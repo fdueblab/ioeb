@@ -21,19 +21,12 @@
     "ant-design-vue": "^1.5.0-rc.6",
     "axios": "^0.19.0",
     "core-js": "^3.1.2",
-<<<<<<< HEAD
     "echarts": "^5.5.1",
     "element-ui": "2.9.1",
     "enquire.js": "^2.1.6",
     "flv.js": "^1.5.0",
     "jsplumb": "^2.15.6",
     "lodash": "^4.17.15",
-=======
-    "element-ui": "2.9.1",
-    "enquire.js": "^2.1.6",
-    "flv.js": "^1.5.0",
-    "lodash": "4.17.15",
->>>>>>> d4893a81c8fb49afb8a7d7eb61cc18776b49be52
     "lodash.clonedeep": "^4.5.0",
     "lodash.get": "^4.4.2",
     "lodash.pick": "^4.4.0",
@@ -43,20 +36,13 @@
     "nprogress": "^0.2.0",
     "video.js": "^7.10.2",
     "viser-vue": "^2.4.6",
-<<<<<<< HEAD
     "vue": "^2.7.16",
-=======
-    "vue": "^2.6.10",
->>>>>>> d4893a81c8fb49afb8a7d7eb61cc18776b49be52
     "vue-amap": "^0.5.10",
     "vue-clipboard2": "^0.2.1",
     "vue-codemirror": "^4.0.6",
     "vue-cropper": "0.4.9",
     "vue-diagrams": "^0.0.1-development",
-<<<<<<< HEAD
     "vue-draggable-next": "^2.2.1",
-=======
->>>>>>> d4893a81c8fb49afb8a7d7eb61cc18776b49be52
     "vue-json-views": "^1.1.0",
     "vue-ls": "^3.2.1",
     "vue-quill-editor": "^3.0.6",
@@ -88,11 +74,7 @@
     "opencollective": "^1.0.3",
     "opencollective-postinstall": "^2.0.2",
     "vue-svg-icon-loader": "^2.1.1",
-<<<<<<< HEAD
     "vue-template-compiler": "^2.7.16",
-=======
-    "vue-template-compiler": "^2.6.10",
->>>>>>> d4893a81c8fb49afb8a7d7eb61cc18776b49be52
     "webpack-theme-color-replacer": "^1.2.17"
   },
   "collective": {

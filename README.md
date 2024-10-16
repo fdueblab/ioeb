@@ -1,6 +1,5 @@
 <h1 align="center">EB 微服务工具箱前端</h1>
 
-- node版本 10.16.0
 - 框架：vue
 - 环境：npm，构建工具：yarn
 - 后台依赖：docker

@@ -822,7 +822,6 @@ export const constantRouterMap = [
             ]
           }
         ]
-<<<<<<< HEAD
       },
 
       {
@@ -840,9 +839,6 @@ export const constantRouterMap = [
           }
         ]
       },
-=======
-      }
->>>>>>> d4893a81c8fb49afb8a7d7eb61cc18776b49be52
       // 练习语法
       /*      {
               path: '/exercises',

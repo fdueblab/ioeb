@@ -180,11 +180,7 @@ const serviceListData = [
           id: '2102',
           type: 'regulatoryAnalysis',
           name: 'analyzeRegulations',
-<<<<<<< HEAD
           ico: 'el-icon-document',
-=======
-          ico: 'el-icon-law',
->>>>>>> d4893a81c8fb49afb8a7d7eb61cc18776b49be52
           style: {}
         }]
       }

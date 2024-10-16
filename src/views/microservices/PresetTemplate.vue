@@ -46,10 +46,7 @@
           <a-card-meta title="数据隐私保护类">
             <template slot="description">
               提供全面的数据安全与隐私保护服务，确保数据的安全与合规性。
-<<<<<<< HEAD
               
-=======
->>>>>>> d4893a81c8fb49afb8a7d7eb61cc18776b49be52
             </template>
           </a-card-meta>
         </a-card>
