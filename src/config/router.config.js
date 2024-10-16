@@ -824,21 +824,21 @@ export const constantRouterMap = [
         ]
       },
 
-      {
-        path: '/test',
-        name: '服务组合',
-        component: RouteView,
-        redirect: '/test/bianpai',
-        meta: { title: '应用服务动态组合', icon: 'pushpin' },
-        children: [
-          {
-            path: '/test/bianpai',
-            name: '可视化组合服务',
-            meta: { title: '服务组合体动态编排', keepAlive: true },
-            component: () => import('@/views/schedule/Schedule_copy')
-          }
-        ]
-      },
+      // {
+      //   path: '/test',
+      //   name: '服务组合',
+      //   component: RouteView,
+      //   redirect: '/test/bianpai',
+      //   meta: { title: '应用服务动态组合', icon: 'pushpin' },
+      //   children: [
+      //     {
+      //       path: '/test/bianpai',
+      //       name: '可视化组合服务',
+      //       meta: { title: '服务组合体动态编排', keepAlive: true },
+      //       component: () => import('@/views/schedule/Schedule_copy')
+      //     }
+      //   ]
+      // },
       // 练习语法
       /*      {
               path: '/exercises',
