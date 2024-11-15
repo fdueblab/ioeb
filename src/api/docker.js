@@ -8,18 +8,18 @@ const api = {
   deleteContainer: '/api/docker/container/delete',
   newImage: '/api/docker/newImage',
   createContainer: '/api/docker/container/creat',
-  createImage: '/api/docker/test/exec',
+  createImage: '/api/docker/test/exec'
 
 }
 
 export default api
 
 // 修改默认前缀
-// axios.defaults.baseURL = 'http://49.235.115.169:10031/api'
-axios.defaults.baseURL = 'http://localhost:10031'
+axios.defaults.baseURL = 'http://49.235.115.169:10031/api'
+// axios.defaults.baseURL = 'http://localhost:10031'
 
 // container id
-export function inspectContainer(parameter) {
+export function inspectContainer (parameter) {
   return axios({
     url: api.inspectContainer,
     method: 'get',
@@ -27,7 +27,7 @@ export function inspectContainer(parameter) {
   })
 }
 
-export function startContainer(parameter) {
+export function startContainer (parameter) {
   return axios({
     url: api.startContainer,
     method: 'post',
@@ -35,7 +35,7 @@ export function startContainer(parameter) {
   })
 }
 
-export function stopContainer(parameter) {
+export function stopContainer (parameter) {
   return axios({
     url: api.stopContainer,
     method: 'post',
@@ -43,7 +43,7 @@ export function stopContainer(parameter) {
   })
 }
 
-export function restartContainer(parameter) {
+export function restartContainer (parameter) {
   return axios({
     url: api.restartContainer,
     method: 'post',
@@ -51,7 +51,7 @@ export function restartContainer(parameter) {
   })
 }
 
-export function deleteContainer(parameter) {
+export function deleteContainer (parameter) {
   return axios({
     url: api.deleteContainer,
     method: 'post',
@@ -59,26 +59,24 @@ export function deleteContainer(parameter) {
   })
 }
 
-
-export function createContainer(data) {
+export function createContainer (data) {
   return axios({
     url: api.createContainer,
     method: 'post',
     data: data
   })
 }
-export function createImage() {
+export function createImage () {
   return axios({
     url: api.createImage,
     method: 'get'
   })
 }
 
-export function createDockfile(formData) {
+export function createDockfile (formData) {
     return axios({
       method: 'post',
       url: api.newImage,
       data: formData
     })
   }
-

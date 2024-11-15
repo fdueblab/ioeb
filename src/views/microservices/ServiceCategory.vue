@@ -47,13 +47,9 @@
 export default {
   name: 'ServiceCategory',
   methods: {
-    jumpAircraft() {
-      this.$router.push({ name: '服务规范' })
+    jumpAircraft () {
+      this.$router.push({ name: 'ServiceDetail' })
     }
   }
 }
 </script>
-
-<style scoped>
-
-</style>

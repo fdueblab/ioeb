@@ -1,14 +1,14 @@
 import Mock from 'mockjs2'
 import { builder, getBody } from '../util'
 
-const username = ['admin', 'super']
+const username = ['issuer', 'publisher', 'user']
 // 强硬要求 ant.design 相同密码
 // '21232f297a57a5a743894a0e4a801fc3',
-const password = ['8914de686ab28dc22f30d3d8e107ff6c'] // admin, ant.design
+const password = ['e10adc3949ba59abbe56e057f20f883e', 'e10adc3949ba59abbe56e057f20f883e', 'e10adc3949ba59abbe56e057f20f883e'] // admin, ant.design
 
 const login = (options) => {
   const body = getBody(options)
-  console.log('[mock url:/auth/login]:', body)
+  console.log('mock: body', body)
   if (!username.includes(body.username) || !password.includes(body.password)) {
     return builder({ isLogin: true }, '账户或密码错误', 401)
   }
@@ -16,9 +16,9 @@ const login = (options) => {
   return builder({
     'id': Mock.mock('@guid'),
     'name': Mock.mock('@name'),
-    'username': 'admin',
+    'username': Mock.mock(body.username),
     'password': '',
-    'avatar': 'https://gw.alipayobjects.com/zos/rmsportal/jZUIxmJycoymBprLOUbT.png',
+    'avatar': '',
     'status': 1,
     'telephone': '',
     'lastLoginIp': '27.154.74.117',
@@ -33,17 +33,14 @@ const login = (options) => {
 }
 
 const logout = () => {
-  console.log('[mock url:/auth/logout]:')
   return builder({}, '[测试接口] 注销成功')
 }
 
 const smsCaptcha = () => {
-  console.log('[mock url:/account/sms]:')
   return builder({ captcha: Mock.mock('@integer(10000, 99999)') })
 }
 
 const twofactor = () => {
-  console.log('[mock url:/auth/2step-code]:')
   return builder({ stepCode: Mock.mock('@integer(0, 1)') })
 }
 

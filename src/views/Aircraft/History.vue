@@ -9,8 +9,7 @@
               {{ resp.student_name }}
             </a-descriptions-item>
             <a-descriptions-item label="体验性质">
-<!--              {{ resp.exam_course }}-->
-
+              <!--              {{ resp.exam_course }}-->
               <a-radio-group name="radioGroup" :default-value="0" @change="onChange">
                 <a-radio :value="1">
                   远程操作
@@ -19,8 +18,6 @@
                   教学实训
                 </a-radio>
               </a-radio-group>
-
-
             </a-descriptions-item>
             <a-descriptions-item label="操作计划">
               {{ resp.exam_requirement }}
@@ -34,23 +31,22 @@
           </a-descriptions>
 
           <a-result status="success" v-if="passStatus" title="成功通过教学">
-
           </a-result>
-          <a-result status="error" v-else="passStatus" title="没有通过">
-
+          <a-result status="error" v-else title="没有通过">
           </a-result>
-<!--          <a-tag color="#87d068" v-if="passStatus">-->
-<!--            通过-->
-<!--          </a-tag>-->
-<!--          <a-tag color="#f50" v-else>-->
-<!--            不通过-->
-<!--          </a-tag>-->
+          <!--          <a-tag color="#87d068" v-if="passStatus">-->
+          <!--            通过-->
+          <!--          </a-tag>-->
+          <!--          <a-tag color="#f50" v-else>-->
+          <!--            不通过-->
+          <!--          </a-tag>-->
         </a-col>
         <a-col :span="2">
           <a-divider type="vertical"></a-divider>
         </a-col>
-        <a-col :span="12" :v-if="mapLoading"
-        >
+        <a-col
+          :span="12"
+          :v-if="mapLoading">
           <div class="amap-wrapper">
             <el-amap
               vid="amapTrack"
@@ -60,11 +56,15 @@
               :zoomEnable="true"
               ref="map"
             >
-              <el-amap-polygon v-for="(polygon, index) in polygons"
-                               :vid="index" :ref="`polygon_${index}`" :path="polygon.path"
-                               :draggable="polygon.draggable"
-                               :events="polygon.events"></el-amap-polygon>
-
+              <el-amap-polygon
+                v-for="(polygon, index) in polygons"
+                :key="index"
+                :vid="index"
+                :ref="`polygon_${index}`"
+                :path="polygon.path"
+                :draggable="polygon.draggable"
+                :events="polygon.events">
+              </el-amap-polygon>
             </el-amap>
           </div>
         </a-col>
@@ -89,7 +89,6 @@ export default {
       msg: 'vue-amap向你问好！',
       initAddr: [121.502891, 31.290807],
       center: [121.5273285, 31.21515044],
-
       examRoom: 1, // 考场
       userName: '宋杰',  // 学生姓名
       grade: '通过', // 是否通过
@@ -112,12 +111,9 @@ export default {
         }
       }
       ],
-
       resp: {},
       mapLoading: false,
-
       passStatus: false
-
     }
   },
   created() {
@@ -127,7 +123,6 @@ export default {
       this.polygons[0]['path'] = this.resp['trace']
       this.passStatus = this.resp['result'] === '通过'
       this.mapLoading = true
-
     })
   },
   methods: {

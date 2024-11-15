@@ -28,7 +28,7 @@
     </div>
 
     <s-table :columns="columns" :data="loadData">
-      <span slot="permission" slot-scope="text,record,index">
+      <span slot="permission" slot-scope="text, record">
         <a-tag v-for="(action, index) in record.actionList" :key="index" color="blue">{{ action.describe }}</a-tag>
         <span>{{ text }}</span>&nbsp;
       </span>

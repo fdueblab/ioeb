@@ -33,9 +33,9 @@
         :alert="{ show: true, clear: true }"
         :rowSelection="{ selectedRowKeys: this.selectedRowKeys, onChange: this.onSelectChange }">
 
-        <a slot="Name" slot-scope="text,record,index" style="font-size:18px;font-weight: bold">
+        // eslint-disable-next-line vue/no-unused-vars
+        <a slot="Name" slot-scope="text" style="font-size:18px;font-weight: bold">
           {{ text }}
-
         </a>
 
         <div slot="Mode" slot-scope="text,record,index">
@@ -69,7 +69,7 @@
     components: {
       STable
     },
-    data() {
+    data () {
       return {
         testhidden: [true, false, true],
 
@@ -144,7 +144,7 @@
       }
     },
     filters: {
-      timeFilter(time) {
+      timeFilter (time) {
         const statusMap = {
           1: '正常',
           2: '禁用'
@@ -153,25 +153,25 @@
           return statusMap[0]
         } else { return statusMap[1] }
       },
-      nameFilter(name) {
+      nameFilter (name) {
         return name[0].substring(1)
       }
     },
     methods: {
-      onSelectChange(selectedRowKeys, selectedRows) {
+      onSelectChange (selectedRowKeys, selectedRows) {
         this.selectedRowKeys = selectedRowKeys
         this.selectedRows = selectedRows
       },
       // status filter
-      statusFilter(text) {
+      statusFilter (text) {
         if (text.indexOf('Up') !== -1) { return 0 }
       },
       // 更改scale出现的组件
-      toggle(index) {
+      toggle (index) {
         this.$set(this.scaledDisabled, index, !this.scaledDisabled[index])
       },
       // scaleService
-      scaleService(record, index) {
+      scaleService (record, index) {
         let param = {}
         param = {
           id: record.id,
@@ -184,7 +184,7 @@
         })
       },
       // 在loadData中接收数据以后的处理
-      afterwards(res) {
+      afterwards (res) {
         for (const k of res.data) {
           this.scaledDisabled.push(true)
           this.scaleNum.push(k.replicas)

@@ -4,7 +4,7 @@
       <span class="ef-node-pmenu" @click="menu.open = !menu.open"><i
         :class="{'el-icon-caret-bottom': menu.open,'el-icon-caret-right': !menu.open}"></i>&nbsp;{{ menu.name }}</span>
       <ul v-show="menu.open" class="flow-menu">
-        <div v-for="m in menu.children">
+        <div v-for="(m, index) in menu.children" :key="index">
           <span class="ef-node-psubmenu" @click="m.open = !m.open"><i
             :class="{'el-icon-caret-bottom': m.open,'el-icon-caret-right': !m.open}"></i>&nbsp;{{ m.name }}</span>
           <ul v-show="m.open" class="f-node-menu-ul">
@@ -29,7 +29,7 @@
   }
 
   export default {
-    data() {
+    data () {
       return {
         activeNames: '1',
         // draggable配置参数参考 https://www.cnblogs.com/weixin186/p/10108679.html
@@ -100,13 +100,13 @@
     components: {
       draggable
     },
-    created() {
+    created () {
       /**
        * 以下是为了解决在火狐浏览器上推拽时弹出tab页到搜索问题
        * @param event
        */
       if (this.isFirefox()) {
-        document.body.ondrop = function(event) {
+        document.body.ondrop = function (event) {
           // 解决火狐浏览器无法获取鼠标拖拽结束的坐标问题
           mousePosition.left = event.layerX
           mousePosition.top = event.clientY - 50
@@ -115,7 +115,7 @@
         }
       }
     },
-    mounted() {
+    mounted () {
       getServiceList().then(response => {
         this.menuList = response.result
         console.dir(response.result)
@@ -123,7 +123,7 @@
     },
     methods: {
       // 根据类型获取左侧菜单对象
-      getMenuByType(type) {
+      getMenuByType (type) {
         for (let i = 0; i < this.menuList.length; i++) {
           const children = this.menuList[i].children
           for (let j = 0; j < children.length; j++) {
@@ -137,7 +137,7 @@
         }
       },
       // 根据id获取左侧菜单对象
-      getMenuById(id) {
+      getMenuById (id) {
         for (let i = 0; i < this.menuList.length; i++) {
           const children = this.menuList[i].children
           for (let j = 0; j < children.length; j++) {
@@ -151,16 +151,16 @@
         }
       },
       // 拖拽开始时触发
-      move(evt, a, b, c) {
+      move (evt, a, b, c) {
         var type = evt.item.attributes.type.nodeValue
         this.nodeMenu = this.getMenuByType(type)
       },
       // 拖拽结束时触发
-      end(evt, e) {
+      end (evt, e) {
         this.$emit('addNode', evt, this.nodeMenu, mousePosition)
       },
       // 是否是火狐浏览器
-      isFirefox() {
+      isFirefox () {
         var userAgent = navigator.userAgent
         if (userAgent.indexOf('Firefox') > -1) {
           return true

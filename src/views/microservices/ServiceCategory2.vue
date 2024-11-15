@@ -49,7 +49,7 @@
 export default {
   name: 'DataPrivacyService',
   methods: {
-    jumpDataPrivacy() {
+    jumpDataPrivacy () {
       this.$router.push({ name: '数据隐私保护服务规范' })
     }
   }

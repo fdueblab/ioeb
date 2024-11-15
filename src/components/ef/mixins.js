@@ -1,5 +1,5 @@
 export const easyFlowMixin = {
-    data() {
+    data () {
         return {
             jsplumbSetting: {
                 // 动态锚点、位置自适应

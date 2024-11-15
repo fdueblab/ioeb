@@ -1,45 +1,45 @@
 <template>
   <div class="page-header-index-wide">
     <a-card :bordered="false" :bodyStyle="{ padding: '16px 0', height: '100%' }" :style="{ height: '100%' }">
-      <div class="account-settings-info-main" :class="device">
+      <div class="account-settings-info-main" :class="{ 'mobile': isMobile }">
         <div class="account-settings-info-left">
           <a-menu
-            :mode="device == 'mobile' ? 'horizontal' : 'inline'"
-            :style="{ border: '0', width: device == 'mobile' ? '560px' : 'auto'}"
+            :mode="isMobile ? 'horizontal' : 'inline'"
+            :style="{ border: '0', width: isMobile ? '560px' : 'auto'}"
             :selectedKeys="selectedKeys"
             type="inner"
             @openChange="onOpenChange"
           >
-            <a-menu-item key="/account/settings/base">
-              <router-link :to="{ name: 'BaseSettings' }">
-                基本设置
+            <a-menu-item key="/account/settings/basic">
+              <router-link :to="{ name: 'BasicSettings' }">
+                {{ $t('account.settings.menuMap.basic') }}
               </router-link>
             </a-menu-item>
             <a-menu-item key="/account/settings/security">
               <router-link :to="{ name: 'SecuritySettings' }">
-                安全设置
+                {{ $t('account.settings.menuMap.security') }}
               </router-link>
             </a-menu-item>
             <a-menu-item key="/account/settings/custom">
               <router-link :to="{ name: 'CustomSettings' }">
-                个性化
+                {{ $t('account.settings.menuMap.custom') }}
               </router-link>
             </a-menu-item>
             <a-menu-item key="/account/settings/binding">
               <router-link :to="{ name: 'BindingSettings' }">
-                账户绑定
+                {{ $t('account.settings.menuMap.binding') }}
               </router-link>
             </a-menu-item>
             <a-menu-item key="/account/settings/notification">
               <router-link :to="{ name: 'NotificationSettings' }">
-                新消息通知
+                {{ $t('account.settings.menuMap.notification') }}
               </router-link>
             </a-menu-item>
           </a-menu>
         </div>
         <div class="account-settings-info-right">
           <div class="account-settings-info-title">
-            <span>{{ $route.meta.title }}</span>
+            <span>{{ $t($route.meta.title) }}</span>
           </div>
           <route-view></route-view>
         </div>
@@ -49,15 +49,14 @@
 </template>
 
 <script>
-import { PageView, RouteView } from '@/layouts'
-import { mixinDevice } from '@/utils/mixin.js'
+import { RouteView } from '@/layouts'
+import { baseMixin } from '@/store/app-mixin'
 
 export default {
   components: {
-    RouteView,
-    PageView
+    RouteView
   },
-  mixins: [mixinDevice],
+  mixins: [baseMixin],
   data () {
     return {
       // horizontal  inline
@@ -69,10 +68,10 @@ export default {
       // cropper
       preview: {},
       option: {
-        img: '/avatar2.jpg',
+        img: '/avatar2.svg',
         info: true,
         size: 1,
-        outputType: 'jpeg',
+        outputType: 'svg',
         canScale: false,
         autoCrop: true,
         // 只有自动截图开启 宽度高度才生效

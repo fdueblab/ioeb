@@ -13,16 +13,7 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     'generator-star-spacing': 'off',
     'no-mixed-operators': 0,
-    'vue/max-attributes-per-line': [
-      2,
-      {
-        'singleline': 5,
-        'multiline': {
-          'max': 1,
-          'allowFirstLine': false
-        }
-      }
-    ],
+    'vue/max-attributes-per-line': 'off',
     'vue/attribute-hyphenation': 0,
     'vue/html-self-closing': 0,
     'vue/component-name-in-template-casing': 0,

@@ -49,7 +49,7 @@
 export default {
   name: 'AMLComplianceService',
   methods: {
-    jumpAMLCompliance() {
+    jumpAMLCompliance () {
       this.$router.push({ name: '反洗钱合规服务规范' })
     }
   }

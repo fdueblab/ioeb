@@ -165,7 +165,7 @@
 import pick from 'lodash.pick'
 import { STable } from '@/components'
 import { getRoleList, getServiceList } from '@/api/manage'
-import { PERMISSION_ENUM } from '@/utils/helper/permission'
+import { PERMISSION_ENUM } from '@/core/permission/permission'
 
 const STATUS = {
   1: '启用',
@@ -331,7 +331,7 @@ export default {
 
 <style lang="less" scoped>
 .permission-form {
-  /deep/ .permission-group {
+  :deep(.permission-group) {
     margin-top: 0;
     margin-bottom: 0;
   }

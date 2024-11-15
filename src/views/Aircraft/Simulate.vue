@@ -180,8 +180,9 @@ export default {
     },
     reInit() {
       if (window['WebSocket']) {
-        var localAddr = 'ws://localhost:7676/conn?targetDeviceId=1&type=browser'
-        var remoteAddr = 'ws://49.234.46.215:7676/conn?targetDeviceId=1&type=browser'
+        // eslint-disable-next-line no-unused-vars
+        const localAddr = 'ws://localhost:7676/conn?targetDeviceId=1&type=browser'
+        const remoteAddr = 'ws://49.234.46.215:7676/conn?targetDeviceId=1&type=browser'
         this.conn = new WebSocket(remoteAddr)
         this.conn.onclose = function (evt) {
           const s = '服务器主动断开连接'

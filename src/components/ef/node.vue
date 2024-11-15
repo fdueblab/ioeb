@@ -23,6 +23,20 @@
       <i class="el-icon-warning-outline el-node-state-warning" v-show="node.state === 'warning'"></i>
       <i class="el-icon-loading el-node-state-running" v-show="node.state === 'running'"></i>
     </div>
+
+    <div class="ef-node-divider"></div>
+    <!-- 参数信息 -->
+    <div class="ef-node-parameters">
+        <!-- <p><strong>Input:</strong> {{ node.input }}</p>
+        <p><strong>Output:</strong> {{ node.output }}</p>
+        <p><strong>Version:</strong> {{ node.version }}</p> -->
+        <label><strong>Input:</strong></label>
+        <input type="text" value="input" readonly>
+        <label><strong>Output:</strong></label>
+        <input type="text" value="output" readonly>
+        <label><strong>Version:</strong></label>
+        <input type="text" value="v1.0" readonly>
+    </div>
   </div>
 </template>
 
@@ -32,25 +46,25 @@
             node: Object,
             activeElement: Object
         },
-        data() {
+        data () {
             return {
             }
         },
         computed: {
-            nodeContainerClass() {
+            nodeContainerClass () {
                 return {
                     'ef-node-container': true,
-                    'ef-node-active': this.activeElement.type == 'node' ? this.activeElement.nodeId === this.node.id : false
+                    'ef-node-active': this.activeElement.type === 'node' ? this.activeElement.nodeId === this.node.id : false
                 }
             },
             // 节点容器样式
-            nodeContainerStyle() {
+            nodeContainerStyle () {
                 return {
                     top: this.node.top,
                     left: this.node.left
                 }
             },
-            nodeIcoClass() {
+            nodeIcoClass () {
                 var nodeIcoClass = {}
                 nodeIcoClass[this.node.ico] = true
                 // 添加该class可以推拽连线出来
@@ -60,13 +74,13 @@
         },
         methods: {
             // 点击节点
-            clickNode() {
+            clickNode () {
                 this.$emit('clickNode', this.node.id)
             },
             // 鼠标移动后抬起
-            changeNodeSite() {
+            changeNodeSite () {
                 // 避免抖动
-                if (this.node.left == this.$refs.node.style.left && this.node.top == this.$refs.node.style.top) {
+                if (this.node.left === this.$refs.node.style.left && this.node.top === this.$refs.node.style.top) {
                     return
                 }
                 this.$emit('changeNodeSite', {

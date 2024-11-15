@@ -185,7 +185,7 @@
     },
     methods: {
       show() {
-        console.log(loadData)
+        console.log('loadData')
       },
       handleOk() {
         this.$refs.table.refresh()

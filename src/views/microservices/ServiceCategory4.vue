@@ -49,7 +49,7 @@
 export default {
   name: 'DataAnalyticsService',
   methods: {
-    jumpDataAnalytics() {
+    jumpDataAnalytics () {
       this.$router.push({ name: '数据分析与决策服务规范' })
     }
   }

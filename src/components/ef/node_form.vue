@@ -71,10 +71,11 @@
 
 <script>
 import { cloneDeep } from 'lodash'
+// eslint-disable-next-line no-unused-vars
 import { addFlowService } from '@/api/schedule'
 
 export default {
-  data() {
+  data () {
     return {
       visible: true,
       // node 或 line
@@ -95,7 +96,7 @@ export default {
      * @param data
      * @param id
      */
-    nodeInit(data, id) {
+    nodeInit (data, id) {
       this.type = 'node'
       this.data = data
       data.nodeList.filter((node) => {
@@ -104,15 +105,15 @@ export default {
         }
       })
     },
-    lineInit(line) {
+    lineInit (line) {
       this.type = 'line'
       this.line = line
     },
     // 修改连线
-    saveLine() {
+    saveLine () {
       this.$emit('setLineLabel', this.line.from, this.line.to, this.line.label)
     },
-    save() {
+    save () {
       this.data.nodeList.filter((node) => {
         if (node.id === this.node.id) {
           node.name = this.node.name
@@ -124,11 +125,11 @@ export default {
       })
     },
     // 向服务器提交编排的service信息
-    addScheduledService() {
+    addScheduledService () {
       const k = this.services
       k.nodeList = this.flowData.nodeList
       k.lineList = this.flowData.lineList
-      setTimeout(() => { 
+      setTimeout(() => {
         this.$message.info('镜像正在打包上传，请稍等...')
       }, 1000)
       // 还未联调

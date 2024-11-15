@@ -2,13 +2,11 @@ import Mock from 'mockjs2'
 import { builder } from '../util'
 
 const orgTree = () => {
-  return builder([
-    {
+  return builder([{
     'key': 'key-01',
     'title': '研发中心',
     'icon': 'mail',
-    'children': [
-      {
+    'children': [{
       'key': 'key-01-01',
       'title': '后端组',
       'icon': null,
@@ -18,16 +16,16 @@ const orgTree = () => {
         'title': 'JAVA',
         'icon': null
       },
-        {
-          'key': 'key-01-01-02',
-          'title': 'PHP',
-          'icon': null
-        },
-        {
-          'key': 'key-01-01-03',
-          'title': 'Golang',
-          'icon': null
-        }
+      {
+        'key': 'key-01-01-02',
+        'title': 'PHP',
+        'icon': null
+      },
+      {
+        'key': 'key-01-01-03',
+        'title': 'Golang',
+        'icon': null
+      }
       ]
     }, {
       'key': 'key-01-02',
@@ -39,16 +37,16 @@ const orgTree = () => {
         'title': 'React',
         'icon': null
       },
-        {
-          'key': 'key-01-02-02',
-          'title': 'Vue',
-          'icon': null
-        },
-        {
-          'key': 'key-01-02-03',
-          'title': 'Angular',
-          'icon': null
-        }
+      {
+        'key': 'key-01-02-02',
+        'title': 'Vue',
+        'icon': null
+      },
+      {
+        'key': 'key-01-02-03',
+        'title': 'Angular',
+        'icon': null
+      }
       ]
     }]
   }, {
@@ -72,11 +70,11 @@ const orgTree = () => {
         'title': '财务制度建设',
         'icon': null
       },
-        {
-          'key': 'key-02-03-02',
-          'title': '会计核算',
-          'icon': null
-        }
+      {
+        'key': 'key-02-03-02',
+        'title': '会计核算',
+        'icon': null
+      }
       ]
     }]
   }])
@@ -84,17 +82,15 @@ const orgTree = () => {
 
 const role = () => {
   return builder({
-    'data': [
-      {
+    'data': [{
       'id': 'admin',
-      'name': '超级管理员',
+      'name': '管理员',
       'describe': '拥有所有权限',
       'status': 1,
       'creatorId': 'system',
-      'createTime': '2020-5-11 20:10:11',
+      'createTime': 1497160610259,
       'deleted': 0,
-      'permissions': [
-        {
+      'permissions': [{
         'roleId': 'admin',
         'permissionId': 'comment',
         'permissionName': '评论管理',
@@ -104,566 +100,565 @@ const role = () => {
           'describe': '新增',
           'defaultCheck': false
         },
-          {
-            'action': 'query',
-            'describe': '查询',
-            'defaultCheck': false
-          },
-          {
-            'action': 'get',
-            'describe': '详情',
-            'defaultCheck': false
-          },
-          {
-            'action': 'edit',
-            'describe': '修改',
-            'defaultCheck': false
-          },
-          {
-            'action': 'delete',
-            'describe': '删除',
-            'defaultCheck': false
-          }],
+        {
+          'action': 'query',
+          'describe': '查询',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        },
+        {
+          'action': 'edit',
+          'describe': '修改',
+          'defaultCheck': false
+        },
+        {
+          'action': 'delete',
+          'describe': '删除',
+          'defaultCheck': false
+        }],
         'actionList': ['delete', 'edit'],
         'dataAccess': null
       },
-        {
-          'roleId': 'tenant',
-          'permissionId': 'member',
-          'permissionName': '租户管理',
-          'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-          'actionEntitySet': [{
-            'action': 'add',
-            'describe': '新增',
-            'defaultCheck': false
-          },
-            {
-              'action': 'query',
-              'describe': '查询',
-              'defaultCheck': false
-            },
-            {
-              'action': 'get',
-              'describe': '详情',
-              'defaultCheck': false
-            },
-            {
-              'action': 'edit',
-              'describe': '修改',
-              'defaultCheck': false
-            },
-            {
-              'action': 'delete',
-              'describe': '删除',
-              'defaultCheck': false
-            }
-          ],
-          'actionList': ['query', 'get', 'edit', 'delete'],
-          'dataAccess': null
-        },
-        {
-          'roleId': 'platform',
-          'permissionId': 'menu',
-          'permissionName': '平台使用',
-          'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"import","defaultCheck":false,"describe":"导入"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"}]',
-          'actionEntitySet': [{
-            'action': 'add',
-            'describe': '新增',
-            'defaultCheck': false
-          },
-            {
-              'action': 'import',
-              'describe': '导入',
-              'defaultCheck': false
-            },
-            {
-              'action': 'get',
-              'describe': '详情',
-              'defaultCheck': false
-            },
-            {
-              'action': 'edit',
-              'describe': '修改',
-              'defaultCheck': false
-            }
-          ],
-          'actionList': ['add', 'import'],
-          'dataAccess': null
-        },
-        {
-          'roleId': 'admin',
-          'permissionId': 'order',
-          'permissionName': '订单管理',
-          'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-          'actionEntitySet': [{
-            'action': 'add',
-            'describe': '新增',
-            'defaultCheck': false
-          },
-            {
-              'action': 'query',
-              'describe': '查询',
-              'defaultCheck': false
-            },
-            {
-              'action': 'get',
-              'describe': '详情',
-              'defaultCheck': false
-            },
-            {
-              'action': 'edit',
-              'describe': '修改',
-              'defaultCheck': false
-            },
-            {
-              'action': 'delete',
-              'describe': '删除',
-              'defaultCheck': false
-            }
-          ],
-          'actionList': ['query', 'add', 'get'],
-          'dataAccess': null
-        },
-        {
-          'roleId': 'admin',
-          'permissionId': 'permission',
-          'permissionName': '权限管理',
-          'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-          'actionEntitySet': [{
-            'action': 'add',
-            'describe': '新增',
-            'defaultCheck': false
-          },
-            {
-              'action': 'get',
-              'describe': '详情',
-              'defaultCheck': false
-            },
-            {
-              'action': 'edit',
-              'describe': '修改',
-              'defaultCheck': false
-            },
-            {
-              'action': 'delete',
-              'describe': '删除',
-              'defaultCheck': false
-            }
-          ],
-          'actionList': ['add', 'get', 'edit', 'delete'],
-          'dataAccess': null
-        },
-        {
-          'roleId': 'admin',
-          'permissionId': 'role',
-          'permissionName': '角色管理',
-          'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-          'actionEntitySet': [{
-            'action': 'add',
-            'describe': '新增',
-            'defaultCheck': false
-          },
-            {
-              'action': 'get',
-              'describe': '详情',
-              'defaultCheck': false
-            },
-            {
-              'action': 'edit',
-              'describe': '修改',
-              'defaultCheck': false
-            },
-            {
-              'action': 'delete',
-              'describe': '删除',
-              'defaultCheck': false
-            }
-          ],
-          'actionList': null,
-          'dataAccess': null
-        },
-        {
-          'roleId': 'admin',
-          'permissionId': 'test',
-          'permissionName': '测试权限',
-          'actions': '[]',
-          'actionEntitySet': [],
-          'actionList': null,
-          'dataAccess': null
-        },
-        {
-          'roleId': 'admin',
-          'permissionId': 'user',
-          'permissionName': '用户管理',
-          'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"import","defaultCheck":false,"describe":"导入"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"},{"action":"export","defaultCheck":false,"describe":"导出"}]',
-          'actionEntitySet': [{
-            'action': 'add',
-            'describe': '新增',
-            'defaultCheck': false
-          },
-            {
-              'action': 'import',
-              'describe': '导入',
-              'defaultCheck': false
-            },
-            {
-              'action': 'get',
-              'describe': '详情',
-              'defaultCheck': false
-            },
-            {
-              'action': 'edit',
-              'describe': '修改',
-              'defaultCheck': false
-            },
-            {
-              'action': 'delete',
-              'describe': '删除',
-              'defaultCheck': false
-            },
-            {
-              'action': 'export',
-              'describe': '导出',
-              'defaultCheck': false
-            }
-          ],
-          'actionList': ['add', 'get'],
-          'dataAccess': null
-        }
-      ]
-    },
       {
-        'id': 'svip',
-        'name': '权限管理员',
-        'describe': '',
-        'status': 1,
-        'creatorId': 'system',
-        'createTime': '2020-5-11 20:12:13',
-        'deleted': 0,
-        'permissions': [{
-          'roleId': 'admin',
-          'permissionId': 'comment',
-          'permissionName': '评论管理',
-          'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-          'actionEntitySet': [{
-            'action': 'add',
-            'describe': '新增',
-            'defaultCheck': false
-          },
-            {
-              'action': 'query',
-              'describe': '查询',
-              'defaultCheck': false
-            },
-            {
-              'action': 'get',
-              'describe': '详情',
-              'defaultCheck': false
-            },
-            {
-              'action': 'edit',
-              'describe': '修改',
-              'defaultCheck': false
-            },
-            {
-              'action': 'delete',
-              'describe': '删除',
-              'defaultCheck': false
-            }
-          ],
-          'actionList': ['add', 'get', 'delete'],
-          'dataAccess': null
+        'roleId': 'admin',
+        'permissionId': 'member',
+        'permissionName': '会员管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
         },
-          {
-            'roleId': 'admin',
-            'permissionId': 'member',
-            'permissionName': '会员管理',
-            'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-            'actionEntitySet': [{
-              'action': 'add',
-              'describe': '新增',
-              'defaultCheck': false
-            },
-              {
-                'action': 'query',
-                'describe': '查询',
-                'defaultCheck': false
-              },
-              {
-                'action': 'get',
-                'describe': '详情',
-                'defaultCheck': false
-              }
-            ],
-            'actionList': ['add', 'query', 'get'],
-            'dataAccess': null
-          },
-          {
-            'roleId': 'admin',
-            'permissionId': 'menu',
-            'permissionName': '菜单管理',
-            'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"import","defaultCheck":false,"describe":"导入"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"}]',
-            'actionEntitySet': [{
-              'action': 'add',
-              'describe': '新增',
-              'defaultCheck': false
-            },
-              {
-                'action': 'import',
-                'describe': '导入',
-                'defaultCheck': false
-              },
-              {
-                'action': 'get',
-                'describe': '详情',
-                'defaultCheck': false
-              }
-            ],
-            'actionList': ['add', 'get'],
-            'dataAccess': null
-          },
-          {
-            'roleId': 'admin',
-            'permissionId': 'order',
-            'permissionName': '订单管理',
-            'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-            'actionEntitySet': [{
-              'action': 'add',
-              'describe': '新增',
-              'defaultCheck': false
-            },
-              {
-                'action': 'query',
-                'describe': '查询',
-                'defaultCheck': false
-              },
-              {
-                'action': 'get',
-                'describe': '详情',
-                'defaultCheck': false
-              },
-              {
-                'action': 'edit',
-                'describe': '修改',
-                'defaultCheck': false
-              }
-            ],
-            'actionList': ['add', 'query'],
-            'dataAccess': null
-          },
-          {
-            'roleId': 'admin',
-            'permissionId': 'permission',
-            'permissionName': '权限管理',
-            'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-            'actionEntitySet': [{
-              'action': 'add',
-              'describe': '新增',
-              'defaultCheck': false
-            },
-              {
-                'action': 'get',
-                'describe': '详情',
-                'defaultCheck': false
-              },
-              {
-                'action': 'edit',
-                'describe': '修改',
-                'defaultCheck': false
-              }
-            ],
-            'actionList': ['add', 'get', 'edit'],
-            'dataAccess': null
-          },
-          {
-            'roleId': 'admin',
-            'permissionId': 'role',
-            'permissionName': '角色管理',
-            'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-            'actionEntitySet': [{
-              'action': 'add',
-              'describe': '新增',
-              'defaultCheck': false
-            },
-              {
-                'action': 'edit',
-                'describe': '修改',
-                'defaultCheck': false
-              },
-              {
-                'action': 'delete',
-                'describe': '删除',
-                'defaultCheck': false
-              }
-            ],
-            'actionList': null,
-            'dataAccess': null
-          },
-          {
-            'roleId': 'admin',
-            'permissionId': 'test',
-            'permissionName': '测试权限',
-            'actions': '[]',
-            'actionEntitySet': [],
-            'actionList': ['add', 'edit'],
-            'dataAccess': null
-          },
-          {
-            'roleId': 'admin',
-            'permissionId': 'user',
-            'permissionName': '用户管理',
-            'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"import","defaultCheck":false,"describe":"导入"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"},{"action":"export","defaultCheck":false,"describe":"导出"}]',
-            'actionEntitySet': [{
-              'action': 'add',
-              'describe': '新增',
-              'defaultCheck': false
-            },
-              {
-                'action': 'import',
-                'describe': '导入',
-                'defaultCheck': false
-              },
-              {
-                'action': 'get',
-                'describe': '详情',
-                'defaultCheck': false
-              },
-              {
-                'action': 'edit',
-                'describe': '修改',
-                'defaultCheck': false
-              }
-            ],
-            'actionList': ['add'],
-            'dataAccess': null
-          }
-        ]
+        {
+          'action': 'query',
+          'describe': '查询',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        },
+        {
+          'action': 'edit',
+          'describe': '修改',
+          'defaultCheck': false
+        },
+        {
+          'action': 'delete',
+          'describe': '删除',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': ['query', 'get', 'edit', 'delete'],
+        'dataAccess': null
       },
       {
-        'id': 'user',
-        'name': '普通管理员',
-        'describe': '普通用户，只能查询',
-        'status': 1,
-        'creatorId': 'system',
-        /*      'createTime': 1497160610259, */
-        'createTime': '2020-5-11 20:15:13',
-        'deleted': 0,
-        'permissions': [{
-          'roleId': 'user',
-          'permissionId': 'comment',
-          'permissionName': '评论管理',
-          'actions': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"}]',
-          'actionEntitySet': [{
-            'action': 'query',
-            'describe': '查询',
-            'defaultCheck': false
-          },
-            {
-              'action': 'get',
-              'describe': '详情',
-              'defaultCheck': false
-            }
-          ],
-          'actionList': ['query'],
-          'dataAccess': null
+        'roleId': 'admin',
+        'permissionId': 'menu',
+        'permissionName': '菜单管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"import","defaultCheck":false,"describe":"导入"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
         },
-
-          {
-            'roleId': 'user',
-            'permissionId': 'marketing',
-            'permissionName': '营销管理',
-            'actions': '[]',
-            'actionEntitySet': [],
-            'actionList': null,
-            'dataAccess': null
-          },
-          {
-            'roleId': 'user',
-            'permissionId': 'member',
-            'permissionName': '会员管理',
-            'actions': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"}]',
-            'actionEntitySet': [{
-              'action': 'query',
-              'describe': '查询',
-              'defaultCheck': false
-            },
-              {
-                'action': 'get',
-                'describe': '详情',
-                'defaultCheck': false
-              }
-            ],
-            'actionList': null,
-            'dataAccess': null
-          },
-          {
-            'roleId': 'user',
-            'permissionId': 'menu',
-            'permissionName': '菜单管理',
-            'actions': '[]',
-            'actionEntitySet': [],
-            'actionList': null,
-            'dataAccess': null
-          },
-
-          {
-            'roleId': 'user',
-            'permissionId': 'order',
-            'permissionName': '订单管理',
-            'actions': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"}]',
-            'actionEntitySet': [{
-              'action': 'query',
-              'describe': '查询',
-              'defaultCheck': false
-            },
-              {
-                'action': 'get',
-                'describe': '详情',
-                'defaultCheck': false
-              }
-            ],
-            'actionList': null,
-            'dataAccess': null
-          },
-          {
-            'roleId': 'user',
-            'permissionId': 'permission',
-            'permissionName': '权限管理',
-            'actions': '[]',
-            'actionEntitySet': [],
-            'actionList': null,
-            'dataAccess': null
-          },
-          {
-            'roleId': 'user',
-            'permissionId': 'role',
-            'permissionName': '角色管理',
-            'actions': '[]',
-            'actionEntitySet': [],
-            'actionList': null,
-            'dataAccess': null
-          },
-
-          {
-            'roleId': 'user',
-            'permissionId': 'test',
-            'permissionName': '测试权限',
-            'actions': '[]',
-            'actionEntitySet': [],
-            'actionList': null,
-            'dataAccess': null
-          },
-          {
-            'roleId': 'user',
-            'permissionId': 'user',
-            'permissionName': '用户管理',
-            'actions': '[]',
-            'actionEntitySet': [],
-            'actionList': null,
-            'dataAccess': null
-          }
-        ]
+        {
+          'action': 'import',
+          'describe': '导入',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        },
+        {
+          'action': 'edit',
+          'describe': '修改',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': ['add', 'import'],
+        'dataAccess': null
+      },
+      {
+        'roleId': 'admin',
+        'permissionId': 'order',
+        'permissionName': '订单管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
+        },
+        {
+          'action': 'query',
+          'describe': '查询',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        },
+        {
+          'action': 'edit',
+          'describe': '修改',
+          'defaultCheck': false
+        },
+        {
+          'action': 'delete',
+          'describe': '删除',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': ['query', 'add', 'get'],
+        'dataAccess': null
+      },
+      {
+        'roleId': 'admin',
+        'permissionId': 'permission',
+        'permissionName': '权限管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        },
+        {
+          'action': 'edit',
+          'describe': '修改',
+          'defaultCheck': false
+        },
+        {
+          'action': 'delete',
+          'describe': '删除',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': ['add', 'get', 'edit', 'delete'],
+        'dataAccess': null
+      },
+      {
+        'roleId': 'admin',
+        'permissionId': 'role',
+        'permissionName': '角色管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        },
+        {
+          'action': 'edit',
+          'describe': '修改',
+          'defaultCheck': false
+        },
+        {
+          'action': 'delete',
+          'describe': '删除',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': null,
+        'dataAccess': null
+      },
+      {
+        'roleId': 'admin',
+        'permissionId': 'test',
+        'permissionName': '测试权限',
+        'actions': '[]',
+        'actionEntitySet': [],
+        'actionList': null,
+        'dataAccess': null
+      },
+      {
+        'roleId': 'admin',
+        'permissionId': 'user',
+        'permissionName': '用户管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"import","defaultCheck":false,"describe":"导入"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"},{"action":"export","defaultCheck":false,"describe":"导出"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
+        },
+        {
+          'action': 'import',
+          'describe': '导入',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        },
+        {
+          'action': 'edit',
+          'describe': '修改',
+          'defaultCheck': false
+        },
+        {
+          'action': 'delete',
+          'describe': '删除',
+          'defaultCheck': false
+        },
+        {
+          'action': 'export',
+          'describe': '导出',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': ['add', 'get'],
+        'dataAccess': null
       }
+      ]
+    },
+    {
+      'id': 'svip',
+      'name': 'SVIP',
+      'describe': '超级会员',
+      'status': 1,
+      'creatorId': 'system',
+      'createTime': 1532417744846,
+      'deleted': 0,
+      'permissions': [{
+        'roleId': 'admin',
+        'permissionId': 'comment',
+        'permissionName': '评论管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
+        },
+        {
+          'action': 'query',
+          'describe': '查询',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        },
+        {
+          'action': 'edit',
+          'describe': '修改',
+          'defaultCheck': false
+        },
+        {
+          'action': 'delete',
+          'describe': '删除',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': ['add', 'get', 'delete'],
+        'dataAccess': null
+      },
+      {
+        'roleId': 'admin',
+        'permissionId': 'member',
+        'permissionName': '会员管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
+        },
+        {
+          'action': 'query',
+          'describe': '查询',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': ['add', 'query', 'get'],
+        'dataAccess': null
+      },
+      {
+        'roleId': 'admin',
+        'permissionId': 'menu',
+        'permissionName': '菜单管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"import","defaultCheck":false,"describe":"导入"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
+        },
+        {
+          'action': 'import',
+          'describe': '导入',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': ['add', 'get'],
+        'dataAccess': null
+      },
+      {
+        'roleId': 'admin',
+        'permissionId': 'order',
+        'permissionName': '订单管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
+        },
+        {
+          'action': 'query',
+          'describe': '查询',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        },
+        {
+          'action': 'edit',
+          'describe': '修改',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': ['add', 'query'],
+        'dataAccess': null
+      },
+      {
+        'roleId': 'admin',
+        'permissionId': 'permission',
+        'permissionName': '权限管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        },
+        {
+          'action': 'edit',
+          'describe': '修改',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': ['add', 'get', 'edit'],
+        'dataAccess': null
+      },
+      {
+        'roleId': 'admin',
+        'permissionId': 'role',
+        'permissionName': '角色管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
+        },
+        {
+          'action': 'edit',
+          'describe': '修改',
+          'defaultCheck': false
+        },
+        {
+          'action': 'delete',
+          'describe': '删除',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': null,
+        'dataAccess': null
+      },
+      {
+        'roleId': 'admin',
+        'permissionId': 'test',
+        'permissionName': '测试权限',
+        'actions': '[]',
+        'actionEntitySet': [],
+        'actionList': ['add', 'edit'],
+        'dataAccess': null
+      },
+      {
+        'roleId': 'admin',
+        'permissionId': 'user',
+        'permissionName': '用户管理',
+        'actions': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"import","defaultCheck":false,"describe":"导入"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"},{"action":"export","defaultCheck":false,"describe":"导出"}]',
+        'actionEntitySet': [{
+          'action': 'add',
+          'describe': '新增',
+          'defaultCheck': false
+        },
+        {
+          'action': 'import',
+          'describe': '导入',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        },
+        {
+          'action': 'edit',
+          'describe': '修改',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': ['add'],
+        'dataAccess': null
+      }
+      ]
+    },
+    {
+      'id': 'user',
+      'name': '普通会员',
+      'describe': '普通用户，只能查询',
+      'status': 1,
+      'creatorId': 'system',
+      'createTime': 1497160610259,
+      'deleted': 0,
+      'permissions': [{
+        'roleId': 'user',
+        'permissionId': 'comment',
+        'permissionName': '评论管理',
+        'actions': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"}]',
+        'actionEntitySet': [{
+          'action': 'query',
+          'describe': '查询',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': ['query'],
+        'dataAccess': null
+      },
+
+      {
+        'roleId': 'user',
+        'permissionId': 'marketing',
+        'permissionName': '营销管理',
+        'actions': '[]',
+        'actionEntitySet': [],
+        'actionList': null,
+        'dataAccess': null
+      },
+      {
+        'roleId': 'user',
+        'permissionId': 'member',
+        'permissionName': '会员管理',
+        'actions': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"}]',
+        'actionEntitySet': [{
+          'action': 'query',
+          'describe': '查询',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': null,
+        'dataAccess': null
+      },
+      {
+        'roleId': 'user',
+        'permissionId': 'menu',
+        'permissionName': '菜单管理',
+        'actions': '[]',
+        'actionEntitySet': [],
+        'actionList': null,
+        'dataAccess': null
+      },
+
+      {
+        'roleId': 'user',
+        'permissionId': 'order',
+        'permissionName': '订单管理',
+        'actions': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"}]',
+        'actionEntitySet': [{
+          'action': 'query',
+          'describe': '查询',
+          'defaultCheck': false
+        },
+        {
+          'action': 'get',
+          'describe': '详情',
+          'defaultCheck': false
+        }
+        ],
+        'actionList': null,
+        'dataAccess': null
+      },
+      {
+        'roleId': 'user',
+        'permissionId': 'permission',
+        'permissionName': '权限管理',
+        'actions': '[]',
+        'actionEntitySet': [],
+        'actionList': null,
+        'dataAccess': null
+      },
+      {
+        'roleId': 'user',
+        'permissionId': 'role',
+        'permissionName': '角色管理',
+        'actions': '[]',
+        'actionEntitySet': [],
+        'actionList': null,
+        'dataAccess': null
+      },
+
+      {
+        'roleId': 'user',
+        'permissionId': 'test',
+        'permissionName': '测试权限',
+        'actions': '[]',
+        'actionEntitySet': [],
+        'actionList': null,
+        'dataAccess': null
+      },
+      {
+        'roleId': 'user',
+        'permissionId': 'user',
+        'permissionName': '用户管理',
+        'actions': '[]',
+        'actionEntitySet': [],
+        'actionList': null,
+        'dataAccess': null
+      }
+      ]
+    }
     ],
     'pageSize': 10,
     'pageNo': 0,
@@ -692,6 +687,154 @@ const permissionNoPager = () => {
       'delete'
     ]
   },
+  {
+    'id': 'member',
+    'name': '会员管理',
+    'describe': null,
+    'status': 1,
+    'actionData': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+    'sptDaTypes': null,
+    'optionalFields': '[]',
+    'parents': null,
+    'type': 'default',
+    'deleted': 0,
+    'actions': [
+      'add',
+      'query',
+      'get',
+      'edit',
+      'delete'
+    ]
+  },
+  {
+    'id': 'menu',
+    'name': '菜单管理',
+    'describe': null,
+    'status': 1,
+    'actionData': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"import","defaultCheck":false,"describe":"导入"},{"action":"get","defaultCheck":false,"describe":"查询"},{"action":"edit","defaultCheck":false,"describe":"修改"}]',
+    'sptDaTypes': null,
+    'optionalFields': '[]',
+    'parents': null,
+    'type': 'default',
+    'deleted': 0,
+    'actions': [
+      'add',
+      'import',
+      'get',
+      'edit'
+    ]
+  },
+  {
+    'id': 'order',
+    'name': '订单管理',
+    'describe': null,
+    'status': 1,
+    'actionData': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+    'sptDaTypes': null,
+    'optionalFields': '[]',
+    'parents': null,
+    'type': 'default',
+    'deleted': 0,
+    'actions': [
+      'add',
+      'query',
+      'get',
+      'edit',
+      'delete'
+    ]
+  },
+  {
+    'id': 'permission',
+    'name': '权限管理',
+    'describe': null,
+    'status': 1,
+    'actionData': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"查询"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+    'sptDaTypes': null,
+    'optionalFields': '[]',
+    'parents': null,
+    'type': 'default',
+    'deleted': 0,
+    'actions': [
+      'add',
+      'get',
+      'edit',
+      'delete'
+    ]
+  },
+  {
+    'id': 'role',
+    'name': '角色管理',
+    'describe': null,
+    'status': 1,
+    'actionData': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"查询"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+    'sptDaTypes': null,
+    'optionalFields': '[]',
+    'parents': null,
+    'type': 'default',
+    'deleted': 0,
+    'actions': [
+      'add',
+      'get',
+      'edit',
+      'delete'
+    ]
+  },
+  {
+    'id': 'test',
+    'name': '测试权限',
+    'describe': null,
+    'status': 1,
+    'actionData': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"详情"}]',
+    'sptDaTypes': null,
+    'optionalFields': '[]',
+    'parents': null,
+    'type': 'default',
+    'deleted': 0,
+    'actions': [
+      'add',
+      'get'
+    ]
+  },
+  {
+    'id': 'user',
+    'name': '用户管理',
+    'describe': null,
+    'status': 1,
+    'actionData': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"},{"action":"import","defaultCheck":false,"describe":"导入"},{"action":"export","defaultCheck":false,"describe":"导出"}]',
+    'sptDaTypes': null,
+    'optionalFields': '[]',
+    'parents': null,
+    'type': 'default',
+    'deleted': 0,
+    'actions': [
+      'add',
+      'get'
+    ]
+  }
+  ])
+}
+
+const permissions = () => {
+  return builder({
+    'data': [{
+      'id': 'marketing',
+      'name': '营销管理',
+      'describe': null,
+      'status': 1,
+      'actionData': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
+      'sptDaTypes': null,
+      'optionalFields': null,
+      'parents': null,
+      'type': null,
+      'deleted': 0,
+      'actions': [
+        'add',
+        'query',
+        'get',
+        'edit',
+        'delete'
+      ]
+    },
     {
       'id': 'member',
       'name': '会员管理',
@@ -805,7 +948,7 @@ const permissionNoPager = () => {
       'name': '用户管理',
       'describe': null,
       'status': 1,
-      'actionData': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"},{"action":"import","defaultCheck":false,"describe":"导入"},{"action":"export","defaultCheck":false,"describe":"导出"}]',
+      'actionData': '[{"action":"add","describe":"新增","defaultCheck":false},{"action":"get","describe":"查询","defaultCheck":false}]',
       'sptDaTypes': null,
       'optionalFields': '[]',
       'parents': null,
@@ -816,141 +959,6 @@ const permissionNoPager = () => {
         'get'
       ]
     }
-  ])
-}
-
-const permissions = () => {
-  return builder({
-    'data': [
-      {
-      'id': 'interface',
-      'name': '服务接口管理',
-      'describe': null,
-      'status': 1,
-      // 'actionData': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-      'actionData': '[{"action":"query","defaultCheck":false,"describe":"接口测试"},{"action":"get","defaultCheck":false,"describe":"查看"}]',
-      'sptDaTypes': null,
-      'optionalFields': null,
-      'parents': null,
-      'type': null,
-      'deleted': 0,
-      'actions': [
-        // 'add',
-        'query',
-        'get'
-        // 'edit',
-        // 'delete'
-      ]
-    },
-      {
-        'id': 'tenant',
-        'name': '租户管理',
-        'describe': null,
-        'status': 1,
-        'actionData': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-        'sptDaTypes': null,
-        'optionalFields': '[]',
-        'parents': null,
-        'type': 'default',
-        'deleted': 0,
-        'actions': [
-          'add',
-          'query',
-          'get',
-          'edit',
-          'delete'
-        ]
-      },
-      {
-        'id': 'platform',
-        'name': '平台使用',
-        'describe': null,
-        'status': 1,
-        /* 'actionData': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"import","defaultCheck":false,"describe":"导入"},{"action":"get","defaultCheck":false,"describe":"查询"},{"action":"edit","defaultCheck":false,"describe":"修改"}]', */
-        'actionData': '[{"action":"null","defaultCheck":false,"describe":"案例云"},{"action":"import","defaultCheck":false,"describe":"其他云平台"}]',
-        'sptDaTypes': null,
-        'optionalFields': '[]',
-        'parents': null,
-        'type': 'default',
-        'deleted': 0,
-        'actions': [
-          'add',
-          'import',
-          'get',
-          'edit'
-        ]
-      },
-      {
-        'id': 'permission',
-        'name': '权限管理',
-        'describe': null,
-        'status': 1,
-        'actionData': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"查询"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-        'sptDaTypes': null,
-        'optionalFields': '[]',
-        'parents': null,
-        'type': 'default',
-        'deleted': 0,
-        'actions': [
-          'add',
-          'get',
-          'edit',
-          'delete'
-        ]
-      },
-      {
-        'id': 'role',
-        'name': '角色管理',
-        'describe': null,
-        'status': 1,
-        'actionData': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"查询"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-        'sptDaTypes': null,
-        'optionalFields': '[]',
-        'parents': null,
-        'type': 'default',
-        'deleted': 0,
-        'actions': [
-          'add',
-          'get',
-          'edit',
-          'delete'
-        ]
-      },
-      {
-        'id': 'test',
-        'name': '测试权限',
-        'describe': null,
-        'status': 1,
-        'actionData': '[{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"get","defaultCheck":false,"describe":"详情"}]',
-        'sptDaTypes': null,
-        'optionalFields': '[]',
-        'parents': null,
-        'type': 'default',
-        'deleted': 0,
-        'actions': [
-          'add',
-          'get'
-        ]
-      },
-      {
-        'id': 'user',
-        'name': '用户管理',
-        'describe': null,
-        'status': 1,
-        'actionData': '[{"action":"query","defaultCheck":false,"describe":"查询"},{"action":"get","defaultCheck":false,"describe":"详情"},{"action":"add","defaultCheck":false,"describe":"新增"},{"action":"edit","defaultCheck":false,"describe":"修改"},{"action":"delete","defaultCheck":false,"describe":"删除"}]',
-        'sptDaTypes': null,
-        'optionalFields': '[]',
-        'parents': null,
-        'type': 'default',
-        'deleted': 0,
-        'actions': [
-          'add',
-          'get',
-          'query',
-          'edit',
-          'delete'
-        ]
-      }
     ],
     'pageSize': 10,
     'pageNo': 0,

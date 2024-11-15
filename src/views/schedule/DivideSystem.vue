@@ -24,7 +24,7 @@
         {{ uploading ? 'Uploading' : 'Start Upload' }}
       </a-button>
     </a-form>
-    <el-button circle @click="conn.send('勾引陈坤')">发送信息</el-button>
+    <a-button circle @click="conn.send('勾引陈坤')">发送信息</a-button>
   </div>
 </template>
 <script>
@@ -33,7 +33,7 @@ import { saveFile } from '@/api/schedule'
 
 export default {
   name: 'DivideSystem',
-  data() {
+  data () {
     return {
       fileList: [],
       uploading: false,
@@ -41,7 +41,7 @@ export default {
       conn: null
     }
   },
-  created() {
+  created () {
     if ('WebSocket' in window) {
       this.conn = new WebSocket('ws://localhost:8080/test')
       this.conn.onopen = function () {
@@ -59,21 +59,21 @@ export default {
     }
   },
   methods: {
-    handleRemove(file) {
+    handleRemove (file) {
       console.log(this.form.getFieldValue('kind'))
       const index = this.fileList.indexOf(file)
       const newFileList = this.fileList.slice()
       newFileList.splice(index, 1)
       this.fileList = newFileList
     },
-    beforeUpload(file) {
+    beforeUpload (file) {
       // 过滤掉不是class的文件
       if (!(file.name.indexOf('.class') === -1) && file.name[0] !== '.') {
         this.fileList = [...this.fileList, file]
       }
       return false
     },
-    handleUpload() {
+    handleUpload () {
       this.form.validateFields(err => {
         if (!err) {
           const { fileList } = this
@@ -87,7 +87,7 @@ export default {
         }
       })
     },
-    saveData(formData) {
+    saveData (formData) {
       saveFile(formData).then(res => {
         this.$router.push({
             path: '/schedule/micserviceChart',

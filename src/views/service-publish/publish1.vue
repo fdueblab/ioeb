@@ -7,24 +7,25 @@
       <div class="steps-content" v-show="current==0">
         <label style="margin-left: 10%;">选择服务类别: </label><a-cascader :options="options" v-model="type" placeholder="Please select" />
         <a-form-item label="服务端口" style="width: 300px;margin-left: 10%;">
-          <a-input style=""
+          <a-input
+            style=""
             v-model="port"
           />
         </a-form-item>
-           <label style="margin-left: 10%;" >选择文件：</label> <a-upload :file-list="fileList" :remove="handleRemove" :before-upload="beforeUpload">
-              <a-button>
-                <a-icon type="upload"/>
-                文件选择
-              </a-button>
-            </a-upload>
-          <a-button
-            type="primary"
-            @click="handleUpload"
-            style="margin-left: 66%;margin-top: 10px"
-          >
-            开始上传
+        <label style="margin-left: 10%;" >选择文件：</label> <a-upload :file-list="fileList" :remove="handleRemove" :before-upload="beforeUpload">
+          <a-button>
+            <a-icon type="upload"/>
+            文件选择
           </a-button>
-        <a-progress style="margin-left: 13%;margin-bottom: 20px" type="circle" :percent="percent"  v-show="isShow"/>
+        </a-upload>
+        <a-button
+          type="primary"
+          @click="handleUpload"
+          style="margin-left: 66%;margin-top: 10px"
+        >
+          开始上传
+        </a-button>
+        <a-progress style="margin-left: 13%;margin-bottom: 20px" type="circle" :percent="percent" v-show="isShow"/>
       </div>
       <div class="steps-content" v-show="current==1">
         <a-form :form="form" :label-col="{ span: 5 }" :wrapper-col="{ span: 12 }" @submit="handleSubmit">
@@ -33,16 +34,16 @@
               v-decorator="['note', { rules: [{ required: true, message: 'Please input your note!' }] }]"
             />
           </a-form-item>
-            <a-form-item label="开发者">
-              <a-input
-                v-decorator="['note', { rules: [{ required: true, message: 'Please input your note!' }] }]"
-              />
+          <a-form-item label="开发者">
+            <a-input
+              v-decorator="['note', { rules: [{ required: true, message: 'Please input your note!' }] }]"
+            />
           </a-form-item>
-            <a-form-item label="联系方式">
-              <a-input
-                v-decorator="['note', { rules: [{ required: true, message: 'Please input your note!' }] }]"
-              />
-            </a-form-item>
+          <a-form-item label="联系方式">
+            <a-input
+              v-decorator="['note', { rules: [{ required: true, message: 'Please input your note!' }] }]"
+            />
+          </a-form-item>
           <a-button @click="test">231412341234</a-button>
         </a-form>
       </div >
@@ -66,7 +67,6 @@
 </template>
 <script>
 
-
 import { createDockfile, createImage } from '@/api/docker'
 
 export default {
@@ -84,7 +84,7 @@ export default {
           children: [
             {
               value: 'device-control',
-              label: '设备控制',
+              label: '设备控制'
             },
             {
               value: 'video-service',
@@ -106,7 +106,7 @@ export default {
               value: 'video-analysis',
               label: '视频分析'
             }
-          ],
+          ]
         }
       ],
       fileList: [],
@@ -115,24 +115,24 @@ export default {
       steps: [
         {
           title: '选择服务类型并上传服务文件',
-          content: 'First-content',
+          content: 'First-content'
         },
         {
           title: '补充相关信息',
-          content: 'Second-content',
-        },
-      ],
+          content: 'Second-content'
+        }
+      ]
     }
   },
   methods: {
-    test(){
+    test() {
 
     },
     next() {
       this.current++
     },
     prev() {
-      this.current--;
+      this.current--
     },
     handleRemove(file) {
       const index = this.fileList.indexOf(file)
@@ -140,8 +140,8 @@ export default {
       newFileList.splice(index, 1)
       this.fileList = newFileList
     },
-    beforeUpload(file){
-      this.fileList=[...this.fileList,file]
+    beforeUpload(file) {
+      this.fileList = [...this.fileList, file]
       return false
     },
     handleUpload() {
@@ -156,17 +156,17 @@ export default {
     },
     saveData(formData) {
       console.log(2)
-      formData.append('type',this.type[1])
-      formData.append('port',this.port)
-      createDockfile(formData).then(res =>{
+      formData.append('type', this.type[1])
+      formData.append('port', this.port)
+      createDockfile(formData).then(res => {
         console.log(res)
-        createImage().then(res =>{
+        createImage().then(res => {
           console.log(res)
-          this.$router.push({name:'各个微服务的可视化查看'})
-        }).catch(err =>{
+          this.$router.push({ name: '各个微服务的可视化查看' })
+        }).catch(err => {
           console.log(err)
         })
-      }).catch(err =>{
+      }).catch(err => {
         console.log(3)
         console.log(err)
       })

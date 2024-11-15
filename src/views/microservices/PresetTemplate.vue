@@ -1,7 +1,7 @@
 <template>
   <div>
     <a-divider>资源类型</a-divider>
-    <a-row gutter="16" style="margin-bottom: 20px;">
+    <a-row :gutter="16" style="margin-bottom: 20px;">
       <a-col :span="8">
         <a-card hoverable @click="jumpAircraft">
           <img
@@ -46,14 +46,13 @@
           <a-card-meta title="数据隐私保护类">
             <template slot="description">
               提供全面的数据安全与隐私保护服务，确保数据的安全与合规性。
-              
             </template>
           </a-card-meta>
         </a-card>
       </a-col>
     </a-row>
 
-    <a-row gutter="16">
+    <a-row :gutter="16">
       <a-col :span="8">
         <a-card hoverable @click="jumpOpsManagement">
           <img
@@ -110,23 +109,23 @@
 export default {
   name: 'List',
   methods: {
-    jumpAircraft() {
-      this.$router.push({ name: '服务类别详情-前沿装备类' })
+    jumpAircraft () {
+      this.$router.push({ name: 'ServiceCategory' })
     },
-    jumpAntiMoney() {
-      this.$router.push({ name: '服务类别详情-反洗钱合规类' })
+    jumpAntiMoney () {
+      this.$router.push({ name: 'ServiceCategory1' })
     },
-    jumpDataPrivacy() {
-      this.$router.push({ name: '服务类别详情-数据隐私保护类' })
+    jumpDataPrivacy () {
+      this.$router.push({ name: 'ServiceCategory2' })
     },
-    jumpOpsManagement() {
-      this.$router.push({ name: '服务类别详情-智能运维管理类' })
+    jumpOpsManagement () {
+      this.$router.push({ name: 'ServiceCategory3' })
     },
-    jumpDataAnalytics() {
-      this.$router.push({ name: '服务类别详情-数据分析与决策类' })
+    jumpDataAnalytics () {
+      this.$router.push({ name: 'ServiceCategory4' })
     },
-    jumpCyberSecurity() {
-      this.$router.push({ name: '服务类别详情-网络安全防护类' })
+    jumpCyberSecurity () {
+      this.$router.push({ name: 'ServiceCategory5' })
     }
   }
 }

@@ -1,45 +1,39 @@
 <template>
-  <a-card :bordered="false" style="margin: -24px -24px 0px;">
-    <result type="error" :title="title" :description="description">
-      <template slot="action">
-        <a-button type="primary" >返回修改</a-button>
+  <a-card :bordered="false">
+    <a-result status="error" :title="result.title" :sub-title="result.description">
+      <template #extra>
+        <a-button type="primary" >{{ $t('result.fail.error.btn-text') }}</a-button>
       </template>
-      <div>
+      <div class="desc">
         <div style="font-size: 16px; color: rgba(0, 0, 0, 0.85); font-weight: 500; margin-bottom: 16px">
-          您提交的内容有如下错误：
+          {{ $t('result.fail.error.hint-title') }}
         </div>
         <div style="margin-bottom: 16px">
           <a-icon type="close-circle-o" style="color: #f5222d; margin-right: 8px"/>
-          您的账户已被冻结
-          <a style="margin-left: 16px">立即解冻 <a-icon type="right" /></a>
+          {{ $t('result.fail.error.hint-text1') }}
+          <a style="margin-left: 16px">{{ $t('result.fail.error.hint-btn1') }} <a-icon type="right" /></a>
         </div>
         <div>
           <a-icon type="close-circle-o" style="color: #f5222d; margin-right: 8px"/>
-          您的账户还不具备申请资格
-          <a style="margin-left: 16px">立即升级 <a-icon type="right" /></a>
+          {{ $t('result.fail.error.hint-text2') }}
+          <a style="margin-left: 16px">{{ $t('result.fail.error.hint-btn2') }} <a-icon type="right" /></a>
         </div>
       </div>
-    </result>
+    </a-result>
   </a-card>
 </template>
 
 <script>
-import { Result } from '@/components'
 
 export default {
   name: 'Error',
-  components: {
-    Result
-  },
-  data () {
-    return {
-      title: '提交失败',
-      description: '请核对并修改以下信息后，再重新提交。'
+  computed: {
+    result () {
+      return {
+      title: this.$t('result.fail.error.title'),
+      description: this.$t('result.fail.error.description')
+      }
     }
   }
 }
 </script>
-
-<style scoped>
-
-</style>

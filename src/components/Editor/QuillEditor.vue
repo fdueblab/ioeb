@@ -72,10 +72,11 @@ export default {
 
 /* 覆盖 quill 默认边框圆角为 ant 默认圆角，用于统一 ant 组件风格 */
 .ant-editor-quill {
-  /deep/ .ql-toolbar.ql-snow {
+  line-height: initial;
+  :deep(.ql-toolbar.ql-snow) {
     border-radius: @border-radius-base @border-radius-base 0 0;
   }
-  /deep/ .ql-container.ql-snow {
+  :deep(.ql-container.ql-snow) {
     border-radius: 0 0 @border-radius-base @border-radius-base;
   }
 }

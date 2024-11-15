@@ -19,10 +19,10 @@
       @ok="() => (modalVisible = false)">
       <a-spin tip="Loading..." :spinning="spinning">
         <div class="spin-content">
-          {{text}}
+          {{ text }}
         </div>
       </a-spin>
-      <div v-for="item in urls" v-show="isShow">
+      <div v-for="(item, index) in urls" v-show="isShow" :key="index">
         {{ item }}
       </div>
     </a-modal>
@@ -33,7 +33,7 @@ import { serviceDetection } from '@/api/service'
 
 export default {
   name: 'ServiceDetection',
-  data() {
+  data () {
     return {
       headers: {
         authorization: 'authorization-text'
@@ -46,7 +46,7 @@ export default {
     }
   },
   methods: {
-    handleChange(info) {
+    handleChange (info) {
       if (info.file.status !== 'uploading') {
         console.log(info.file, info.fileList)
       }
@@ -56,7 +56,7 @@ export default {
         this.$message.error(`${info.file.name} file upload failed.`)
       }
     },
-    customRequest() {
+    customRequest () {
       this.modalVisible = true
       this.spinning = false
       setTimeout(() => {

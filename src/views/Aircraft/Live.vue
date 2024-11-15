@@ -14,8 +14,8 @@
           <a-tabs default-active-key="1">
             <a-tab-pane key="1" tab="直播">
               <a-divider>直播控制</a-divider>
-              <el-button type="success" @click='sendCommand("startLiveShow")'>开始直播</el-button>
-              <el-button type="danger" @click='sendCommand("stopLiveShow")'>停止直播</el-button>
+              <el-button type="success" @click="sendCommand(&quot;startLiveShow&quot;)">开始直播</el-button>
+              <el-button type="danger" @click="sendCommand(&quot;stopLiveShow&quot;)">停止直播</el-button>
               <a-divider>Live Info</a-divider>
               <el-button type="primary">直播状态</el-button>
               <el-button type="primary">声音--开</el-button>
@@ -44,25 +44,25 @@
                 </a-col>
               </a-row>
               <a-divider>操作指令</a-divider>
-              <el-button type="success" @click='sendCommand("startStickControl")'>启动摇杆</el-button>
-              <el-button type="danger" @click='sendCommand("stopStickControl")'>禁用摇杆</el-button>
+              <el-button type="success" @click="sendCommand(&quot;startStickControl&quot;)">启动摇杆</el-button>
+              <el-button type="danger" @click="sendCommand(&quot;stopStickControl&quot;)">禁用摇杆</el-button>
               <br/><br/>
-              <el-button type="primary" @click='sendCommand("1")'>起飞</el-button>
-              <el-button type="primary" @click='sendCommand("2")'>降落</el-button>
-              <el-button type="primary" @click='sendCommand("3")'>自动降落</el-button>
+              <el-button type="primary" @click="sendCommand(&quot;1&quot;)">起飞</el-button>
+              <el-button type="primary" @click="sendCommand(&quot;2&quot;)">降落</el-button>
+              <el-button type="primary" @click="sendCommand(&quot;3&quot;)">自动降落</el-button>
               <a-divider>操作面板</a-divider>
-              <el-button circle style="margin-left: 5%" @click='sendCommand("w")'>W</el-button>
+              <el-button circle style="margin-left: 5%" @click="sendCommand(&quot;w&quot;)">W</el-button>
               &nbsp
-              <el-button circle @click='sendCommand("0")'>重置</el-button>
-              <el-button icon="el-icon-top" circle style="margin-left: 18%" @click='sendCommand("up")'></el-button>
+              <el-button circle @click="sendCommand(&quot;0&quot;)">重置</el-button>
+              <el-button icon="el-icon-top" circle style="margin-left: 18%" @click="sendCommand(&quot;up&quot;)"></el-button>
               <br/><br/>
-              <el-button circle @click='sendCommand("a")' >A</el-button>
-              <el-button circle @click='sendCommand("s")'>S</el-button>
-              <el-button circle @click='sendCommand("d")'>D</el-button>
+              <el-button circle @click="sendCommand(&quot;a&quot;)" >A</el-button>
+              <el-button circle @click="sendCommand(&quot;s&quot;)">S</el-button>
+              <el-button circle @click="sendCommand(&quot;d&quot;)">D</el-button>
               &nbsp
-              <el-button icon="el-icon-back" circle style="margin-left: 7%" @click='sendCommand("left")'></el-button>
-              <el-button icon="el-icon-bottom" circle @click='sendCommand("down")'></el-button>
-              <el-button icon="el-icon-right" circle @click='sendCommand("right")'></el-button>
+              <el-button icon="el-icon-back" circle style="margin-left: 7%" @click="sendCommand(&quot;left&quot;)"></el-button>
+              <el-button icon="el-icon-bottom" circle @click="sendCommand(&quot;down&quot;)"></el-button>
+              <el-button icon="el-icon-right" circle @click="sendCommand(&quot;right&quot;)"></el-button>
             </a-tab-pane>
             <a-tab-pane key="3" tab="飞行参数">
               <a-descriptions title="飞行信息" layout="vertical">
@@ -122,111 +122,111 @@
           </a-card-meta>
         </a-card>
       </a-tab-pane>
-<!--      <a-tab-pane key="2" tab="模拟飞行训练" force-render>-->
-<!--        <el-image :src="require('@/assets/simulator.png')" v-show="simulatorStatus"></el-image>-->
-<!--        <div id="simulatorControl">-->
-<!--          <a-tabs default-active-key="1" >-->
-<!--            <a-tab-pane key="1" tab="参数设置">-->
-<!--              <a-divider>经纬度设置</a-divider>-->
-<!--              纬度：<input></input> 度<Br/>-->
-<!--              经度：<input></input> 度<Br/><Br/>-->
-<!--              <a-button type="primary" @click="simulatorStatus=true">开始仿真</a-button>-->
-<!--              &nbsp-->
-<!--              <a-button type="danger" @click="simulatorStatus=false">停止仿真</a-button>-->
-<!--              <a-divider>风速设置</a-divider>-->
-<!--              正北方向分量: <input placeholder="0"></input> m/s<Br/>-->
-<!--              正东方向分量: <input placeholder="0"></input> m/s<Br/>-->
-<!--              垂直方向分量: <input placeholder="0"></input> m/s<Br/>-->
-<!--              配置模式:-->
-<!--              <a-select default-value="1" style="width: 120px">-->
-<!--                <a-select-option value="1">-->
-<!--                  实时风速-->
-<!--                </a-select-option>-->
-<!--                <a-select-option value="2">-->
-<!--                  初始化风速-->
-<!--                </a-select-option>-->
-<!--              </a-select>-->
-<!--              <Br/>-->
-<!--              <a-button type="primary">设置</a-button>-->
-<!--            </a-tab-pane>-->
-<!--            <a-tab-pane key="2" tab="飞行控制" force-render>-->
-<!--              <a-divider>操作指令</a-divider>-->
-<!--              <el-button type="success">开始模拟</el-button>-->
-<!--              <el-button type="danger">停止模拟</el-button>-->
-<!--              <br/><br/>-->
-<!--              <el-button type="success">启用摇杆</el-button>-->
-<!--              <el-button type="danger">禁用摇杆</el-button>-->
-<!--              <a-divider>虚拟飞行控制</a-divider>-->
-<!--              <el-button circle style="margin-left: 10%">W</el-button>-->
-<!--              &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp-->
-<!--              <el-button icon="el-icon-top" circle style="margin-left: 33%"></el-button>-->
-<!--              <br/><br/>-->
-<!--              <el-button circle>A</el-button>-->
-<!--              <el-button circle>S</el-button>-->
-<!--              <el-button circle>D</el-button>-->
-<!--              &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp-->
-<!--              <el-button icon="el-icon-back" circle style="margin-left: 7%"></el-button>-->
-<!--              <el-button icon="el-icon-bottom" circle></el-button>-->
-<!--              <el-button icon="el-icon-right" circle></el-button>-->
-<!--            </a-tab-pane>-->
-<!--            <a-tab-pane key="3" tab="详情">-->
-<!--              <a-descriptions title="飞行信息" layout="vertical">-->
-<!--                <a-descriptions-item label="经度">-->
-<!--                  {{ Latitude }}-->
-<!--                </a-descriptions-item>-->
-<!--                <a-descriptions-item label="纬度">-->
-<!--                  {{ Longitude }}-->
-<!--                </a-descriptions-item>-->
-<!--                <a-descriptions-item label="时间">-->
-<!--                  {{ time }}-->
-<!--                </a-descriptions-item>-->
-<!--                <a-descriptions-item label="地面坐标X">-->
-<!--                  {{ WorldX }}-->
-<!--                </a-descriptions-item>-->
-<!--                <a-descriptions-item label="地面坐标Y">-->
-<!--                  {{ WorldY }}-->
-<!--                </a-descriptions-item>-->
-<!--                <a-descriptions-item label="地面坐标Z">-->
-<!--                  {{ WorldZ }}-->
-<!--                </a-descriptions-item>-->
-<!--                <a-descriptions-item label="机身坐标X">-->
-<!--                  {{ VelocityX }}-->
-<!--                </a-descriptions-item>-->
-<!--                <a-descriptions-item label="机身坐标Y">-->
-<!--                  {{ VelocityY }}-->
-<!--                </a-descriptions-item>-->
-<!--                <a-descriptions-item label="机身坐标Z">-->
-<!--                  {{ VelocityZ }}-->
-<!--                </a-descriptions-item>-->
-<!--                <a-descriptions-item label="飞行状态" :span="3">-->
-<!--                  <a-badge status="processing" text="Running"/>-->
-<!--                </a-descriptions-item>-->
-<!--                <a-descriptions-item label="配置信息">-->
-<!--                  X轴: 0.0000-->
-<!--                  <br/>-->
-<!--                  Y轴: 0.0000-->
-<!--                  <br/>-->
-<!--                  Z轴: 0.0000-->
-<!--                  <br/>-->
-<!--                  横轴接收: 0.0000-->
-<!--                  <br/>-->
-<!--                  Y轴接收: 0.0000-->
-<!--                  <br/>-->
-<!--                  Z轴接收: 0.0000<br/>-->
-<!--                </a-descriptions-item>-->
-<!--              </a-descriptions>-->
-<!--            </a-tab-pane>-->
-<!--          </a-tabs>-->
-<!--        </div>-->
-<!--      </a-tab-pane>-->
-<!--      <a-tab-pane key="3" tab="飞行评价分析">-->
-<!--        <a-card :span="12" v-for="item in items" :key="item.title">-->
-<!--          <a-card-meta :title="item.title" :description="item.description">-->
-<!--            &lt;!&ndash;          <a-avatar slot="avatar" :src="imgSrc"/>&ndash;&gt;-->
-<!--            <a-avatar slot="avatar" :src="item.imgSrc"></a-avatar>-->
-<!--          </a-card-meta>-->
-<!--        </a-card>-->
-<!--      </a-tab-pane>-->
+      <!--      <a-tab-pane key="2" tab="模拟飞行训练" force-render>-->
+      <!--        <el-image :src="require('@/assets/simulator.png')" v-show="simulatorStatus"></el-image>-->
+      <!--        <div id="simulatorControl">-->
+      <!--          <a-tabs default-active-key="1" >-->
+      <!--            <a-tab-pane key="1" tab="参数设置">-->
+      <!--              <a-divider>经纬度设置</a-divider>-->
+      <!--              纬度：<input></input> 度<Br/>-->
+      <!--              经度：<input></input> 度<Br/><Br/>-->
+      <!--              <a-button type="primary" @click="simulatorStatus=true">开始仿真</a-button>-->
+      <!--              &nbsp-->
+      <!--              <a-button type="danger" @click="simulatorStatus=false">停止仿真</a-button>-->
+      <!--              <a-divider>风速设置</a-divider>-->
+      <!--              正北方向分量: <input placeholder="0"></input> m/s<Br/>-->
+      <!--              正东方向分量: <input placeholder="0"></input> m/s<Br/>-->
+      <!--              垂直方向分量: <input placeholder="0"></input> m/s<Br/>-->
+      <!--              配置模式:-->
+      <!--              <a-select default-value="1" style="width: 120px">-->
+      <!--                <a-select-option value="1">-->
+      <!--                  实时风速-->
+      <!--                </a-select-option>-->
+      <!--                <a-select-option value="2">-->
+      <!--                  初始化风速-->
+      <!--                </a-select-option>-->
+      <!--              </a-select>-->
+      <!--              <Br/>-->
+      <!--              <a-button type="primary">设置</a-button>-->
+      <!--            </a-tab-pane>-->
+      <!--            <a-tab-pane key="2" tab="飞行控制" force-render>-->
+      <!--              <a-divider>操作指令</a-divider>-->
+      <!--              <el-button type="success">开始模拟</el-button>-->
+      <!--              <el-button type="danger">停止模拟</el-button>-->
+      <!--              <br/><br/>-->
+      <!--              <el-button type="success">启用摇杆</el-button>-->
+      <!--              <el-button type="danger">禁用摇杆</el-button>-->
+      <!--              <a-divider>虚拟飞行控制</a-divider>-->
+      <!--              <el-button circle style="margin-left: 10%">W</el-button>-->
+      <!--              &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp-->
+      <!--              <el-button icon="el-icon-top" circle style="margin-left: 33%"></el-button>-->
+      <!--              <br/><br/>-->
+      <!--              <el-button circle>A</el-button>-->
+      <!--              <el-button circle>S</el-button>-->
+      <!--              <el-button circle>D</el-button>-->
+      <!--              &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp-->
+      <!--              <el-button icon="el-icon-back" circle style="margin-left: 7%"></el-button>-->
+      <!--              <el-button icon="el-icon-bottom" circle></el-button>-->
+      <!--              <el-button icon="el-icon-right" circle></el-button>-->
+      <!--            </a-tab-pane>-->
+      <!--            <a-tab-pane key="3" tab="详情">-->
+      <!--              <a-descriptions title="飞行信息" layout="vertical">-->
+      <!--                <a-descriptions-item label="经度">-->
+      <!--                  {{ Latitude }}-->
+      <!--                </a-descriptions-item>-->
+      <!--                <a-descriptions-item label="纬度">-->
+      <!--                  {{ Longitude }}-->
+      <!--                </a-descriptions-item>-->
+      <!--                <a-descriptions-item label="时间">-->
+      <!--                  {{ time }}-->
+      <!--                </a-descriptions-item>-->
+      <!--                <a-descriptions-item label="地面坐标X">-->
+      <!--                  {{ WorldX }}-->
+      <!--                </a-descriptions-item>-->
+      <!--                <a-descriptions-item label="地面坐标Y">-->
+      <!--                  {{ WorldY }}-->
+      <!--                </a-descriptions-item>-->
+      <!--                <a-descriptions-item label="地面坐标Z">-->
+      <!--                  {{ WorldZ }}-->
+      <!--                </a-descriptions-item>-->
+      <!--                <a-descriptions-item label="机身坐标X">-->
+      <!--                  {{ VelocityX }}-->
+      <!--                </a-descriptions-item>-->
+      <!--                <a-descriptions-item label="机身坐标Y">-->
+      <!--                  {{ VelocityY }}-->
+      <!--                </a-descriptions-item>-->
+      <!--                <a-descriptions-item label="机身坐标Z">-->
+      <!--                  {{ VelocityZ }}-->
+      <!--                </a-descriptions-item>-->
+      <!--                <a-descriptions-item label="飞行状态" :span="3">-->
+      <!--                  <a-badge status="processing" text="Running"/>-->
+      <!--                </a-descriptions-item>-->
+      <!--                <a-descriptions-item label="配置信息">-->
+      <!--                  X轴: 0.0000-->
+      <!--                  <br/>-->
+      <!--                  Y轴: 0.0000-->
+      <!--                  <br/>-->
+      <!--                  Z轴: 0.0000-->
+      <!--                  <br/>-->
+      <!--                  横轴接收: 0.0000-->
+      <!--                  <br/>-->
+      <!--                  Y轴接收: 0.0000-->
+      <!--                  <br/>-->
+      <!--                  Z轴接收: 0.0000<br/>-->
+      <!--                </a-descriptions-item>-->
+      <!--              </a-descriptions>-->
+      <!--            </a-tab-pane>-->
+      <!--          </a-tabs>-->
+      <!--        </div>-->
+      <!--      </a-tab-pane>-->
+      <!--      <a-tab-pane key="3" tab="飞行评价分析">-->
+      <!--        <a-card :span="12" v-for="item in items" :key="item.title">-->
+      <!--          <a-card-meta :title="item.title" :description="item.description">-->
+      <!--            &lt;!&ndash;          <a-avatar slot="avatar" :src="imgSrc"/>&ndash;&gt;-->
+      <!--            <a-avatar slot="avatar" :src="item.imgSrc"></a-avatar>-->
+      <!--          </a-card-meta>-->
+      <!--        </a-card>-->
+      <!--      </a-tab-pane>-->
     </a-tabs>
   </div>
 </template>
@@ -300,8 +300,9 @@ export default {
     },
     reInit() {
       if (window['WebSocket']) {
-        var localAddr = 'ws://localhost:7676/conn?targetDeviceId=1&type=browser'
-        var remoteAddr = 'ws://123.60.55.75:7010/test'
+        // eslint-disable-next-line no-unused-vars
+        const localAddr = 'ws://localhost:7676/conn?targetDeviceId=1&type=browser'
+        const remoteAddr = 'ws://123.60.55.75:7010/test'
         this.conn = new WebSocket(remoteAddr)
         this.conn.onclose = function (evt) {
           const s = '服务器主动断开连接'

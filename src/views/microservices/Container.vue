@@ -41,40 +41,32 @@
         </a-form>
       </div>
       <!-- 使用s-table完成数据展示-->
-      <s-table
+      <a-table
         :columns="columns"
-        :data="loadData"
         ref="table"
         rowKey="key"
+        :data-source="dataSource"
         :alert="{ show: true, clear: true }"
         :rowSelection="{ selectedRowKeys: this.selectedRowKeys, onChange: this.onSelectChange }"
         showPagination="auto">
-
         <!-- slot 作为过滤器-->
         <span slot="Names" slot-scope="text" style="font-size:18px;font-weight: bold">
           {{ text|nameFilter }}
         </span>
-
         <div slot="Action" slot-scope="text" style="width:60px">
           <a-button @click="handleLog(text)" icon="copy" size="small"></a-button>
           <a-button @click="handleDetail(text)" icon="info-circle" size="small"></a-button>
-
         </div>
-
         <div slot="Status" slot-scope="text">
           <a-tag color="#87d068" v-if="statusFilter(text)===0">Running</a-tag>
           <a-tag color="#f50" v-else-if="statusFilter(text) === 1">Stopped</a-tag>
           <a-tag color="#f0ad4e" v-else>Paused</a-tag>
         </div>
-
         <div slot="Image" slot-scope="text" style="width:200px">
           {{ text }}
         </div>
-      </s-table>
+      </a-table>
     </a-card>
-    <p> selectedRowKeys:
-    {{ this.selectedRowKeys }}
-    </p>
   </div>
 </template>
 
@@ -88,7 +80,7 @@ export default {
   components: {
     STable
   },
-  data() {
+  data () {
     return {
       startButtonDisabled: false,
       resumeButtonDisabled: false,
@@ -98,16 +90,7 @@ export default {
       queryParam: {},
       test1: 'hello',
       kind: 'petclinic',
-
-      loadData: parameter => {
-        return this.$http.get('http://localhost:10031/api/docker/container/list', {
-        // return this.$http.get('http://49.235.115.169:10031/api/docker/container/list', {
-          params: Object.assign(parameter, this.queryParam)
-        }).then(res => {
-          console.log(res)
-          return res.result
-        })
-      },
+      dataSource: [],
       selectedRowKeys: [],
       selectedRows: [],
       columns: [
@@ -181,7 +164,7 @@ export default {
     }
   },
   filters: {
-    timeFilter(time) {
+    timeFilter (time) {
       const statusMap = {
         1: '正常',
         2: '禁用'
@@ -192,18 +175,18 @@ export default {
         return statusMap[1]
       }
     },
-    nameFilter(name) {
+    nameFilter (name) {
       console.log(name)
       return name[0].substring(1)
     }
   },
   methods: {
-    testRefresh() {
+    testRefresh () {
       this.selectedRows.splice(0)
       this.selectedRowKeys.splice(0)
     },
     // 容器日志页
-    handleLog(record) {
+    handleLog (record) {
       this.$router.push({
         path: '/microservices/container/logs',
         query: {
@@ -212,7 +195,7 @@ export default {
       })
     },
     // 容器json格式化页=docker inspect
-    handleDetail(record) {
+    handleDetail (record) {
       this.$router.push({
         path: '/microservices/container/json',
         query: {
@@ -221,7 +204,7 @@ export default {
         }
       })
     },
-    onSelectChange(selectedRowKeys, selectedRows) {
+    onSelectChange (selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
 
@@ -242,7 +225,7 @@ export default {
       }
     },
     // status filter
-    statusFilter(text) {
+    statusFilter (text) {
       if (text.indexOf('Up') !== -1) {
         return 0
       } else if (text.indexOf('Paused') !== -1) {
@@ -251,7 +234,7 @@ export default {
         return 1
       }
     },
-    getIds() {
+    getIds () {
       const g = []
       for (const row in this.selectedRows) {
         if (this.selectedRows[row].Status.indexOf('Up') === -1) {
@@ -260,14 +243,13 @@ export default {
       }
       return g
     },
-    gotonewcon(){
+    gotonewcon () {
       this.$router.push({
-        path: '/microservices/newcontainer',
-
+        path: '/microservices/newcontainer'
       })
     },
     // 启动容器，如果有容器已经是启动状态，不启动
-    launchContainers() {
+    launchContainers () {
       const k = {}
       k.ids = []
       // console.log(this.selectedRows)
@@ -291,7 +273,7 @@ export default {
         }
       })
     },
-    deleteContainers() {
+    deleteContainers () {
       const k = {}
       k.ids = []
       for (const row in this.selectedRows) {
@@ -308,7 +290,7 @@ export default {
         }
       })
     },
-    stopContainers() {
+    stopContainers () {
       const k = {}
       k.ids = []
       // console.log(this.selectedRows)
@@ -332,7 +314,7 @@ export default {
         }
       })
     },
-    restartContainers() {
+    restartContainers () {
       const k = {}
       k.ids = []
       // console.log(this.selectedRows)

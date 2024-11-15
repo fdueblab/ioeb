@@ -6,11 +6,11 @@
       </a-steps>
       <div class="steps-content" v-show="current == 0">
         <label style="margin-left: 10%;">选择服务类别: </label>
-        <a-cascader 
-          :options="options" 
-          v-model="type" 
-          placeholder="请选择" 
-          style="margin-left: 10%;"  
+        <a-cascader
+          :options="options"
+          v-model="type"
+          placeholder="请选择"
+          style="margin-left: 10%;"
         />
         <a-form-item label="服务端口" style="width: 300px; margin-left: 10%;">
           <a-input v-model="port" />
@@ -63,16 +63,18 @@
 </template>
 
 <script>
-import { createDockfile, createImage } from '@/api/docker';
-import { serviceDetection } from '@/api/service';
-import { Cascader } from 'ant-design-vue';
+// eslint-disable-next-line no-unused-vars
+import { createDockfile, createImage } from '@/api/docker'
+// eslint-disable-next-line no-unused-vars
+import { serviceDetection } from '@/api/service'
+import { Cascader } from 'ant-design-vue'
 
 export default {
   name: 'DivideSystem',
   components: {
     'a-cascader': Cascader
   },
-  data() {
+  data () {
     return {
       percent: 0,
       isShow: false,
@@ -90,54 +92,54 @@ export default {
             { value: 'device-operate', label: '设备操作' },
             { value: 'operate-analysis', label: '操作分析' },
             { value: 'video-analysis', label: '视频分析' }
-          ],
+          ]
         }
       ],
       fileList: [],
       current: 0,
       steps: [
         { title: '选择服务类型并上传服务文件' },
-        { title: '补充相关信息' },
-      ],
+        { title: '补充相关信息' }
+      ]
     }
   },
   methods: {
-    test() {
+    test () {
       // 测试逻辑
     },
-    next() {
-      this.current++;
+    next () {
+      this.current++
     },
-    prev() {
-      this.current--;
+    prev () {
+      this.current--
     },
-    handleRemove(file) {
-      const index = this.fileList.indexOf(file);
-      const newFileList = this.fileList.slice();
-      newFileList.splice(index, 1);
-      this.fileList = newFileList;
+    handleRemove (file) {
+      const index = this.fileList.indexOf(file)
+      const newFileList = this.fileList.slice()
+      newFileList.splice(index, 1)
+      this.fileList = newFileList
     },
-    beforeUpload(file) {
-      this.fileList = [...this.fileList, file];
-      return false; // 阻止自动上传
+    beforeUpload (file) {
+      this.fileList = [...this.fileList, file]
+      return false // 阻止自动上传
     },
-    handleUpload() {
-      const { fileList } = this;
-      const formData = new FormData();
+    handleUpload () {
+      const { fileList } = this
+      const formData = new FormData()
       fileList.forEach(file => {
-        formData.append('file', file);
-      });
-      this.saveData(formData);
+        formData.append('file', file)
+      })
+      this.saveData(formData)
     },
-    saveData(formData) {
-      formData.append('type', this.type[1]);
-      formData.append('port', this.port);
+    saveData (formData) {
+      formData.append('type', this.type[1])
+      formData.append('port', this.port)
       // 等待15秒
-      this.isUploading = true; 
+      this.isUploading = true
       setTimeout(() => {
-        this.isUploading = false;
-        this.$message.success('上传成功');
-      }, 10000); // 模拟2秒的上传时间
+        this.isUploading = false
+        this.$message.success('上传成功')
+      }, 10000) // 模拟2秒的上传时间
 
       // createDockfile(formData).then(res => {
       //   console.log(res);

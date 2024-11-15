@@ -4,9 +4,7 @@
       <a-col :span="8">
         <a-card title="设备端微服务" :bordered="true">
           <p style="font-size: 15px;font-weight: bolder">设备状态</p>
-          <a-button type="primary" block @click="()=>(modalVisible1=true)">
-            <p>无人机状态采集微服务</p>
-          </a-button>
+          <a-button type="primary" block @click="()=>(modalVisible1=true)">无人机状态采集微服务</a-button>
           <a-modal
             title="无人机飞行信息"
             :visible="modalVisible1"
@@ -80,20 +78,14 @@
             &nbsp
             <a-button type="primary">落地</a-button>
             <a-divider/>
-            <el-button
-              :disabled=upflag
-              icon="el-icon-top"
-              circle
-            ></el-button>
-            <el-button icon="el-icon-back" circle></el-button>
-            <el-button icon="el-icon-right" circle></el-button>
-            <el-button icon="el-icon-bottom" circle></el-button>
+            <a-button icon="arrow-up" shape="circle"></a-button>&nbsp
+            <a-button icon="arrow-left" shape="circle"></a-button>&nbsp
+            <a-button icon="arrow-right" shape="circle"></a-button>&nbsp
+            <a-button icon="arrow-down" shape="circle"></a-button>
           </a-modal>
           <a-divider/>
           <p style="font-size: 15px;font-weight: bolder">现场视频</p>
-          <a-button type="primary" block @click="modalVisible3=true">
-            <p>无人机视频采集微服务</p>
-          </a-button>
+          <a-button type="primary" block @click="modalVisible3=true">无人机视频采集微服务</a-button>
           <br/><br/>
           <a-modal
             title="视频采集"
@@ -108,7 +100,7 @@
             <a-button type="primary" @click="$alert('Disconnect Success')">断开直播源</a-button>
           </a-modal>
           <a-button type="primary" block @click="modalVisible4=true">
-            <p>无人机视频通信微服务</p>
+            无人机视频通信微服务
           </a-button>
           <br/><br/>
           <a-modal
@@ -133,41 +125,41 @@
             <a-button type="primary"></a-button>
           </a-modal>
           <a-button type="primary" block>
-            <p>无人机视频分析微服务</p>
+            无人机视频分析微服务
           </a-button>
         </a-card>
       </a-col>
       <a-col :span="8">
         <a-card title="体验端微服务" :bordered="false">
           <a-button type="primary" block>
-            <p>视频分析评价微服务</p>
+            视频分析评价微服务
           </a-button>
           <br/><br/>
           <a-button type="primary" block>
-            <p>操作分析评价微服务</p>
+            操作分析评价微服务
           </a-button>
           <br/>
           <br/>
           <a-button type="primary" block>
-            <p>设备操作管理微服务</p>
+            设备操作管理微服务
           </a-button>
           <br/>
           <br/>
           <a-button type="primary" block>
-            <p>设备操纵模拟微服务</p>
+            设备操纵模拟微服务
           </a-button>
         </a-card>
       </a-col>
       <a-col :span="8">
         <a-card title="其他管理运维中介微服务" :bordered="false">
           <a-button type="primary" block @click="modalVisible5=true">
-            <p>双向通信微服务</p>
+            双向通信微服务
           </a-button><br/><br/>
           <a-button type="primary" block @click="modalVisible5=true">
-            <p>服务管理</p>
+            服务管理
           </a-button><br/><br/>
           <a-button type="primary" block @click="modalVisible5=true">
-            <p>服务间数据传递</p>
+            服务间数据传递
           </a-button><br/><br/>
           <a-modal
             title="模拟器设置"
@@ -211,7 +203,7 @@ export default {
   components: {
     EasyPlayer
   },
-  data() {
+  data () {
     return {
       modalVisible1: false,
       modalVisible2: false,
@@ -221,6 +213,7 @@ export default {
       videoUrlFLV: '',
       fluent: true,
       autoplay: true,
+      upflag: true,
       WorldX: 0.0000,
       WorldY: 0.0000,
       WorldZ: 0.0000,
@@ -232,7 +225,9 @@ export default {
       time: 45646
     }
   },
-  methods: {}
+  methods: {
+    handleChange () {}
+  }
 }
 </script>
 

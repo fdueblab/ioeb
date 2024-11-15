@@ -11,7 +11,7 @@ export default api
  *
  * @param parameter
  */
-export function scaleService(parameter) {
+export function scaleService (parameter) {
   return axios({
     url: api.scaleService,
     method: 'post',
@@ -19,7 +19,7 @@ export function scaleService(parameter) {
   })
 }
 
-export function deployStack(parameter) {
+export function deployStack (parameter) {
   return axios({
     url: api.deployStack,
     method: 'post',

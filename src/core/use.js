@@ -1,6 +1,4 @@
 import Vue from 'vue'
-import VueStorage from 'vue-ls'
-import config from '@/config/defaultSettings'
 
 // base library
 import Antd from 'ant-design-vue'
@@ -12,7 +10,7 @@ import 'ant-design-vue/dist/antd.less'
 import VueClipboard from 'vue-clipboard2'
 import MultiTab from '@/components/MultiTab'
 import PageLoading from '@/components/PageLoading'
-import PermissionHelper from '@/utils/helper/permission'
+import PermissionHelper from '@/core/permission/permission'
 // import '@/components/use'
 import './directives/action'
 
@@ -22,7 +20,6 @@ Vue.use(Antd)
 Vue.use(Viser)
 Vue.use(MultiTab)
 Vue.use(PageLoading)
-Vue.use(VueStorage, config.storageOptions)
 Vue.use(VueClipboard)
 Vue.use(PermissionHelper)
 Vue.use(VueCropper)

@@ -12,7 +12,7 @@
           <div class="cardItemContent">
             <span>{{ item.updatedAt | fromNow }}</span>
             <div class="avatarList">
-              <avatar-list size="mini">
+              <avatar-list size="small">
                 <avatar-list-item
                   v-for="(member, i) in item.members"
                   :key="`${item.id}-avatar-${i}`"
@@ -32,7 +32,7 @@
 import moment from 'moment'
 import { TagSelect, StandardFormRow, Ellipsis, AvatarList } from '@/components'
 const TagSelectOption = TagSelect.Option
-const AvatarListItem = AvatarList.AvatarItem
+const AvatarListItem = AvatarList.Item
 
 export default {
   name: 'Project',
@@ -78,11 +78,11 @@ export default {
   .ant-pro-pages-account-projects-cardList {
     margin-top: 24px;
 
-    /deep/ .ant-card-meta-title {
+    :deep(.ant-card-meta-title) {
       margin-bottom: 4px;
     }
 
-    /deep/ .ant-card-meta-description {
+    :deep(.ant-card-meta-description) {
       height: 44px;
       overflow: hidden;
       line-height: 22px;
@@ -101,7 +101,7 @@ export default {
         font-size: 12px;
       }
 
-      /deep/ .ant-pro-avatar-list {
+      :deep(.ant-pro-avatar-list) {
         flex: 0 1 auto;
       }
     }

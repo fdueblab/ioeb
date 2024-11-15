@@ -36,7 +36,3 @@ export const getQueryParameters = (options) => {
 export const getBody = (options) => {
   return options.body && JSON.parse(options.body)
 }
-
-export const logMethodOptions = (methodName, options) => {
-  console.log('[mock in:', methodName, ']:', options)
-}

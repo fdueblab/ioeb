@@ -49,7 +49,7 @@
 export default {
   name: 'OpsManagementService',
   methods: {
-    jumpOpsManagement() {
+    jumpOpsManagement () {
       this.$router.push({ name: '智能运维管理服务规范' })
     }
   }

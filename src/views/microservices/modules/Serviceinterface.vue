@@ -25,7 +25,7 @@ export default {
     return {
       message: '公司信息!',
       orderBy: ['c1', 'c2'], // 可以控制字段的先后顺序，想调整列的先后顺序，改这个数组就行，可以做个性化设置
-      tableTh: {// 表头的描述信息
+      tableTh: { // 表头的描述信息
         c1: {
           title: '公司名称', // 还可以增加其他描述，比如width等
           align: 'left'

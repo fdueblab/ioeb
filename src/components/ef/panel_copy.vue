@@ -5,7 +5,11 @@
         <div class="ef-tooltar">
           <el-link type="primary" :underline="false">{{ data.name }}</el-link>
           <el-divider direction="vertical"></el-divider>
-          <el-button type="text" icon="el-icon-delete" size="large" @click="deleteElement"
+          <el-button
+            type="text"
+            icon="el-icon-delete"
+            size="large"
+            @click="deleteElement"
             :disabled="!this.activeElement.type"></el-button>
           <el-divider direction="vertical"></el-divider>
           <el-button type="text" icon="el-icon-download" size="large" @click="downloadData"></el-button>
@@ -25,16 +29,26 @@
       </div>
       <div id="efContainer" ref="efContainer" class="container" v-flowDrag style="background-color: #f0f2f7">
         <template v-for="node in data.nodeList">
-          <flow-node :id="node.id" :key="node.id" :node="node" :activeElement="activeElement"
-            @changeNodeSite="changeNodeSite" @nodeRightMenu="nodeRightMenu" @clickNode="clickNode">
+          <flow-node
+            :id="node.id"
+            :key="node.id"
+            :node="node"
+            :activeElement="activeElement"
+            @changeNodeSite="changeNodeSite"
+            @nodeRightMenu="nodeRightMenu"
+            @clickNode="clickNode">
           </flow-node>
         </template>
 
       </div>
 
       <div style="width: 300px;border-left: 1px solid #dce3e8;background-color: #FBFBFB">
-        <flow-node-form ref="nodeForm" @setLineLabel="setLineLabel" @repaintEverything="repaintEverything"
-          :flow-data="data" :data-reload-clear="dataReloadClear"></flow-node-form>
+        <flow-node-form
+          ref="nodeForm"
+          @setLineLabel="setLineLabel"
+          @repaintEverything="repaintEverything"
+          :flow-data="data"
+          :data-reload-clear="dataReloadClear"></flow-node-form>
       </div>
     </div>
 
@@ -63,7 +77,7 @@ import { getDataE } from './data_E'
 import { getDataNew } from './data_new'
 
 export default {
-  data() {
+  data () {
     return {
       jsPlumb: null,
       easyFlowVisible: true,
@@ -79,7 +93,7 @@ export default {
       },
       zoom: 0.5,
       isTesting: false,
-      intervalId: null,
+      intervalId: null
     }
   },
   mixins: [easyFlowMixin],
@@ -88,7 +102,7 @@ export default {
   },
   directives: {
     'flowDrag': {
-      bind(el, binding, vnode, oldNode) {
+      bind (el, binding, vnode, oldNode) {
         if (!binding) {
           return
         }
@@ -125,10 +139,10 @@ export default {
     this.dataReloadClear()
   },
   methods: {
-    getUUID() {
+    getUUID () {
       return Math.random().toString(36).substr(3, 10)
     },
-    jsPlumbInit() {
+    jsPlumbInit () {
       this.jsPlumb.ready(() => {
         this.jsPlumb.importDefaults(this.jsplumbSetting)
         this.jsPlumb.setSuspendDrawing(false, true)
@@ -191,35 +205,35 @@ export default {
         this.jsPlumb.setContainer(this.$refs.efContainer)
       })
     },
-    loadEasyFlow() {
+    loadEasyFlow () {
       for (var i = 0; i < this.data.nodeList.length; i++) {
-        const node = this.data.nodeList[i];
-        this.jsPlumb.makeSource(node.id, this.jsplumbSourceOptions);
-        this.jsPlumb.makeTarget(node.id, this.jsplumbTargetOptions);
+        const node = this.data.nodeList[i]
+        this.jsPlumb.makeSource(node.id, this.jsplumbSourceOptions)
+        this.jsPlumb.makeTarget(node.id, this.jsplumbTargetOptions)
         this.jsPlumb.draggable(node.id, {
-          containment: 'parent',
-        });
+          containment: 'parent'
+        })
       }
 
       // 初始化连线
-      for (var i = 0; i < this.data.lineList.length; i++) {
-        const line = this.data.lineList[i];
+      for (let i = 0; i < this.data.lineList.length; i++) {
+        const line = this.data.lineList[i]
         var connParam = {
           source: line.from,
           target: line.to,
           label: line.label ? line.label : '',
-          connector: ["Bezier"], // 使用 Bezier 曲线
+          connector: ['Bezier'], // 使用 Bezier 曲线
           anchors: line.anchors ? line.anchors : undefined,
-          paintStyle: line.paintStyle ? line.paintStyle : undefined,
-        };
-        this.jsPlumb.connect(connParam, this.jsplumbConnectOptions);
+          paintStyle: line.paintStyle ? line.paintStyle : undefined
+        }
+        this.jsPlumb.connect(connParam, this.jsplumbConnectOptions)
       }
 
       this.$nextTick(() => {
-        this.loadEasyFlowFinish = true;
-      });
+        this.loadEasyFlowFinish = true
+      })
     },
-    setLineLabel(from, to, label) {
+    setLineLabel (from, to, label) {
       var conn = this.jsPlumb.getConnections({
         source: from,
         target: to
@@ -234,12 +248,12 @@ export default {
         label: label
       })
       this.data.lineList.forEach(function (line) {
-        if (line.from == from && line.to == to) {
+        if (line.from === from && line.to === to) {
           line.label = label
         }
       })
     },
-    deleteElement() {
+    deleteElement () {
       if (this.activeElement.type === 'node') {
         this.deleteNode(this.activeElement.nodeId)
       } else if (this.activeElement.type === 'line') {
@@ -257,18 +271,18 @@ export default {
         })
       }
     },
-    deleteLine(from, to) {
+    deleteLine (from, to) {
       this.data.lineList = this.data.lineList.filter(function (line) {
-        if (line.from == from && line.to == to) {
+        if (line.from === from && line.to === to) {
           return false
         }
         return true
       })
     },
-    changeLine(oldFrom, oldTo) {
+    changeLine (oldFrom, oldTo) {
       this.deleteLine(oldFrom, oldTo)
     },
-    changeNodeSite(data) {
+    changeNodeSite (data) {
       for (var i = 0; i < this.data.nodeList.length; i++) {
         const node = this.data.nodeList[i]
         if (node.id === data.nodeId) {
@@ -278,7 +292,7 @@ export default {
       }
     },
 
-    addNode(evt, nodeMenu, mousePosition) {
+    addNode (evt, nodeMenu, mousePosition) {
       var screenX = evt.originalEvent.clientX; var screenY = evt.originalEvent.clientY
       const efContainer = this.$refs.efContainer
       var containerRect = efContainer.getBoundingClientRect()
@@ -330,17 +344,15 @@ export default {
       })
     },
 
-    deleteNode(nodeId) {
+    deleteNode (nodeId) {
       this.$confirm('确定要删除节点' + nodeId + '?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning',
         closeOnClickModal: false
       }).then(() => {
-
         this.data.nodeList = this.data.nodeList.filter(function (node) {
           if (node.id === nodeId) {
-
             return false
           }
           return true
@@ -352,12 +364,12 @@ export default {
       })
       return true
     },
-    clickNode(nodeId) {
+    clickNode (nodeId) {
       this.activeElement.type = 'node'
       this.activeElement.nodeId = nodeId
       this.$refs.nodeForm.nodeInit(this.data, nodeId)
     },
-    hasLine(from, to) {
+    hasLine (from, to) {
       for (var i = 0; i < this.data.lineList.length; i++) {
         var line = this.data.lineList[i]
         if (line.from === from && line.to === to) {
@@ -366,26 +378,26 @@ export default {
       }
       return false
     },
-    hashOppositeLine(from, to) {
+    hashOppositeLine (from, to) {
       return this.hasLine(to, from)
     },
-    nodeRightMenu(nodeId, evt) {
+    nodeRightMenu (nodeId, evt) {
       this.menu.show = true
       this.menu.curNodeId = nodeId
       this.menu.left = evt.x + 'px'
       this.menu.top = evt.y + 'px'
     },
-    repaintEverything() {
+    repaintEverything () {
       console.log('重绘')
       this.jsPlumb.repaint()
     },
-    dataInfo() {
+    dataInfo () {
       this.flowInfoVisible = true
       this.$nextTick(function () {
         this.$refs.flowInfo.init()
       })
     },
-    dataReload(data) {
+    dataReload (data) {
       this.easyFlowVisible = false
       this.data.nodeList = []
       this.data.lineList = []
@@ -394,32 +406,32 @@ export default {
         this.easyFlowVisible = true
         this.data = data
         this.$nextTick(() => {
-          this.jsPlumb = jsPlumb.getInstance()
+          this.jsPlumb = this.jsPlumb.getInstance()
           this.$nextTick(() => {
             this.jsPlumbInit()
           })
         })
       })
     },
-    dataReloadA() {
+    dataReloadA () {
       this.dataReload(getDataA())
     },
-    dataReloadB() {
+    dataReloadB () {
       this.dataReload(getDataB())
     },
-    dataReloadC() {
+    dataReloadC () {
       this.dataReload(getDataC())
     },
-    dataReloadD() {
+    dataReloadD () {
       this.dataReload(getDataD())
     },
-    dataReloadE() {
+    dataReloadE () {
       this.dataReload(getDataE())
     },
-    dataReloadClear() {
+    dataReloadClear () {
       this.dataReload(getDataNew())
     },
-    zoomAdd() {
+    zoomAdd () {
       if (this.zoom >= 1) {
         return
       }
@@ -427,7 +439,7 @@ export default {
       this.$refs.efContainer.style.transform = `scale(${this.zoom})`
       this.jsPlumb.setZoom(this.zoom)
     },
-    zoomSub() {
+    zoomSub () {
       if (this.zoom <= 0) {
         return
       }
@@ -435,7 +447,7 @@ export default {
       this.$refs.efContainer.style.transform = `scale(${this.zoom})`
       this.jsPlumb.setZoom(this.zoom)
     },
-    downloadData() {
+    downloadData () {
       this.$confirm('确定要下载该流程数据吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -452,31 +464,29 @@ export default {
       }).catch(() => {
       })
     },
-
-
-    test() {
-      this.isTesting = !this.isTesting; // 切换测试状态
-      const connections = this.jsPlumb.getAllConnections();
+    test () {
+      this.isTesting = !this.isTesting // 切换测试状态
+      const connections = this.jsPlumb.getAllConnections()
 
       if (this.isTesting) {
         // 启动虚线滚动效果
-        let dashOffset = 0;
+        let dashOffset = 0
         this.intervalId = setInterval(() => {
-          dashOffset += 2; // 控制滚动速度
+          dashOffset += 2 // 控制滚动速度
           connections.forEach(conn => {
-            conn.setPaintStyle({ 
-              stroke: 'green', 
-              strokeWidth: 2, 
-              dashstyle: `4 ${dashOffset}`  // 滚动虚线
-            });
-          });
-        }, 100); // 每100毫秒更新一次
+            conn.setPaintStyle({
+              stroke: 'green',
+              strokeWidth: 2,
+              dashstyle: `4 ${dashOffset}` // 滚动虚线
+            })
+          })
+        }, 100) // 每100毫秒更新一次
       } else {
         // 停止滚动效果，恢复为原样式
-        clearInterval(this.intervalId); // 清除定时器
+        clearInterval(this.intervalId) // 清除定时器
         connections.forEach(conn => {
-          conn.setPaintStyle({ stroke: 'blue', strokeWidth: 2, dashstyle: "0" });
-        });
+          conn.setPaintStyle({ stroke: 'blue', strokeWidth: 2, dashstyle: '0' })
+        })
       }
     }
 

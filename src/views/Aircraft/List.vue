@@ -7,7 +7,7 @@
         src="@/assets/aircraft1.jpg"
       />
       <template slot="actions" class="ant-card-actions">
-        <a-button type="link" @click='jumpAircraft()'>点击进入体验</a-button>
+        <a-button type="link" @click="jumpAircraft()">点击进入体验</a-button>
       </template>
       <a-card-meta title="无人机">
         <template slot="description">

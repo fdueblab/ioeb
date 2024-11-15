@@ -1,4 +1,4 @@
-var data_E = {
+const data = {
     name: '前沿装备远程体验-服务架构推荐示例',
     nodeList: [
       {
@@ -15,7 +15,7 @@ var data_E = {
         name: '设备控制',
         type: 'task',
         left: '163px',
-        top: '331px',//365
+        top: '331px', // 365
         ico: 'el-icon-user-solid',
         state: 'success'
       },
@@ -82,12 +82,12 @@ var data_E = {
     ],
     lineList: [{
       from: 'device',
-      to: 'device-control',
-      //label: '条件A'
+      to: 'device-control'
+      // label: '条件A'
     }, {
       from: 'device',
-      to: 'device-status',
-      //label: '条件B'
+      to: 'device-status'
+      // label: '条件B'
     }, {
       from: 'camera',
       to: 'video-service'
@@ -129,8 +129,6 @@ var data_E = {
       }
     ]
   }
-  
   export function getDataE() {
-    return data_E
+    return data
   }
-  

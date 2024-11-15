@@ -4,7 +4,7 @@ import { axios } from '@/utils/request'
 axios.defaults.baseURL = 'http://localhost:8080/'
 
 // container id
-export function serviceDetection() {
+export function serviceDetection () {
   return axios({
     url: 'getAllUrl',
     method: 'get'

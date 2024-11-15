@@ -42,7 +42,7 @@
     <!--    </div>-->
     <div class="card-list">
       <a-list :grid="{ gutter: 24, column: 3 }" :data-source="data">
-        <a-list-item slot="renderItem" slot-scope="item, index">
+        <a-list-item slot="renderItem" slot-scope="item">
           <a-card :hoverable="true">
             <a-card-meta>
               <a slot="title" :href="item.href">{{ item.title }}</a>

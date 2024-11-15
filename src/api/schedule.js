@@ -6,23 +6,23 @@ const api = {
   saveFile: '/schedule/saveFile'
 }
 
-axios.defaults.baseURL = 'http://localhost:8080'  //仅修改所在文件
+axios.defaults.baseURL = 'http://localhost:8080' // 仅修改所在文件
 // axios.defaults.baseURL = 'http://124.222.217.145:8089'  //仅修改所在文件
-export function getServiceList() {
+export function getServiceList () {
   return axios({
     url: api.getServiceList,
     method: 'get'
   })
 }
 
-export function addFlowService(param) {
+export function addFlowService (param) {
   return axios({
     url: api.sendFlowData,
     method: 'post',
     body: param
   })
 }
-export function saveFile(formData) {
+export function saveFile (formData) {
   return axios({
     method: 'post',
     url: api.saveFile,

@@ -64,7 +64,6 @@ export default {
       fileList: [],
       uploading: false,
       options: {
-        // img: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
         img: '',
         autoCrop: true,
         autoCropWidth: 200,

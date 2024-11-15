@@ -49,7 +49,7 @@
 export default {
   name: 'CyberSecurityService',
   methods: {
-    jumpCyberSecurity() {
+    jumpCyberSecurity () {
       this.$router.push({ name: '网络安全防护服务规范' })
     }
   }

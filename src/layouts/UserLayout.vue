@@ -1,46 +1,50 @@
 <template>
-  <div id="userLayout" :class="['user-layout-wrapper', device]">
+
+  <div id="userLayout" :class="['user-layout-wrapper', isMobile && 'mobile']">
     <div class="container">
-      <div class="top">
-        <div class="header">
-          <a href="/">
-            <img src="~@/assets/logo.svg" class="logo" alt="logo">
-            <span class="title">Fudan EB Lab</span>
-          </a>
-        </div>
-        <div class="desc">
-          微服务工具箱，目前开发中
-        </div>
+      <div class="user-layout-lang">
+        <select-lang class="select-lang-trigger" />
       </div>
+      <div class="user-layout-content">
+        <div class="top">
+          <div class="header">
+            <a href="/">
+              <img src="../assets/fdu_logo_small.png" class="logo" alt="logo">
+              <span class="title">微服务工具箱</span>
+            </a>
+          </div>
+          <div class="desc">
+            {{ $t('layouts.userLayout.title') }}
+          </div>
+        </div>
 
-      <route-view></route-view>
+        <router-view />
 
-      <!--      <div class="footer">-->
-      <!--        <div class="links">-->
-      <!--          <a href="_self">帮助</a>-->
-      <!--          <a href="_self">隐私</a>-->
-      <!--          <a href="_self">条款</a>-->
-      <!--        </div>-->
-      <!--        <div class="copyright">-->
-      <!--          Copyright &copy; 2018 白鹭学园技术组出品-->
-      <!--        </div>-->
-      <!--      </div>-->
-
+        <!-- <div class="footer">
+          <div class="links">
+            <a href="_self">帮助</a>
+            <a href="_self">隐私</a>
+            <a href="_self">条款</a>
+          </div>
+          <div class="copyright">
+            Copyright &copy; 2024
+          </div>
+        </div> -->
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import RouteView from './RouteView'
-import { mixinDevice } from '@/utils/mixin'
+import { deviceMixin } from '@/store/device-mixin'
+import SelectLang from '@/components/SelectLang'
 
 export default {
   name: 'UserLayout',
-  components: { RouteView },
-  mixins: [mixinDevice],
-  data () {
-    return {}
+  components: {
+    SelectLang
   },
+  mixins: [deviceMixin],
   mounted () {
     document.body.classList.add('userLayout')
   },
@@ -51,29 +55,46 @@ export default {
 </script>
 
 <style lang="less" scoped>
-  #userLayout.user-layout-wrapper {
-    height: 100%;
+#userLayout.user-layout-wrapper {
+  height: 100%;
 
-    &.mobile {
-      .container {
-        .main {
-          max-width: 368px;
-          width: 98%;
-        }
+  &.mobile {
+    .container {
+      .main {
+        max-width: 368px;
+        width: 98%;
+      }
+    }
+  }
+
+  .container {
+    width: 100%;
+    min-height: 100%;
+    background: #f0f2f5 url(~@/assets/background.svg) no-repeat 50%;
+    background-size: 100%;
+    //padding: 50px 0 84px;
+    position: relative;
+
+    .user-layout-lang {
+      width: 100%;
+      height: 40px;
+      line-height: 44px;
+      text-align: right;
+
+      .select-lang-trigger {
+        cursor: pointer;
+        padding: 12px;
+        margin-right: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        vertical-align: middle;
       }
     }
 
-    .container {
-      width: 100%;
-      min-height: 100%;
-      background: #f0f2f5 url(~@/assets/background.svg) no-repeat 50%;
-      background-size: 100%;
-      padding: 110px 0 144px;
-      position: relative;
-
-      a {
-        text-decoration: none;
-      }
+    .user-layout-content {
+      padding: 32px 0 24px;
 
       .top {
         text-align: center;
@@ -93,10 +114,9 @@ export default {
           }
 
           .logo {
-            height: 60px;
+            height: 44px;
             vertical-align: top;
             margin-right: 16px;
-            //margin-bottom: 16px;
             border-style: none;
           }
 
@@ -124,7 +144,7 @@ export default {
       }
 
       .footer {
-        position: absolute;
+        // position: absolute;
         width: 100%;
         bottom: 0;
         padding: 0 16px;
@@ -148,5 +168,11 @@ export default {
         }
       }
     }
+
+    a {
+      text-decoration: none;
+    }
+
   }
+}
 </style>

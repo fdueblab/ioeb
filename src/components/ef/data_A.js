@@ -1,4 +1,4 @@
-var data_A = {
+const data = {
     name: '流程A',
     nodeList: [
         {
@@ -36,5 +36,5 @@ var data_A = {
 }
 
 export function getDataA() {
-    return data_A
+    return data
 }
