@@ -56,6 +56,11 @@
                 </a-form-item>
               </a-col>
             </a-row>
+            <a-row :gutter="20">
+              <a-col :span="12">
+                <ServiceComposition :services="selectedRows"/>
+              </a-col>
+            </a-row>
           </a-form>
           <a-form>
             <a-form-item label="测评结果">
@@ -74,7 +79,7 @@
 </template>
 
 <script>
-import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
+import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent, ServiceComposition } from '@/components'
 const statusMap = {
   0: {
     status: 'default',
@@ -150,7 +155,8 @@ export default {
     Ellipsis,
     TagSelect,
     StandardFormRow,
-    ArticleListContent
+    ArticleListContent,
+    ServiceComposition
   },
   data () {
     return {

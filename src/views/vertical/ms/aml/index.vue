@@ -75,31 +75,31 @@
       </div>
     </a-card>
     <a-card :bordered="false" style="margin-top: 10px; height: 430px;">
-      <a-row :gutter=20>
+      <a-row :gutter="20">
         <a-col :span="12">
           <a-card :bodyStyle="{padding: 0}" style="height: 390px;">
             <codemirror v-model="code" :style="codemirrorStyle" :options="cmOptions"></codemirror>
           </a-card>
         </a-col>
-        <a-col :span=12>
+        <a-col :span="12">
           <a-card style="height: 390px;">
             <a-form>
-                <a-form-item label="输入参数">
-                  <a-input placeholder=""/>
-                </a-form-item>
-                <a-form-item label="输出参数">
-                  <a-input placeholder=""/>
-                </a-form-item>
-                <a-form-item label="条件参数">
-                  <a-input placeholder=""/>
-                </a-form-item>
-                <a-form-item label="效果参数">
-                  <a-input placeholder=""/>
-                </a-form-item>
-                <a-form-item>
-                 <div style="text-align: center;"> <a-button type="primary">发布</a-button> </div>
-                </a-form-item>
-              </a-form>
+              <a-form-item label="输入参数">
+                <a-input placeholder=""/>
+              </a-form-item>
+              <a-form-item label="输出参数">
+                <a-input placeholder=""/>
+              </a-form-item>
+              <a-form-item label="条件参数">
+                <a-input placeholder=""/>
+              </a-form-item>
+              <a-form-item label="效果参数">
+                <a-input placeholder=""/>
+              </a-form-item>
+              <a-form-item>
+                <div style="text-align: center;"> <a-button type="primary">发布</a-button> </div>
+              </a-form-item>
+            </a-form>
           </a-card>
         </a-col>
       </a-row>
