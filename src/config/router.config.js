@@ -95,7 +95,7 @@ export const asyncRouterMap = [
               {
                 path: '/evaluation/aml/emulation',
                 name: 'evaluation-aml-emulation',
-                meta: { title: '应用微服务仿真评估', keepAlive: true, permission: ['admin', 'publisher'] },
+                meta: { title: '应用端服务仿真评估', keepAlive: true, permission: ['admin', 'publisher'] },
                 component: () => import('@/views/evaluation/aml/emulation')
               }
             ]
@@ -115,7 +115,7 @@ export const asyncRouterMap = [
               {
                 path: '/evaluation/aircraft//emulation',
                 name: 'atom-app-evaluation-aircraft',
-                meta: { title: '应用微服务仿真评估', keepAlive: true, permission: ['admin', 'publisher'] },
+                meta: { title: '应用端服务仿真评估', keepAlive: true, permission: ['admin', 'publisher'] },
                 component: () => import('@/views/evaluation/aircraft/emulation')
               }
             ]

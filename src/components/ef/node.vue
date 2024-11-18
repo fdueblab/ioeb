@@ -27,15 +27,15 @@
     <div class="ef-node-divider"></div>
     <!-- 参数信息 -->
     <div class="ef-node-parameters">
-        <!-- <p><strong>Input:</strong> {{ node.input }}</p>
+      <!-- <p><strong>Input:</strong> {{ node.input }}</p>
         <p><strong>Output:</strong> {{ node.output }}</p>
         <p><strong>Version:</strong> {{ node.version }}</p> -->
-        <label><strong>Input:</strong></label>
-        <input type="text" value="input" readonly>
-        <label><strong>Output:</strong></label>
-        <input type="text" value="output" readonly>
-        <label><strong>Version:</strong></label>
-        <input type="text" value="v1.0" readonly>
+      <label><strong>Input:</strong></label>
+      <input type="text" value="input" readonly>
+      <label><strong>Output:</strong></label>
+      <input type="text" value="output" readonly>
+      <label><strong>Version:</strong></label>
+      <input type="text" value="v1.0" readonly>
     </div>
   </div>
 </template>

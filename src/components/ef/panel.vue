@@ -6,7 +6,7 @@
           <el-link type="primary" :underline="false">{{ data.name }}</el-link>
           <el-divider direction="vertical"></el-divider>
           <el-button type="text" icon="el-icon-delete" size="large" @click="deleteElement"
-            :disabled="!this.activeElement.type"></el-button>
+                     :disabled="!this.activeElement.type"></el-button>
           <el-divider direction="vertical"></el-divider>
           <el-button type="text" icon="el-icon-download" size="large" @click="downloadData"></el-button>
           <div style="float: right;margin-right: 5px">
@@ -26,7 +26,7 @@
       <div id="efContainer" ref="efContainer" class="container" v-flowDrag style="background-color: #f0f2f7">
         <template v-for="node in data.nodeList">
           <flow-node :id="node.id" :key="node.id" :node="node" :activeElement="activeElement"
-            @changeNodeSite="changeNodeSite" @nodeRightMenu="nodeRightMenu" @clickNode="clickNode">
+                     @changeNodeSite="changeNodeSite" @nodeRightMenu="nodeRightMenu" @clickNode="clickNode">
           </flow-node>
         </template>
 
@@ -34,7 +34,7 @@
 
       <div style="width: 300px;border-left: 1px solid #dce3e8;background-color: #FBFBFB">
         <flow-node-form ref="nodeForm" @setLineLabel="setLineLabel" @repaintEverything="repaintEverything"
-          :flow-data="data" :data-reload-clear="dataReloadClear"></flow-node-form>
+                        :flow-data="data" :data-reload-clear="dataReloadClear"></flow-node-form>
       </div>
     </div>
 
