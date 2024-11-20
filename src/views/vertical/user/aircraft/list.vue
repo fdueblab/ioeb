@@ -2,46 +2,46 @@
   <page-header-wrapper :title="false">
     <a-card :bordered="false" class="ant-pro-components-tag-select">
       <a-form :form="form" layout="inline">
+        <standard-form-row title="类型" block style="padding-bottom: 11px;">
+          <a-form-item>
+            <tag-select @change="handleTagChange('type', $event)">
+              <tag-select-option v-for="(item, index) in typeArr" :key="index" :value="index">{{ item }}</tag-select-option>
+            </tag-select>
+          </a-form-item>
+        </standard-form-row>
+
         <standard-form-row title="领域" block style="padding-bottom: 11px;">
           <a-form-item>
-            <tag-select>
-              <tag-select-option value="Category1">无人机技术服务</tag-select-option>
+            <tag-select @change="handleTagChange('domain', $event)">
+              <tag-select-option v-for="(item, index) in domainArr" :key="index" :value="index">{{ item }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
 
         <standard-form-row title="行业" grid>
           <a-form-item>
-            <tag-select>
-              <tag-select-option value="Category1">城市治理</tag-select-option>
-              <tag-select-option value="Category2">文旅农林</tag-select-option>
-              <tag-select-option value="Category3">教育培训</tag-select-option>
+            <tag-select @change="handleTagChange('industry', $event)">
+              <tag-select-option v-for="(item, index) in industryArr" :key="index" :value="index">{{ item }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
+
         <standard-form-row title="场景" grid>
           <a-form-item>
-            <tag-select>
-              <tag-select-option value="Category1">应急救援</tag-select-option>
-              <tag-select-option value="Category2">交通巡逻</tag-select-option>
-              <tag-select-option value="Category3">低空物流</tag-select-option>
-              <tag-select-option value="Category4">低空测绘</tag-select-option>
-              <tag-select-option value="Category5">目标识别</tag-select-option>
+            <tag-select @change="handleTagChange('scenario', $event)">
+              <tag-select-option v-for="(item, index) in scenarioArr" :key="index" :value="index">{{ item }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
+
         <standard-form-row title="技术" grid>
           <a-form-item>
-            <tag-select>
-              <tag-select-option value="Category1">线路设计</tag-select-option>
-              <tag-select-option value="Category2">虚拟仿真</tag-select-option>
-              <tag-select-option value="Category3">智能感知</tag-select-option>
-              <tag-select-option value="Category4">远程控制</tag-select-option>
-              <tag-select-option value="Category5">视频分析</tag-select-option>
-              <tag-select-option value="Category6">技术评价</tag-select-option>
+            <tag-select @change="handleTagChange('technology', $event)">
+              <tag-select-option v-for="(item, index) in technologyArr" :key="index" :value="index">{{ item }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
+
         <standard-form-row title="其他" grid last>
           <a-row :gutter="24">
             <a-col :span="8">
@@ -56,8 +56,8 @@
             </a-col>
             <a-col :span="8">
               <span class="table-page-search-submitButtons" :style="advanced && { float: 'right', overflow: 'hidden' } || {} ">
-                <a-button type="primary" @click="$refs.table.refresh(true)">查询</a-button>
-                <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>
+                <a-button type="primary" @click="handleSearch">查询</a-button>
+                <a-button style="margin-left: 8px" @click="handleReset">重置</a-button>
               </span>
             </a-col>
           </a-row>
@@ -68,7 +68,7 @@
       <a-table
         ref="table"
         :columns="columns"
-        :dataSource="dataSource"
+        :dataSource="filteredDataSource"
       >
         <span slot="serial" slot-scope="text, record, index">
           {{ index + 1 }}
@@ -135,35 +135,55 @@ const normMap = {
 const data = []
 data.push({
   name: '无人机虚拟仿真微服务',
-  type: '虚拟仿真',
+  type: 0,
+  domain: 0,
+  industry: 0,
+  scenario: 0,
+  technology: 1,
   status: 1,
   norm: [0, 1, 2],
   number: '2342'
 })
 data.push({
   name: '无人机低空测绘微服务',
-  type: '低空测绘',
+  type: 0,
+  domain: 0,
+  industry: 1,
+  scenario: 3,
+  technology: 2,
   status: 0,
   norm: [0, 2],
   number: '2342'
 })
 data.push({
   name: '无人机目标识别微服务',
-  type: '目标识别',
+  type: 0,
+  domain: 0,
+  industry: 2,
+  scenario: 4,
+  technology: 2,
   status: 3,
   norm: [1, 2],
   number: '2342'
 })
 data.push({
   name: '无人机远程控制微服务',
-  type: '远程控制',
+  type: 0,
+  domain: 0,
+  industry: 0,
+  scenario: 1,
+  technology: 3,
   status: 2,
   norm: [0, 1, 3],
   number: '2342'
 })
 data.push({
   name: '无人机视频分析微服务',
-  type: '视频分析',
+  type: 0,
+  domain: 0,
+  industry: 1,
+  scenario: 2,
+  technology: 4,
   status: 1,
   norm: [1, 2, 3],
   number: '2342'
@@ -188,7 +208,14 @@ export default {
       // 高级搜索 展开/关闭
       advanced: false,
       // 查询参数
-      queryParam: {},
+      queryParam: {
+        type: [],
+        domain: [],
+        industry: [],
+        scenario: [],
+        technology: [],
+        name: ''
+      },
       // 加载数据方法 必须为 Promise 对象
       columns: [
         {
@@ -201,7 +228,15 @@ export default {
         },
         {
           title: '服务类型',
-          dataIndex: 'type'
+          dataIndex: 'type',
+          width: '100px',
+          customRender: (text) => this.typeArr[text]
+        },
+        {
+          title: '技术类型',
+          dataIndex: 'technology',
+          width: '100px',
+          customRender: (text) => this.technologyArr[text]
         },
         {
           title: '服务状态',
@@ -231,9 +266,15 @@ export default {
           scopedSlots: { customRender: 'action' }
         }
       ],
-      dataSource: [],
+      dataSource: data,
+      filteredDataSource: data,
       selectedRowKeys: [],
-      selectedRows: []
+      selectedRows: [],
+      typeArr: ['原子微服务', '元应用服务'],
+      domainArr: ['无人机技术服务'],
+      industryArr: ['城市治理', '文旅农林', '教育培训'],
+      scenarioArr: ['应急救援', '交通巡逻', '低空物流', '低空测绘', '目标识别'],
+      technologyArr: ['线路设计', '虚拟仿真', '智能感知', '远程控制', '视频分析', '技术评价']
     }
   },
   filters: {
@@ -248,11 +289,37 @@ export default {
     }
   },
   created () {
-    this.dataSource = data
+    this.filteredDataSource = this.dataSource
   },
   computed: {
   },
   methods: {
+    handleTagChange(field, e) {
+      const selectedTagVal = e.value
+      const index = this.queryParam[field].indexOf(selectedTagVal)
+      if (index > -1) {
+        this.queryParam[field].splice(index, 1)
+      } else {
+        this.queryParam[field].push(selectedTagVal)
+      }
+      this.filterDataSource()
+    },
+    filterDataSource() {
+      this.filteredDataSource = this.dataSource.filter(item => {
+        return (this.queryParam.type.length > 0 ? this.queryParam.type.includes(item.type) : true) &&
+          (this.queryParam.domain.length > 0 ? this.queryParam.domain.includes(item.domain) : true) &&
+          (this.queryParam.industry.length > 0 ? this.queryParam.industry.includes(item.industry) : true) &&
+          (this.queryParam.scenario.length > 0 ? this.queryParam.scenario.includes(item.scenario) : true) &&
+          (this.queryParam.technology.length > 0 ? this.queryParam.technology.includes(item.technology) : true)
+      })
+    },
+    handleSearch() {
+      this.filterDataSource()
+    },
+    handleReset() {
+      this.queryParam = {}
+      this.filteredDataSource = this.dataSource
+    },
     handleToAdd () {
       this.$refs.tempSelectModal.open()
     },

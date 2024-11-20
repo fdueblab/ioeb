@@ -114,38 +114,24 @@ const normMap = {
 }
 const data = []
 data.push({
-  name: '异常识别微服务',
+  name: '跨境支付安全性测评',
   type: '异常识别',
   status: 1,
   norm: [0, 1, 2],
   number: '2342'
 })
 data.push({
-  name: '安全计算微服务',
+  name: '反洗钱综合评估',
   type: '安全计算',
   status: 0,
   norm: [0, 2],
   number: '2342'
 })
 data.push({
-  name: '技术评测微服务',
+  name: '跨境支付报告生成',
   type: '技术评测',
   status: 3,
   norm: [1, 2],
-  number: '2342'
-})
-data.push({
-  name: '报告生成微服务',
-  type: '报告生成',
-  status: 2,
-  norm: [0, 1, 3],
-  number: '2342'
-})
-data.push({
-  name: '信用评估微服务',
-  type: '信用评估',
-  status: 1,
-  norm: [1, 2, 3],
   number: '2342'
 })
 
