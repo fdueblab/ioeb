@@ -114,38 +114,24 @@ const normMap = {
 }
 const data = []
 data.push({
-  name: '无人机虚拟仿真微服务',
+  name: '无人机试飞模拟器',
   type: '异常识别',
   status: 1,
   norm: [0, 1, 2],
   number: '2342'
 })
 data.push({
-  name: '无人机低空测绘微服务	',
+  name: '无人机智能导航',
   type: '安全计算',
   status: 0,
   norm: [0, 2],
   number: '2342'
 })
 data.push({
-  name: '无人机目标识别微服务	',
+  name: '无人机航拍辅助',
   type: '技术评测',
   status: 3,
   norm: [1, 2],
-  number: '2342'
-})
-data.push({
-  name: '无人机远程控制微服务	',
-  type: '报告生成',
-  status: 2,
-  norm: [0, 1, 3],
-  number: '2342'
-})
-data.push({
-  name: '无人机视频分析微服务	',
-  type: '信用评估',
-  status: 1,
-  norm: [1, 2, 3],
   number: '2342'
 })
 
