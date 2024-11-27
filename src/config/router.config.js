@@ -28,24 +28,24 @@ export const asyncRouterMap = [
         },
         component: () => import('@/views/dashboard/Analysis')
       },
-      // 垂域用户端服务管理
+      // 微服务与元应用检索
       {
         path: '/vertical-user',
         name: 'vertical-user',
         redirect: '/vertical-user/aml',
         component: RouteView,
-        meta: { title: '垂域用户端服务管理', keepAlive: true, icon: 'appstore', permission: ['admin', 'publisher'] },
+        meta: { title: '微服务与元应用检索', keepAlive: true, icon: 'appstore', permission: ['admin', 'publisher'] },
         children: [
           {
             path: '/vertical-user/aml',
             name: 'vertical-user-aml',
             component: () => import('@/views/vertical/user/aml'),
-            meta: { title: '跨境支付反洗钱服务', keepAlive: true, permission: ['admin', 'publisher'] }
+            meta: { title: '跨境支付监测', keepAlive: true, permission: ['admin', 'publisher'] }
           },
           {
             path: '/vertical-user/aircraft',
             name: 'vertical-user-aircraft',
-            meta: { title: '低空飞行器操控服务', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '低空飞行器监测控制', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/aircraft')
           }
         ]
@@ -72,13 +72,35 @@ export const asyncRouterMap = [
           }
         ]
       },
-      // 原子及应用服务评测
+      // 垂域元应用服务生成
+      {
+        path: '/vertical-meta-app',
+        name: 'vertical-ms',
+        redirect: '/vertical-atom-app/aml',
+        component: RouteView,
+        meta: { title: '垂域元应用服务生成', keepAlive: true, icon: 'form', permission: ['admin', 'publisher', 'user'] },
+        children: [
+          {
+            path: '/vertical-atom-app/aml',
+            name: 'vertical-meta-app-aml',
+            component: () => import('@/views/vertical/ms/aml'),
+            meta: { title: '跨境支付反洗钱元应用生成', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+          },
+          {
+            path: '/vertical-atom-app/aircraft',
+            name: 'vertical-atom-app-aircraft',
+            meta: { title: '低空飞行器操控元应用生成', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
+            component: () => import('@/views/vertical/ms/aircraft')
+          }
+        ]
+      },
+      // 技术评测与仿真验证
       {
         path: '/evaluation',
         name: 'evaluation',
         redirect: '/evaluation/aml/technology',
         component: RouteView,
-        meta: { title: '原子及应用服务评测', keepAlive: true, icon: 'radar-chart', permission: ['admin', 'publisher'] },
+        meta: { title: '技术评测与仿真验证', keepAlive: true, icon: 'radar-chart', permission: ['admin', 'publisher'] },
         children: [
           {
             path: '/evaluation/aml',
@@ -93,9 +115,15 @@ export const asyncRouterMap = [
                 meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
               },
               {
+                path: '/evaluation/aircraft/schedule',
+                name: 'evaluation-aircraft-schedule',
+                component: () => import('@/views/schedule/AirCraftSchedule'),
+                meta: { title: '单体元应用仿真构建', keepAlive: true, permission: ['admin', 'publisher'] }
+              },
+              {
                 path: '/evaluation/aml/emulation',
                 name: 'evaluation-aml-emulation',
-                meta: { title: '应用端服务仿真评估', keepAlive: true, permission: ['admin', 'publisher'] },
+                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
                 component: () => import('@/views/evaluation/aml/emulation')
               }
             ]
@@ -113,9 +141,15 @@ export const asyncRouterMap = [
                 meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
               },
               {
+                path: '/evaluation/aircraft/schedule',
+                name: 'evaluation-aircraft-schedule',
+                component: () => import('@/views/schedule/AirCraftSchedule'),
+                meta: { title: '单体元应用仿真构建', keepAlive: true, permission: ['admin', 'publisher'] }
+              },
+              {
                 path: '/evaluation/aircraft//emulation',
                 name: 'atom-app-evaluation-aircraft',
-                meta: { title: '应用端服务仿真评估', keepAlive: true, permission: ['admin', 'publisher'] },
+                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
                 component: () => import('@/views/evaluation/aircraft/emulation')
               }
             ]
@@ -348,6 +382,18 @@ export const asyncRouterMap = [
             permission: ['admin', 'publisher', 'user']
         },
         component: () => import('@/views/user-manage')
+      },
+      // 使用指南
+      {
+        path: '/guide',
+        name: 'guide',
+        meta: {
+          title: '使用指南',
+          keepAlive: true,
+          icon: 'team',
+          permission: ['admin', 'publisher', 'user']
+        },
+        component: () => import('@/views/schedule/Schedule')
       },
       // 用户管理
       {

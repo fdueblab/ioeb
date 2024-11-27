@@ -2,8 +2,28 @@
   <div>
     <a-row :gutter="24">
       <a-col :sm="24" :md="12" :xl="6" :style="{ marginBottom: '24px' }">
-        <chart-card :loading="loading" title="总发布技术资源(个)" total="1,260">
-          <a-tooltip title="当前系统总发布技术资源数" slot="action">
+        <chart-card :loading="loading" title="原子微服务数量(个)" total="1,260">
+          <a-tooltip title="当前系统总发布原子微服务资源数" slot="action">
+            <a-icon type="info-circle-o" />
+          </a-tooltip>
+          <div>
+            <trend flag="up" style="margin-right: 16px;">
+              <span slot="term">{{ $t('dashboard.analysis.week') }}</span>
+              2%
+            </trend>
+            <trend flag="down">
+              <span slot="term">{{ $t('dashboard.analysis.day') }}</span>
+              1%
+            </trend>
+          </div>
+          <template slot="footer">
+            <a :disabled="username !== 'publisher'" href="./#/ms/manage" target="_parent" style="margin-right: 12px">查看所有</a>
+          </template>
+        </chart-card>
+      </a-col>
+      <a-col :sm="24" :md="12" :xl="6" :style="{ marginBottom: '24px' }">
+        <chart-card :loading="loading" title="元应用构建数量" :total="846 | NumberFormat">
+          <a-tooltip title="当前系统构建的元应用总数" slot="action">
             <a-icon type="info-circle-o" />
           </a-tooltip>
           <div>
@@ -22,18 +42,7 @@
         </chart-card>
       </a-col>
       <a-col :sm="24" :md="12" :xl="6" :style="{ marginBottom: '24px' }">
-        <chart-card :loading="loading" title="服务组合数量" :total="846 | NumberFormat">
-          <a-tooltip :title="$t('dashboard.analysis.introduce')" slot="action">
-            <a-icon type="info-circle-o" />
-          </a-tooltip>
-          <div>
-            <mini-area />
-          </div>
-          <template slot="footer">今日组合<span> {{ '10' | NumberFormat }}</span></template>
-        </chart-card>
-      </a-col>
-      <a-col :sm="24" :md="12" :xl="6" :style="{ marginBottom: '24px' }">
-        <chart-card :loading="loading" title="组合应用访问量" :total="6560 | NumberFormat">
+        <chart-card :loading="loading" title="元应用验证数量" :total="6560 | NumberFormat">
           <a-tooltip :title="$t('dashboard.analysis.introduce')" slot="action">
             <a-icon type="info-circle-o" />
           </a-tooltip>
@@ -44,7 +53,7 @@
         </chart-card>
       </a-col>
       <a-col :sm="24" :md="12" :xl="6" :style="{ marginBottom: '24px' }">
-        <chart-card :loading="loading" title="服务测试通过占比" total="78%">
+        <chart-card :loading="loading" title="元应用验证通过率" total="78%">
           <a-tooltip :title="$t('dashboard.analysis.introduce')" slot="action">
             <a-icon type="info-circle-o" />
           </a-tooltip>
@@ -70,20 +79,20 @@
             </div>
             <a-range-picker :style="{width: '256px'}" />
           </div>
-          <a-tab-pane loading="true" tab="微服务发布" key="1">
+          <a-tab-pane loading="true" tab="微服务发布趋势" key="1">
             <a-row>
               <a-col :xl="16" :lg="12" :md="12" :sm="24" :xs="24">
                 <bar :data="barData" title="微服务发布趋势" />
               </a-col>
               <a-col :xl="8" :lg="12" :md="12" :sm="24" :xs="24">
-                <rank-list title="发布者排行" :list="rankList"/>
+                <rank-list title="微服务发布排行" :list="rankList"/>
               </a-col>
             </a-row>
           </a-tab-pane>
-          <a-tab-pane tab="服务组合实例" key="2">
+          <a-tab-pane tab="元应用构建趋势" key="2">
             <a-row>
               <a-col :xl="16" :lg="12" :md="12" :sm="24" :xs="24">
-                <bar :data="barData2" title="服务组合实例趋势" />
+                <bar :data="barData2" title="元应用构建趋势" />
               </a-col>
               <a-col :xl="8" :lg="12" :md="12" :sm="24" :xs="24">
                 <rank-list title="应用排行" :list="serviceList"/>
@@ -129,7 +138,7 @@
               <a-col :xs="24" :sm="12" :style="{ marginBottom: ' 24px'}">
                 <number-info :total="2.7" :sub-total="26.2" status="down">
                   <span slot="subtitle">
-                    <span>组合应用日用户数</span>
+                    <span>元应用用户数</span>
                     <a-tooltip :title="$t('dashboard.analysis.introduce')" slot="action">
                       <a-icon type="info-circle-o" :style="{ marginLeft: '8px' }" />
                     </a-tooltip>

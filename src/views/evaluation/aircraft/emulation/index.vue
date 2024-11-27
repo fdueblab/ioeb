@@ -56,20 +56,15 @@
                 </a-form-item>
               </a-col>
             </a-row>
-            <a-row :gutter="20">
-              <a-col :span="12">
-                <ServiceComposition :services="selectedRows"/>
-              </a-col>
-            </a-row>
           </a-form>
           <a-form>
-            <a-form-item label="测评结果">
+            <a-form-item label="验证结果">
               <a-textarea v-model="response" placeholder="" :rows="7" />
             </a-form-item>
             <a-form-item
               :wrapperCol="{ span: 24 }"
               style="text-align: center">
-              <a-button type="primary" @click="onTest">开始测评</a-button>
+              <a-button type="primary" @click="onTest">开始验证</a-button>
             </a-form-item>
           </a-form>
         </a-card>
