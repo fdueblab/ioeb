@@ -50,44 +50,44 @@
           {
             id: '3',
             type: 'group',
-            name: '沙盘相关微服务',
+            name: '低空飞行器操控服务',
             open: true,
             children: [
               {
                 id: '100',
                 type: 'group',
-                name: '酒店订单微服务',
+                name: '无人机目标识别服务',
                 open: true,
                 children: [{
                   id: '1001',
-                  type: 'getHotelInfo', // TODO: 使用type指定不同的item
-                  name: 'getHotelInfo',
-                  ico: 'el-icon-shopping-cart-full',
+                  type: 'getTargetLocation', // TODO: 使用type指定不同的item
+                  name: 'getTargetLocation',
+                  ico: 'el-icon-location',
                   style: {}
                 }, {
                   id: '1002',
-                  type: 'setHotelPrice',
-                  name: 'setHotelPrice',
-                  ico: 'el-icon-shopping-cart-full',
+                  type: 'getTargetInfo',
+                  name: 'getTargetInfo',
+                  ico: 'el-icon-user',
                   style: {}
                 }]
               },
               {
                 id: '101',
                 type: 'group',
-                name: '餐饮微服务',
+                name: '无人机远程控制服务',
                 open: true,
                 children: [{
                   id: '1101',
-                  type: 'getOrderInfo',
-                  name: 'getOrderInfo',
-                  ico: 'el-icon-shopping-cart-full',
+                  type: 'setTargetLocation',
+                  name: 'setTargetLocation',
+                  ico: 'el-icon-location',
                   style: {}
                 }, {
                   id: '1102',
-                  type: 'setOrderPrice',
-                  name: 'setOrderPrice',
-                  ico: 'el-icon-shopping-cart-full',
+                  type: 'setMotionMode',
+                  name: 'setMotionMode',
+                  ico: 'el-icon-rank',
                   style: {}
                 }]
               }

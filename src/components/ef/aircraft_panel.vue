@@ -20,19 +20,19 @@
       </el-col>
     </el-row>
     <div style="display: flex;height: calc(100% - 47px);">
-      <div style="width: 15vw;border-right: 1px solid #dce3e8;background-color: #FBFBFB">
+      <div style="width: 15vw; border-right: 1px solid #dce3e8;background-color: #FBFBFB">
         <node-menu @addNode="addNode" ref="nodeMenu"></node-menu>
       </div>
-      <div id="efContainer" ref="efContainer" class="container" v-flowDrag style="background-color: #f0f2f7">
+      <div id="efContainer" ref="efContainer" class="container" v-flowDrag style="flex: 1; position: relative; background-color: #f0f2f7">
         <template v-for="node in data.nodeList">
           <flow-node :id="node.id" :key="node.id" :node="node" :activeElement="activeElement"
                      @changeNodeSite="changeNodeSite" @nodeRightMenu="nodeRightMenu" @clickNode="clickNode">
           </flow-node>
         </template>
-      </div>
-      <div style="width: 300px;border-left: 1px solid #dce3e8;background-color: #FBFBFB">
-        <flow-node-form ref="nodeForm" @setLineLabel="setLineLabel" @repaintEverything="repaintEverything"
-                        :flow-data="data" :data-reload-clear="dataReloadClear"></flow-node-form>
+        <div style="position: fixed; bottom: 0; width: 700px; border-left: 1px solid #dce3e8; border-top: 1px solid #dce3e8; background-color: #FBFBFB">
+          <flow-node-form ref="nodeForm" @setLineLabel="setLineLabel" @repaintEverything="repaintEverything"
+                          :flow-data="data" :data-reload-clear="dataReloadClear"></flow-node-form>
+        </div>
       </div>
     </div>
     <flow-info v-if="flowInfoVisible" ref="flowInfo" :data="data"></flow-info>
@@ -47,7 +47,7 @@ import { easyFlowMixin } from '@/components/ef/mixins'
 import flowNode from '@/components/ef/node'
 import nodeMenu from '@/components/ef/node_menu_with_input'
 import FlowInfo from '@/components/ef/info'
-import FlowNodeForm from './node_form'
+import FlowNodeForm from './node_form_bottom'
 import lodash from 'lodash'
 import { getDataA } from './data_A'
 import { getDataB } from './data_B'
