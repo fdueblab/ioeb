@@ -115,9 +115,9 @@ export const asyncRouterMap = [
                 meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
               },
               {
-                path: '/evaluation/aircraft/schedule',
-                name: 'evaluation-aircraft-schedule',
-                component: () => import('@/views/schedule/AirCraftSchedule'),
+                path: '/evaluation/aml/schedule',
+                name: 'evaluation-aml-schedule',
+                component: () => import('@/views/schedule/AmlSchedule'),
                 meta: { title: '单体元应用仿真构建', keepAlive: true, permission: ['admin', 'publisher'] }
               },
               {

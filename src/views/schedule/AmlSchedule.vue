@@ -3,10 +3,11 @@
     <iframe
       src="http://111.229.9.133/chatbot/DLtQcvLBRB0RfPUT"
       style="height: calc(100vh - 64px); width: 25vw;"
-      frameborder="0"
+      frameBorder="0"
       allow="microphone">
     </iframe>
-    <flow-panel style="height: calc(100vh - 64px); width: 100%;" :initial-flow="initFlow" :initial-services="initServices" />
+    <flow-panel style="height: calc(100vh - 64px); width: 100%;" :initial-flow="initFlow"
+                :initial-services="initServices" />
   </div>
 </template>
 
@@ -18,7 +19,7 @@ export default {
   components: {
     FlowPanel
   },
-  data () {
+  data() {
     return {
       initFlow: {
         // name: '初始流程图',
@@ -32,46 +33,59 @@ export default {
       },
       initServices: [
         {
-          id: '3',
+          id: '9',
           type: 'group',
-          name: '低空飞行器操控服务',
+          name: '跨境支付反洗钱服务',
           open: true,
           children: [
             {
-              id: '100',
+              id: '900',
               type: 'group',
-              name: '无人机目标识别服务',
+              name: '安全计算微服务',
               open: true,
               children: [{
-                id: '1001',
-                type: 'getTargetLocation',
-                name: 'getTargetLocation',
-                ico: 'el-icon-location-information',
-                style: {}
-              }, {
-                id: '1002',
-                type: 'getTargetInfo',
-                name: 'getTargetInfo',
-                ico: 'el-icon-user',
+                id: '9001',
+                type: 'securityCalculation',
+                name: 'securityCalculation',
+                ico: 'el-icon-s-data',
                 style: {}
               }]
             },
             {
-              id: '101',
+              id: '901',
               type: 'group',
-              name: '无人机远程控制服务',
+              name: '报告生成微服务',
               open: true,
               children: [{
-                id: '1101',
-                type: 'setTargetLocation',
-                name: 'setTargetLocation',
-                ico: 'el-icon-add-location',
+                id: '9101',
+                type: 'getReport',
+                name: 'getReport',
+                ico: 'el-icon-document-add',
                 style: {}
               }, {
-                id: '1102',
-                type: 'setMotionMode',
-                name: 'setMotionMode',
-                ico: 'el-icon-rank',
+                id: '9102',
+                type: 'sendReport',
+                name: 'sendReport',
+                ico: 'el-icon-upload',
+                style: {}
+              }]
+            },
+            {
+              id: '902',
+              type: 'group',
+              name: '信用评估微服务',
+              open: true,
+              children: [{
+                id: '9201',
+                type: 'getRiskInfo',
+                name: 'getRiskInfo',
+                ico: 'el-icon-data-analysis',
+                style: {}
+              }, {
+                id: '9202',
+                type: 'creditEvaluation',
+                name: 'creditEvaluation',
+                ico: 'el-icon-data-line',
                 style: {}
               }]
             }

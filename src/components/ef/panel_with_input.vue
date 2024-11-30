@@ -21,7 +21,7 @@
     </el-row>
     <div style="display: flex;height: calc(100% - 47px);">
       <div style="width: 15vw; border-right: 1px solid #dce3e8;background-color: #FBFBFB">
-        <node-menu @addNode="addNode" ref="nodeMenu"></node-menu>
+        <node-menu @addNode="addNode" ref="nodeMenu" :menu-list="initialServices"></node-menu>
       </div>
       <div id="efContainer" ref="efContainer" class="container" v-flowDrag style="flex: 1; position: relative; background-color: #f0f2f7">
         <template v-for="node in data.nodeList">
@@ -58,9 +58,13 @@ import { getDataNew } from './data_new'
 
 export default {
   props: {
-    initialFlowText: {
-      type: String,
-      default: ''
+    initialFlow: {
+      type: Object,
+      default: () => ({}),
+    },
+    initialServices: {
+      type: Array,
+      default: () => []
     }
   },
   data() {
@@ -161,16 +165,17 @@ export default {
       return Math.random().toString(36).substr(3, 10)
     },
     parseInitialFlowText() {
-      if (!this.initialFlowText) {
+      if (!this.initialFlow || !this.initialFlow.nodeList || !this.initialFlow.lineList) {
         this.dataReloadClear()
         return
       }
 
       try {
-        const parsedData = JSON.parse(this.initialFlowText)
+        const parsedData = this.initialFlow
         this.dataReload(parsedData);
       } catch (error) {
-        console.error('Failed to parse initial flow text:', error)
+        console.error('Failed to get initial flow', error)
+        this.dataReloadClear()
       }
     },
     jsPlumbInit() {
