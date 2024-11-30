@@ -29,6 +29,12 @@
   }
 
   export default {
+    props: {
+      menuList: {
+        type: Array,
+        default: () => []
+      }
+    },
     data () {
       return {
         activeNames: '1',
@@ -45,55 +51,6 @@
         },
         // 默认打开的左侧菜单的id
         defaultOpeneds: ['1', '2'],
-        // TODO 修改menulist
-        menuList: [
-          {
-            id: '3',
-            type: 'group',
-            name: '低空飞行器操控服务',
-            open: true,
-            children: [
-              {
-                id: '100',
-                type: 'group',
-                name: '无人机目标识别服务',
-                open: true,
-                children: [{
-                  id: '1001',
-                  type: 'getTargetLocation', // TODO: 使用type指定不同的item
-                  name: 'getTargetLocation',
-                  ico: 'el-icon-location',
-                  style: {}
-                }, {
-                  id: '1002',
-                  type: 'getTargetInfo',
-                  name: 'getTargetInfo',
-                  ico: 'el-icon-user',
-                  style: {}
-                }]
-              },
-              {
-                id: '101',
-                type: 'group',
-                name: '无人机远程控制服务',
-                open: true,
-                children: [{
-                  id: '1101',
-                  type: 'setTargetLocation',
-                  name: 'setTargetLocation',
-                  ico: 'el-icon-location',
-                  style: {}
-                }, {
-                  id: '1102',
-                  type: 'setMotionMode',
-                  name: 'setMotionMode',
-                  ico: 'el-icon-rank',
-                  style: {}
-                }]
-              }
-            ]
-          }
-        ],
         nodeMenu: {}
       }
     },

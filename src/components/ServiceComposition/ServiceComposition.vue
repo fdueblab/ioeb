@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import FlowPanel from '@/components/ef/aircraft_panel'
+import FlowPanel from '@/components/ef/panel_with_input'
 
 export default {
   name: 'ServiceComposition',
