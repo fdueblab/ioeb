@@ -72,28 +72,6 @@ export const asyncRouterMap = [
           }
         ]
       },
-      // 垂域元应用服务生成
-      {
-        path: '/vertical-meta-app',
-        name: 'vertical-ms',
-        redirect: '/vertical-atom-app/aml',
-        component: RouteView,
-        meta: { title: '垂域元应用服务生成', keepAlive: true, icon: 'form', permission: ['admin', 'publisher', 'user'] },
-        children: [
-          {
-            path: '/vertical-atom-app/aml',
-            name: 'vertical-meta-app-aml',
-            component: () => import('@/views/vertical/ms/aml'),
-            meta: { title: '跨境支付反洗钱元应用生成', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          },
-          {
-            path: '/vertical-atom-app/aircraft',
-            name: 'vertical-atom-app-aircraft',
-            meta: { title: '低空飞行器操控元应用生成', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
-            component: () => import('@/views/vertical/ms/aircraft')
-          }
-        ]
-      },
       // 技术评测与仿真验证
       {
         path: '/evaluation',
@@ -393,7 +371,7 @@ export const asyncRouterMap = [
           icon: 'team',
           permission: ['admin', 'publisher', 'user']
         },
-        component: () => import('@/views/schedule/Schedule')
+        component: () => import('@/views/dashboard/Guide')
       },
       // 用户管理
       {
