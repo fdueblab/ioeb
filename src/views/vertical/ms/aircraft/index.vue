@@ -47,6 +47,25 @@
                 </a-select>
               </a-form-item>
             </a-col>
+          </a-row>
+          <a-row :gutter="20">
+            <a-col :span="6">
+              <a-form-item label="微服务名称">
+                <a-input placeholder="请输入">
+                </a-input>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="服务调用选项">
+                <a-select placeholder="请选择" default-value="0">
+                  <a-select-option value="0">RestFul接口</a-select-option>
+                  <a-select-option value="1">Websocket连接</a-select-option>
+                  <a-select-option value="2">其他</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-row :gutter="20">
             <a-col :span="6">
               <a-form-item label="程序">
                 <a-upload
@@ -73,15 +92,15 @@
         <v-chart style="height: 100%; width: 100%;" :options="options" autoresize/>
       </div>
     </a-card>
-    <a-card :bordered="false" style="margin-top: 10px; height: 430px;">
+    <a-card :bordered="false" style="margin-top: 10px; height: 530px;">
       <a-row :gutter="20">
         <a-col :span="12">
-          <a-card :bodyStyle="{padding: 0}" style="height: 390px;">
+          <a-card :bodyStyle="{ padding: 0 }" style="height: 480px;">
             <codemirror v-model="code" :style="codemirrorStyle" :options="cmOptions"></codemirror>
           </a-card>
         </a-col>
         <a-col :span="12">
-          <a-card style="height: 390px;">
+          <a-card style="height: 480px;">
             <a-form>
               <a-form-item label="输入参数">
                 <a-input placeholder=""/>
@@ -94,6 +113,14 @@
               </a-form-item>
               <a-form-item label="效果参数">
                 <a-input placeholder=""/>
+              </a-form-item>
+              <a-form-item label="接口/配置文件" label-width="100px">
+                <a-upload
+                  name="file"
+                  :multiple="false"
+                  action="">
+                  <a-button> <a-icon type="upload" /> 选择文件 </a-button>
+                </a-upload>
               </a-form-item>
               <a-form-item>
                 <div style="text-align: center;"> <a-button type="primary">发布</a-button> </div>
@@ -228,7 +255,7 @@ export default {
       codemirrorStyle: {
         fontSize: '14px',
         lineHeight: '120%',
-        height: '388px'
+        height: '478px'
       }
     }
   },
@@ -268,6 +295,6 @@ export default {
   height: 300px;
 }
 /deep/ .CodeMirror{
-  height: 388px;
+  height: 478px;
 }
 </style>

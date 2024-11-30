@@ -1,23 +1,26 @@
 <template>
   <div class="schedule-with-input">
-    <iframe
-      src="http://111.229.9.133/chatbot/DLtQcvLBRB0RfPUT"
-      style="height: calc(100vh - 64px); width: 25vw;"
-      frameBorder="0"
-      allow="microphone">
-    </iframe>
-    <flow-panel style="height: calc(100vh - 64px); width: 100%;" :initial-flow="initFlow"
-                :initial-services="initServices" />
+    <!-- TODO: 解决跨域问题，对接真正后端 -->
+    <!--    <iframe-->
+    <!--      src="http://111.229.9.133/chatbot/DLtQcvLBRB0RfPUT"-->
+    <!--      style="height: calc(100vh - 88px); width: 25vw;"-->
+    <!--      frameborder="0"-->
+    <!--      allow="microphone">-->
+    <!--    </iframe>-->
+    <fake-chat />
+    <flow-panel style="height: calc(100vh - 88px); width: 100%;" :initial-flow="initFlow" :initial-services="initServices" />
   </div>
 </template>
 
 <script>
 import FlowPanel from '@/components/ef/panel_with_input'
+import FakeChat from '@/components/ef/fake_chat'
 
 export default {
   name: 'ServiceComposition',
   components: {
-    FlowPanel
+    FlowPanel,
+    FakeChat
   },
   data() {
     return {
