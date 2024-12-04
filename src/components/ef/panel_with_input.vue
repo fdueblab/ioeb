@@ -29,7 +29,7 @@
                      @changeNodeSite="changeNodeSite" @nodeRightMenu="nodeRightMenu" @clickNode="clickNode">
           </flow-node>
         </template>
-        <div style="position: fixed; bottom: 0; width: 700px; border-left: 1px solid #dce3e8; border-top: 1px solid #dce3e8; background-color: #FBFBFB">
+        <div style="position: fixed; bottom: 0; width: 700px; border-left: 1px solid #dce3e8; border-top: 1px solid #dce3e8; background-color: #FBFBFB; z-index: 999">
           <flow-node-form ref="nodeForm" @setLineLabel="setLineLabel" @repaintEverything="repaintEverything"
                           :flow-data="data" :data-reload-clear="dataReloadClear"></flow-node-form>
         </div>
@@ -124,7 +124,7 @@ export default {
   },
   directives: {
     'flowDrag': {
-      bind(el, binding, vnode, oldNode) {
+      bind(el, binding) {
         if (!binding) {
           return
         }
@@ -446,6 +446,9 @@ export default {
           })
         })
       })
+    },
+    updateInitialFlow(newFlow) {
+      this.dataReload(newFlow)
     },
     dataReloadA() {
       this.dataReload(getDataA())

@@ -87,7 +87,7 @@
         </a-form>
       </div>
     </a-card>
-    <a-card :bordered="false" style="margin-top: 10px;">
+    <a-card v-show="options" :bordered="false" style="margin-top: 10px;">
       <div class="g6-x">
         <v-chart style="height: 100%; width: 100%;" :options="options" autoresize/>
       </div>
@@ -175,54 +175,9 @@ export default {
     StandardFormRow,
     ArticleListContent
   },
-  computed: {
-    options () {
-      const json = require('./data.json')
-      return {
-        animationDurationUpdate: 1500,
-        animationEasingUpdate: 'quinticInOut',
-        series: [
-          {
-            type: 'graph',
-            layout: 'none',
-            data: json.nodes.map(function (node) {
-              return {
-                x: node.x,
-                y: node.y,
-                id: node.id,
-                name: node.label,
-                symbolSize: node.size,
-                itemStyle: {
-                  color: node.color
-                }
-              }
-            }),
-            edges: json.edges.map(function (edge) {
-              return {
-                source: edge.sourceID,
-                target: edge.targetID
-              }
-            }),
-            emphasis: {
-              focus: 'adjacency',
-              label: {
-                position: 'right',
-                show: true
-              }
-            },
-            roam: true,
-            lineStyle: {
-              width: 0.5,
-              curveness: 0.3,
-              opacity: 0.7
-            }
-          }
-        ]
-      }
-    }
-  },
   data () {
     return {
+      options: null,
       // create model
       graph: null,
       form: this.$form.createForm(this),
@@ -259,12 +214,77 @@ export default {
       }
     }
   },
-  mounted () {
-    this.initGraph()
-  },
+  mounted () {},
   methods: {
-    initGraph () {},
-    onUpload () {},
+    onUpload () {
+      const json = {
+        nodes: [
+          { id: '1000', x: 200, y: 50, label: 'getTargetFeature', size: 50, color: '#F6BD16', value: 'Websocket connection' },
+          { id: '1001', x: 50, y: 200, label: 'getTargetLocation', size: 50, color: '#5B8FF9', value: 'Websocket connection' },
+          { id: '1002', x: 200, y: 150, label: 'getTargetInfo', size: 50, color: '#5AD8A6', value: 'RestFul API' },
+          { id: '1003', x: 350, y: 200, label: 'getTargetType', size: 50, color: '#5D7092', value: 'RestFul API' }
+        ],
+        edges: [
+          { sourceID: '1000', targetID: '1002' },
+          { sourceID: '1001', targetID: '1002' },
+          { sourceID: '1002', targetID: '1003' },
+        ]
+      }
+
+      this.options = {
+        animationDurationUpdate: 1500,
+        animationEasingUpdate: 'quinticInOut',
+        series: [
+          {
+            type: 'graph',
+            layout: 'none',
+            data: json.nodes.map(function (node) {
+              return {
+                x: node.x,
+                y: node.y,
+                id: node.id,
+                name: node.label,
+                symbolSize: node.size,
+                itemStyle: {
+                  color: node.color
+                },
+                label: {
+                  show: true,
+                  position: 'inside'
+                },
+                value: node.value
+              }
+            }),
+            edges: json.edges.map(function (edge) {
+              return {
+                source: edge.sourceID,
+                target: edge.targetID,
+                lineStyle: {
+                  curveness: 0.3
+                },
+                symbol: ['none', 'arrow'],
+                symbolSize: [0, 10]
+              }
+            }),
+            emphasis: {
+              focus: 'adjacency',
+            },
+            roam: true,
+            lineStyle: {
+              width: 0.5,
+              curveness: 0.3,
+              opacity: 0.7
+            }
+          }
+        ],
+        tooltip: {
+          trigger: 'item',
+          formatter: function (params) {
+            return params.value
+          }
+        }
+      }
+    },
     onTest () {
       const obj = {
         code: 200,
