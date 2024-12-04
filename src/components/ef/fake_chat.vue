@@ -25,7 +25,7 @@ export default {
       userInput: '',
       messages: [],
       welcomeMessage: '请告诉我您的需求，我将根据您的需求提供建议',
-      fixedOutput2: '右侧微服务应该能实现本模块的需求，后续将基于大模型提供仿真构建功能',
+      fixedOutput2: '按照您的需求，我们选择了右侧的服务，并以右侧的流程图进行了它们的组合与编排。您可以自行拖动流程图以修改它们的构建方式。',
       currentIndex: 0,
       isInputEnabled: true
     }
@@ -37,6 +37,8 @@ export default {
         this.messages.push({ text: this.userInput, isUser: true })
         this.messages.push({ text: '', isUser: false })
         this.typeWriter(this.fixedOutput2)
+        this.$emit('update-services', this.getUpdatedServices())
+        this.$emit('update-flow', this.getUpdatedFlow())
       }
     },
     typeWriter(text) {
@@ -44,6 +46,77 @@ export default {
         this.messages[this.messages.length - 1].text += text.charAt(this.currentIndex)
         this.currentIndex++
         setTimeout(() => this.typeWriter(text), 100) // 每100毫秒输出一个字符
+      }
+    },
+    getUpdatedServices() {
+      return [
+        {
+          id: '3',
+          type: 'group',
+          name: '低空飞行器操控服务',
+          open: true,
+          children: [
+            {
+              id: '100',
+              type: 'group',
+              name: '无人机目标识别服务',
+              open: true,
+              children: [{
+                id: '1001',
+                type: 'getTargetLocation',
+                name: 'getTargetLocation',
+                ico: 'el-icon-location-information',
+                style: {}
+              }, {
+                id: '1002',
+                type: 'getTargetType',
+                name: 'getTargetType',
+                ico: 'el-icon-user',
+                style: {}
+              }]
+            },
+            {
+              id: '101',
+              type: 'group',
+              name: '无人机远程控制服务',
+              open: true,
+              children: [{
+                id: '1101',
+                type: 'setTargetLocation',
+                name: 'setTargetLocation',
+                ico: 'el-icon-add-location',
+                style: {}
+              }, {
+                id: '1102',
+                type: 'setMotionMode',
+                name: 'setMotionMode',
+                ico: 'el-icon-rank',
+                style: {}
+              }, {
+                id: '1103',
+                type: 'runUAV',
+                name: 'runUAV',
+                ico: 'el-icon-video-play',
+                style: {}
+              }]
+            }
+          ]
+        }
+      ]
+    },
+    getUpdatedFlow() {
+      return {
+        name: '初始流程图',
+        nodeList: [
+          { id: '1001', name: 'getTargetLocation', type: 'start', left: '0', top: '60px', ico: 'el-icon-location-information', state: 'success' },
+          { id: '1101', name: 'setTargetLocation', type: 'process', left: '250px', top: '0px', ico: 'el-icon-add-location', state: 'success' },
+          { id: '1102', name: 'setMotionMode', type: 'process', left: '300px', top: '250px', ico: 'el-icon-add-location', state: 'success' }
+        ],
+        lineList: [
+          { from: '1001', to: '1101' },
+          { from: '1101', to: '1102' },
+          { from: '1102', to: '1103' }
+        ]
       }
     }
   },
@@ -58,7 +131,7 @@ export default {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 88px);
-  width: 25vw;
+  width: 35vw;
   border: 1px solid #ccc;
   border-radius: 8px;
   overflow: hidden;
