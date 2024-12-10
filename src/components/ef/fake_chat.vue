@@ -10,7 +10,7 @@
         type="text"
         v-model="userInput"
         @keyup.enter="handleUserInput"
-        placeholder="输入内容..."
+        placeholder="告诉AI你想做什么"
         :disabled="!isInputEnabled"
       />
       <button @click="handleUserInput" :disabled="!isInputEnabled">发送</button>
@@ -25,7 +25,6 @@ export default {
       userInput: '',
       messages: [],
       welcomeMessage: '请告诉我您的需求，我将根据您的需求提供建议',
-      fixedOutput2: '按照您的需求，我们选择了右侧的服务，并以右侧的流程图进行了它们的组合与编排。您可以自行拖动流程图以修改它们的构建方式。',
       currentIndex: 0,
       isInputEnabled: true
     }
@@ -36,7 +35,9 @@ export default {
         this.isInputEnabled = false
         this.messages.push({ text: this.userInput, isUser: true })
         this.messages.push({ text: '', isUser: false })
-        this.typeWriter(this.fixedOutput2)
+        const chosenServices = ['异常识别微服务', '报告生成微服务']
+        const outputMessage = `按照您的需求，我选择了\`${chosenServices.join('`')}\`中的一些相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
+        this.typeWriter(outputMessage)
         this.$emit('update-services', this.getUpdatedServices())
         this.$emit('update-flow', this.getUpdatedFlow())
       }
@@ -51,52 +52,56 @@ export default {
     getUpdatedServices() {
       return [
         {
-          id: '3',
+          id: '9',
           type: 'group',
-          name: '低空飞行器操控服务',
+          name: '跨境支付AI监测服务',
           open: true,
           children: [
             {
-              id: '100',
+              id: '90',
               type: 'group',
-              name: '无人机目标识别服务',
+              name: '异常识别微服务',
               open: true,
-              children: [{
-                id: '1001',
-                type: 'getTargetLocation',
-                name: 'getTargetLocation',
-                ico: 'el-icon-location-information',
-                style: {}
-              }, {
-                id: '1002',
-                type: 'getTargetType',
-                name: 'getTargetType',
-                ico: 'el-icon-user',
-                style: {}
-              }]
+              children: [
+                {
+                  id: '9002',
+                  type: 'preprocess',
+                  name: 'preprocess',
+                  ico: 'el-icon-c-scale-to-original',
+                  style: {}
+                },
+                {
+                  id: '9005',
+                  type: 'evaluate',
+                  name: 'evaluate',
+                  ico: 'el-icon-data-line',
+                  style: {}
+                },
+                {
+                  id: '9006',
+                  type: 'visualize',
+                  name: 'visualize',
+                  ico: 'el-icon-pie-chart',
+                  style: {}
+                }
+              ]
             },
             {
-              id: '101',
+              id: '94',
               type: 'group',
-              name: '无人机远程控制服务',
+              name: '报告生成微服务',
               open: true,
               children: [{
-                id: '1101',
-                type: 'setTargetLocation',
-                name: 'setTargetLocation',
-                ico: 'el-icon-add-location',
+                id: '9401',
+                type: 'generateReport',
+                name: 'generateReport',
+                ico: 'el-icon-document-add',
                 style: {}
               }, {
-                id: '1102',
-                type: 'setMotionMode',
-                name: 'setMotionMode',
-                ico: 'el-icon-rank',
-                style: {}
-              }, {
-                id: '1103',
-                type: 'runUAV',
-                name: 'runUAV',
-                ico: 'el-icon-video-play',
+                id: '9402',
+                type: 'sendReport',
+                name: 'sendReport',
+                ico: 'el-icon-upload',
                 style: {}
               }]
             }
@@ -106,16 +111,70 @@ export default {
     },
     getUpdatedFlow() {
       return {
-        name: '初始流程图',
+        name: 'AI推荐流程',
         nodeList: [
-          { id: '1001', name: 'getTargetLocation', type: 'start', left: '0', top: '60px', ico: 'el-icon-location-information', state: 'success' },
-          { id: '1101', name: 'setTargetLocation', type: 'process', left: '250px', top: '0px', ico: 'el-icon-add-location', state: 'success' },
-          { id: '1102', name: 'setMotionMode', type: 'process', left: '300px', top: '250px', ico: 'el-icon-add-location', state: 'success' }
+          {
+            id: '9000',
+            name: 'preprocess',
+            type: 'start',
+            left: '0',
+            top: '0px',
+            ico: 'el-icon-c-scale-to-original',
+            input: 'csv File',
+            output: 'json',
+            version: '1.0',
+            state: 'success'
+          },
+          { id: '9001',
+            name: 'evaluate',
+            type: 'process',
+            left: '0',
+            top: '250px',
+            ico: 'el-icon-s-data',
+            state: 'success',
+            input: 'json',
+            output: 'vector',
+            version: '1.1'
+          },
+          { id: '9002',
+            name: 'visualize',
+            type: 'process',
+            left: '200px',
+            top: '120px',
+            ico: 'el-icon-pie-chart',
+            state: 'warning',
+            input: 'vector',
+            output: 'image',
+            version: '1.2'
+          },
+          { id: '9101',
+            name: 'generateReport',
+            type: 'process',
+            left: '420px',
+            top: '0px',
+            ico: 'el-icon-document-add',
+            state: 'success',
+            input: 'image',
+            output: 'pdf',
+            version: '1.0'
+          },
+          { id: '9102',
+            name: 'sendReport',
+            type: 'end',
+            left: '400px',
+            top: '220px',
+            ico: 'el-icon-upload',
+            state: 'error',
+            input: 'pdf',
+            output: '',
+            version: '0.8'
+          }
         ],
         lineList: [
-          { from: '1001', to: '1101' },
-          { from: '1101', to: '1102' },
-          { from: '1102', to: '1103' }
+          { from: '9000', to: '9001' },
+          { from: '9001', to: '9002' },
+          { from: '9002', to: '9101' },
+          { from: '9101', to: '9102' }
         ]
       }
     }
@@ -130,7 +189,6 @@ export default {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 88px);
   width: 35vw;
   border: 1px solid #ccc;
   border-radius: 8px;

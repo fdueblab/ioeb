@@ -29,7 +29,6 @@ import Dialog from '@/components/Dialog'
 // custom components
 
 import DescriptionList from '@/components/DescriptionList'
-import ServiceComposition from '@/components/ServiceComposition'
 
 export {
   AvatarList,
@@ -58,6 +57,5 @@ export {
 
   Dialog,
 
-  DescriptionList,
-  ServiceComposition
+  DescriptionList
 }

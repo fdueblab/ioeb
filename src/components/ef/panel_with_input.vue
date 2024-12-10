@@ -14,14 +14,14 @@
             <el-button plain round @click="dataReloadE" icon="el-icon-refresh" size="mini">自定义样式</el-button>
             <el-button plain round @click="dataReloadClear" icon="el-icon-refresh" size="mini">清空画布</el-button>
             <el-button plain round @click="test" icon="el-icon-refresh" size="mini">{{ this.isTesting ? '停止测试' : '测试连接' }}</el-button>
-            <el-button plain round @click="addExternalServices" icon="el-icon-plus" size="mini">添加微服务</el-button>
+            <el-button plain round @click="addServices" icon="el-icon-plus" size="mini">添加微服务</el-button>
           </div>
         </div>
       </el-col>
     </el-row>
     <div style="display: flex;height: calc(100% - 47px);">
       <div style="width: 15vw; border-right: 1px solid #dce3e8;background-color: #FBFBFB">
-        <node-menu @addNode="addNode" ref="nodeMenu" :menu-list="initialServices"></node-menu>
+        <node-menu @addNode="addNode" ref="nodeMenu" :menu-list="services"></node-menu>
       </div>
       <div id="efContainer" ref="efContainer" class="container" v-flowDrag style="flex: 1; position: relative; background-color: #f0f2f7">
         <template v-for="node in data.nodeList">
@@ -29,13 +29,21 @@
                      @changeNodeSite="changeNodeSite" @nodeRightMenu="nodeRightMenu" @clickNode="clickNode">
           </flow-node>
         </template>
-        <div style="position: fixed; bottom: 0; width: 700px; border-left: 1px solid #dce3e8; border-top: 1px solid #dce3e8; background-color: #FBFBFB; z-index: 999">
+        <div style="position: fixed; bottom: 0; border-left: 1px solid #dce3e8; border-top: 1px solid #dce3e8; background-color: #FBFBFB; z-index: 999">
           <flow-node-form ref="nodeForm" @setLineLabel="setLineLabel" @repaintEverything="repaintEverything"
                           :flow-data="data" :data-reload-clear="dataReloadClear"></flow-node-form>
         </div>
       </div>
     </div>
-    <flow-info v-if="flowInfoVisible" ref="flowInfo" :data="data"></flow-info>
+    <flow-info v-if="flowInfoVisible" ref="flowInfo" :data="data" />
+    <services-adder
+      v-if="servicesAdderVisible"
+      ref="servicesAdder"
+      :title="services[0]?.name"
+      :initialSelectedItems="services[0]?.children"
+      @confirm="handleServiceConfirm"
+      @close="handleServiceClose"
+    />
   </div>
 </template>
 
@@ -47,7 +55,8 @@ import { easyFlowMixin } from '@/components/ef/mixins'
 import flowNode from '@/components/ef/node'
 import nodeMenu from '@/components/ef/node_menu_with_input'
 import FlowInfo from '@/components/ef/info'
-import FlowNodeForm from './node_form_bottom'
+import FlowNodeForm from '@/components/ef/node_form_bottom'
+import ServicesAdder from '@/components/ef/services_adder'
 import lodash from 'lodash'
 import { getDataA } from './data_A'
 import { getDataB } from './data_B'
@@ -72,7 +81,9 @@ export default {
       jsPlumb: null,
       easyFlowVisible: true,
       flowInfoVisible: false,
+      servicesAdderVisible: false,
       loadEasyFlowFinish: false,
+      services: [],
       data: {
         name: '流程图',
         nodeList: [],
@@ -120,7 +131,7 @@ export default {
   },
   mixins: [easyFlowMixin],
   components: {
-    draggable, flowNode, nodeMenu, FlowInfo, FlowNodeForm
+    draggable, flowNode, nodeMenu, FlowInfo, FlowNodeForm, ServicesAdder
   },
   directives: {
     'flowDrag': {
@@ -158,7 +169,16 @@ export default {
   },
   mounted() {
     this.jsPlumb = jsPlumb.getInstance()
+    this.setServices(this.initialServices)
     this.parseInitialFlowText()
+  },
+  watch: {
+    initialServices: {
+      handler(newVal) {
+        this.setServices(newVal)
+      },
+      deep: true
+    },
   },
   methods: {
     getUUID() {
@@ -177,6 +197,9 @@ export default {
         console.error('Failed to get initial flow', error)
         this.dataReloadClear()
       }
+    },
+    setServices(serviceList) {
+      this.services = serviceList
     },
     jsPlumbInit() {
       this.jsPlumb.ready(() => {
@@ -422,7 +445,6 @@ export default {
       this.menu.top = evt.y + 'px'
     },
     repaintEverything() {
-      console.log('重绘')
       this.jsPlumb.repaint()
     },
     dataInfo() {
@@ -524,18 +546,20 @@ export default {
         });
       }
     },
-    getExternalServices() {
-      // 假设这个方法能获取外部服务，返回一些写死的示例服务
-      return [
-        { name: '服务1', type: 'service', ico: 'el-icon-service' },
-        { name: '服务2', type: 'service', ico: 'el-icon-service' },
-        { name: '服务3', type: 'service', ico: 'el-icon-service' }
-      ]
+    handleServiceConfirm(selectedItems) {
+      const childrenServices = [...this.services[0].children, ...selectedItems]
+      this.setServices([{
+        ...this.services[0],
+        children: childrenServices
+      }])
     },
-    addExternalServices() {
-      const services = this.getExternalServices()
-      services.forEach(service => {
-        this.addExternalNode(service)
+    handleServiceClose() {
+      this.servicesAdderVisible = false
+    },
+    addServices() {
+      this.servicesAdderVisible = true
+      this.$nextTick(() => {
+        this.$refs.servicesAdder.init()
       })
     },
     addExternalNode(node) {
@@ -547,7 +571,8 @@ export default {
         left: '100px',
         top: '100px',
         ico: node.ico,
-        state: 'success'
+        state: 'success',
+        style: {}
       }
 
       this.data.nodeList.push(newNode)

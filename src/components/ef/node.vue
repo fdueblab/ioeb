@@ -31,11 +31,11 @@
         <p><strong>Output:</strong> {{ node.output }}</p>
         <p><strong>Version:</strong> {{ node.version }}</p> -->
       <label><strong>Input:</strong></label>
-      <input type="text" value="input" readonly>
+      <input type="text" :value="node.input" readonly>
       <label><strong>Output:</strong></label>
-      <input type="text" value="output" readonly>
+      <input type="text" :value="node.output" readonly>
       <label><strong>Version:</strong></label>
-      <input type="text" value="v1.0" readonly>
+      <input type="text" :value="node.version" readonly>
     </div>
   </div>
 </template>

@@ -23,7 +23,7 @@ export default {
   menu: {
     locale: true
   },
-  title: '微服务工具箱',
+  title: 'AI资源开放平台',
   pwa: false,
   iconfontUrl: '',
   production: process.env.NODE_ENV === 'production' && process.env.VUE_APP_PREVIEW !== 'true'

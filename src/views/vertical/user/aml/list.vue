@@ -42,29 +42,19 @@
           </a-form-item>
         </standard-form-row>
 
-        <standard-form-row title="其他" grid last>
-          <a-row :gutter="24">
-            <a-col :span="8">
-              <a-form-item label="服务名称" :wrapper-col="{ xs: 18, sm: 18, md: 18 }">
-                <a-input style="width: 100%" v-model="queryParam.name" placeholder=""/>
+        <standard-form-row title="智能检索" grid last>
+          <a-row>
+            <a-col :span="16">
+              <a-form-item :wrapper-col="{ xs: 18, sm: 18, md: 18 }">
+                <a-input-search style="width: 100%" v-model="agentSearchText" placeholder="请输入您想要的微服务名称、功能等"
+                                @search="handleAgentSearch" :loading="agentSearchLoading" />
               </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <a-form-item label="发布日期" :wrapper-col="{ xs: 18, sm: 18, md: 18 }">
-                <a-date-picker v-model="queryParam.pushDate" style="width: 100%" placeholder="请输入更新日期"/>
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <span class="table-page-search-submitButtons" :style="advanced && { float: 'right', overflow: 'hidden' } || {} ">
-                <a-button type="primary" @click="handleSearch">查询</a-button>
-                <a-button style="margin-left: 8px" @click="handleReset">重置</a-button>
-              </span>
             </a-col>
           </a-row>
         </standard-form-row>
       </a-form>
     </a-card>
-    <a-card :bordered="false">
+    <a-card :bordered="false" :title="agentSearchData.length > 0 ? 'AI智能检索为您推荐以下微服务' : false">
       <a-table
         ref="table"
         :columns="columns"
@@ -134,17 +124,6 @@ const normMap = {
 }
 const data = []
 data.push({
-  name: '异常识别微服务',
-  type: 0,
-  domain: 0,
-  industry: 0,
-  scenario: 0,
-  technology: 0,
-  status: 1,
-  norm: [0, 1, 2],
-  number: '2342'
-})
-data.push({
   name: '安全计算微服务',
   type: 0,
   domain: 0,
@@ -167,17 +146,6 @@ data.push({
   number: '2342'
 })
 data.push({
-  name: '报告生成微服务',
-  type: 0,
-  domain: 0,
-  industry: 2,
-  scenario: 3,
-  technology: 3,
-  status: 2,
-  norm: [0, 1, 3],
-  number: '2342'
-})
-data.push({
   name: '信用评估微服务',
   type: 0,
   domain: 0,
@@ -188,6 +156,30 @@ data.push({
   norm: [1, 2, 3],
   number: '2342'
 })
+data.push({
+  name: '报告生成微服务',
+  type: 0,
+  domain: 0,
+  industry: 2,
+  scenario: 3,
+  technology: 3,
+  status: 2,
+  norm: [0, 1, 3],
+  number: '2342'
+})
+if (sessionStorage.getItem('upload_exception_service') === '1') {
+  data.push({
+    name: '异常识别微服务',
+    type: 0,
+    domain: 0,
+    industry: 0,
+    scenario: 0,
+    technology: 0,
+    status: 1,
+    norm: [0, 1, 2],
+    number: '2342'
+  })
+}
 
 export default {
   name: 'TableList',
@@ -205,16 +197,16 @@ export default {
       visible: false,
       confirmLoading: false,
       mdl: null,
-      // 高级搜索 展开/关闭
-      advanced: false,
+      agentSearchText: '',
+      agentSearchLoading: false,
+      agentSearchData: [],
       // 查询参数
       queryParam: {
         type: [],
         domain: [],
         industry: [],
         scenario: [],
-        technology: [],
-        name: ''
+        technology: []
       },
       // 加载数据方法 必须为 Promise 对象
       columns: [
@@ -271,7 +263,7 @@ export default {
       selectedRowKeys: [],
       selectedRows: [],
       typeArr: ['原子微服务', '元应用服务'],
-      domainArr: ['跨境支付异常监测服务'],
+      domainArr: ['跨境支付AI监测服务'],
       industryArr: ['金融风控', '自贸监管', '跨境贸易', '跨境电商'],
       scenarioArr: ['反洗钱', '合规监测', '税务稽查', '业务统计', '信用评估'],
       technologyArr: ['异常识别', '安全计算', '技术评测', '报告生成', '配套技术', '关联技术']
@@ -302,7 +294,6 @@ export default {
       } else {
         this.queryParam[field].push(selectedTagVal)
       }
-      console.log(this.queryParam)
       this.filterDataSource()
     },
     filterDataSource() {
@@ -311,9 +302,7 @@ export default {
           (this.queryParam.domain.length > 0 ? this.queryParam.domain.includes(item.domain) : true) &&
           (this.queryParam.industry.length > 0 ? this.queryParam.industry.includes(item.industry) : true) &&
           (this.queryParam.scenario.length > 0 ? this.queryParam.scenario.includes(item.scenario) : true) &&
-          (this.queryParam.technology.length > 0 ? this.queryParam.technology.includes(item.technology) : true) // &&
-          // (this.queryParam.name ? item.name.includes(this.queryParam.name) : true) &&
-          // (this.queryParam.pushDate ? moment(item.pushDate).isSame(this.queryParam.pushDate, 'day') : true)
+          (this.queryParam.technology.length > 0 ? this.queryParam.technology.includes(item.technology) : true)
       })
     },
     handleSearch() {
@@ -410,12 +399,27 @@ export default {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
     },
-    toggleAdvanced () {
-      this.advanced = !this.advanced
-    },
     resetSearchForm () {
       this.queryParam = {
         date: moment(new Date())
+      }
+    },
+    handleAgentSearch() {
+      console.log(this.agentSearchText)
+      if (this.agentSearchText && this.agentSearchText !== '') {
+        this.agentSearchLoading = true
+        new Promise((resolve, reject) => {
+          setTimeout(() => {
+            this.agentSearchData = this.dataSource.filter((item, index) => (index % 2 === 0))
+            resolve()
+          }, 1000)
+        }).then(res => {
+          this.filteredDataSource = this.agentSearchData
+        }).finally(() => {
+          this.agentSearchLoading = false
+        })
+      } else {
+        this.$message.error('请先输入您的需求！')
       }
     }
   }
@@ -432,5 +436,45 @@ export default {
 
 .list-articles-trigger {
   margin-left: 12px;
+}
+
+/* 聊天机器人容器的样式 */
+.dify-chatbot-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: 400px;
+  height: 500px;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* 按钮的样式 */
+.dify-chatbot-bubble-button {
+  width: 60px;
+  border-radius: 25%; /* 圆形按钮 */
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dify-chatbot-bubble-button:hover {
+  background: #40a9f0;
+  transform: scale(1.1); /* 悬停时放大 */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dify-chatbot-bubble-button:active {
+  transform: scale(0.95); /* 点击时缩小 */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 </style>

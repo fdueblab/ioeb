@@ -21,9 +21,9 @@ export const asyncRouterMap = [
         path: '/home',
         name: 'home',
         meta: {
-            title: '首页',
+            title: '服务与应用数据统计',
             keepAlive: true,
-            icon: 'home',
+            icon: 'bar-chart',
             permission: ['admin', 'publisher', 'user']
         },
         component: () => import('@/views/dashboard/Analysis')
@@ -40,12 +40,12 @@ export const asyncRouterMap = [
             path: '/vertical-user/aml',
             name: 'vertical-user-aml',
             component: () => import('@/views/vertical/user/aml'),
-            meta: { title: '跨境支付监测', keepAlive: true, permission: ['admin', 'publisher'] }
+            meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher'] }
           },
           {
             path: '/vertical-user/aircraft',
             name: 'vertical-user-aircraft',
-            meta: { title: '低空飞行器监测控制', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '低空飞行AI监控', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/aircraft')
           }
         ]
@@ -56,19 +56,41 @@ export const asyncRouterMap = [
         name: 'vertical-ms',
         redirect: '/vertical-ms/aml',
         component: RouteView,
-        meta: { title: '垂域原子微服务发布', keepAlive: true, icon: 'form', permission: ['admin', 'publisher'] },
+        meta: { title: '垂域原子微服务发布', keepAlive: true, icon: 'upload', permission: ['admin', 'publisher'] },
         children: [
           {
             path: '/vertical-ms/aml',
             name: 'vertical-ms-aml',
             component: () => import('@/views/vertical/ms/aml'),
-            meta: { title: '跨境支付反洗钱服务发布', keepAlive: true, permission: ['admin', 'publisher'] }
+            meta: { title: '跨境支付AI监测服务发布', keepAlive: true, permission: ['admin', 'publisher'] }
           },
           {
             path: '/vertical-ms/aircraft',
             name: 'vertical-ms-aircraft',
-            meta: { title: '低空飞行器操控服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '低空飞行AI监控服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/ms/aircraft')
+          }
+        ]
+      },
+      // 垂域元应用仿真构建
+      {
+        path: '/vertical-meta-app',
+        name: 'vertical-ms',
+        redirect: '/vertical-atom-app/aml',
+        component: RouteView,
+        meta: { title: '垂域元应用仿真构建', keepAlive: true, icon: 'form', permission: ['admin', 'publisher', 'user'] },
+        children: [
+          {
+            path: '/vertical-atom-app/aml',
+            name: 'vertical-meta-app-aml',
+            component: () => import('@/views/schedule/AmlSchedule'),
+            meta: { title: '跨境元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+          },
+          {
+            path: '/vertical-atom-app/aircraft',
+            name: 'vertical-atom-app-aircraft',
+            component: () => import('@/views/schedule/AirCraftSchedule'),
+            meta: { title: '低空元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
           }
         ]
       },
@@ -84,7 +106,7 @@ export const asyncRouterMap = [
             path: '/evaluation/aml',
             name: 'evaluation-aml',
             component: RouteView,
-            meta: { title: '跨境支付反洗钱服务评测', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '跨境支付AI监测服务评测', keepAlive: true, permission: ['admin', 'publisher'] },
             children: [
               {
                 path: '/evaluation/aml/technology',
@@ -109,7 +131,7 @@ export const asyncRouterMap = [
           {
             path: '/evaluation/aircraft',
             name: 'evaluation-aircraft',
-            meta: { title: '低空飞行器操控服务评测', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '低空飞行AI监控服务评测', keepAlive: true, permission: ['admin', 'publisher'] },
             component: RouteView,
             children: [
               {
@@ -146,7 +168,7 @@ export const asyncRouterMap = [
             path: '/operation/aml',
             name: 'operation-aml',
             component: RouteView,
-            meta: { title: '跨境支付反洗钱服务运维管理', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '跨境支付AI监测服务运维管理', keepAlive: true, permission: ['admin', 'publisher'] },
             children: [
               {
                 path: '/operation/aml/container-status',
@@ -165,7 +187,7 @@ export const asyncRouterMap = [
           {
             path: '/operation/aircraft',
             name: 'operation-aircraft',
-            meta: { title: '低空飞行器操控服务运维管理', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '低空飞行AI监控服务运维管理', keepAlive: true, permission: ['admin', 'publisher'] },
             component: RouteView,
             children: [
               {
@@ -365,49 +387,44 @@ export const asyncRouterMap = [
       {
         path: '/guide',
         name: 'guide',
-        meta: {
-          title: '使用指南',
-          keepAlive: true,
-          icon: 'team',
-          permission: ['admin', 'publisher', 'user']
-        },
+        meta: { title: '使用指南', keepAlive: true, icon: 'book', permission: ['admin', 'publisher', 'user'] },
         component: () => import('@/views/dashboard/Guide')
       },
       // 用户管理
-      {
-        path: '/management',
-        name: 'management',
-        redirect: '/management/role',
-        component: RouteView,
-        hidden: true,
-        meta: { title: '用户管理', keepAlive: true, icon: 'setting', permission: ['admin', 'publisher'] },
-        children: [
-          {
-            path: '/management/role',
-            name: 'management_role',
-            component: () => import('@/views/management/Role'),
-            meta: { title: '角色管理', keepAlive: true, permission: ['admin', 'publisher'] }
-          },
-          {
-            path: '/management/user',
-            name: 'management_user',
-            component: () => import('@/views/management/User'),
-            meta: { title: '用户管理', keepAlive: true, permission: ['admin', 'publisher'] }
-          },
-          {
-            path: '/management/permission',
-            name: 'management_permission',
-            component: () => import('@/views/management/PermissionList'),
-            meta: { title: '用户权限', keepAlive: true, permission: ['admin', 'publisher'] }
-          },
-          {
-            path: '/management/tenant',
-            name: 'management_tenant',
-            component: () => import('@/views/management/TenantList'),
-            meta: { title: '租户管理', keepAlive: true, permission: ['admin', 'publisher'] }
-          }
-        ]
-      },
+      // {
+      //   path: '/management',
+      //   name: 'management',
+      //   redirect: '/management/role',
+      //   component: RouteView,
+      //   hidden: true,
+      //   meta: { title: '用户管理', keepAlive: true, icon: 'setting', permission: ['admin', 'publisher'] },
+      //   children: [
+      //     {
+      //       path: '/management/role',
+      //       name: 'management_role',
+      //       component: () => import('@/views/management/Role'),
+      //       meta: { title: '角色管理', keepAlive: true, permission: ['admin', 'publisher'] }
+      //     },
+      //     {
+      //       path: '/management/user',
+      //       name: 'management_user',
+      //       component: () => import('@/views/management/User'),
+      //       meta: { title: '用户管理', keepAlive: true, permission: ['admin', 'publisher'] }
+      //     },
+      //     {
+      //       path: '/management/permission',
+      //       name: 'management_permission',
+      //       component: () => import('@/views/management/PermissionList'),
+      //       meta: { title: '用户权限', keepAlive: true, permission: ['admin', 'publisher'] }
+      //     },
+      //     {
+      //       path: '/management/tenant',
+      //       name: 'management_tenant',
+      //       component: () => import('@/views/management/TenantList'),
+      //       meta: { title: '租户管理', keepAlive: true, permission: ['admin', 'publisher'] }
+      //     }
+      //   ]
+      // },
       // dashboard
       {
         path: '/dashboard',

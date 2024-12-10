@@ -74,7 +74,7 @@
 </template>
 
 <script>
-import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent, ServiceComposition } from '@/components'
+import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
 const statusMap = {
   0: {
     status: 'default',
@@ -136,8 +136,7 @@ export default {
     Ellipsis,
     TagSelect,
     StandardFormRow,
-    ArticleListContent,
-    ServiceComposition
+    ArticleListContent
   },
   data () {
     return {

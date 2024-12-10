@@ -110,13 +110,6 @@ const normMap = {
 }
 const data = []
 data.push({
-  name: '异常识别微服务',
-  type: '异常识别',
-  status: 1,
-  norm: [0, 1, 2],
-  number: '2342'
-})
-data.push({
   name: '安全计算微服务',
   type: '安全计算',
   status: 0,
@@ -131,19 +124,28 @@ data.push({
   number: '2342'
 })
 data.push({
-  name: '报告生成微服务',
-  type: '报告生成',
-  status: 2,
-  norm: [0, 1, 3],
-  number: '2342'
-})
-data.push({
   name: '信用评估微服务',
   type: '信用评估',
   status: 1,
   norm: [1, 2, 3],
   number: '2342'
 })
+data.push({
+  name: '报告生成微服务',
+  type: '报告生成',
+  status: 2,
+  norm: [0, 1, 3],
+  number: '2342'
+})
+if (sessionStorage.getItem('upload_exception_service') === '1') {
+  data.push({
+    name: '异常识别微服务',
+    type: '异常识别',
+    status: 1,
+    norm: [0, 1, 2],
+    number: '2342'
+  })
+}
 
 export default {
   name: 'TableList',

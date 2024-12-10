@@ -42,25 +42,13 @@
           </a-form-item>
         </standard-form-row>
 
-        <standard-form-row title="其他" grid last>
-          <a-row :gutter="24">
-            <a-col :span="8">
-              <a-form-item label="服务名称" :wrapper-col="{ xs: 18, sm: 18, md: 18 }">
-                <a-input style="width: 100%" v-model="queryParam.name" placeholder=""/>
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <a-form-item label="发布日期" :wrapper-col="{ xs: 18, sm: 18, md: 18 }">
-                <a-date-picker v-model="queryParam.pushDate" style="width: 100%" placeholder="请输入更新日期"/>
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <span class="table-page-search-submitButtons" :style="advanced && { float: 'right', overflow: 'hidden' } || {} ">
-                <a-button type="primary" @click="handleSearch">查询</a-button>
-                <a-button style="margin-left: 8px" @click="handleReset">重置</a-button>
-              </span>
-            </a-col>
-          </a-row>
+        <standard-form-row title="智能检索" grid last>
+          <a-form-item>
+            <a-button class="dify-chatbot-bubble-button" @click="toggleChatBot">
+              <a-icon type="robot" v-if="!showChatBot"/>
+              <a-icon type="close" v-else/>
+            </a-button>
+          </a-form-item>
         </standard-form-row>
       </a-form>
     </a-card>
@@ -92,6 +80,15 @@
         </span>
       </a-table>
     </a-card>
+    <!-- 聊天机器人容器 -->
+    <div v-if="showChatBot" class="dify-chatbot-container">
+      <iframe
+        src="https://yufanwenshu.cn/chatbot/RcN7gYC9B3UnlUWc"
+        style="width: 100%; height: 100%; min-height: 700px"
+        frameborder="0"
+        allow="microphone">
+      </iframe>
+    </div>
   </page-header-wrapper>
 </template>
 
@@ -205,8 +202,7 @@ export default {
       visible: false,
       confirmLoading: false,
       mdl: null,
-      // 高级搜索 展开/关闭
-      advanced: false,
+      showChatBot: false, // 控制聊天机器人是否显示
       // 查询参数
       queryParam: {
         type: [],
@@ -407,13 +403,13 @@ export default {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
     },
-    toggleAdvanced () {
-      this.advanced = !this.advanced
-    },
     resetSearchForm () {
       this.queryParam = {
         date: moment(new Date())
       }
+    },
+    toggleChatBot() {
+      this.showChatBot = !this.showChatBot // 切换聊天机器人的显示状态
     }
   }
 }
@@ -429,5 +425,44 @@ export default {
 
 .list-articles-trigger {
   margin-left: 12px;
+}
+
+.dify-chatbot-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: 400px;
+  height: 500px;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* 按钮的样式 */
+.dify-chatbot-bubble-button {
+  width: 60px;
+  border-radius: 25%; /* 圆形按钮 */
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dify-chatbot-bubble-button:hover {
+  background: #40a9f0;
+  transform: scale(1.1); /* 悬停时放大 */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dify-chatbot-bubble-button:active {
+  transform: scale(0.95); /* 点击时缩小 */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 </style>
