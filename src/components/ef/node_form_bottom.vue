@@ -35,6 +35,23 @@
               </el-col>
             </el-row>
             <el-row>
+              <el-col :span="8">
+                <el-form-item label="Input">
+                  <el-input v-model="node.input"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="Output">
+                  <el-input v-model="node.output"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="Version">
+                  <el-input v-model="node.version"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
               <el-col :span="24">
                 <el-form-item>
                   <el-button icon="el-icon-close">重置</el-button>
@@ -153,6 +170,9 @@ export default {
           node.left = this.node.left
           node.top = this.node.top
           node.ico = this.node.ico
+          node.input = this.node.input
+          node.output = this.node.output
+          node.version = this.node.version
           this.$emit('repaintEverything')
         }
       })

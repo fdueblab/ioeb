@@ -6,22 +6,23 @@
           <a-row :gutter="48">
             <a-col :md="8" :sm="24">
               <a-form-item label="服务名称">
-                <a-input v-model="queryParam.id" placeholder=""/>
+                <a-input v-model="queryParam.id" placeholder="请输入服务名称"/>
               </a-form-item>
             </a-col>
             <a-col :md="8" :sm="24">
               <a-form-item label="使用状态">
-                <a-select v-model="queryParam.status" placeholder="请选择" default-value="0">
-                  <a-select-option value="0">全部</a-select-option>
+                <a-select v-model="queryParam.status" placeholder="请选择" default-value="-1">
+                  <a-select-option value="-1">全部</a-select-option>
+                  <a-select-option value="0">未启动</a-select-option>
                   <a-select-option value="1">运行中</a-select-option>
-                  <a-select-option value="2">已停止</a-select-option>
+                  <a-select-option value="2">异常</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
             <a-col :md="8" :sm="24">
               <span class="table-page-search-submitButtons">
-                <a-button type="primary" @click="$refs.table.refresh(true)">查询</a-button>
-                <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>
+                <a-button type="primary" @click="handleSearch">查询</a-button>
+                <a-button style="margin-left: 8px" @click="handleReset">重置</a-button>
               </span>
             </a-col>
           </a-row>
@@ -30,12 +31,12 @@
 
       <div class="table-operator">
         <a-button type="primary" icon="plus" @click="handleAdd">新建</a-button>
+        <a-button icon="sync" @click="handleRefresh" :loading="isRefreshing">更新</a-button>
         <a-dropdown v-action:edit v-if="selectedRowKeys.length > 0">
           <a-menu slot="overlay">
-            <a-menu-item key="1"><a-icon type="delete" />删除</a-menu-item>
-            <a-menu-item key="2"><a-icon type="pause-circle" />停止</a-menu-item>
-            <a-menu-item key="3"><a-icon type="caret-right"/>启动</a-menu-item>
-            <a-menu-item key="4"><a-icon type="sync"/>更新</a-menu-item>
+            <a-menu-item key="1" @click="handleBatchDelete"><a-icon type="delete" />删除</a-menu-item>
+            <a-menu-item key="2" @click="handleBatchStop"><a-icon type="pause-circle" />停止</a-menu-item>
+            <a-menu-item key="3" @click="handleBatchStart"><a-icon type="caret-right"/>启动</a-menu-item>
           </a-menu>
           <a-button style="margin-left: 8px">
             批量操作 <a-icon type="down" />
@@ -46,7 +47,7 @@
       <a-table
         ref="table"
         :columns="columns"
-        :dataSource="dataSource"
+        :dataSource="filteredDataSource"
         :row-selection="rowSelection"
       >
         <span slot="serial" slot-scope="text, record, index">
@@ -57,10 +58,10 @@
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
-            <a v-if="record.status === 2" @click="handleEdit(record)">启动</a>
-            <a v-if="record.status === 1" @click="handleEdit(record)">停止</a>
+            <a v-if="record.status === 2 || record.status === 0" @click="handleStart(record)">启动</a>
+            <a v-if="record.status === 1" @click="handleStop(record)">停止</a>
             <a-divider type="vertical" />
-            <a @click="handleSub(record)">删除</a>
+            <a @click="handleDelete(record)">删除</a>
           </template>
         </span>
       </a-table>
@@ -73,7 +74,7 @@ import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/comp
 const statusMap = {
   0: {
     status: 'default',
-    text: '关闭'
+    text: '未启动'
   },
   1: {
     status: 'processing',
@@ -81,7 +82,7 @@ const statusMap = {
   },
   2: {
     status: 'error',
-    text: '已停止'
+    text: '异常'
   }
 }
 const data = []
@@ -141,15 +142,12 @@ export default {
   },
   data () {
     return {
-      // create model
-      form: this.$form.createForm(this),
-      visible: false,
-      confirmLoading: false,
-      mdl: null,
-      // 高级搜索 展开/关闭
-      advanced: false,
+      isRefreshing: false,
       // 查询参数
-      queryParam: {},
+      queryParam: {
+        id: '',
+        status: '-1'
+      },
       // 加载数据方法 必须为 Promise 对象
       columns: [
         {
@@ -186,9 +184,9 @@ export default {
         }
       ],
       dataSource: [],
+      filteredDataSource: [],
       selectedRowKeys: [],
-      selectedRows: [],
-      response: ''
+      selectedRows: []
     }
   },
   filters: {
@@ -200,7 +198,7 @@ export default {
     }
   },
   created () {
-    this.dataSource = data
+    this.initData()
   },
   computed: {
     rowSelection () {
@@ -214,38 +212,77 @@ export default {
     handleAdd () {
       this.$emit('onGoAdd')
     },
-    handleEdit (record) {
-      console.log(record)
+    // 查询
+    handleSearch() {
+      this.filteredDataSource = this.dataSource.filter(item => {
+        const nameMatch = item.name.includes(this.queryParam.id)
+        const statusMatch = this.queryParam.status === '-1' || item.status === Number(this.queryParam.status)
+        return nameMatch && statusMatch
+      })
     },
-    delConfirm() {
-      this.$message.success('删除成功！')
+    // 重置
+    handleReset() {
+      this.queryParam = { id: '', status: '-1' }
+      this.filteredDataSource = this.dataSource
     },
-    handleCancel () {
-      this.visible = false
-      const form = this.$refs.createModal.form
-      form.resetFields() // 清理表单数据（可不做）
+    // 启动
+    handleStart(record) {
+      record.status = 1
+      this.$message.success(`${record.name} 已启动`)
     },
-    handleChange (value) {
-      console.log(`selected ${value}`)
+    // 停止
+    handleStop(record) {
+      record.status = 0
+      this.$message.success(`${record.name} 已停止`)
     },
-    onSelectChange (selectedRowKeys, selectedRows) {
+    // 删除
+    handleDelete(record) {
+      this.dataSource = this.dataSource.filter(item => item !== record)
+      this.filteredDataSource = this.filteredDataSource.filter(item => item !== record)
+      this.$message.success(`${record.name} 已删除`)
+    },
+    // 批量启动
+    handleBatchStart() {
+      this.selectedRows.forEach(row => {
+        row.status = 1
+      })
+      this.$message.success('批量启动成功')
+    },
+    // 批量停止
+    handleBatchStop() {
+      this.selectedRows.forEach(row => {
+        row.status = 0
+      })
+      this.$message.success('批量停止成功')
+    },
+    // 批量删除
+    handleBatchDelete() {
+      this.dataSource = this.dataSource.filter(item => !this.selectedRowKeys.includes(item))
+      this.filteredDataSource = this.filteredDataSource.filter(item => !this.selectedRowKeys.includes(item))
+      this.selectedRowKeys = []
+      this.$message.success('批量删除成功')
+    },
+    handleRefresh() {
+      if (this.isRefreshing) return
+      this.isRefreshing = true
+      setTimeout(() => {
+        this.$message.success('刷新成功')
+        this.isRefreshing = false
+      }, 1000)
+    },
+    initData() {
+      this.dataSource = data
+      this.filteredDataSource = this.dataSource
+    },
+    // 选择行
+    onSelectChange(selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
-    },
-    toggleAdvanced () {
-      this.advanced = !this.advanced
-    },
-    onTest () {
-      const obj = {
-        code: 200,
-        message: '测试通过！'
-      }
-      const newObj = JSON.stringify(obj, null, 4)
-      this.response = newObj
     }
   }
 }
 </script>
+
 <style lang="less" scoped>
 .ant-pro-components-tag-select {
   :deep(.ant-pro-tag-select .ant-tag) {

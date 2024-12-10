@@ -12,9 +12,10 @@
             <a-col :md="8" :sm="24">
               <a-form-item label="使用状态">
                 <a-select v-model="queryParam.status" placeholder="请选择" default-value="0">
-                  <a-select-option value="0">全部</a-select-option>
+                  <a-select-option value="-1">全部</a-select-option>
+                  <a-select-option value="0">未启动</a-select-option>
                   <a-select-option value="1">运行中</a-select-option>
-                  <a-select-option value="2">已停止</a-select-option>
+                  <a-select-option value="2">异常</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -49,7 +50,7 @@ import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/comp
 const statusMap = {
   0: {
     status: 'default',
-    text: '关闭'
+    text: '未启动'
   },
   1: {
     status: 'processing',
@@ -57,19 +58,10 @@ const statusMap = {
   },
   2: {
     status: 'error',
-    text: '已停止'
+    text: '异常'
   }
 }
 const data = []
-data.push({
-  name: '异常识别微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8081/TCP → 0.0.0.0:8080',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 1,
-  norm: [0, 1, 2],
-  number: '2342'
-})
 data.push({
   name: '安全计算微服务',
   netWork: 'bridge',
@@ -97,6 +89,18 @@ data.push({
   norm: [0, 1, 3],
   number: '2342'
 })
+if (sessionStorage.getItem('upload_exception_service') === '1') {
+  data.push({
+    name: '异常识别微服务',
+    netWork: 'bridge',
+    port: '0.0.0.0:8081/TCP → 0.0.0.0:8080',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
+    status: 1,
+    norm: [0, 1, 2],
+    number: '2342'
+  })
+}
+
 export default {
   name: 'TableList',
   components: {

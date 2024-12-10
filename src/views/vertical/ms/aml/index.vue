@@ -8,7 +8,7 @@
               <a-form-item label="领域">
                 <a-select placeholder="请选择" default-value="0">
                   <a-select-option value="0">全部</a-select-option>
-                  <a-select-option value="1">跨境支付异常监测服务</a-select-option>
+                  <a-select-option value="1">跨境支付AI监测服务</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -124,7 +124,7 @@
                 </a-upload>
               </a-form-item>
               <a-form-item>
-                <div style="text-align: center;"> <a-button type="primary">发布</a-button> </div>
+                <div style="text-align: center;"> <a-button type="primary" @click="uploadService">发布</a-button> </div>
               </a-form-item>
             </a-form>
           </a-card>
@@ -219,11 +219,24 @@ export default {
     onUpload () {
       const json = {
         nodes: [
-          { id: '9101', x: 50, y: 50, label: 'getReport', size: 50, color: '#F6BD16', value: 'RestFul API' },
-          { id: '9102', x: 80, y: 50, label: 'sendReport', size: 50, color: '#5B8FF9', value: 'RestFul API' }
+          { id: '9001', x: 0, y: 150, label: 'datasets', size: 50, color: '#6F9654', value: 'RestFul API' },
+          { id: '9002', x: 150, y: 150, label: 'preprocess', size: 50, color: '#E76F51', value: 'RestFul API' },
+          { id: '9003', x: 300, y: 150, label: 'train', size: 50, color: '#2A9D8F', value: 'RestFul API' },
+          { id: '9004', x: 450, y: 50, label: 'predict', size: 50, color: '#F4A261', value: 'RestFul API' },
+          { id: '9005', x: 450, y: 150, label: 'evaluate', size: 50, color: '#264653', value: 'RestFul API' },
+          { id: '9006', x: 450, y: 250, label: 'visualize', size: 50, color: '#E9C46A', value: 'RestFul API' },
+          { id: '9007', x: 300, y: 250, label: 'models', size: 50, color: '#A8DADC', value: 'RestFul API' }
         ],
         edges: [
-          { sourceID: '9101', targetID: '9102' }
+          { sourceID: '9001', targetID: '9002' }, // datasets → preprocess
+          { sourceID: '9002', targetID: '9003' }, // preprocess → train
+          { sourceID: '9003', targetID: '9004' }, // train → predict
+          { sourceID: '9003', targetID: '9005' }, // train → evaluate
+          { sourceID: '9003', targetID: '9006' }, // train → visualize
+          { sourceID: '9003', targetID: '9007' }, // train → models
+          { sourceID: '9007', targetID: '9004' }, // models → predict
+          { sourceID: '9007', targetID: '9005' }, // models → evaluate
+          { sourceID: '9007', targetID: '9006' } // models → visualize
         ]
       }
 
@@ -288,6 +301,10 @@ export default {
       }
       const newObj = JSON.stringify(obj, null, 4)
       this.response = newObj
+    },
+    uploadService () {
+      this.$message.success('发布成功，请等待审核！')
+      sessionStorage.setItem('upload_exception_service', '0')
     }
   }
 }

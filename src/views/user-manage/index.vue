@@ -83,7 +83,7 @@ const statusMap = {
 const data = []
 data.push({
   name: '张三',
-  field: '跨境支付异常监测服务',
+  field: '跨境支付AI监测服务',
   org: '复旦大学',
   contact: '133*****876',
   number: '121',
