@@ -94,19 +94,19 @@ export const asyncRouterMap = [
           }
         ]
       },
-      // 技术评测与仿真验证
+      // 技术评测与业务验证
       {
         path: '/evaluation',
         name: 'evaluation',
         redirect: '/evaluation/aml/technology',
         component: RouteView,
-        meta: { title: '技术评测与仿真验证', keepAlive: true, icon: 'radar-chart', permission: ['admin', 'publisher'] },
+        meta: { title: '技术评测与业务验证', keepAlive: true, icon: 'radar-chart', permission: ['admin', 'publisher'] },
         children: [
           {
             path: '/evaluation/aml',
             name: 'evaluation-aml',
             component: RouteView,
-            meta: { title: '跨境支付AI监测服务评测', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '跨境支付AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
             children: [
               {
                 path: '/evaluation/aml/technology',
@@ -131,7 +131,7 @@ export const asyncRouterMap = [
           {
             path: '/evaluation/aircraft',
             name: 'evaluation-aircraft',
-            meta: { title: '低空飞行AI监控服务评测', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '低空飞行AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
             component: RouteView,
             children: [
               {
@@ -156,19 +156,19 @@ export const asyncRouterMap = [
           }
         ]
       },
-      // 技术微服务运维管理
+      // 服务及应用运维管理
       {
         path: '/operation',
         name: 'operation',
         redirect: '/operation/aml/container-status',
         component: RouteView,
-        meta: { title: '技术微服务运维管理', keepAlive: true, icon: 'control', permission: ['admin', 'publisher'] },
+        meta: { title: '服务及应用运维管理', keepAlive: true, icon: 'control', permission: ['admin', 'publisher'] },
         children: [
           {
             path: '/operation/aml',
             name: 'operation-aml',
             component: RouteView,
-            meta: { title: '跨境支付AI监测服务运维管理', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '跨境支付AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
             children: [
               {
                 path: '/operation/aml/container-status',
@@ -187,7 +187,7 @@ export const asyncRouterMap = [
           {
             path: '/operation/aircraft',
             name: 'operation-aircraft',
-            meta: { title: '低空飞行AI监控服务运维管理', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '低空飞行AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
             component: RouteView,
             children: [
               {
