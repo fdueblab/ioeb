@@ -2,7 +2,7 @@
   <div class="chat-container">
     <div class="chat-output" ref="chatOutput">
       <div v-for="(message, index) in messages" :key="index" :class="['chat-message', message.isUser ? 'user-message' : 'bot-message']">
-        <div class="message-content">{{ message.text }}</div>
+        <div class="message-content" v-html="message.text"></div>
       </div>
     </div>
     <div class="chat-input">
@@ -36,7 +36,7 @@ export default {
         this.messages.push({ text: this.userInput, isUser: true })
         this.messages.push({ text: '', isUser: false })
         const chosenServices = ['异常识别微服务', '报告生成微服务']
-        const outputMessage = `按照您的需求，我选择了\`${chosenServices.join('`')}\`中的一些相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
+        const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的一些相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
         this.typeWriter(outputMessage)
         this.$emit('update-services', this.getUpdatedServices())
         this.$emit('update-flow', this.getUpdatedFlow())
@@ -46,7 +46,7 @@ export default {
       if (this.currentIndex < text.length) {
         this.messages[this.messages.length - 1].text += text.charAt(this.currentIndex)
         this.currentIndex++
-        setTimeout(() => this.typeWriter(text), 100) // 每100毫秒输出一个字符
+        setTimeout(() => this.typeWriter(text), 50) // 每100毫秒输出一个字符
       }
     },
     getUpdatedServices() {
@@ -260,5 +260,14 @@ export default {
   background-color: #f0f0f0;
   color: #ccc;
   cursor: not-allowed;
+}
+
+/* 添加样式以支持 <code> 标签的显示 */
+.message-content code {
+  background-color: #f4f4f4;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: monospace;
+  color: #d63384;
 }
 </style>

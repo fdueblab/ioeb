@@ -70,9 +70,11 @@
             <a-col :span="6">
               <a-form-item label="程序">
                 <a-upload
-                  name="file"
-                  :multiple="true"
-                  action="">
+                  accept=".py,.jar"
+                  :file-list="programFiles"
+                  :remove="removeProgramFile"
+                  :customRequest="customProgramFilesChose"
+                  :multiple="true">
                   <a-button> <a-icon type="upload" /> 选择程序 </a-button>
                 </a-upload>
               </a-form-item>
@@ -81,7 +83,9 @@
               <a-form-item
                 :wrapperCol="{ span: 24 }"
                 style="text-align: center">
-                <a-button type="primary" @click="onUpload">开始上传</a-button>
+                <a-button type="primary" @click="onUpload" :disabled="programFiles.length === 0" :loading="uploadProgramLoading">
+                  开始上传
+                </a-button>
               </a-form-item>
             </a-col>
           </a-row>
@@ -117,14 +121,20 @@
               </a-form-item>
               <a-form-item label="接口/配置文件" label-width="100px">
                 <a-upload
-                  name="file"
-                  :multiple="false"
-                  action="">
+                  accept=".yml,.yaml,.json,.ini,.conf"
+                  :file-list="configFiles"
+                  :remove="removeConfigFile"
+                  :customRequest="customConfigFileChose"
+                  :multiple="false">
                   <a-button> <a-icon type="upload" /> 选择文件 </a-button>
                 </a-upload>
               </a-form-item>
               <a-form-item>
-                <div style="text-align: center;"> <a-button type="primary" @click="uploadService">发布</a-button> </div>
+                <div style="text-align: center;">
+                  <a-button type="primary" @click="uploadService" :disabled="programFiles.length === 0" :loading="uploadServiceLoading">
+                    发布
+                  </a-button>
+                </div>
               </a-form-item>
             </a-form>
           </a-card>
@@ -183,6 +193,10 @@ export default {
       form: this.$form.createForm(this),
       response: '',
       code: '',
+      programFiles: [],
+      configFiles: [],
+      uploadProgramLoading: false,
+      uploadServiceLoading: false,
       cmOptions: {
         mode: 'application/json',
         gutters: ['CodeMirror-lint-markers', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
@@ -217,6 +231,20 @@ export default {
   mounted () {},
   methods: {
     onUpload () {
+      this.uploadProgramLoading = true
+      setTimeout(() => {
+        // 模拟上传文件合法性校验
+        const file = this.programFiles
+        if (file[0] && file[0].name === 'abnormal_recognition.py') {
+          this.$message.success('上传成功，发现以下接口')
+          this.setChart()
+        } else {
+          this.$message.error('上传的程序不符合规范，上传失败！')
+        }
+        this.uploadProgramLoading = false
+      }, 1000)
+    },
+    setChart() {
       const json = {
         nodes: [
           { id: '9001', x: 0, y: 150, label: 'datasets', size: 50, color: '#6F9654', value: 'RestFul API' },
@@ -303,8 +331,45 @@ export default {
       this.response = newObj
     },
     uploadService () {
-      this.$message.success('发布成功，请等待审核！')
-      sessionStorage.setItem('upload_exception_service', '0')
+      this.uploadServiceLoading = true
+      setTimeout(() => {
+        this.$message.success('发布成功，请等待审核！')
+        sessionStorage.setItem('upload_exception_service', '0')
+        this.uploadServiceLoading = false
+      }, 1000)
+    },
+    async customProgramFilesChose (options) {
+      const { file } = options
+      if (!file) {
+        return false
+      }
+      const url = URL.createObjectURL(file)
+      this.programFiles.push({
+        uid: file?.uid,
+        name: file.name,
+        status: 'done',
+        url // url 是展示在页面上的绝对链接
+      })
+    },
+    removeProgramFile (file) {
+      this.programFiles = this.programFiles.filter(item => item.uid !== file.uid)
+    },
+    // 配置文件只支持单个文件
+    async customConfigFileChose (options) {
+      const { file } = options
+      if (!file) {
+        return false
+      }
+      const url = URL.createObjectURL(file)
+      this.configFiles = {
+        uid: file?.uid,
+        name: file.name,
+        status: 'done',
+        url // url 是展示在页面上的绝对链接
+      }
+    },
+    removeConfigFile () {
+      this.configFiles = []
     }
   }
 }
