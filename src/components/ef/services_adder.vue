@@ -101,7 +101,7 @@ export default {
         }
       })
     },
-    handleCheckChange(data, checked, indeterminate) {
+    handleCheckChange(data, checked) {
       if (checked) {
         const parentService = this.findParentService(data)
         if (parentService) {

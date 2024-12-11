@@ -11,7 +11,6 @@
           <el-button type="text" icon="el-icon-download" size="large" @click="downloadData"></el-button>
           <div style="float: right;margin-right: 5px">
             <el-button plain round icon="el-icon-document" @click="dataInfo" size="mini">流程信息</el-button>
-            <el-button plain round @click="dataReloadE" icon="el-icon-refresh" size="mini">自定义样式</el-button>
             <el-button plain round @click="dataReloadClear" icon="el-icon-refresh" size="mini">清空画布</el-button>
             <el-button plain round @click="test" icon="el-icon-refresh" size="mini">{{ this.isTesting ? '停止测试' : '测试连接' }}</el-button>
             <el-button plain round @click="addServices" icon="el-icon-plus" size="mini">添加微服务</el-button>
@@ -474,18 +473,6 @@ export default {
     },
     dataReloadA() {
       this.dataReload(getDataA())
-    },
-    dataReloadB() {
-      this.dataReload(getDataB())
-    },
-    dataReloadC() {
-      this.dataReload(getDataC())
-    },
-    dataReloadD() {
-      this.dataReload(getDataD())
-    },
-    dataReloadE() {
-      this.dataReload(getDataE())
     },
     dataReloadClear() {
       this.dataReload(getDataNew())

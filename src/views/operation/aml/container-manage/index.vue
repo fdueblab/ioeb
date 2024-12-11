@@ -6,7 +6,7 @@
           <a-row :gutter="48">
             <a-col :md="8" :sm="24">
               <a-form-item label="服务名称">
-                <a-input v-model="queryParam.id" placeholder="请输入服务名称"/>
+                <a-input v-model="queryParam.name" placeholder="请输入服务名称"/>
               </a-form-item>
             </a-col>
             <a-col :md="8" :sm="24">
@@ -71,58 +71,7 @@
 
 <script>
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-const statusMap = {
-  0: {
-    status: 'default',
-    text: '未启动'
-  },
-  1: {
-    status: 'processing',
-    text: '运行中'
-  },
-  2: {
-    status: 'error',
-    text: '异常'
-  }
-}
-const data = [
-  {
-    name: '安全计算微服务',
-    netWork: 'bridge',
-    port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-    volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-    status: 1,
-    norm: [0, 2],
-    number: '2342'
-  },
-  {
-    name: '技术评测微服务',
-    netWork: 'bridge',
-    port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-    volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-    status: 1,
-    norm: [1, 2],
-    number: '2342'
-  },
-  {
-    name: '报告生成微服务',
-    netWork: 'bridge',
-    port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-    volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-    status: 1,
-    norm: [0, 1, 3],
-    number: '2342'
-  },
-  {
-    name: '信用评估微服务',
-    netWork: 'bridge',
-    port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-    volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-    status: 2,
-    norm: [1, 2, 3],
-    number: '2342'
-  }
-]
+import { getAmlServices, getStatusMap } from '@/views/operation/aml/services_data'
 
 export default {
   name: 'TableList',
@@ -137,7 +86,7 @@ export default {
       isRefreshing: false,
       // 查询参数
       queryParam: {
-        id: '',
+        name: '',
         status: '-1'
       },
       // 加载数据方法 必须为 Promise 对象
@@ -183,9 +132,11 @@ export default {
   },
   filters: {
     statusFilter (type) {
+      const statusMap = getStatusMap()
       return statusMap[type].text
     },
     statusTypeFilter (type) {
+      const statusMap = getStatusMap()
       return statusMap[type].status
     }
   },
@@ -202,43 +153,43 @@ export default {
   },
   methods: {
     handleAdd () {
-      this.$emit('onGoAdd')
+      window.location.href = '/vertical-ms/aml'
     },
     // 查询
     handleSearch() {
       this.filteredDataSource = this.dataSource.filter(item => {
-        const nameMatch = item.name.includes(this.queryParam.id)
+        const nameMatch = item.name.includes(this.queryParam.name)
         const statusMatch = this.queryParam.status === '-1' || item.status === Number(this.queryParam.status)
         return nameMatch && statusMatch
       })
     },
     // 重置
     handleReset() {
-      this.queryParam = { id: '', status: '-1' }
+      this.queryParam = { name: '', status: '-1' }
       this.filteredDataSource = this.dataSource
     },
     // 启动
     handleStart(record) {
-      record.status = 1
       if (record.name === '异常识别微服务') {
         sessionStorage.setItem('upload_exception_service', '1')
       }
+      record.status = 1
       this.$message.success(`${record.name} 已启动`)
     },
     // 停止
     handleStop(record) {
-      record.status = 0
       if (record.name === '异常识别微服务') {
         sessionStorage.setItem('upload_exception_service', '0')
       }
+      record.status = 0
       this.$message.success(`${record.name} 已停止`)
     },
     // 删除
     handleDelete(record) {
-      data.splice(data.indexOf(record), 1)
+      this.dataSource = this.dataSource.filter(item => !this.selectedRowKeys.includes(item))
+      this.filteredDataSource = this.dataSource
       this.selectedRowKeys = []
       this.selectedRows = []
-      this.initData()
       this.$message.success(`${record.name} 已删除`)
     },
     // 批量启动
@@ -258,8 +209,9 @@ export default {
     // 批量删除
     handleBatchDelete() {
       this.dataSource = this.dataSource.filter(item => !this.selectedRowKeys.includes(item))
-      this.filteredDataSource = this.filteredDataSource.filter(item => !this.selectedRowKeys.includes(item))
+      this.filteredDataSource = this.dataSource
       this.selectedRowKeys = []
+      this.selectedRows = []
       this.$message.success('批量删除成功')
     },
     handleRefresh() {
@@ -272,18 +224,7 @@ export default {
       }, 1000)
     },
     initData () {
-      this.dataSource = data
-      if (sessionStorage.getItem('upload_exception_service')) {
-        this.dataSource[4] = {
-          name: '异常识别微服务',
-          netWork: 'bridge',
-          port: '0.0.0.0:8081/TCP → 0.0.0.0:8080',
-          volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-          status: sessionStorage.getItem('upload_exception_service') === '1' ? 1 : 0,
-          norm: [0, 1, 2],
-          number: '2342'
-        }
-      }
+      this.dataSource = getAmlServices()
       this.filteredDataSource = this.dataSource
     },
     // 选择行
