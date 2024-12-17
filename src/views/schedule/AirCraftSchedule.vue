@@ -1,18 +1,26 @@
 <template>
   <div class="schedule-with-input">
-    <!--    TODO: 解决跨域问题，对接真正后端-->
-    <iframe
-      src="https://yufanwenshu.cn/chatbot/l3XNgHzLlECqrr0r"
-      style="height: 100%; width: 35vw;"
-      frameborder="0"
-      allow="microphone">
-    </iframe>
-    <iframe
-      src="https://yufanwenshu.cn/app/d999c955-66bb-492a-aa98-9327b39ade39/workflow"
-      style="height: 100%; width: 100%;"
-      frameborder="0"
-      allow="microphone">
-    </iframe>
+    <div style="height: 100%; width: 35vw;">
+      聊天机器人嵌入地址：
+      <a-input v-model="chatBotUrl" placeholder="请输入聊天机器人地址" />
+      <iframe
+        :src="chatBotUrl"
+        style="height: 100%; width: 100%;"
+        frameborder="0"
+        allow="microphone">
+      </iframe>
+    </div>
+    <div style="height: 100%; width: 100%;">
+      流程图嵌入地址：
+      <a-input v-model="flowUrl" placeholder="请输入流程图嵌入地址" />
+      <iframe
+        :src="flowUrl"
+        style="height: 100%; width: 100%;"
+        frameborder="0"
+        allow="microphone">
+      </iframe>
+    </div>
+
   </div>
 </template>
 
@@ -28,6 +36,8 @@ export default {
   },
   data () {
     return {
+      chatBotUrl: 'https://yufanwenshu.cn/chatbot/l3XNgHzLlECqrr0r',
+      flowUrl: 'https://yufanwenshu.cn/app/d999c955-66bb-492a-aa98-9327b39ade39/workflow',
       initFlow: {},
       initServices: [
         {

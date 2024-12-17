@@ -1,4 +1,4 @@
-const amlServices = [
+const amlServiceNodes = [
   {
     id: '90',
     type: 'group',
@@ -167,10 +167,10 @@ const amlServices = [
   }
 ]
 
-export function getAllAmlServices() {
+export function getAllAmlServiceNodes() {
   if (sessionStorage.getItem('upload_exception_service') === '1') {
-    return amlServices
+    return amlServiceNodes
   } else {
-    return amlServices.filter(item => item.id !== '90')
+    return amlServiceNodes.filter(item => item.id !== '90')
   }
 }

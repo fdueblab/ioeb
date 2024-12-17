@@ -13,9 +13,7 @@
               <a-form-item label="使用状态">
                 <a-select v-model="queryParam.status" placeholder="请选择" default-value="-1">
                   <a-select-option value="-1">全部</a-select-option>
-                  <a-select-option value="0">未启动</a-select-option>
-                  <a-select-option value="1">运行中</a-select-option>
-                  <a-select-option value="2">异常</a-select-option>
+                  <a-select-option v-for="(item, index) in statusMap" :key="index" :value="index">{{ item.text }}</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -36,7 +34,7 @@
           <a-menu slot="overlay">
             <a-menu-item key="1" @click="handleBatchDelete"><a-icon type="delete" />删除</a-menu-item>
             <a-menu-item key="2" @click="handleBatchStop"><a-icon type="pause-circle" />停止</a-menu-item>
-            <a-menu-item key="3" @click="handleBatchStart"><a-icon type="caret-right"/>启动</a-menu-item>
+            <a-menu-item key="3" @click="handleBatchStart"><a-icon type="caret-right"/>启动/分配容器</a-menu-item>
           </a-menu>
           <a-button style="margin-left: 8px">
             批量操作 <a-icon type="down" />
@@ -58,8 +56,9 @@
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
-            <a v-if="record.status === 2 || record.status === 0" @click="handleStart(record)">启动</a>
-            <a v-if="record.status === 1" @click="handleStop(record)">停止</a>
+            <a v-if="record.status === 0" @click="handleStart(record)">部署</a>
+            <a v-if="record.status === 2" @click="handleStart(record)">启动</a>
+            <a v-if="record.status === 1 || record.status === 3" @click="handleStop(record)">停止</a>
             <a-divider type="vertical" />
             <a @click="handleDelete(record)">删除</a>
           </template>
@@ -71,7 +70,8 @@
 
 <script>
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-import { getAmlServices, getStatusMap } from '@/views/operation/aml/services_data'
+import { getAmlServices } from '@/mock/data/services_data'
+import { getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
   name: 'TableList',
@@ -89,7 +89,7 @@ export default {
         name: '',
         status: '-1'
       },
-      // 加载数据方法 必须为 Promise 对象
+      statusMap: getServiceStatusMap(),
       columns: [
         {
           title: '#',
@@ -132,11 +132,11 @@ export default {
   },
   filters: {
     statusFilter (type) {
-      const statusMap = getStatusMap()
+      const statusMap = getServiceStatusMap()
       return statusMap[type].text
     },
     statusTypeFilter (type) {
-      const statusMap = getStatusMap()
+      const statusMap = getServiceStatusMap()
       return statusMap[type].status
     }
   },
@@ -153,7 +153,7 @@ export default {
   },
   methods: {
     handleAdd () {
-      window.location.href = '/vertical-ms/aml'
+      this.$router.push({ path: '#/vertical-ms/aml' })
     },
     // 查询
     handleSearch() {

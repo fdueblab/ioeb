@@ -7,7 +7,7 @@
             <a-form layout="inline">
               <a-row :gutter="48">
                 <a-col :span="18">
-                  <a-form-item label="服务名称">
+                  <a-form-item label="元应用名称">
                     <a-input v-model="queryParam.id" placeholder=""/>
                   </a-form-item>
                 </a-col>
@@ -40,8 +40,8 @@
                 <a-form-item label="性能指标">
                   <a-select placeholder="请选择" default-value="0">
                     <a-select-option value="0">全部</a-select-option>
-                    <a-select-option value="1">可组合</a-select-option>
-                    <a-select-option value="2">完备性</a-select-option>
+                    <a-select-option value="1">查全率</a-select-option>
+                    <a-select-option value="2">查准率</a-select-option>
                     <a-select-option value="3">计算效率</a-select-option>
                   </a-select>
                 </a-form-item>
@@ -75,24 +75,8 @@
 
 <script>
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-const statusMap = {
-  0: {
-    status: 'default',
-    text: '关闭'
-  },
-  1: {
-    status: 'processing',
-    text: '运行中'
-  },
-  2: {
-    status: 'success',
-    text: '容器已分配'
-  },
-  3: {
-    status: 'error',
-    text: '异常'
-  }
-}
+import { getAirCraftServices } from '@/mock/data/services_data'
+import { getServiceStatusMap } from '@/mock/data/map_data'
 const normMap = {
   0: {
     text: '安全性'
@@ -107,28 +91,6 @@ const normMap = {
     text: '可信性'
   }
 }
-const data = []
-data.push({
-  name: '无人机试飞模拟器',
-  type: '异常识别',
-  status: 1,
-  norm: [0, 1, 2],
-  number: '2342'
-})
-data.push({
-  name: '无人机智能导航',
-  type: '安全计算',
-  status: 0,
-  norm: [0, 2],
-  number: '2342'
-})
-data.push({
-  name: '无人机航拍辅助',
-  type: '技术评测',
-  status: 3,
-  norm: [1, 2],
-  number: '2342'
-})
 
 export default {
   name: 'TableList',
@@ -149,14 +111,14 @@ export default {
       advanced: false,
       // 查询参数
       queryParam: {},
-      // 加载数据方法 必须为 Promise 对象
+      statusMap: getServiceStatusMap(),
       columns: [
         {
           title: '#',
           scopedSlots: { customRender: 'serial' }
         },
         {
-          title: '服务名称',
+          title: '元应用名称',
           dataIndex: 'name'
         }
       ],
@@ -168,9 +130,11 @@ export default {
   },
   filters: {
     statusFilter (type) {
+      const statusMap = getServiceStatusMap()
       return statusMap[type].text
     },
     statusTypeFilter (type) {
+      const statusMap = getServiceStatusMap()
       return statusMap[type].status
     },
     normFilter (type) {
@@ -178,7 +142,7 @@ export default {
     }
   },
   created () {
-    this.dataSource = data
+    this.initData()
   },
   computed: {
     rowSelection () {
@@ -189,19 +153,25 @@ export default {
     }
   },
   methods: {
-    handleAdd () {
-      this.$emit('onGoAdd')
+    handleSearch() {
+      this.filteredDataSource = this.dataSource.filter(item => {
+        const nameMatch = item.name.includes(this.queryParam.name)
+        const statusMatch = this.queryParam.status === '-1' || item.status === Number(this.queryParam.status)
+        return nameMatch && statusMatch
+      })
     },
-    handleEdit (record) {
-      console.log(record)
+    handleRefresh() {
+      if (this.isRefreshing) return
+      this.isRefreshing = true
+      setTimeout(() => {
+        this.initData()
+        this.$message.success('刷新成功')
+        this.isRefreshing = false
+      }, 1000)
     },
-    delConfirm() {
-      this.$message.success('删除成功！')
-    },
-    handleCancel () {
-      this.visible = false
-      const form = this.$refs.createModal.form
-      form.resetFields() // 清理表单数据（可不做）
+    handleReset() {
+      this.queryParam = { name: '', status: '-1' }
+      this.filteredDataSource = this.dataSource
     },
     handleChange (value) {
       console.log(`selected ${value}`)
@@ -217,6 +187,10 @@ export default {
       }
       const newObj = JSON.stringify(obj, null, 4)
       this.response = newObj
+    },
+    initData () {
+      this.dataSource = getAirCraftServices()
+      this.filteredDataSource = this.dataSource
     }
   }
 }

@@ -81,17 +81,17 @@
         </div>
       </el-tab-pane>
       <!--            <div class="el-node-form-tag"></div>-->
-      <el-tab-pane label="提交服务">
+      <el-tab-pane label="构建为元应用">
         <el-form :model="services" ref="dataForm" label-width="80px">
           <el-row>
             <el-col :span="12">
-              <el-form-item label="api">
+              <el-form-item label="名称">
                 <el-input v-model="services.api"></el-input>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="端口分配">
-                <el-input v-model="services.name"></el-input>
+              <el-form-item label="领域">
+                <el-input v-model="services.name" :disabled="true"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
