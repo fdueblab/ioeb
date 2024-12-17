@@ -9,20 +9,27 @@
                      :disabled="!this.activeElement.type"></el-button>
           <el-divider direction="vertical"></el-divider>
           <el-button type="text" icon="el-icon-download" size="large" @click="downloadData"></el-button>
+          <el-button plain round @click="addMetaApp" icon="el-icon-s-grid" type="success" size="large">构建为元应用</el-button>
           <div style="float: right;margin-right: 5px">
-            <el-button plain round icon="el-icon-document" @click="dataInfo" size="mini">流程信息</el-button>
+            <el-button plain round icon="el-icon-document" @click="dataInfo" size="mini">流程数据</el-button>
             <el-button plain round @click="dataReloadClear" icon="el-icon-refresh" size="mini">清空画布</el-button>
-            <el-button plain round @click="test" icon="el-icon-refresh" size="mini">{{ this.isTesting ? '停止测试' : '测试连接' }}</el-button>
+            <el-button plain round @click="test" icon="el-icon-connection" size="mini">{{ this.isTesting ? '停止测试' : '测试连接' }}</el-button>
             <el-button plain round @click="addServices" icon="el-icon-plus" size="mini">添加微服务</el-button>
           </div>
         </div>
       </el-col>
     </el-row>
     <div style="display: flex;height: calc(100% - 47px);">
-      <div style="width: 15vw; border-right: 1px solid #dce3e8;background-color: #FBFBFB">
+      <div style="width: 15vw; border-right: 1px solid #dce3e8;background-color: #FBFBFB;position: relative">
+        <div v-if="loadingServices" class="loading-overlay">
+          <i class="el-icon-loading" />
+        </div>
         <node-menu @addNode="addNode" ref="nodeMenu" :menu-list="services"></node-menu>
       </div>
       <div id="efContainer" ref="efContainer" class="container" v-flowDrag style="flex: 1; position: relative; background-color: #f0f2f7">
+        <div v-if="loadingFlow" class="loading-overlay">
+          <i class="el-icon-loading" />
+        </div>
         <template v-for="node in data.nodeList">
           <flow-node :id="node.id" :key="node.id" :node="node" :activeElement="activeElement"
                      @changeNodeSite="changeNodeSite" @nodeRightMenu="nodeRightMenu" @clickNode="clickNode">
@@ -43,6 +50,12 @@
       @confirm="handleServiceConfirm"
       @close="handleServiceClose"
     />
+    <meta-app-builder
+      v-if="metaAppBuilderVisible"
+      ref="metaAppBuilder"
+      :service-type="serviceType"
+      @close="metaAppBuilderVisible = false"
+    />
   </div>
 </template>
 
@@ -56,12 +69,9 @@ import nodeMenu from '@/components/ef/node_menu_with_input'
 import FlowInfo from '@/components/ef/info'
 import FlowNodeForm from '@/components/ef/node_form_bottom'
 import ServicesAdder from '@/components/ef/services_adder'
+import MetaAppBuilder from '@/components/ef/meta_app_builder'
 import lodash from 'lodash'
 import { getDataA } from './data_A'
-import { getDataB } from './data_B'
-import { getDataC } from './data_C'
-import { getDataD } from './data_D'
-import { getDataE } from './data_E'
 import { getDataNew } from './data_new'
 
 export default {
@@ -73,6 +83,18 @@ export default {
     initialServices: {
       type: Array,
       default: () => []
+    },
+    loadingServices: {
+      type: Boolean,
+      default: false
+    },
+    loadingFlow: {
+      type: Boolean,
+      default: false
+    },
+    serviceType: {
+      type: String,
+      default: 'aml'
     }
   },
   data() {
@@ -81,6 +103,7 @@ export default {
       easyFlowVisible: true,
       flowInfoVisible: false,
       servicesAdderVisible: false,
+      metaAppBuilderVisible: false,
       loadEasyFlowFinish: false,
       services: [],
       data: {
@@ -130,7 +153,7 @@ export default {
   },
   mixins: [easyFlowMixin],
   components: {
-    draggable, flowNode, nodeMenu, FlowInfo, FlowNodeForm, ServicesAdder
+    draggable, flowNode, nodeMenu, FlowInfo, FlowNodeForm, ServicesAdder, MetaAppBuilder
   },
   directives: {
     'flowDrag': {
@@ -549,6 +572,18 @@ export default {
         this.$refs.servicesAdder.init()
       })
     },
+    addMetaApp() {
+      // TODO: =======
+      if (this.data.nodeList.length > 0 || true) {
+        this.metaAppBuilderVisible = true
+        this.$nextTick(() => {
+          this.$refs.metaAppBuilder.init()
+        })
+      } else {
+        this.$message.error('请先创建元应用流程！')
+      }
+
+    },
     addExternalNode(node) {
       const nodeId = this.getUUID()
       const newNode = {
@@ -574,3 +609,21 @@ export default {
   }
 }
 </script>
+
+<style lang="less" scoped>
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  i {
+    font-size: 30px;
+  }
+}
+</style>

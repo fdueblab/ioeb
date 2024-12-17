@@ -7,7 +7,7 @@
           <el-form :model="node" ref="dataForm" label-width="80px" v-show="type === 'node'">
             <el-row>
               <el-col :span="12">
-                <el-form-item label="类型">
+                <el-form-item label="调用地址">
                   <el-input v-model="node.type" :disabled="true"></el-input>
                 </el-form-item>
               </el-col>
@@ -36,17 +36,17 @@
             </el-row>
             <el-row>
               <el-col :span="8">
-                <el-form-item label="Input">
+                <el-form-item label="输入">
                   <el-input v-model="node.input"></el-input>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
-                <el-form-item label="Output">
+                <el-form-item label="输出">
                   <el-input v-model="node.output"></el-input>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
-                <el-form-item label="Version">
+                <el-form-item label="版本">
                   <el-input v-model="node.version"></el-input>
                 </el-form-item>
               </el-col>
@@ -80,41 +80,39 @@
           </el-form>
         </div>
       </el-tab-pane>
-      <!--            <div class="el-node-form-tag"></div>-->
-      <el-tab-pane label="构建为元应用">
-        <el-form :model="services" ref="dataForm" label-width="80px">
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="名称">
-                <el-input v-model="services.api"></el-input>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="领域">
-                <el-input v-model="services.name" :disabled="true"></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="描述">
-                <el-input v-model="services.description" :rows="3" type="textarea" placeholder="请输入内容"></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item>
-                <el-button icon="el-icon-close">重置</el-button>
-                <el-button type="primary" icon="el-icon-check" @click="addScheduledService">保存</el-button>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-form>
-      </el-tab-pane>
-    </el-tabs>
-    <!--    </div>-->
 
+      <!--      <el-tab-pane label="构建为元应用">-->
+      <!--        <el-form :model="services" ref="dataForm" label-width="80px">-->
+      <!--          <el-row>-->
+      <!--            <el-col :span="12">-->
+      <!--              <el-form-item label="名称">-->
+      <!--                <el-input v-model="services.api"></el-input>-->
+      <!--              </el-form-item>-->
+      <!--            </el-col>-->
+      <!--            <el-col :span="12">-->
+      <!--              <el-form-item label="领域">-->
+      <!--                <el-input v-model="services.name" :disabled="true"></el-input>-->
+      <!--              </el-form-item>-->
+      <!--            </el-col>-->
+      <!--          </el-row>-->
+      <!--          <el-row>-->
+      <!--            <el-col :span="24">-->
+      <!--              <el-form-item label="描述">-->
+      <!--                <el-input v-model="services.description" :rows="3" type="textarea" placeholder="请输入内容"></el-input>-->
+      <!--              </el-form-item>-->
+      <!--            </el-col>-->
+      <!--          </el-row>-->
+      <!--          <el-row>-->
+      <!--            <el-col :span="24">-->
+      <!--              <el-form-item>-->
+      <!--                <el-button icon="el-icon-close">重置</el-button>-->
+      <!--                <el-button type="primary" icon="el-icon-check" @click="addScheduledService">保存</el-button>-->
+      <!--              </el-form-item>-->
+      <!--            </el-col>-->
+      <!--          </el-row>-->
+      <!--        </el-form>-->
+      <!--      </el-tab-pane>-->
+    </el-tabs>
   </div>
 
 </template>

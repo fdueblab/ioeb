@@ -6,14 +6,23 @@
       </div>
     </div>
     <div class="chat-input">
-      <input
-        type="text"
+      <!--      <input-->
+      <!--        type="text"-->
+      <!--        v-model="userInput"-->
+      <!--        @keyup.enter="handleUserInput"-->
+      <!--        placeholder="告诉AI你想做什么"-->
+      <!--        :disabled="!isInputEnabled"-->
+      <!--      />-->
+      <!--      <button @click="handleUserInput" :disabled="!isInputEnabled">发送</button>-->
+      <a-input-search
+        style="width: 100%"
         v-model="userInput"
-        @keyup.enter="handleUserInput"
+        @search="handleUserInput"
         placeholder="告诉AI你想做什么"
+        enter-button="发送"
         :disabled="!isInputEnabled"
+        :loading="isInputLoading"
       />
-      <button @click="handleUserInput" :disabled="!isInputEnabled">发送</button>
     </div>
   </div>
 </template>
@@ -26,27 +35,31 @@ export default {
       messages: [],
       welcomeMessage: '请告诉我您的需求，我将根据您的需求提供建议',
       currentIndex: 0,
-      isInputEnabled: true
+      isInputEnabled: true,
+      isInputLoading: false
     }
   },
   methods: {
     handleUserInput() {
-      if (this.isInputEnabled) {
-        this.isInputEnabled = false
-        this.messages.push({ text: this.userInput, isUser: true })
-        this.messages.push({ text: '', isUser: false })
-        const chosenServices = ['异常识别微服务', '报告生成微服务']
-        const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的一些相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
-        this.typeWriter(outputMessage)
-        this.$emit('update-services', this.getUpdatedServices())
-        this.$emit('update-flow', this.getUpdatedFlow())
-      }
+      this.isInputLoading = true
+      this.isInputEnabled = false
+      this.messages.push({ text: this.userInput, isUser: true })
+      this.messages.push({ text: '', isUser: false })
+      const chosenServices = ['异常识别微服务', '报告生成微服务']
+      const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的一些相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
+      this.userInput = ''
+      this.typeWriter(outputMessage)
+      this.$emit('update-services', this.getUpdatedServices())
+      this.$emit('update-flow', this.getUpdatedFlow())
     },
     typeWriter(text) {
       if (this.currentIndex < text.length) {
         this.messages[this.messages.length - 1].text += text.charAt(this.currentIndex)
         this.currentIndex++
-        setTimeout(() => this.typeWriter(text), 50) // 每100毫秒输出一个字符
+        setTimeout(() => this.typeWriter(text), 50)
+      } else {
+        this.isInputLoading = false
+        this.currentIndex = 0
       }
     },
     getUpdatedServices() {
@@ -117,6 +130,7 @@ export default {
             id: '9000',
             name: 'preprocess',
             type: 'start',
+            url: 'ms.kxyun.net/preprocess',
             left: '0',
             top: '0px',
             ico: 'el-icon-c-scale-to-original',
@@ -125,9 +139,11 @@ export default {
             version: '1.0',
             state: 'success'
           },
-          { id: '9001',
+          {
+            id: '9001',
             name: 'evaluate',
             type: 'process',
+            url: 'ms.kxyun.net/evaluate',
             left: '0',
             top: '250px',
             ico: 'el-icon-s-data',
@@ -136,9 +152,11 @@ export default {
             output: 'vector',
             version: '1.1'
           },
-          { id: '9002',
+          {
+            id: '9002',
             name: 'visualize',
             type: 'process',
+            url: 'ms.kxyun.net/visualize',
             left: '200px',
             top: '120px',
             ico: 'el-icon-pie-chart',
@@ -147,9 +165,11 @@ export default {
             output: 'image',
             version: '1.2'
           },
-          { id: '9101',
+          {
+            id: '9101',
             name: 'generateReport',
             type: 'process',
+            url: 'ms.kxyun.net/generateReport',
             left: '420px',
             top: '0px',
             ico: 'el-icon-document-add',
@@ -158,9 +178,11 @@ export default {
             output: 'pdf',
             version: '1.0'
           },
-          { id: '9102',
+          {
+            id: '9102',
             name: 'sendReport',
             type: 'end',
+            url: 'ms.kxyun.net/sendReport',
             left: '400px',
             top: '220px',
             ico: 'el-icon-upload',

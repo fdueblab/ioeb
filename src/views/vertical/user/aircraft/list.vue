@@ -87,13 +87,86 @@
           <a-badge :status="text | statusTypeFilter" :text="text | statusFilter" />
         </span>
         <span slot="norm" slot-scope="text">
-          <a-tag color="#87d068" v-for="(item, index) in text" :key="index"><a-icon type="check" /> {{ item | normFilter }}</a-tag>
+          <a-popover v-for="(item, index) in text" :key="index" title="可信云技术服务溯源">
+            <template slot="content">
+              <p>{{ item.key | normFilter }}</p>
+              <el-rate v-model="item.score" disabled show-score text-color="#ff9900">
+              </el-rate>
+            </template>
+            <a-tag color="#87d068">
+              <a-icon type="check" /> {{ item.key | normFilter }}
+            </a-tag>
+          </a-popover>
         </span>
         <span slot="source" slot-scope="text">
-          <a-tag color="blue" @change="handleSource(text)">知识产权</a-tag>
-          <a-tag color="cyan" @change="handleSource(text)">应用案例</a-tag>
-          <a-tag color="orange" @change="handleSource(text)">舆情信息</a-tag>
-          <a-tag color="green" @change="handleSource(text)">链上存证</a-tag>
+          <a-popover :title="text.popoverTitle">
+            <template slot="content">
+              <h1>公司信息</h1>
+              <p><strong>公司名称：</strong>{{ text.companyName }}</p>
+              <p><strong>地址：</strong>{{ text.companyAddress }}</p>
+              <p><strong>联系方式：</strong>{{ text.companyContact }}</p>
+              <p><strong>简介：</strong>{{ text.companyIntroduce }}</p>
+              <p>综合可信度：</p>
+              <el-rate v-model="text.companyScore" disabled show-score text-color="#ff9900" :score-template="text.companyScore.toString()"></el-rate>
+              <h1>微服务信息</h1>
+              <p><strong>微服务描述:</strong> {{ text.msIntroduce }}</p>
+              <p>综合可信度：
+                <el-rate v-model="text.msScore" disabled show-score text-color="#ff9900" :score-template="text.msScore.toString()"></el-rate>
+              </p>
+            </template>
+            <a-tag color="blue" @change="handleSource(text)">知识产权</a-tag>
+          </a-popover>
+          <a-popover :title="text.popoverTitle">
+            <template slot="content">
+              <h1>公司信息</h1>
+              <p><strong>公司名称：</strong>{{ text.companyName }}</p>
+              <p><strong>地址：</strong>{{ text.companyAddress }}</p>
+              <p><strong>联系方式：</strong>{{ text.companyContact }}</p>
+              <p><strong>简介：</strong>{{ text.companyIntroduce }}</p>
+              <p>综合可信度：</p>
+              <el-rate v-model="text.companyScore" disabled show-score text-color="#ff9900" :score-template="text.companyScore.toString()"></el-rate>
+              <h1>微服务信息</h1>
+              <p><strong>微服务描述:</strong> {{ text.msIntroduce }}</p>
+              <p>综合可信度：
+                <el-rate v-model="text.msScore" disabled show-score text-color="#ff9900" :score-template="text.msScore.toString()"></el-rate>
+              </p>
+            </template>
+            <a-tag color="cyan" @change="handleSource(text)">应用案例</a-tag>
+          </a-popover>
+          <a-popover :title="text.popoverTitle">
+            <template slot="content">
+              <h1>公司信息</h1>
+              <p><strong>公司名称：</strong>{{ text.companyName }}</p>
+              <p><strong>地址：</strong>{{ text.companyAddress }}</p>
+              <p><strong>联系方式：</strong>{{ text.companyContact }}</p>
+              <p><strong>简介：</strong>{{ text.companyIntroduce }}</p>
+              <p>综合可信度：</p>
+              <el-rate v-model="text.companyScore" disabled show-score text-color="#ff9900" :score-template="text.companyScore.toString()"></el-rate>
+              <h1>微服务信息</h1>
+              <p><strong>微服务描述:</strong> {{ text.msIntroduce }}</p>
+              <p>综合可信度：
+                <el-rate v-model="text.msScore" disabled show-score text-color="#ff9900" :score-template="text.msScore.toString()"></el-rate>
+              </p>
+            </template>
+            <a-tag color="orange" @change="handleSource(text)">舆情信息</a-tag>
+          </a-popover>
+          <a-popover :title="text.popoverTitle">
+            <template slot="content">
+              <h1>公司信息</h1>
+              <p><strong>公司名称：</strong>{{ text.companyName }}</p>
+              <p><strong>地址：</strong>{{ text.companyAddress }}</p>
+              <p><strong>联系方式：</strong>{{ text.companyContact }}</p>
+              <p><strong>简介：</strong>{{ text.companyIntroduce }}</p>
+              <p>综合可信度：</p>
+              <el-rate v-model="text.companyScore" disabled show-score text-color="#ff9900" :score-template="text.companyScore.toString()"></el-rate>
+              <h1>微服务信息</h1>
+              <p><strong>微服务描述:</strong> {{ text.msIntroduce }}</p>
+              <p>综合可信度：
+                <el-rate v-model="text.msScore" disabled show-score text-color="#ff9900" :score-template="text.msScore.toString()"></el-rate>
+              </p>
+            </template>
+            <a-tag color="green" @change="handleSource(text)">链上存证</a-tag>
+          </a-popover>
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
@@ -206,7 +279,7 @@ export default {
       selectedRowKeys: [],
       selectedRows: [],
       typeArr: ['原子微服务', '元应用服务'],
-      domainArr: ['无人机技术服务'],
+      domainArr: ['低空飞行AI监控服务'],
       industryArr: ['城市治理', '文旅农林', '教育培训'],
       scenarioArr: ['应急救援', '交通巡逻', '低空物流', '低空测绘', '目标识别'],
       technologyArr: ['线路设计', '虚拟仿真', '智能感知', '远程控制', '视频分析', '技术评价']
