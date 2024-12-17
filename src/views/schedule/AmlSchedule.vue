@@ -1,8 +1,15 @@
 <template>
   <div class="schedule-with-input">
     <fake-chat style="height: calc(100vh - 100px)" @update-services="updateServices" @update-flow="updateFlow" />
-    <flow-panel style="height: calc(100vh - 100px); width: 100%;" :initial-flow="initFlow"
-                :initial-services="initServices" ref="flowPanel" />
+    <flow-panel
+      ref="flowPanel"
+      style="height: calc(100vh - 100px); width: 100%;"
+      :initial-flow="initFlow"
+      :initial-services="initServices"
+      :loading-services="loadingServices"
+      :loading-flow="loadingFlow"
+      :service-type="'aml'"
+    />
   </div>
 </template>
 
@@ -27,15 +34,25 @@ export default {
           open: true,
           children: []
         }
-      ]
+      ],
+      loadingServices: false, // 新增 loadingServices 状态
+      loadingFlow: false // 新增 loadingFlow 状态
     }
   },
   methods: {
     updateServices(newServices) {
-      this.initServices = newServices
+      this.loadingServices = true
+      setTimeout(() => {
+        this.initServices = newServices
+        this.loadingServices = false
+      }, 800)
     },
     updateFlow(newFlow) {
-      this.$refs.flowPanel.updateInitialFlow(newFlow)
+      this.loadingFlow = true
+      setTimeout(() => {
+        this.$refs.flowPanel.updateInitialFlow(newFlow)
+        this.loadingFlow = false
+      }, 1600)
     }
   }
 }

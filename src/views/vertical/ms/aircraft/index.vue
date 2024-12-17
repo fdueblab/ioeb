@@ -8,7 +8,7 @@
               <a-form-item label="领域">
                 <a-select placeholder="请选择" default-value="0">
                   <a-select-option value="0">全部</a-select-option>
-                  <a-select-option value="1">无人机技术服务</a-select-option>
+                  <a-select-option value="1">低空飞行AI监控服务</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
