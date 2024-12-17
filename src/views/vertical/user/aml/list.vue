@@ -2,6 +2,30 @@
   <page-header-wrapper :title="false">
     <a-card :bordered="false" class="ant-pro-components-tag-select">
       <a-form :form="form" layout="inline">
+        <standard-form-row title="智能检索" block style="padding-bottom: 11px;">
+          <a-row>
+            <a-col :span="12">
+              <a-form-item :wrapper-col="{ xs: 22, sm: 22, md: 22 }">
+                <a-input-search style="width: 100%" v-model="agentSearchText" placeholder="请输入您想要的微服务名称、功能等"
+                                @search="handleAgentSearch" :loading="agentSearchLoading" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="基于知识增强通过对话检索">
+                <a-button class="dify-chatbot-bubble-button" @click="toggleChatBot">
+                  <a-icon type="robot" v-if="!showChatBot"/>
+                  <a-icon type="close" v-else/>
+                </a-button>
+              </a-form-item>
+            </a-col>
+            <!--            <a-col :span="6">-->
+            <!--              <a-form-item>-->
+            <!--                <a-button type="primary" icon="sync" @click="handleReset">重置检索条件</a-button>-->
+            <!--              </a-form-item>-->
+            <!--            </a-col>-->
+          </a-row>
+        </standard-form-row>
+
         <standard-form-row title="类型" block style="padding-bottom: 11px;">
           <a-form-item>
             <tag-select @change="handleTagChange('type', $event)">
@@ -41,17 +65,6 @@
             </tag-select>
           </a-form-item>
         </standard-form-row>
-
-        <standard-form-row title="智能检索" grid last>
-          <a-row>
-            <a-col :span="16">
-              <a-form-item :wrapper-col="{ xs: 18, sm: 18, md: 18 }">
-                <a-input-search style="width: 100%" v-model="agentSearchText" placeholder="请输入您想要的微服务名称、功能等"
-                                @search="handleAgentSearch" :loading="agentSearchLoading" />
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </standard-form-row>
       </a-form>
     </a-card>
     <a-card :bordered="false" :title="agentSearchData.length > 0 ? 'AI智能检索为您推荐以下微服务' : false">
@@ -82,104 +95,25 @@
         </span>
       </a-table>
     </a-card>
+    <!-- 聊天机器人容器 -->
+    <div v-if="showChatBot" class="dify-chatbot-container">
+      <iframe
+        src="https://yufanwenshu.cn/chatbot/RcN7gYC9B3UnlUWc"
+        style="width: 100%; height: 100%; min-height: 700px"
+        frameborder="0"
+        allow="microphone">
+      </iframe>
+    </div>
   </page-header-wrapper>
 </template>
 
 <script>
 import moment from 'moment'
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
+import { getAssignedAmlService } from '@/mock/data/services_data'
+import { getNormMap, getServiceStatusMap } from '@/mock/data/map_data'
 
 const TagSelectOption = TagSelect.Option
-const statusMap = {
-  0: {
-    status: 'default',
-    text: '关闭'
-  },
-  1: {
-    status: 'processing',
-    text: '运行中'
-  },
-  2: {
-    status: 'success',
-    text: '容器已分配'
-  },
-  3: {
-    status: 'error',
-    text: '异常'
-  }
-}
-const normMap = {
-  0: {
-    text: '安全性'
-  },
-  1: {
-    text: '鲁棒性'
-  },
-  2: {
-    text: '隐私性'
-  },
-  3: {
-    text: '可信性'
-  }
-}
-const data = []
-data.push({
-  name: '安全计算微服务',
-  type: 0,
-  domain: 0,
-  industry: 0,
-  scenario: 1,
-  technology: 1,
-  status: 0,
-  norm: [0, 2],
-  number: '2342'
-})
-data.push({
-  name: '技术评测微服务',
-  type: 0,
-  domain: 0,
-  industry: 1,
-  scenario: 2,
-  technology: 2,
-  status: 3,
-  norm: [1, 2],
-  number: '2342'
-})
-data.push({
-  name: '信用评估微服务',
-  type: 0,
-  domain: 0,
-  industry: 3,
-  scenario: 4,
-  technology: 4,
-  status: 1,
-  norm: [1, 2, 3],
-  number: '2342'
-})
-data.push({
-  name: '报告生成微服务',
-  type: 0,
-  domain: 0,
-  industry: 2,
-  scenario: 3,
-  technology: 3,
-  status: 2,
-  norm: [0, 1, 3],
-  number: '2342'
-})
-if (sessionStorage.getItem('upload_exception_service') === '1') {
-  data.push({
-    name: '异常识别微服务',
-    type: 0,
-    domain: 0,
-    industry: 0,
-    scenario: 0,
-    technology: 0,
-    status: 1,
-    norm: [0, 1, 2],
-    number: '2342'
-  })
-}
 
 export default {
   name: 'TableList',
@@ -197,9 +131,12 @@ export default {
       visible: false,
       confirmLoading: false,
       mdl: null,
+      showChatBot: false, // 控制聊天机器人是否显示
       agentSearchText: '',
       agentSearchLoading: false,
       agentSearchData: [],
+      statusMap: getServiceStatusMap(),
+      normMap: getNormMap(),
       // 查询参数
       queryParam: {
         type: [],
@@ -258,8 +195,8 @@ export default {
           scopedSlots: { customRender: 'action' }
         }
       ],
-      dataSource: data,
-      filteredDataSource: data,
+      dataSource: [],
+      filteredDataSource: [],
       selectedRowKeys: [],
       selectedRows: [],
       typeArr: ['原子微服务', '元应用服务'],
@@ -271,17 +208,20 @@ export default {
   },
   filters: {
     statusFilter (type) {
+      const statusMap = getServiceStatusMap()
       return statusMap[type].text
     },
     statusTypeFilter (type) {
+      const statusMap = getServiceStatusMap()
       return statusMap[type].status
     },
     normFilter (type) {
+      const normMap = getNormMap()
       return normMap[type].text
     }
   },
   created () {
-    this.filteredDataSource = this.dataSource
+    this.initData()
   },
   computed: {
   },
@@ -309,8 +249,16 @@ export default {
       this.filterDataSource()
     },
     handleReset() {
-      this.queryParam = {}
-      this.filteredDataSource = this.dataSource
+      // TODO: 要在TagSelect中添加清楚方法
+      this.queryParam = {
+        type: [],
+        domain: [],
+        industry: [],
+        scenario: [],
+        technology: [],
+        name: ''
+      }
+      this.initData()
     },
     handleToAdd () {
       this.$refs.tempSelectModal.open()
@@ -405,7 +353,6 @@ export default {
       }
     },
     handleAgentSearch() {
-      console.log(this.agentSearchText)
       if (this.agentSearchText && this.agentSearchText !== '') {
         this.agentSearchLoading = true
         new Promise((resolve, reject) => {
@@ -421,6 +368,15 @@ export default {
       } else {
         this.$message.error('请先输入您的需求！')
       }
+    },
+    initData () {
+      this.agentSearchText = ''
+      this.agentSearchData = []
+      this.dataSource = getAssignedAmlService()
+      this.filteredDataSource = this.dataSource
+    },
+    toggleChatBot() {
+      this.showChatBot = !this.showChatBot // 切换聊天机器人的显示状态
     }
   }
 }
@@ -438,7 +394,6 @@ export default {
   margin-left: 12px;
 }
 
-/* 聊天机器人容器的样式 */
 .dify-chatbot-container {
   position: fixed;
   bottom: 20px;
@@ -455,8 +410,8 @@ export default {
 
 /* 按钮的样式 */
 .dify-chatbot-bubble-button {
-  width: 60px;
-  border-radius: 25%; /* 圆形按钮 */
+  width: 40px;
+  border-radius: 25%;
   border: none;
   padding: 0;
   cursor: pointer;

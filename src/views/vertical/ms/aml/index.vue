@@ -57,11 +57,13 @@
               </a-form-item>
             </a-col>
             <a-col :span="6">
-              <a-form-item label="服务调用选项">
+              <!--  TODO: =======改为微服务  -->
+              <a-form-item label="外部调用方式">
                 <a-select placeholder="请选择" default-value="0">
-                  <a-select-option value="0">RestFul接口</a-select-option>
-                  <a-select-option value="1">Websocket连接</a-select-option>
-                  <a-select-option value="2">其他</a-select-option>
+                  <a-select-option value="0">RPC调用</a-select-option>
+                  <a-select-option value="1">RestFul接口</a-select-option>
+                  <a-select-option value="2">Websocket连接</a-select-option>
+                  <a-select-option value="3">其他</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -105,6 +107,7 @@
           </a-card>
         </a-col>
         <a-col :span="12">
+          <!-- TODO: =======改为选中的节点作为微服务，编辑其参数 -->
           <a-card style="height: 480px;">
             <a-form>
               <a-form-item label="输入参数">
@@ -236,7 +239,7 @@ export default {
         // 模拟上传文件合法性校验
         const file = this.programFiles
         if (file[0] && file[0].name === 'abnormal_recognition.py') {
-          this.$message.success('上传成功，发现以下接口')
+          this.$message.success('解析成功，已显示微服务拆分结果')
           this.setChart()
         } else {
           this.$message.error('上传的程序不符合规范，上传失败！')
@@ -246,6 +249,7 @@ export default {
     },
     setChart() {
       const json = {
+        // TODO: =======改为微服务（显示调用方式、参数等），例如数据管理和处理、模型预测、功能实现分别作为一个微服务
         nodes: [
           { id: '9001', x: 0, y: 150, label: 'datasets', size: 50, color: '#6F9654', value: 'RestFul API' },
           { id: '9002', x: 150, y: 150, label: 'preprocess', size: 50, color: '#E76F51', value: 'RestFul API' },
@@ -332,11 +336,16 @@ export default {
     },
     uploadService () {
       this.uploadServiceLoading = true
-      setTimeout(() => {
-        this.$message.success('发布成功，请等待审核！')
-        sessionStorage.setItem('upload_exception_service', '0')
-        this.uploadServiceLoading = false
-      }, 1000)
+      new Promise((resolve) => {
+        setTimeout(() => {
+          this.$message.success('发布成功，请等待管理员测试与部署')
+          sessionStorage.setItem('upload_exception_service', '0')
+          this.uploadServiceLoading = false
+          resolve()
+        }, 1000)
+      }).then(() => {
+        this.$router.push({ path: '#/vertical/ms/aml/list' })
+      })
     },
     async customProgramFilesChose (options) {
       const { file } = options

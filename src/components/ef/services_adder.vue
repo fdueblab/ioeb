@@ -7,14 +7,22 @@
     class="service-dialog"
   >
     <div class="dialog-content">
+      <el-input
+        v-model="filterText"
+        style="width: 80%"
+        placeholder="搜索微服务"
+        @change="handleSearch"
+        clearable
+      />
       <el-tree
-        :data="services"
+        :data="filterData"
+        empty-text=""
         show-checkbox
+        v-loading="loading"
         node-key="id"
         :default-expand-all="true"
         :props="defaultProps"
         :default-checked-keys="defaultCheckedKeys"
-        :check-strictly="true"
         @check-change="handleCheckChange"
         class="service-tree"
       >
@@ -33,7 +41,8 @@
 </template>
 
 <script>
-import { getAllAmlServices } from '@/components/ef/all_services'
+import { getAllAmlServiceNodes } from '@/mock/data/service_nodes'
+import cloneDeep from 'lodash.clonedeep'
 
 export default {
   props: {
@@ -49,11 +58,15 @@ export default {
   data() {
     return {
       services: [],
+      filterData: [],
       selectedNodes: [],
       dialogVisible: false,
+      loading: false,
+      filterText: '',
       defaultProps: {
         children: 'children',
-        label: 'name'
+        label: 'name',
+        disabled: 'disabled'
       },
       defaultCheckedKeys: [],
       disabledNodes: []
@@ -62,12 +75,17 @@ export default {
   methods: {
     init() {
       this.dialogVisible = true
-      this.fetchServices()
-      this.initSelectedItems()
+      this.loading = true
+      setTimeout(() => {
+        this.filterText = ''
+        this.fetchServices()
+        this.initSelectedItems()
+        this.loading = false
+      }, 500)
     },
     fetchServices() {
-      // 模拟获取服务数据
-      this.services = getAllAmlServices()
+      this.services = getAllAmlServiceNodes()
+      this.filterData = this.services
     },
     initSelectedItems() {
       this.defaultCheckedKeys = []
@@ -118,24 +136,37 @@ export default {
           )
         }
       }
-      // 更新服务的置灰状态
-      this.updateServiceDisabledState(this.services)
     },
-    updateServiceDisabledState(nodes) {
-      nodes.forEach(node => {
+    handleSearch() {
+      const keyword = this.filterText.trim().toLowerCase()
+      if (keyword) {
+        this.filterData = this.filterServices(this.services, keyword)
+      } else {
+        this.filterData = this.services
+      }
+    },
+    filterServices(nodes, keyword) {
+      return cloneDeep(nodes).map(node => {
+        const match = node.name.toLowerCase().includes(keyword)
         if (node.children) {
-          const allChildrenSelected = node.children.every(child =>
-            this.selectedNodes.some(selected => selected.id === child.id)
-          )
-          node.disabled = allChildrenSelected
-          this.updateServiceDisabledState(node.children)
+          node.children = this.filterServices(node.children, keyword)
+        } else {
+          node.children = []
         }
-      })
+        if (match || node.children.length > 0) {
+          return node
+        } else {
+          return null
+        }
+      }).filter(node => node !== null)
     },
     onConfirm() {
       const selectedServices = this.services
         .map((service) => {
-          if (service.selectedChildren && service.selectedChildren.length > 0) {
+          // 去掉initialSelectedItems里的服务节点
+          if (this.initialSelectedItems.some(item => item.id === service.id)) {
+            return null
+          } else if (service.selectedChildren && service.selectedChildren.length > 0) {
             return {
               ...service,
               children: service.selectedChildren

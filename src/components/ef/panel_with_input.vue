@@ -84,7 +84,7 @@ export default {
       loadEasyFlowFinish: false,
       services: [],
       data: {
-        name: '流程图',
+        name: '新的流程图',
         nodeList: [],
         lineList: []
       },
