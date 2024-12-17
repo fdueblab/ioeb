@@ -29,7 +29,8 @@
         <standard-form-row title="类型" block style="padding-bottom: 11px;">
           <a-form-item>
             <tag-select @change="handleTagChange('type', $event)">
-              <tag-select-option v-for="(item, index) in typeArr" :key="index" :value="index">{{ item }}</tag-select-option>
+              <tag-select-option v-for="(item, index) in typeArr" :key="index" :value="index">{{ item
+              }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
@@ -37,7 +38,8 @@
         <standard-form-row title="领域" block style="padding-bottom: 11px;">
           <a-form-item>
             <tag-select @change="handleTagChange('domain', $event)">
-              <tag-select-option v-for="(item, index) in domainArr" :key="index" :value="index">{{ item }}</tag-select-option>
+              <tag-select-option v-for="(item, index) in domainArr" :key="index" :value="index">{{ item
+              }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
@@ -45,7 +47,8 @@
         <standard-form-row title="行业" grid>
           <a-form-item>
             <tag-select @change="handleTagChange('industry', $event)">
-              <tag-select-option v-for="(item, index) in industryArr" :key="index" :value="index">{{ item }}</tag-select-option>
+              <tag-select-option v-for="(item, index) in industryArr" :key="index" :value="index">{{ item
+              }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
@@ -53,7 +56,8 @@
         <standard-form-row title="场景" grid>
           <a-form-item>
             <tag-select @change="handleTagChange('scenario', $event)">
-              <tag-select-option v-for="(item, index) in scenarioArr" :key="index" :value="index">{{ item }}</tag-select-option>
+              <tag-select-option v-for="(item, index) in scenarioArr" :key="index" :value="index">{{ item
+              }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
@@ -61,9 +65,21 @@
         <standard-form-row title="技术" grid>
           <a-form-item>
             <tag-select @change="handleTagChange('technology', $event)">
-              <tag-select-option v-for="(item, index) in technologyArr" :key="index" :value="index">{{ item }}</tag-select-option>
+              <tag-select-option v-for="(item, index) in technologyArr" :key="index" :value="index">{{ item
+              }}</tag-select-option>
             </tag-select>
           </a-form-item>
+        </standard-form-row>
+
+        <standard-form-row title="智能检索" grid last>
+          <a-row>
+            <a-col :span="16">
+              <a-form-item :wrapper-col="{ xs: 18, sm: 18, md: 18 }">
+                <a-input-search style="width: 100%" v-model="agentSearchText" placeholder="请输入您想要的微服务名称、功能等"
+                                @search="handleAgentSearch" :loading="agentSearchLoading" />
+              </a-form-item>
+            </a-col>
+          </a-row>
         </standard-form-row>
       </a-form>
     </a-card>
@@ -80,13 +96,86 @@
           <a-badge :status="text | statusTypeFilter" :text="text | statusFilter" />
         </span>
         <span slot="norm" slot-scope="text">
-          <a-tag color="#87d068" v-for="(item, index) in text" :key="index"><a-icon type="check" /> {{ item | normFilter }}</a-tag>
+          <a-popover v-for="(item, index) in text" :key="index" title="可信云技术服务溯源">
+            <template slot="content">
+              <p>{{ item.key | normFilter }}</p>
+              <el-rate v-model="item.score" disabled show-score text-color="#ff9900">
+              </el-rate>
+            </template>
+            <a-tag color="#87d068">
+              <a-icon type="check" /> {{ item.key | normFilter }}
+            </a-tag>
+          </a-popover>
         </span>
         <span slot="source" slot-scope="text">
-          <a-tag color="blue" @change="handleSource(text)">知识产权</a-tag>
-          <a-tag color="cyan" @change="handleSource(text)">应用案例</a-tag>
-          <a-tag color="orange" @change="handleSource(text)">舆情信息</a-tag>
-          <a-tag color="green" @change="handleSource(text)">链上存证</a-tag>
+          <a-popover :title="text.popoverTitle">
+            <template slot="content">
+              <h1>公司信息</h1>
+              <p><strong>公司名称：</strong>{{ text.companyName }}</p>
+              <p><strong>地址：</strong>{{ text.companyAddress }}</p>
+              <p><strong>联系方式：</strong>{{ text.companyContact }}</p>
+              <p><strong>简介：</strong>{{ text.companyIntroduce }}</p>
+              <p>综合可信度：</p>
+              <el-rate v-model="text.companyScore" disabled show-score text-color="#ff9900" :score-template="text.companyScore.toString()"></el-rate>
+              <h1>微服务信息</h1>
+              <p><strong>微服务描述:</strong> {{ text.msIntroduce }}</p>
+              <p>综合可信度：
+                <el-rate v-model="text.msScore" disabled show-score text-color="#ff9900" :score-template="text.msScore.toString()"></el-rate>
+              </p>
+            </template>
+            <a-tag color="blue" @change="handleSource(text)">知识产权</a-tag>
+          </a-popover>
+          <a-popover :title="text.popoverTitle">
+            <template slot="content">
+              <h1>公司信息</h1>
+              <p><strong>公司名称：</strong>{{ text.companyName }}</p>
+              <p><strong>地址：</strong>{{ text.companyAddress }}</p>
+              <p><strong>联系方式：</strong>{{ text.companyContact }}</p>
+              <p><strong>简介：</strong>{{ text.companyIntroduce }}</p>
+              <p>综合可信度：</p>
+              <el-rate v-model="text.companyScore" disabled show-score text-color="#ff9900" :score-template="text.companyScore.toString()"></el-rate>
+              <h1>微服务信息</h1>
+              <p><strong>微服务描述:</strong> {{ text.msIntroduce }}</p>
+              <p>综合可信度：
+                <el-rate v-model="text.msScore" disabled show-score text-color="#ff9900" :score-template="text.msScore.toString()"></el-rate>
+              </p>
+            </template>
+            <a-tag color="cyan" @change="handleSource(text)">应用案例</a-tag>
+          </a-popover>
+          <a-popover :title="text.popoverTitle">
+            <template slot="content">
+              <h1>公司信息</h1>
+              <p><strong>公司名称：</strong>{{ text.companyName }}</p>
+              <p><strong>地址：</strong>{{ text.companyAddress }}</p>
+              <p><strong>联系方式：</strong>{{ text.companyContact }}</p>
+              <p><strong>简介：</strong>{{ text.companyIntroduce }}</p>
+              <p>综合可信度：</p>
+              <el-rate v-model="text.companyScore" disabled show-score text-color="#ff9900" :score-template="text.companyScore.toString()"></el-rate>
+              <h1>微服务信息</h1>
+              <p><strong>微服务描述:</strong> {{ text.msIntroduce }}</p>
+              <p>综合可信度：
+                <el-rate v-model="text.msScore" disabled show-score text-color="#ff9900" :score-template="text.msScore.toString()"></el-rate>
+              </p>
+            </template>
+            <a-tag color="orange" @change="handleSource(text)">舆情信息</a-tag>
+          </a-popover>
+          <a-popover :title="text.popoverTitle">
+            <template slot="content">
+              <h1>公司信息</h1>
+              <p><strong>公司名称：</strong>{{ text.companyName }}</p>
+              <p><strong>地址：</strong>{{ text.companyAddress }}</p>
+              <p><strong>联系方式：</strong>{{ text.companyContact }}</p>
+              <p><strong>简介：</strong>{{ text.companyIntroduce }}</p>
+              <p>综合可信度：</p>
+              <el-rate v-model="text.companyScore" disabled show-score text-color="#ff9900" :score-template="text.companyScore.toString()"></el-rate>
+              <h1>微服务信息</h1>
+              <p><strong>微服务描述:</strong> {{ text.msIntroduce }}</p>
+              <p>综合可信度：
+                <el-rate v-model="text.msScore" disabled show-score text-color="#ff9900" :score-template="text.msScore.toString()"></el-rate>
+              </p>
+            </template>
+            <a-tag color="green" @change="handleSource(text)">链上存证</a-tag>
+          </a-popover>
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
@@ -127,6 +216,7 @@ export default {
   data () {
     return {
       // create model
+      kvalue: 5,
       form: this.$form.createForm(this),
       visible: false,
       confirmLoading: false,
@@ -249,7 +339,7 @@ export default {
       this.filterDataSource()
     },
     handleReset() {
-      // TODO: 要在TagSelect中添加清楚方法
+      // TODO: 要在TagSelect中添加清除方法
       this.queryParam = {
         type: [],
         domain: [],
@@ -260,19 +350,19 @@ export default {
       }
       this.initData()
     },
-    handleToAdd () {
+    handleToAdd() {
       this.$refs.tempSelectModal.open()
     },
-    handleAdd () {
+    handleAdd() {
       this.$emit('onGoAdd')
     },
-    handleEdit (record) {
-      console.log(record)
+    handleEdit(record) {
+      // console.log(record)
     },
-    handleSource (record) {
-      console.log(record)
+    handleSource(record) {
+      // console.log(record)
     },
-    handleUse (record) {
+    handleUse(record) {
       if (record.status === 0) {
         this.$message.warning('服务关闭中，请启动后使用！')
       } else if (record.status === 3) {
@@ -284,12 +374,12 @@ export default {
     delConfirm() {
       this.$message.success('删除成功！')
     },
-    handleOk () {
+    handleOk() {
       const form = this.$refs.createModal.form
       this.confirmLoading = true
       form.validateFields((errors, values) => {
         if (!errors) {
-          console.log('values', values)
+          // console.log('values', values)
           if (values.id > 0) {
             // 修改 e.g.
             new Promise((resolve, reject) => {
@@ -328,26 +418,26 @@ export default {
         }
       })
     },
-    handleCancel () {
+    handleCancel() {
       this.visible = false
       const form = this.$refs.createModal.form
       form.resetFields() // 清理表单数据（可不做）
     },
-    handleSub (record) {
+    handleSub(record) {
       if (record.status !== 0) {
         this.$message.info(`${record.no} 订阅成功`)
       } else {
         this.$message.error(`${record.no} 订阅失败，规则已关闭`)
       }
     },
-    handleChange (value) {
-      console.log(`selected ${value}`)
+    handleChange(value) {
+      // console.log(`selected ${value}`)
     },
-    onSelectChange (selectedRowKeys, selectedRows) {
+    onSelectChange(selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
     },
-    resetSearchForm () {
+    resetSearchForm() {
       this.queryParam = {
         date: moment(new Date())
       }
