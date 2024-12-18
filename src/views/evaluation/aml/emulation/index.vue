@@ -8,12 +8,12 @@
               <a-row :gutter="48">
                 <a-col :span="18">
                   <a-form-item label="元应用名称">
-                    <a-input v-model="queryParam.id" placeholder=""/>
+                    <a-input v-model="queryParam.id" placeholder="请输入元应用名称"/>
                   </a-form-item>
                 </a-col>
                 <a-col :span="6">
                   <div style="text-align: center;">
-                    <a-button type="primary">查询</a-button>
+                    <a-button type="primary" @click="handleSearch">查询</a-button>
                   </div>
                 </a-col>
               </a-row>
@@ -22,7 +22,7 @@
           <a-table
             ref="table"
             :columns="columns"
-            :dataSource="dataSource"
+            :dataSource="filteredDataSource"
             :row-selection="rowSelection"
             size="middle"
           >
@@ -74,23 +74,9 @@
 </template>
 
 <script>
-import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-import { getAmlServices } from '@/mock/data/services_data'
-import { getServiceStatusMap } from '@/mock/data/map_data'
-const normMap = {
-  0: {
-    text: '安全性'
-  },
-  1: {
-    text: '鲁棒性'
-  },
-  2: {
-    text: '隐私性'
-  },
-  3: {
-    text: '可信性'
-  }
-}
+import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
+import { getAmlMetaApps } from '@/mock/data/services_data'
+import { getNormMap, getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
   name: 'TableList',
@@ -102,7 +88,6 @@ export default {
   },
   data () {
     return {
-      // create model
       form: this.$form.createForm(this),
       visible: false,
       confirmLoading: false,
@@ -123,6 +108,7 @@ export default {
         }
       ],
       dataSource: [],
+      filteredDataSource: [],
       selectedRowKeys: [],
       selectedRows: [],
       response: ''
@@ -138,6 +124,7 @@ export default {
       return statusMap[type].status
     },
     normFilter (type) {
+      const normMap = getNormMap()
       return normMap[type].text
     }
   },
@@ -155,9 +142,9 @@ export default {
   methods: {
     handleSearch() {
       this.filteredDataSource = this.dataSource.filter(item => {
-        const nameMatch = item.name.includes(this.queryParam.name)
-        const statusMatch = this.queryParam.status === '-1' || item.status === Number(this.queryParam.status)
-        return nameMatch && statusMatch
+        // const statusMatch = this.queryParam.status === '-1' || item.status === Number(this.queryParam.status)
+        // return nameMatch && statusMatch
+        return item.name.includes(this.queryParam.name)
       })
     },
     handleRefresh() {
@@ -185,11 +172,33 @@ export default {
         code: 200,
         message: '测试通过！'
       }
-      const newObj = JSON.stringify(obj, null, 4)
-      this.response = newObj
+      const serviceData = {
+        ...JSON.parse(sessionStorage.getItem('metaAppInfo')),
+        status: 6,
+        norm: [
+          {
+            key: 0,
+            score: 5
+          },
+          {
+            key: 1,
+            score: 5
+          },
+          {
+            key: 2,
+            score: 5
+          },
+          {
+            key: 3,
+            score: 5
+          }
+        ]
+      }
+      sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
+      this.response = JSON.stringify(obj, null, 4)
     },
     initData () {
-      this.dataSource = getAmlServices()
+      this.dataSource = getAmlMetaApps()
       this.filteredDataSource = this.dataSource
     }
   }

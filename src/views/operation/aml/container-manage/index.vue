@@ -59,6 +59,8 @@
             <a v-if="record.status === 0" @click="handleStart(record)">部署</a>
             <a v-if="record.status === 2" @click="handleStart(record)">启动</a>
             <a v-if="record.status === 1 || record.status === 3" @click="handleStop(record)">停止</a>
+            <a v-if="record.status === 5" @click="handleAccept(record)">通过</a>
+            <a v-if="record.status === 6" @click="handleDisable(record)">禁用</a>
             <a-divider type="vertical" />
             <a @click="handleDelete(record)">删除</a>
           </template>
@@ -70,7 +72,7 @@
 
 <script>
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-import { getAmlServices } from '@/mock/data/services_data'
+import { getAmlMetaApps, getAmlServices } from '@/mock/data/services_data'
 import { getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
@@ -184,6 +186,32 @@ export default {
       record.status = 0
       this.$message.success(`${record.name} 已停止`)
     },
+    // 通过
+    handleAccept(record) {
+      const metaAppInfo = sessionStorage.getItem('metaAppInfo')
+      console.log('metaAppInfo---------------')
+      console.log(metaAppInfo)
+      if (metaAppInfo && metaAppInfo.name === record.name) {
+        sessionStorage.setItem('metaAppInfo', JSON.stringify({
+          ...JSON.parse(metaAppInfo),
+          status: 5
+        }))
+      }
+      record.status = 5
+      this.$message.success(`${record.name} 已通过`)
+    },
+    // 禁用
+    handleDisable(record) {
+      const metaAppInfo = sessionStorage.getItem('metaAppInfo')
+      if (metaAppInfo && metaAppInfo.name === record.name) {
+        sessionStorage.setItem('metaAppInfo', JSON.stringify({
+          ...JSON.parse(metaAppInfo),
+          status: 4
+        }))
+      }
+      record.status = 4
+      this.$message.success(`${record.name} 已禁用`)
+    },
     // 删除
     handleDelete(record) {
       this.dataSource = this.dataSource.filter(item => !this.selectedRowKeys.includes(item))
@@ -224,7 +252,7 @@ export default {
       }, 1000)
     },
     initData () {
-      this.dataSource = getAmlServices()
+      this.dataSource = [...getAmlServices(), ...getAmlMetaApps()]
       this.filteredDataSource = this.dataSource
     },
     // 选择行

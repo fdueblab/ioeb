@@ -199,8 +199,8 @@
 <script>
 import moment from 'moment'
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-import { getAssignedAmlService } from '@/mock/data/services_data'
-import { getNormMap, getServiceStatusMap } from '@/mock/data/map_data'
+import { getAssignedAmlMetaApp, getAssignedAmlService } from '@/mock/data/services_data'
+import { getIndustryMap, getScenarioMap, getTechnologyMap, getNormMap, getServiceStatusMap, getServiceTypeMap } from '@/mock/data/map_data'
 
 const TagSelectOption = TagSelect.Option
 
@@ -289,11 +289,11 @@ export default {
       filteredDataSource: [],
       selectedRowKeys: [],
       selectedRows: [],
-      typeArr: ['原子微服务', '元应用服务'],
+      typeArr: getServiceTypeMap(),
       domainArr: ['跨境支付AI监测服务'],
-      industryArr: ['金融风控', '自贸监管', '跨境贸易', '跨境电商'],
-      scenarioArr: ['反洗钱', '合规监测', '税务稽查', '业务统计', '信用评估'],
-      technologyArr: ['异常识别', '安全计算', '技术评测', '报告生成', '配套技术', '关联技术']
+      industryArr: getIndustryMap('aml'),
+      scenarioArr: getScenarioMap('aml'),
+      technologyArr: getTechnologyMap('aml')
     }
   },
   filters: {
@@ -462,7 +462,7 @@ export default {
     initData () {
       this.agentSearchText = ''
       this.agentSearchData = []
-      this.dataSource = getAssignedAmlService()
+      this.dataSource = [...getAssignedAmlService(), ...getAssignedAmlMetaApp()]
       this.filteredDataSource = this.dataSource
     },
     toggleChatBot() {

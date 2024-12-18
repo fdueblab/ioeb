@@ -573,8 +573,7 @@ export default {
       })
     },
     addMetaApp() {
-      // TODO: =======
-      if (this.data.nodeList.length > 0 || true) {
+      if (this.data.nodeList.length > 0) {
         this.metaAppBuilderVisible = true
         this.$nextTick(() => {
           this.$refs.metaAppBuilder.init()
