@@ -83,7 +83,7 @@
               <a-form-item
                 :wrapperCol="{ span: 24 }"
                 style="text-align: center">
-                <a-button type="primary" @click="onUpload" loading="uploadProgramLoading">
+                <a-button type="primary" @click="onUpload" :loading="uploadProgramLoading">
                   开始上传
                 </a-button>
               </a-form-item>
@@ -340,7 +340,6 @@ export default {
       new Promise((resolve) => {
         setTimeout(() => {
           this.$message.success('预发布成功！可以进行部署与测试')
-          sessionStorage.setItem('upload_exception_service', '1')
           this.uploadServiceLoading = false
           resolve()
         }, 1000)
