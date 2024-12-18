@@ -10,7 +10,7 @@ const amlServices = [
     port: '0.0.0.0:8000/TCP → 0.0.0.0:80000',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
     status: 1,
-    number: '2342',
+    number: '512',
     norm: [
       {
         key: 0,
@@ -42,8 +42,8 @@ const amlServices = [
     netWork: 'bridge',
     port: '0.0.0.0:8001/TCP → 0.0.0.0:80001',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-    status: 0,
-    number: '0',
+    status: 1,
+    number: '8192',
     norm: [
       {
         key: 1,
@@ -76,7 +76,7 @@ const amlServices = [
     port: '0.0.0.0:8002/TCP → 0.0.0.0:80002',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
     status: 3,
-    number: '234',
+    number: '2330',
     norm: [
       {
         key: 0,
@@ -358,6 +358,49 @@ const airCraftServices = [
   }
 ]
 
+const amlMetaApps = [
+  {
+    name: '跨境支付评估报告生成',
+    type: 1,
+    domain: 0,
+    industry: 1,
+    scenario: 2,
+    technology: 4,
+    netWork: 'bridge',
+    port: '0.0.0.0:1020/TCP → 0.0.0.0:10020',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/metaApp',
+    status: 5,
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
+      companyScore: 5,
+      msScore: 5
+    },
+    number: '2342'
+  }
+]
+
 export function getAmlServices() {
   if (sessionStorage.getItem('upload_exception_service')) {
     amlServices.find(item => item.name === '异常识别微服务').status = Number(sessionStorage.getItem('upload_exception_service'))
@@ -377,4 +420,17 @@ export function getAirCraftServices() {
 
 export function getAssignedAirCraftService() {
   return airCraftServices.filter(item => item.status !== 0)
+}
+
+export function getAmlMetaApps() {
+  if (sessionStorage.getItem('metaAppInfo')) {
+    const metaAppInfo = JSON.parse(sessionStorage.getItem('metaAppInfo'))
+    return [...amlMetaApps, metaAppInfo]
+  } else {
+    return amlMetaApps
+  }
+}
+
+export function getAssignedAmlMetaApp() {
+  return getAmlMetaApps().filter(item => item.status !== 4)
 }

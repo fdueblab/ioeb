@@ -76,21 +76,7 @@
 <script>
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
 import { getAirCraftServices } from '@/mock/data/services_data'
-import { getServiceStatusMap } from '@/mock/data/map_data'
-const normMap = {
-  0: {
-    text: '安全性'
-  },
-  1: {
-    text: '鲁棒性'
-  },
-  2: {
-    text: '隐私性'
-  },
-  3: {
-    text: '可信性'
-  }
-}
+import { getNormMap, getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
   name: 'TableList',
@@ -138,6 +124,7 @@ export default {
       return statusMap[type].status
     },
     normFilter (type) {
+      const normMap = getNormMap()
       return normMap[type].text
     }
   },

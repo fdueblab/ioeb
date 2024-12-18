@@ -190,7 +190,7 @@
 <script>
 import moment from 'moment'
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-import { getNormMap, getServiceStatusMap } from '@/mock/data/map_data'
+import { getIndustryMap, getScenarioMap, getTechnologyMap, getNormMap, getServiceStatusMap, getServiceTypeMap } from '@/mock/data/map_data'
 import { getAssignedAirCraftService } from '@/mock/data/services_data'
 
 const TagSelectOption = TagSelect.Option
@@ -278,11 +278,11 @@ export default {
       filteredDataSource: [],
       selectedRowKeys: [],
       selectedRows: [],
-      typeArr: ['原子微服务', '元应用服务'],
+      typeArr: getServiceTypeMap(),
       domainArr: ['低空飞行AI监控服务'],
-      industryArr: ['城市治理', '文旅农林', '教育培训'],
-      scenarioArr: ['应急救援', '交通巡逻', '低空物流', '低空测绘', '目标识别'],
-      technologyArr: ['线路设计', '虚拟仿真', '智能感知', '远程控制', '视频分析', '技术评价']
+      industryArr: getIndustryMap('aircraft'),
+      scenarioArr: getScenarioMap('aircraft'),
+      technologyArr: getTechnologyMap('aircraft')
     }
   },
   filters: {

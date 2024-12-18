@@ -49,7 +49,7 @@
 
 <script>
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-import { getAmlServices } from '@/mock/data/services_data'
+import { getAmlMetaApps, getAmlServices } from '@/mock/data/services_data'
 import { getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
@@ -137,7 +137,7 @@ export default {
       this.filteredDataSource = this.dataSource
     },
     initData () {
-      this.dataSource = getAmlServices()
+      this.dataSource = [...getAmlServices(), ...getAmlMetaApps()]
       this.filteredDataSource = this.dataSource
     }
   }
