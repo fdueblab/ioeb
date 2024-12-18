@@ -89,7 +89,7 @@ data.push({
   norm: [0, 1, 3],
   number: '2342'
 })
-if (sessionStorage.getItem('upload_exception_service') === '1') {
+if (sessionStorage.getItem('upload_exception_service')) {
   data.push({
     name: '异常识别微服务',
     netWork: 'bridge',

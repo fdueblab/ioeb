@@ -75,77 +75,9 @@
 </template>
 
 <script>
-import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-const statusMap = {
-  0: {
-    status: 'default',
-    text: '关闭'
-  },
-  1: {
-    status: 'processing',
-    text: '运行中'
-  },
-  2: {
-    status: 'success',
-    text: '容器已分配'
-  },
-  3: {
-    status: 'error',
-    text: '异常'
-  }
-}
-const normMap = {
-  0: {
-    text: '安全性'
-  },
-  1: {
-    text: '鲁棒性'
-  },
-  2: {
-    text: '隐私性'
-  },
-  3: {
-    text: '可信性'
-  }
-}
-const data = []
-data.push({
-  name: '安全计算微服务',
-  type: '安全计算',
-  status: 0,
-  norm: [0, 2],
-  number: '2342'
-})
-data.push({
-  name: '技术评测微服务',
-  type: '技术评测',
-  status: 3,
-  norm: [1, 2],
-  number: '2342'
-})
-data.push({
-  name: '信用评估微服务',
-  type: '信用评估',
-  status: 1,
-  norm: [1, 2, 3],
-  number: '2342'
-})
-data.push({
-  name: '报告生成微服务',
-  type: '报告生成',
-  status: 2,
-  norm: [0, 1, 3],
-  number: '2342'
-})
-if (sessionStorage.getItem('upload_exception_service') === '1') {
-  data.push({
-    name: '异常识别微服务',
-    type: '异常识别',
-    status: 1,
-    norm: [0, 1, 2],
-    number: '2342'
-  })
-}
+import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
+import { getNormMap, getServiceStatusMap } from '@/mock/data/map_data'
+import { getRunningAmlServices } from '@/mock/data/services_data'
 
 export default {
   name: 'TableList',
@@ -185,17 +117,20 @@ export default {
   },
   filters: {
     statusFilter (type) {
+      const statusMap = getServiceStatusMap()
       return statusMap[type].text
     },
     statusTypeFilter (type) {
+      const statusMap = getServiceStatusMap()
       return statusMap[type].status
     },
     normFilter (type) {
+      const normMap = getNormMap()
       return normMap[type].text
     }
   },
   created () {
-    this.dataSource = data
+    this.dataSource = getRunningAmlServices()
   },
   computed: {
     rowSelection () {
@@ -232,8 +167,10 @@ export default {
         code: 200,
         message: '测试通过！'
       }
-      const newObj = JSON.stringify(obj, null, 4)
-      this.response = newObj
+      if (sessionStorage.getItem('upload_exception_service')) {
+        sessionStorage.setItem('upload_exception_service', '4')
+      }
+      this.response = JSON.stringify(obj, null, 4)
     }
   }
 }

@@ -9,7 +9,7 @@ const amlServices = [
     netWork: 'bridge',
     port: '0.0.0.0:8000/TCP → 0.0.0.0:80000',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-    status: 1,
+    status: 4,
     number: '512',
     norm: [
       {
@@ -189,7 +189,7 @@ const airCraftServices = [
     netWork: 'bridge',
     port: '0.0.0.0:8080/TCP → 0.0.0.0:80080',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aircraft/data',
-    status: 1,
+    status: 4,
     norm: [
       {
         key: 0,
@@ -369,7 +369,50 @@ const amlMetaApps = [
     netWork: 'bridge',
     port: '0.0.0.0:1020/TCP → 0.0.0.0:10020',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/metaApp',
-    status: 5,
+    status: 4,
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
+      companyScore: 5,
+      msScore: 5
+    },
+    number: '2342'
+  }
+]
+
+const airCraftMetaApps = [
+  {
+    name: '无人机智能投递',
+    type: 0,
+    domain: 0,
+    industry: 1,
+    scenario: 2,
+    technology: 4,
+    netWork: 'bridge',
+    port: '0.0.0.0:8084/TCP → 0.0.0.0:80084',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/aircraft/data',
+    status: 4,
     norm: [
       {
         key: 0,
@@ -410,16 +453,16 @@ export function getAmlServices() {
   }
 }
 
-export function getAssignedAmlService() {
-  return getAmlServices().filter(item => item.status !== 0)
+export function getRunningAmlServices() {
+  return getAmlServices().filter(item => item.status === 1 || item.status === 4)
 }
 
 export function getAirCraftServices() {
   return airCraftServices
 }
 
-export function getAssignedAirCraftService() {
-  return airCraftServices.filter(item => item.status !== 0)
+export function getRunningAirCraftServices() {
+  return airCraftServices.filter(item => item.status === 1 || item.status === 4)
 }
 
 export function getAmlMetaApps() {
@@ -431,6 +474,14 @@ export function getAmlMetaApps() {
   }
 }
 
-export function getAssignedAmlMetaApp() {
-  return getAmlMetaApps().filter(item => item.status !== 4)
+export function getRunningAmlMetaApps() {
+  return getAmlMetaApps().filter(item => item.status === 1 || item.status === 4)
+}
+
+export function getAirCraftMetaApps() {
+  return airCraftMetaApps
+}
+
+export function getRunningAirCraftMetaApps() {
+  return airCraftMetaApps.filter(item => item.status === 1 || item.status === 4)
 }

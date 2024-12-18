@@ -21,7 +21,7 @@ export default {
 
   'layouts.usermenu.dialog.title': '信息',
   'layouts.usermenu.dialog.content': '您确定要注销吗？',
-  'layouts.userLayout.title': '关键技术协同研发与验证平台',
+  'layouts.userLayout.title': 'AI技术服务与应用验证平台',
   ...components,
   ...global,
   ...menu,

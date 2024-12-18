@@ -10,7 +10,7 @@
               </a-form-item>
             </a-col>
             <a-col :md="8" :sm="24">
-              <a-form-item label="使用状态">
+              <a-form-item label="状态">
                 <a-select v-model="queryParam.status" placeholder="请选择" default-value="-1">
                   <a-select-option value="-1">全部</a-select-option>
                   <a-select-option v-for="(item, index) in statusMap" :key="index" :value="index">{{ item.text }}</a-select-option>
@@ -32,9 +32,10 @@
         <a-button icon="sync" @click="handleRefresh" :loading="isRefreshing">更新</a-button>
         <a-dropdown v-action:edit v-if="selectedRowKeys.length > 0">
           <a-menu slot="overlay">
-            <a-menu-item key="1" @click="handleBatchDelete"><a-icon type="delete" />删除</a-menu-item>
-            <a-menu-item key="2" @click="handleBatchStop"><a-icon type="pause-circle" />停止</a-menu-item>
-            <a-menu-item key="3" @click="handleBatchStart"><a-icon type="caret-right"/>启动/分配容器</a-menu-item>
+            <a-menu-item key="1" @click="handleBatchDelete"><a-icon type="delete" />批量删除</a-menu-item>
+            <a-menu-item key="2" @click="handleBatchStop"><a-icon type="pause-circle" />批量停止</a-menu-item>
+            <a-menu-item key="3" @click="handleBatchDeploy"><a-icon type="caret-right"/>批量部署</a-menu-item>
+            <a-menu-item key="3" @click="handleBatchCancelDeploy"><a-icon type="caret-right"/>批量取消部署</a-menu-item>
           </a-menu>
           <a-button style="margin-left: 8px">
             批量操作 <a-icon type="down" />
@@ -56,11 +57,9 @@
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
-            <a v-if="record.status === 0" @click="handleStart(record)">部署</a>
-            <a v-if="record.status === 2" @click="handleStart(record)">启动</a>
-            <a v-if="record.status === 1 || record.status === 3" @click="handleStop(record)">停止</a>
-            <a v-if="record.status === 5" @click="handleAccept(record)">通过</a>
-            <a v-if="record.status === 6" @click="handleDisable(record)">禁用</a>
+            <a v-if="record.status === 0 || record.status === 2" @click="handleDeploy(record)">部署</a>
+            <a v-if="record.status === 1 || record.status === 3 || record.status === 4" @click="handleStop(record)">停止</a>
+            <a v-if="record.status === 5" @click="handleCancelDeploy(record)">取消</a>
             <a-divider type="vertical" />
             <a @click="handleDelete(record)">删除</a>
           </template>
@@ -107,16 +106,19 @@ export default {
         },
         {
           title: '端口映射',
-          dataIndex: 'port'
+          dataIndex: 'port',
+          width: '150px'
         },
         {
           title: '卷映射',
-          dataIndex: 'volume'
+          dataIndex: 'volume',
+          width: '220px'
         },
         {
           title: '状态',
           dataIndex: 'status',
-          scopedSlots: { customRender: 'status' }
+          scopedSlots: { customRender: 'status' },
+          width: '170px'
         },
         {
           title: '操作',
@@ -171,37 +173,23 @@ export default {
       this.filteredDataSource = this.dataSource
     },
     // 启动
-    handleStart(record) {
+    handleDeploy(record) {
       if (record.name === '异常识别微服务') {
-        sessionStorage.setItem('upload_exception_service', '1')
+        sessionStorage.setItem('upload_exception_service', '5')
       }
-      record.status = 1
-      this.$message.success(`${record.name} 已启动`)
+      record.status = 5
+      this.$message.success(`正在部署 ${record.name}`)
     },
     // 停止
     handleStop(record) {
       if (record.name === '异常识别微服务') {
-        sessionStorage.setItem('upload_exception_service', '0')
+        sessionStorage.setItem('upload_exception_service', '2')
       }
-      record.status = 0
+      record.status = 2
       this.$message.success(`${record.name} 已停止`)
     },
-    // 通过
+    // 通过测评
     handleAccept(record) {
-      const metaAppInfo = sessionStorage.getItem('metaAppInfo')
-      console.log('metaAppInfo---------------')
-      console.log(metaAppInfo)
-      if (metaAppInfo && metaAppInfo.name === record.name) {
-        sessionStorage.setItem('metaAppInfo', JSON.stringify({
-          ...JSON.parse(metaAppInfo),
-          status: 5
-        }))
-      }
-      record.status = 5
-      this.$message.success(`${record.name} 已通过`)
-    },
-    // 禁用
-    handleDisable(record) {
       const metaAppInfo = sessionStorage.getItem('metaAppInfo')
       if (metaAppInfo && metaAppInfo.name === record.name) {
         sessionStorage.setItem('metaAppInfo', JSON.stringify({
@@ -210,7 +198,19 @@ export default {
         }))
       }
       record.status = 4
-      this.$message.success(`${record.name} 已禁用`)
+      this.$message.success(`${record.name} 已通过`)
+    },
+    // 取消部署
+    handleCancelDeploy(record) {
+      const metaAppInfo = sessionStorage.getItem('metaAppInfo')
+      if (metaAppInfo && metaAppInfo.name === record.name) {
+        sessionStorage.setItem('metaAppInfo', JSON.stringify({
+          ...JSON.parse(metaAppInfo),
+          status: 2
+        }))
+      }
+      record.status = 2
+      this.$message.success(`取消部署 ${record.name}`)
     },
     // 删除
     handleDelete(record) {
@@ -220,17 +220,24 @@ export default {
       this.selectedRows = []
       this.$message.success(`${record.name} 已删除`)
     },
-    // 批量启动
-    handleBatchStart() {
+    // 批量部署
+    handleBatchDeploy() {
       this.selectedRows.forEach(row => {
-        row.status = 1
+        row.status = 5
       })
-      this.$message.success('批量启动成功')
+      this.$message.success('开始批量部署')
+    },
+    // 批量取消部署
+    handleBatchCancelDeploy() {
+      this.selectedRows.forEach(row => {
+        row.status = 2
+      })
+      this.$message.success('批量取消部署成功')
     },
     // 批量停止
     handleBatchStop() {
       this.selectedRows.forEach(row => {
-        row.status = 0
+        row.status = 2
       })
       this.$message.success('批量停止成功')
     },

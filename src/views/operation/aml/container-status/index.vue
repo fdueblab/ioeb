@@ -10,7 +10,7 @@
               </a-form-item>
             </a-col>
             <a-col :md="8" :sm="24">
-              <a-form-item label="使用状态">
+              <a-form-item label="状态">
                 <a-select v-model="queryParam.status" placeholder="请选择" default-value="-1">
                   <a-select-option value="-1">全部</a-select-option>
                   <a-select-option v-for="(item, index) in statusMap" :key="index" :value="index">{{ item.text }}</a-select-option>

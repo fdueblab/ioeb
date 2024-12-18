@@ -17,17 +17,6 @@ export const asyncRouterMap = [
       name: 'home'
     },
     children: [
-      {
-        path: '/home',
-        name: 'home',
-        meta: {
-            title: '服务与应用数据统计',
-            keepAlive: true,
-            icon: 'bar-chart',
-            permission: ['admin', 'publisher', 'user']
-        },
-        component: () => import('@/views/dashboard/Analysis')
-      },
       // 微服务与元应用检索
       {
         path: '/vertical-user',
@@ -358,6 +347,18 @@ export const asyncRouterMap = [
             meta: { title: '服务组合体代码生成', keepAlive: true, permission: ['user'] }
           }
         ]
+      },
+      // 数据统计（首页）
+      {
+        path: '/home',
+        name: 'home',
+        meta: {
+          title: '数据统计',
+          keepAlive: true,
+          icon: 'bar-chart',
+          permission: ['admin', 'publisher', 'user']
+        },
+        component: () => import('@/views/dashboard/Analysis')
       },
       // 用户管理
       {

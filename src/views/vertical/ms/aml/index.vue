@@ -56,17 +56,16 @@
                 </a-input>
               </a-form-item>
             </a-col>
-            <a-col :span="6">
-              <!--  TODO: =======改为微服务  -->
-              <a-form-item label="外部调用方式">
-                <a-select placeholder="请选择" default-value="0">
-                  <a-select-option value="0">RPC调用</a-select-option>
-                  <a-select-option value="1">RestFul接口</a-select-option>
-                  <a-select-option value="2">Websocket连接</a-select-option>
-                  <a-select-option value="3">其他</a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
+            <!--            <a-col :span="6">-->
+            <!--              <a-form-item label="外部调用方式">-->
+            <!--                <a-select placeholder="请选择" default-value="0">-->
+            <!--                  <a-select-option value="0">RPC调用</a-select-option>-->
+            <!--                  <a-select-option value="1">HTTP调用</a-select-option>-->
+            <!--                  <a-select-option value="2">Websocket连接</a-select-option>-->
+            <!--                  <a-select-option value="3">其他</a-select-option>-->
+            <!--                </a-select>-->
+            <!--              </a-form-item>-->
+            <!--            </a-col>-->
           </a-row>
           <a-row :gutter="20">
             <a-col :span="6">
@@ -99,46 +98,75 @@
         <v-chart style="height: 100%; width: 100%;" :options="options" autoresize/>
       </div>
     </a-card>
-    <a-card :bordered="false" style="margin-top: 10px; height: 530px;">
+    <a-card :bordered="false" style="margin-top: 10px; height: 410px;">
       <a-row :gutter="20">
         <a-col :span="12">
-          <a-card :bodyStyle="{ padding: 0 }" style="height: 480px;">
+          <a-card :bodyStyle="{ padding: 0 }" style="height: 360px;">
             <codemirror v-model="code" :style="codemirrorStyle" :options="cmOptions"></codemirror>
           </a-card>
         </a-col>
         <a-col :span="12">
-          <!-- TODO: =======改为选中的节点作为微服务，编辑其参数 -->
-          <a-card style="height: 480px;">
+          <!-- TODO: =======选中的节点出示其代码，编辑其参数 -->
+          <a-card style="height: 360px;">
             <a-form>
-              <a-form-item label="输入参数">
-                <a-input placeholder=""/>
-              </a-form-item>
-              <a-form-item label="输出参数">
-                <a-input placeholder=""/>
-              </a-form-item>
-              <a-form-item label="条件参数">
-                <a-input placeholder=""/>
-              </a-form-item>
-              <a-form-item label="效果参数">
-                <a-input placeholder=""/>
-              </a-form-item>
-              <a-form-item label="接口/配置文件" label-width="100px">
-                <a-upload
-                  accept=".yml,.yaml,.json,.ini,.conf"
-                  :file-list="configFiles"
-                  :remove="removeConfigFile"
-                  :customRequest="customConfigFileChose"
-                  :multiple="false">
-                  <a-button> <a-icon type="upload" /> 选择文件 </a-button>
-                </a-upload>
-              </a-form-item>
-              <a-form-item>
-                <div style="text-align: center;">
-                  <a-button type="primary" @click="uploadService" :disabled="programFiles.length === 0" :loading="uploadServiceLoading">
-                    发布
-                  </a-button>
-                </div>
-              </a-form-item>
+              <a-row :gutter="20">
+                <a-col :span="12">
+                  <a-form-item label="输入参数">
+                    <a-input placeholder="请输入Input"/>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item label="输出参数">
+                    <a-input placeholder="请输入Output"/>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <a-row :gutter="20">
+                <a-col :span="12">
+                  <a-form-item label="条件参数">
+                    <a-input placeholder="请输入Condition"/>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item label="效果参数">
+                    <a-input placeholder="请输入Effect"/>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <a-row :gutter="20">
+                <a-col :span="12">
+                  <a-form-item label="接口类型">
+                    <a-select placeholder="请选择" default-value="0">
+                      <a-select-option value="0">RestFul接口</a-select-option>
+                      <a-select-option value="1">RPC接口</a-select-option>
+                      <a-select-option value="2">WebService接口</a-select-option>
+                      <a-select-option value="3">Websocket连接</a-select-option>
+                      <a-select-option value="4">其他</a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item label="接口配置文件">
+                    <a-upload
+                      accept=".yml,.yaml,.json,.ini,.conf"
+                      :file-list="configFiles"
+                      :remove="removeConfigFile"
+                      :customRequest="customConfigFileChose"
+                      :multiple="false">
+                      <a-button> <a-icon type="upload" /> 选择文件 </a-button>
+                    </a-upload>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <a-row :gutter="20" style="margin-top: 30px;">
+                <a-form-item>
+                  <div style="text-align: center;">
+                    <a-button type="primary" @click="uploadService" :disabled="programFiles.length === 0" :loading="uploadServiceLoading">
+                      预发布
+                    </a-button>
+                  </div>
+                </a-form-item>
+              </a-row>
             </a-form>
           </a-card>
         </a-col>
@@ -147,9 +175,8 @@
   </page-header-wrapper>
 </template>
 <script>
-import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
+import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
 // eslint-disable-next-line no-unused-vars
-import * as echarts from 'echarts'
 import vChart from 'vue-echarts'
 import { codemirror } from 'vue-codemirror'
 import 'codemirror/lib/codemirror.css'
@@ -178,6 +205,7 @@ import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
+
 export default {
   name: 'TableList',
   components: {
@@ -194,7 +222,6 @@ export default {
       // create model
       graph: null,
       form: this.$form.createForm(this),
-      response: '',
       code: '',
       programFiles: [],
       configFiles: [],
@@ -226,8 +253,7 @@ export default {
       },
       codemirrorStyle: {
         fontSize: '14px',
-        lineHeight: '120%',
-        height: '478px'
+        lineHeight: '120%'
       }
     }
   },
@@ -239,7 +265,7 @@ export default {
         // 模拟上传文件合法性校验
         const file = this.programFiles
         if (file[0] && file[0].name === 'abnormal_recognition.py') {
-          this.$message.success('解析成功，已显示微服务拆分结果')
+          this.$message.success('解析成功，发现以下可用API及调用关系')
           this.setChart()
         } else {
           this.$message.error('上传的程序不符合规范，上传失败！')
@@ -249,7 +275,6 @@ export default {
     },
     setChart() {
       const json = {
-        // TODO: =======改为微服务（显示调用方式、参数等），例如数据管理和处理、模型预测、功能实现分别作为一个微服务
         nodes: [
           { id: '9001', x: 0, y: 150, label: 'datasets', size: 50, color: '#6F9654', value: 'RestFul API' },
           { id: '9002', x: 150, y: 150, label: 'preprocess', size: 50, color: '#E76F51', value: 'RestFul API' },
@@ -326,20 +351,12 @@ export default {
         }
       }
     },
-    onTest () {
-      const obj = {
-        code: 200,
-        message: '测试通过！'
-      }
-      const newObj = JSON.stringify(obj, null, 4)
-      this.response = newObj
-    },
     uploadService () {
       this.uploadServiceLoading = true
       new Promise((resolve) => {
         setTimeout(() => {
-          this.$message.success('发布成功，请等待管理员测试与部署')
-          sessionStorage.setItem('upload_exception_service', '0')
+          this.$message.success('预发布成功！可以进行部署与测试')
+          sessionStorage.setItem('upload_exception_service', '1')
           this.uploadServiceLoading = false
           resolve()
         }, 1000)
@@ -383,6 +400,7 @@ export default {
   }
 }
 </script>
+
 <style lang="less" scoped>
 .ant-pro-components-tag-select {
   :deep(.ant-pro-tag-select .ant-tag) {
@@ -402,6 +420,6 @@ export default {
   height: 300px;
 }
 /deep/ .CodeMirror{
-  height: 478px;
+  height: 358px;
 }
 </style>

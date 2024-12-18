@@ -1,11 +1,11 @@
 const statusMap = [
   {
-    status: 'warning',
-    text: '未分配容器'
+    status: 'error',
+    text: '容器分配失败'
   },
   {
-    status: 'processing',
-    text: '运行中'
+    status: 'warning',
+    text: '运行中(未通过测评)'
   },
   {
     status: 'default',
@@ -16,12 +16,12 @@ const statusMap = [
     text: '异常'
   },
   {
-    status: 'default',
-    text: '未通过测评'
+    status: 'success',
+    text: '运行中(已通过测评)'
   },
   {
-    status: 'success',
-    text: '可用'
+    status: 'processing',
+    text: '部署中'
   }
 ]
 

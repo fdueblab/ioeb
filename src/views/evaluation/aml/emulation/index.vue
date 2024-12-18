@@ -75,7 +75,7 @@
 
 <script>
 import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
-import { getAmlMetaApps } from '@/mock/data/services_data'
+import { getRunningAmlMetaApps } from '@/mock/data/services_data'
 import { getNormMap, getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
@@ -172,33 +172,36 @@ export default {
         code: 200,
         message: '测试通过！'
       }
-      const serviceData = {
-        ...JSON.parse(sessionStorage.getItem('metaAppInfo')),
-        status: 6,
-        norm: [
-          {
-            key: 0,
-            score: 5
-          },
-          {
-            key: 1,
-            score: 5
-          },
-          {
-            key: 2,
-            score: 5
-          },
-          {
-            key: 3,
-            score: 5
-          }
-        ]
+      const metaAppInfo = sessionStorage.getItem('metaAppInfo')
+      if (metaAppInfo) {
+        const serviceData = {
+          ...JSON.parse(sessionStorage.getItem('metaAppInfo')),
+          status: 4,
+          norm: [
+            {
+              key: 0,
+              score: 5
+            },
+            {
+              key: 1,
+              score: 5
+            },
+            {
+              key: 2,
+              score: 5
+            },
+            {
+              key: 3,
+              score: 5
+            }
+          ]
+        }
+        sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
       }
-      sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
       this.response = JSON.stringify(obj, null, 4)
     },
     initData () {
-      this.dataSource = getAmlMetaApps()
+      this.dataSource = getRunningAmlMetaApps()
       this.filteredDataSource = this.dataSource
     }
   }

@@ -75,7 +75,7 @@
 
 <script>
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-import { getAirCraftServices } from '@/mock/data/services_data'
+import { getRunningAirCraftMetaApps } from '@/mock/data/services_data'
 import { getNormMap, getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
@@ -176,7 +176,7 @@ export default {
       this.response = newObj
     },
     initData () {
-      this.dataSource = getAirCraftServices()
+      this.dataSource = getRunningAirCraftMetaApps()
       this.filteredDataSource = this.dataSource
     }
   }

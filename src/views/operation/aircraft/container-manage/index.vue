@@ -6,16 +6,14 @@
           <a-row :gutter="48">
             <a-col :md="8" :sm="24">
               <a-form-item label="服务名称">
-                <a-input v-model="queryParam.id" placeholder="请输入服务名称"/>
+                <a-input v-model="queryParam.name" placeholder="请输入服务名称"/>
               </a-form-item>
             </a-col>
             <a-col :md="8" :sm="24">
-              <a-form-item label="使用状态">
+              <a-form-item label="状态">
                 <a-select v-model="queryParam.status" placeholder="请选择" default-value="-1">
                   <a-select-option value="-1">全部</a-select-option>
-                  <a-select-option value="0">未启动</a-select-option>
-                  <a-select-option value="1">运行中</a-select-option>
-                  <a-select-option value="2">异常</a-select-option>
+                  <a-select-option v-for="(item, index) in statusMap" :key="index" :value="index">{{ item.text }}</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -34,9 +32,10 @@
         <a-button icon="sync" @click="handleRefresh" :loading="isRefreshing">更新</a-button>
         <a-dropdown v-action:edit v-if="selectedRowKeys.length > 0">
           <a-menu slot="overlay">
-            <a-menu-item key="1" @click="handleBatchDelete"><a-icon type="delete" />删除</a-menu-item>
-            <a-menu-item key="2" @click="handleBatchStop"><a-icon type="pause-circle" />停止</a-menu-item>
-            <a-menu-item key="3" @click="handleBatchStart"><a-icon type="caret-right"/>启动</a-menu-item>
+            <a-menu-item key="1" @click="handleBatchDelete"><a-icon type="delete" />批量删除</a-menu-item>
+            <a-menu-item key="2" @click="handleBatchStop"><a-icon type="pause-circle" />批量停止</a-menu-item>
+            <a-menu-item key="3" @click="handleBatchDeploy"><a-icon type="caret-right"/>批量部署</a-menu-item>
+            <a-menu-item key="3" @click="handleBatchCancelDeploy"><a-icon type="caret-right"/>批量取消部署</a-menu-item>
           </a-menu>
           <a-button style="margin-left: 8px">
             批量操作 <a-icon type="down" />
@@ -58,8 +57,9 @@
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
-            <a v-if="record.status === 2 || record.status === 0" @click="handleStart(record)">启动</a>
-            <a v-if="record.status === 1" @click="handleStop(record)">停止</a>
+            <a v-if="record.status === 0 || record.status === 2" @click="handleDeploy(record)">部署</a>
+            <a v-if="record.status === 1 || record.status === 3 || record.status === 4" @click="handleStop(record)">停止</a>
+            <a v-if="record.status === 5" @click="handleCancelDeploy(record)">取消</a>
             <a-divider type="vertical" />
             <a @click="handleDelete(record)">删除</a>
           </template>
@@ -71,66 +71,8 @@
 
 <script>
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-const statusMap = {
-  0: {
-    status: 'default',
-    text: '未启动'
-  },
-  1: {
-    status: 'processing',
-    text: '运行中'
-  },
-  2: {
-    status: 'error',
-    text: '异常'
-  }
-}
-const data = []
-data.push({
-  name: '无人机虚拟仿真微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8081/TCP → 0.0.0.0:8080',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 1,
-  norm: [0, 1, 2],
-  number: '2342'
-})
-data.push({
-  name: '无人机低空测绘微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 1,
-  norm: [0, 2],
-  number: '2342'
-})
-data.push({
-  name: '无人机目标识别微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 1,
-  norm: [1, 2],
-  number: '2342'
-})
-data.push({
-  name: '无人机远程控制微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 1,
-  norm: [0, 1, 3],
-  number: '2342'
-})
-data.push({
-  name: '无人机视频分析微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 2,
-  norm: [1, 2, 3],
-  number: '2342'
-})
+import { getAirCraftMetaApps, getAirCraftServices } from '@/mock/data/services_data'
+import { getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
   name: 'TableList',
@@ -145,10 +87,10 @@ export default {
       isRefreshing: false,
       // 查询参数
       queryParam: {
-        id: '',
+        name: '',
         status: '-1'
       },
-      // 加载数据方法 必须为 Promise 对象
+      statusMap: getServiceStatusMap(),
       columns: [
         {
           title: '#',
@@ -164,16 +106,19 @@ export default {
         },
         {
           title: '端口映射',
-          dataIndex: 'port'
+          dataIndex: 'port',
+          width: '150px'
         },
         {
           title: '卷映射',
-          dataIndex: 'volume'
+          dataIndex: 'volume',
+          width: '220px'
         },
         {
           title: '状态',
           dataIndex: 'status',
-          scopedSlots: { customRender: 'status' }
+          scopedSlots: { customRender: 'status' },
+          width: '170px'
         },
         {
           title: '操作',
@@ -191,9 +136,11 @@ export default {
   },
   filters: {
     statusFilter (type) {
+      const statusMap = getServiceStatusMap()
       return statusMap[type].text
     },
     statusTypeFilter (type) {
+      const statusMap = getServiceStatusMap()
       return statusMap[type].status
     }
   },
@@ -210,68 +157,89 @@ export default {
   },
   methods: {
     handleAdd () {
-      this.$emit('onGoAdd')
+      this.$router.push({ path: '#/vertical-ms/aml' })
     },
     // 查询
     handleSearch() {
       this.filteredDataSource = this.dataSource.filter(item => {
-        const nameMatch = item.name.includes(this.queryParam.id)
+        const nameMatch = item.name.includes(this.queryParam.name)
         const statusMatch = this.queryParam.status === '-1' || item.status === Number(this.queryParam.status)
         return nameMatch && statusMatch
       })
     },
     // 重置
     handleReset() {
-      this.queryParam = { id: '', status: '-1' }
+      this.queryParam = { name: '', status: '-1' }
       this.filteredDataSource = this.dataSource
     },
     // 启动
-    handleStart(record) {
-      record.status = 1
-      this.$message.success(`${record.name} 已启动`)
+    handleDeploy(record) {
+      record.status = 5
+      this.$message.success(`正在部署 ${record.name}`)
     },
     // 停止
     handleStop(record) {
-      record.status = 0
+      record.status = 2
       this.$message.success(`${record.name} 已停止`)
+    },
+    // 通过测评
+    handleAccept(record) {
+      record.status = 4
+      this.$message.success(`${record.name} 已通过`)
+    },
+    // 取消部署
+    handleCancelDeploy(record) {
+      record.status = 2
+      this.$message.success(`取消部署 ${record.name}`)
     },
     // 删除
     handleDelete(record) {
-      this.dataSource = this.dataSource.filter(item => item !== record)
-      this.filteredDataSource = this.filteredDataSource.filter(item => item !== record)
+      this.dataSource = this.dataSource.filter(item => !this.selectedRowKeys.includes(item))
+      this.filteredDataSource = this.dataSource
+      this.selectedRowKeys = []
+      this.selectedRows = []
       this.$message.success(`${record.name} 已删除`)
     },
-    // 批量启动
-    handleBatchStart() {
+    // 批量部署
+    handleBatchDeploy() {
       this.selectedRows.forEach(row => {
-        row.status = 1
+        row.status = 5
       })
-      this.$message.success('批量启动成功')
+      this.$message.success('开始批量部署')
+    },
+    // 批量取消部署
+    handleBatchCancelDeploy() {
+      this.selectedRows.forEach(row => {
+        row.status = 2
+      })
+      this.$message.success('批量取消部署成功')
     },
     // 批量停止
     handleBatchStop() {
       this.selectedRows.forEach(row => {
-        row.status = 0
+        row.status = 2
       })
       this.$message.success('批量停止成功')
     },
     // 批量删除
     handleBatchDelete() {
       this.dataSource = this.dataSource.filter(item => !this.selectedRowKeys.includes(item))
-      this.filteredDataSource = this.filteredDataSource.filter(item => !this.selectedRowKeys.includes(item))
+      this.filteredDataSource = this.dataSource
       this.selectedRowKeys = []
+      this.selectedRows = []
       this.$message.success('批量删除成功')
     },
     handleRefresh() {
       if (this.isRefreshing) return
       this.isRefreshing = true
       setTimeout(() => {
+        this.initData()
         this.$message.success('刷新成功')
         this.isRefreshing = false
       }, 1000)
     },
-    initData() {
-      this.dataSource = data
+    initData () {
+      this.dataSource = [...getAirCraftServices(), ...getAirCraftMetaApps()]
       this.filteredDataSource = this.dataSource
     },
     // 选择行
