@@ -37,17 +37,17 @@
             <el-row>
               <el-col :span="8">
                 <el-form-item label="输入">
-                  <el-input v-model="node.input"></el-input>
+                  <el-input v-model="node.input" :disabled="true"></el-input>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
                 <el-form-item label="输出">
-                  <el-input v-model="node.output"></el-input>
+                  <el-input v-model="node.output" :disabled="true"></el-input>
                 </el-form-item>
               </el-col>
               <el-col :span="8">
                 <el-form-item label="版本">
-                  <el-input v-model="node.version"></el-input>
+                  <el-input v-model="node.version" :disabled="true"></el-input>
                 </el-form-item>
               </el-col>
             </el-row>

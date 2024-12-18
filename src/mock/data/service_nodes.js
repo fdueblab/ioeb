@@ -168,7 +168,7 @@ const amlServiceNodes = [
 ]
 
 export function getAllAmlServiceNodes() {
-  if (sessionStorage.getItem('upload_exception_service') === '1') {
+  if (sessionStorage.getItem('upload_exception_service') === '4') {
     return amlServiceNodes
   } else {
     return amlServiceNodes.filter(item => item.id !== '90')

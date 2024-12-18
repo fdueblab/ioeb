@@ -4,7 +4,7 @@
     title="构建元应用"
     @ok="handleOk"
     @cancel="handleCancel"
-    ok-text="构建"
+    ok-text="预发布"
     cancel-text="取消"
   >
     <a-form :form="form" layout="vertical">
@@ -93,7 +93,7 @@ export default {
           const serviceData = {
             ...values,
             type: 1,
-            status: 4,
+            status: 1,
             netWork: 'bridge',
             port: '0.0.0.0:1021/TCP → 0.0.0.0:10021',
             volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/metaApp',
@@ -110,9 +110,9 @@ export default {
             number: '0'
           }
           sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
-          window.location.href = `#/evaluation/${this.serviceType}/emulation`
           this.visible = false
           this.$emit('close')
+          window.location.href = `#/evaluation/${this.serviceType}/emulation`
         } else {
           console.log('errors', errors)
         }

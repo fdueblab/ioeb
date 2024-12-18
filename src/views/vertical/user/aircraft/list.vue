@@ -191,7 +191,7 @@
 import moment from 'moment'
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
 import { getIndustryMap, getScenarioMap, getTechnologyMap, getNormMap, getServiceStatusMap, getServiceTypeMap } from '@/mock/data/map_data'
-import { getAssignedAirCraftService } from '@/mock/data/services_data'
+import { getAirCraftServices } from '@/mock/data/services_data'
 
 const TagSelectOption = TagSelect.Option
 
@@ -450,7 +450,7 @@ export default {
     initData () {
       this.agentSearchText = ''
       this.agentSearchData = []
-      this.dataSource = getAssignedAirCraftService()
+      this.dataSource = getAirCraftServices()
       this.filteredDataSource = this.dataSource
     },
     toggleChatBot() {

@@ -6,16 +6,14 @@
           <a-row :gutter="48">
             <a-col :md="8" :sm="24">
               <a-form-item label="服务名称">
-                <a-input v-model="queryParam.id" placeholder="请输入服务名称"/>
+                <a-input v-model="queryParam.name" placeholder="请输入服务名称"/>
               </a-form-item>
             </a-col>
             <a-col :md="8" :sm="24">
-              <a-form-item label="使用状态">
+              <a-form-item label="状态">
                 <a-select v-model="queryParam.status" placeholder="请选择" default-value="-1">
                   <a-select-option value="-1">全部</a-select-option>
-                  <a-select-option value="0">未启动</a-select-option>
-                  <a-select-option value="1">运行中</a-select-option>
-                  <a-select-option value="2">异常</a-select-option>
+                  <a-select-option v-for="(item, index) in statusMap" :key="index" :value="index">{{ item.text }}</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -51,66 +49,8 @@
 
 <script>
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-const statusMap = {
-  0: {
-    status: 'default',
-    text: '未启动'
-  },
-  1: {
-    status: 'processing',
-    text: '运行中'
-  },
-  2: {
-    status: 'error',
-    text: '异常'
-  }
-}
-const data = []
-data.push({
-  name: '无人机虚拟仿真微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8081/TCP → 0.0.0.0:8080',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 1,
-  norm: [0, 1, 2],
-  number: '2342'
-})
-data.push({
-  name: '无人机低空测绘微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 1,
-  norm: [0, 2],
-  number: '2342'
-})
-data.push({
-  name: '无人机目标识别微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 1,
-  norm: [1, 2],
-  number: '2342'
-})
-data.push({
-  name: '无人机远程控制微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 1,
-  norm: [0, 1, 3],
-  number: '2342'
-})
-data.push({
-  name: '无人机视频分析微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 2,
-  norm: [1, 2, 3],
-  number: '2342'
-})
+import { getAirCraftMetaApps, getAirCraftServices } from '@/mock/data/services_data'
+import { getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
   name: 'TableList',
@@ -125,10 +65,10 @@ export default {
       isRefreshing: false,
       // 查询参数
       queryParam: {
-        id: '',
+        name: '',
         status: '-1'
       },
-      // 加载数据方法 必须为 Promise 对象
+      statusMap: getServiceStatusMap(),
       columns: [
         {
           title: '#',
@@ -164,9 +104,11 @@ export default {
   },
   filters: {
     statusFilter (type) {
+      const statusMap = getServiceStatusMap()
       return statusMap[type].text
     },
     statusTypeFilter (type) {
+      const statusMap = getServiceStatusMap()
       return statusMap[type].status
     }
   },
@@ -174,10 +116,9 @@ export default {
     this.initData()
   },
   methods: {
-    // 查询
     handleSearch() {
       this.filteredDataSource = this.dataSource.filter(item => {
-        const nameMatch = item.name.includes(this.queryParam.id)
+        const nameMatch = item.name.includes(this.queryParam.name)
         const statusMatch = this.queryParam.status === '-1' || item.status === Number(this.queryParam.status)
         return nameMatch && statusMatch
       })
@@ -192,11 +133,11 @@ export default {
       }, 1000)
     },
     handleReset() {
-      this.queryParam = { id: '', status: '-1' }
+      this.queryParam = { name: '', status: '-1' }
       this.filteredDataSource = this.dataSource
     },
-    initData() {
-      this.dataSource = data
+    initData () {
+      this.dataSource = [...getAirCraftServices(), ...getAirCraftMetaApps()]
       this.filteredDataSource = this.dataSource
     }
   }

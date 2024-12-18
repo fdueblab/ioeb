@@ -70,17 +70,6 @@
             </tag-select>
           </a-form-item>
         </standard-form-row>
-
-        <standard-form-row title="智能检索" grid last>
-          <a-row>
-            <a-col :span="16">
-              <a-form-item :wrapper-col="{ xs: 18, sm: 18, md: 18 }">
-                <a-input-search style="width: 100%" v-model="agentSearchText" placeholder="请输入您想要的微服务名称、功能等"
-                                @search="handleAgentSearch" :loading="agentSearchLoading" />
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </standard-form-row>
       </a-form>
     </a-card>
     <a-card :bordered="false" :title="agentSearchData.length > 0 ? 'AI智能检索为您推荐以下微服务' : false">
@@ -179,7 +168,7 @@
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
-            <a @click="handleUse(record)">使用</a>
+            <a @click="handleUse(record)">编辑</a>
           </template>
         </span>
       </a-table>
@@ -199,7 +188,7 @@
 <script>
 import moment from 'moment'
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-import { getAssignedAmlMetaApp, getAssignedAmlService } from '@/mock/data/services_data'
+import { getAmlMetaApps, getAmlServices } from '@/mock/data/services_data'
 import { getIndustryMap, getScenarioMap, getTechnologyMap, getNormMap, getServiceStatusMap, getServiceTypeMap } from '@/mock/data/map_data'
 
 const TagSelectOption = TagSelect.Option
@@ -462,7 +451,7 @@ export default {
     initData () {
       this.agentSearchText = ''
       this.agentSearchData = []
-      this.dataSource = [...getAssignedAmlService(), ...getAssignedAmlMetaApp()]
+      this.dataSource = [...getAmlServices(), ...getAmlMetaApps()]
       this.filteredDataSource = this.dataSource
     },
     toggleChatBot() {

@@ -55,23 +55,26 @@
                 </a-input>
               </a-form-item>
             </a-col>
-            <a-col :span="6">
-              <a-form-item label="服务调用选项">
-                <a-select placeholder="请选择" default-value="0">
-                  <a-select-option value="0">RestFul接口</a-select-option>
-                  <a-select-option value="1">Websocket连接</a-select-option>
-                  <a-select-option value="2">其他</a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
+            <!--            <a-col :span="6">-->
+            <!--              <a-form-item label="外部调用方式">-->
+            <!--                <a-select placeholder="请选择" default-value="0">-->
+            <!--                  <a-select-option value="0">RPC调用</a-select-option>-->
+            <!--                  <a-select-option value="1">HTTP调用</a-select-option>-->
+            <!--                  <a-select-option value="2">Websocket连接</a-select-option>-->
+            <!--                  <a-select-option value="3">其他</a-select-option>-->
+            <!--                </a-select>-->
+            <!--              </a-form-item>-->
+            <!--            </a-col>-->
           </a-row>
           <a-row :gutter="20">
             <a-col :span="6">
               <a-form-item label="程序">
                 <a-upload
-                  name="file"
-                  :multiple="true"
-                  action="">
+                  accept=".py,.jar"
+                  :file-list="programFiles"
+                  :remove="removeProgramFile"
+                  :customRequest="customProgramFilesChose"
+                  :multiple="true">
                   <a-button> <a-icon type="upload" /> 选择程序 </a-button>
                 </a-upload>
               </a-form-item>
@@ -80,7 +83,9 @@
               <a-form-item
                 :wrapperCol="{ span: 24 }"
                 style="text-align: center">
-                <a-button type="primary" @click="onUpload">开始上传</a-button>
+                <a-button type="primary" @click="onUpload" loading="uploadProgramLoading">
+                  开始上传
+                </a-button>
               </a-form-item>
             </a-col>
           </a-row>
@@ -92,39 +97,74 @@
         <v-chart style="height: 100%; width: 100%;" :options="options" autoresize/>
       </div>
     </a-card>
-    <a-card :bordered="false" style="margin-top: 10px; height: 530px;">
+    <a-card :bordered="false" style="margin-top: 10px; height: 410px;">
       <a-row :gutter="20">
         <a-col :span="12">
-          <a-card :bodyStyle="{ padding: 0 }" style="height: 480px;">
+          <a-card :bodyStyle="{ padding: 0 }" style="height: 360px;">
             <codemirror v-model="code" :style="codemirrorStyle" :options="cmOptions"></codemirror>
           </a-card>
         </a-col>
         <a-col :span="12">
-          <a-card style="height: 480px;">
+          <a-card style="height: 360px;">
             <a-form>
-              <a-form-item label="输入参数">
-                <a-input placeholder=""/>
-              </a-form-item>
-              <a-form-item label="输出参数">
-                <a-input placeholder=""/>
-              </a-form-item>
-              <a-form-item label="条件参数">
-                <a-input placeholder=""/>
-              </a-form-item>
-              <a-form-item label="效果参数">
-                <a-input placeholder=""/>
-              </a-form-item>
-              <a-form-item label="接口/配置文件" label-width="100px">
-                <a-upload
-                  name="file"
-                  :multiple="false"
-                  action="">
-                  <a-button> <a-icon type="upload" /> 选择文件 </a-button>
-                </a-upload>
-              </a-form-item>
-              <a-form-item>
-                <div style="text-align: center;"> <a-button type="primary">发布</a-button> </div>
-              </a-form-item>
+              <a-row :gutter="20">
+                <a-col :span="12">
+                  <a-form-item label="输入参数">
+                    <a-input placeholder="请输入Input"/>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item label="输出参数">
+                    <a-input placeholder="请输入Output"/>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <a-row :gutter="20">
+                <a-col :span="12">
+                  <a-form-item label="条件参数">
+                    <a-input placeholder="请输入Condition"/>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item label="效果参数">
+                    <a-input placeholder="请输入Effect"/>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <a-row :gutter="20">
+                <a-col :span="12">
+                  <a-form-item label="接口类型">
+                    <a-select placeholder="请选择" default-value="0">
+                      <a-select-option value="0">RestFul接口</a-select-option>
+                      <a-select-option value="1">RPC接口</a-select-option>
+                      <a-select-option value="2">WebService接口</a-select-option>
+                      <a-select-option value="3">Websocket连接</a-select-option>
+                      <a-select-option value="4">其他</a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item label="接口配置文件">
+                    <a-upload
+                      accept=".yml,.yaml,.json,.ini,.conf"
+                      :file-list="configFiles"
+                      :remove="removeConfigFile"
+                      :customRequest="customConfigFileChose"
+                      :multiple="false">
+                      <a-button> <a-icon type="upload" /> 选择文件 </a-button>
+                    </a-upload>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <a-row :gutter="20" style="margin-top: 30px;">
+                <a-form-item>
+                  <div style="text-align: center;">
+                    <a-button type="primary" @click="uploadService" :disabled="programFiles.length === 0" :loading="uploadServiceLoading">
+                      预发布
+                    </a-button>
+                  </div>
+                </a-form-item>
+              </a-row>
             </a-form>
           </a-card>
         </a-col>
@@ -133,10 +173,8 @@
   </page-header-wrapper>
 </template>
 <script>
-/* eslint-disable */
-import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
+import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
 // eslint-disable-next-line no-unused-vars
-import * as echarts from 'echarts'
 import vChart from 'vue-echarts'
 import { codemirror } from 'vue-codemirror'
 import 'codemirror/lib/codemirror.css'
@@ -165,6 +203,7 @@ import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
+
 export default {
   name: 'TableList',
   components: {
@@ -181,8 +220,11 @@ export default {
       // create model
       graph: null,
       form: this.$form.createForm(this),
-      response: '',
       code: '',
+      programFiles: [],
+      configFiles: [],
+      uploadProgramLoading: false,
+      uploadServiceLoading: false,
       cmOptions: {
         mode: 'application/json',
         gutters: ['CodeMirror-lint-markers', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
@@ -209,14 +251,22 @@ export default {
       },
       codemirrorStyle: {
         fontSize: '14px',
-        lineHeight: '120%',
-        height: '478px'
+        lineHeight: '120%'
       }
     }
   },
   mounted () {},
   methods: {
     onUpload () {
+      this.uploadProgramLoading = true
+      setTimeout(() => {
+        // const file = this.programFiles
+        this.$message.success('解析成功，发现以下可用API及调用关系')
+        this.setChart()
+        this.uploadProgramLoading = false
+      }, 1000)
+    },
+    setChart() {
       const json = {
         nodes: [
           { id: '1000', x: 200, y: 50, label: 'getTargetFeature', size: 50, color: '#F6BD16', value: 'Websocket connection' },
@@ -227,7 +277,7 @@ export default {
         edges: [
           { sourceID: '1000', targetID: '1002' },
           { sourceID: '1001', targetID: '1002' },
-          { sourceID: '1002', targetID: '1003' },
+          { sourceID: '1002', targetID: '1003' }
         ]
       }
 
@@ -267,7 +317,7 @@ export default {
               }
             }),
             emphasis: {
-              focus: 'adjacency',
+              focus: 'adjacency'
             },
             roam: true,
             lineStyle: {
@@ -285,17 +335,56 @@ export default {
         }
       }
     },
-    onTest () {
-      const obj = {
-        code: 200,
-        message: '测试通过！'
+    uploadService () {
+      this.uploadServiceLoading = true
+      new Promise((resolve) => {
+        setTimeout(() => {
+          this.$message.success('预发布成功！可以进行部署与测试')
+          sessionStorage.setItem('upload_exception_service', '1')
+          this.uploadServiceLoading = false
+          resolve()
+        }, 1000)
+      }).then(() => {
+        this.$router.push({ path: '#/vertical/ms/aircraft/list' })
+      })
+    },
+    async customProgramFilesChose (options) {
+      const { file } = options
+      if (!file) {
+        return false
       }
-      const newObj = JSON.stringify(obj, null, 4)
-      this.response = newObj
+      const url = URL.createObjectURL(file)
+      this.programFiles.push({
+        uid: file?.uid,
+        name: file.name,
+        status: 'done',
+        url // url 是展示在页面上的绝对链接
+      })
+    },
+    removeProgramFile (file) {
+      this.programFiles = this.programFiles.filter(item => item.uid !== file.uid)
+    },
+    // 配置文件只支持单个文件
+    async customConfigFileChose (options) {
+      const { file } = options
+      if (!file) {
+        return false
+      }
+      const url = URL.createObjectURL(file)
+      this.configFiles = {
+        uid: file?.uid,
+        name: file.name,
+        status: 'done',
+        url // url 是展示在页面上的绝对链接
+      }
+    },
+    removeConfigFile () {
+      this.configFiles = []
     }
   }
 }
 </script>
+
 <style lang="less" scoped>
 .ant-pro-components-tag-select {
   :deep(.ant-pro-tag-select .ant-tag) {
@@ -315,6 +404,6 @@ export default {
   height: 300px;
 }
 /deep/ .CodeMirror{
-  height: 478px;
+  height: 358px;
 }
 </style>
