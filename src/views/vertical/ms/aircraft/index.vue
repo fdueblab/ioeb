@@ -7,43 +7,34 @@
             <a-col :span="6">
               <a-form-item label="领域">
                 <a-select placeholder="请选择" default-value="0">
-                  <a-select-option value="0">全部</a-select-option>
-                  <a-select-option value="1">低空飞行AI监控服务</a-select-option>
+                  <a-select-option value="0">低空飞行AI监控服务</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
             <a-col :span="6">
               <a-form-item label="行业">
-                <a-select placeholder="请选择" default-value="0">
-                  <a-select-option value="0">全部</a-select-option>
-                  <a-select-option value="1">城市治理</a-select-option>
-                  <a-select-option value="2">文旅农林</a-select-option>
-                  <a-select-option value="3">教育培训</a-select-option>
+                <a-select v-model="programInfo.industry" placeholder="请选择行业" allow-clear>
+                  <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="index">
+                    {{ item }}
+                  </a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
             <a-col :span="6">
               <a-form-item label="场景">
-                <a-select placeholder="请选择" default-value="0">
-                  <a-select-option value="0">全部</a-select-option>
-                  <a-select-option value="1">应急救援</a-select-option>
-                  <a-select-option value="2">交通巡逻</a-select-option>
-                  <a-select-option value="3">低空物流</a-select-option>
-                  <a-select-option value="4">低空测绘</a-select-option>
-                  <a-select-option value="5">目标识别</a-select-option>
+                <a-select v-model="programInfo.scenario" placeholder="请选择场景" allow-clear>
+                  <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="index">
+                    {{ item }}
+                  </a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
             <a-col :span="6">
               <a-form-item label="技术">
-                <a-select placeholder="请选择" default-value="0">
-                  <a-select-option value="0">全部</a-select-option>
-                  <a-select-option value="1">线路设计</a-select-option>
-                  <a-select-option value="2">虚拟仿真</a-select-option>
-                  <a-select-option value="3">智能感知</a-select-option>
-                  <a-select-option value="4">远程控制</a-select-option>
-                  <a-select-option value="5">视频分析</a-select-option>
-                  <a-select-option value="6">技术评价</a-select-option>
+                <a-select v-model="programInfo.technology" placeholder="请选择技术" allow-clear>
+                  <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="index">
+                    {{ item }}
+                  </a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -51,20 +42,9 @@
           <a-row :gutter="20">
             <a-col :span="6">
               <a-form-item label="微服务名称">
-                <a-input placeholder="请输入">
-                </a-input>
+                <a-input v-model="programInfo.name" placeholder="请输入" allow-clear />
               </a-form-item>
             </a-col>
-            <!--            <a-col :span="6">-->
-            <!--              <a-form-item label="外部调用方式">-->
-            <!--                <a-select placeholder="请选择" default-value="0">-->
-            <!--                  <a-select-option value="0">RPC调用</a-select-option>-->
-            <!--                  <a-select-option value="1">HTTP调用</a-select-option>-->
-            <!--                  <a-select-option value="2">Websocket连接</a-select-option>-->
-            <!--                  <a-select-option value="3">其他</a-select-option>-->
-            <!--                </a-select>-->
-            <!--              </a-form-item>-->
-            <!--            </a-col>-->
           </a-row>
           <a-row :gutter="20">
             <a-col :span="6">
@@ -94,14 +74,14 @@
     </a-card>
     <a-card v-show="options" :bordered="false" style="margin-top: 10px;">
       <div class="g6-x">
-        <v-chart style="height: 100%; width: 100%;" :options="options" autoresize/>
+        <v-chart style="height: 100%; width: 100%;" :options="options" autoresize @click="handleNodeClick"/>
       </div>
     </a-card>
     <a-card :bordered="false" style="margin-top: 10px; height: 410px;">
       <a-row :gutter="20">
         <a-col :span="12">
           <a-card :bodyStyle="{ padding: 0 }" style="height: 360px;">
-            <codemirror v-model="code" :style="codemirrorStyle" :options="cmOptions"></codemirror>
+            <codemirror v-model="code" :style="codemirrorStyle" :options="cmOptions" />
           </a-card>
         </a-col>
         <a-col :span="12">
@@ -110,36 +90,34 @@
               <a-row :gutter="20">
                 <a-col :span="12">
                   <a-form-item label="输入参数">
-                    <a-input placeholder="请输入Input"/>
+                    <a-input v-model="form.input" placeholder="请输入Input"/>
                   </a-form-item>
                 </a-col>
                 <a-col :span="12">
                   <a-form-item label="输出参数">
-                    <a-input placeholder="请输入Output"/>
+                    <a-input v-model="form.output" placeholder="请输入Output"/>
                   </a-form-item>
                 </a-col>
               </a-row>
               <a-row :gutter="20">
                 <a-col :span="12">
                   <a-form-item label="条件参数">
-                    <a-input placeholder="请输入Condition"/>
+                    <a-input v-model="form.condition" placeholder="请输入Condition"/>
                   </a-form-item>
                 </a-col>
                 <a-col :span="12">
                   <a-form-item label="效果参数">
-                    <a-input placeholder="请输入Effect"/>
+                    <a-input v-model="form.effect" placeholder="请输入Effect"/>
                   </a-form-item>
                 </a-col>
               </a-row>
               <a-row :gutter="20">
                 <a-col :span="12">
-                  <a-form-item label="接口类型">
-                    <a-select placeholder="请选择" default-value="0">
-                      <a-select-option value="0">RestFul接口</a-select-option>
-                      <a-select-option value="1">RPC接口</a-select-option>
-                      <a-select-option value="2">WebService接口</a-select-option>
-                      <a-select-option value="3">Websocket连接</a-select-option>
-                      <a-select-option value="4">其他</a-select-option>
+                  <a-form-item label="API类型">
+                    <a-select v-model="form.apiType" placeholder="请选择">
+                      <a-select-option v-for="(item, index) in apiTypeOptions" :key="index" :value="index">
+                        {{ item }}
+                      </a-select-option>
                     </a-select>
                   </a-form-item>
                 </a-col>
@@ -172,9 +150,11 @@
     </a-card>
   </page-header-wrapper>
 </template>
+
 <script>
 import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
 // eslint-disable-next-line no-unused-vars
+import * as echarts from 'echarts'
 import vChart from 'vue-echarts'
 import { codemirror } from 'vue-codemirror'
 import 'codemirror/lib/codemirror.css'
@@ -203,6 +183,7 @@ import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
+import { getApiTypeMap, getIndustryMap, getScenarioMap, getTechnologyMap } from '@/mock/data/map_data'
 
 export default {
   name: 'TableList',
@@ -217,14 +198,29 @@ export default {
   data () {
     return {
       options: null,
-      // create model
-      graph: null,
-      form: this.$form.createForm(this),
+      industryOptions: getIndustryMap('aircraft'),
+      scenarioOptions: getScenarioMap('aircraft'),
+      technologyOptions: getTechnologyMap('aircraft'),
+      programInfo: {
+        industry: undefined,
+        scenario: undefined,
+        technology: undefined,
+        name: ''
+      },
+      form: {
+        input: '',
+        output: '',
+        condition: '',
+        effect: '',
+        apiType: 0
+      },
       code: '',
       programFiles: [],
       configFiles: [],
       uploadProgramLoading: false,
       uploadServiceLoading: false,
+      programJson: null,
+      apiTypeOptions: getApiTypeMap(),
       cmOptions: {
         mode: 'application/json',
         gutters: ['CodeMirror-lint-markers', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
@@ -262,25 +258,25 @@ export default {
       setTimeout(() => {
         // const file = this.programFiles
         this.$message.success('解析成功，发现以下可用API及调用关系')
+        this.programJson = {
+          nodes: [
+            { id: '1000', x: 200, y: 50, label: 'getTargetFeature', size: 50, color: '#F6BD16', input: 'imageData', output: 'targetFeature', condition: 'condition1', effect: 'effect1', apiType: 2 },
+            { id: '1001', x: 50, y: 200, label: 'getTargetLocation', size: 50, color: '#5B8FF9', input: 'gpsCoordinates', output: 'targetLocation', condition: 'condition2', effect: 'effect2', apiType: 2 },
+            { id: '1002', x: 200, y: 150, label: 'getTargetInfo', size: 50, color: '#5AD8A6', input: 'targetFeature, targetLocation', output: 'targetInfo', condition: 'condition3', effect: 'effect3', apiType: 0 },
+            { id: '1003', x: 350, y: 200, label: 'getTargetType', size: 50, color: '#5D7092', input: 'targetInfo', output: 'targetType', condition: 'condition4', effect: 'effect4', apiType: 0 }
+          ],
+          edges: [
+            { sourceID: '1000', targetID: '1002' },
+            { sourceID: '1001', targetID: '1002' },
+            { sourceID: '1002', targetID: '1003' }
+          ]
+        }
         this.setChart()
         this.uploadProgramLoading = false
       }, 1000)
     },
     setChart() {
-      const json = {
-        nodes: [
-          { id: '1000', x: 200, y: 50, label: 'getTargetFeature', size: 50, color: '#F6BD16', value: 'Websocket connection' },
-          { id: '1001', x: 50, y: 200, label: 'getTargetLocation', size: 50, color: '#5B8FF9', value: 'Websocket connection' },
-          { id: '1002', x: 200, y: 150, label: 'getTargetInfo', size: 50, color: '#5AD8A6', value: 'RestFul API' },
-          { id: '1003', x: 350, y: 200, label: 'getTargetType', size: 50, color: '#5D7092', value: 'RestFul API' }
-        ],
-        edges: [
-          { sourceID: '1000', targetID: '1002' },
-          { sourceID: '1001', targetID: '1002' },
-          { sourceID: '1002', targetID: '1003' }
-        ]
-      }
-
+      const json = this.programJson
       this.options = {
         animationDurationUpdate: 1500,
         animationEasingUpdate: 'quinticInOut',
@@ -302,7 +298,7 @@ export default {
                   show: true,
                   position: 'inside'
                 },
-                value: node.value
+                value: node.id
               }
             }),
             edges: json.edges.map(function (edge) {
@@ -330,6 +326,19 @@ export default {
         tooltip: {
           trigger: 'item',
           formatter: function (params) {
+            const node = json.nodes.find(n => n.id === params.data.id)
+            if (node) {
+              return `
+        <div style="font-size: 14px; line-height: 1.5; color: #333;">
+          <strong>${node.label}</strong><br/>
+          <span style="color: #888;">Input:</span> ${node.input}<br/>
+          <span style="color: #888;">Output:</span> ${node.output}<br/>
+          <span style="color: #888;">Condition:</span> ${node.condition}<br/>
+          <span style="color: #888;">Effect:</span> ${node.effect}<br/>
+          <span style="color: #888;">Interface Type:</span> ${getApiTypeMap()[node.apiType]}
+        </div>
+      `
+            }
             return params.value
           }
         }
@@ -379,6 +388,19 @@ export default {
     },
     removeConfigFile () {
       this.configFiles = []
+    },
+    handleNodeClick(params) {
+      const node = this.programJson.nodes.find(n => n.id === params.data.id)
+      if (node) {
+        this.code = `function ${node.label}(${node.input}) {\n  // 这里是代码逻辑\n  return ${node.output};\n}`
+        this.form = {
+          input: node.input,
+          output: node.output,
+          condition: node.condition,
+          effect: node.effect,
+          apiType: node.apiType
+        }
+      }
     }
   }
 }
