@@ -72,12 +72,12 @@
         <a-tabs default-active-key="1" size="large" :tab-bar-style="{marginBottom: '24px', paddingLeft: '16px'}">
           <div class="extra-wrapper" slot="tabBarExtraContent">
             <div class="extra-item">
-              <a>{{ $t('dashboard.analysis.all-day') }}</a>
-              <a>{{ $t('dashboard.analysis.all-week') }}</a>
-              <a>{{ $t('dashboard.analysis.all-month') }}</a>
-              <a>{{ $t('dashboard.analysis.all-year') }}</a>
+              <a-button type="link" @click="handleDateChange('day')">{{ $t('dashboard.analysis.all-day') }}</a-button>
+              <a-button type="link" @click="handleDateChange('week')">{{ $t('dashboard.analysis.all-week') }}</a-button>
+              <a-button type="link" @click="handleDateChange('month')">{{ $t('dashboard.analysis.all-month') }}</a-button>
+              <a-button type="link" @click="handleDateChange('year')">{{ $t('dashboard.analysis.all-year') }}</a-button>
             </div>
-            <a-range-picker :style="{width: '256px'}" />
+            <a-range-picker :style="{width: '256px'}" :value="dateRange" @change="handleRangePickerChange" />
           </div>
           <a-tab-pane loading="true" tab="微服务发布趋势" key="1">
             <a-row>
@@ -85,7 +85,7 @@
                 <bar :data="barData" title="微服务发布趋势" />
               </a-col>
               <a-col :xl="8" :lg="12" :md="12" :sm="24" :xs="24">
-                <rank-list title="微服务发布排行" :list="rankList"/>
+                <rank-list title="微服务发布排行" :list="serviceRank"/>
               </a-col>
             </a-row>
           </a-tab-pane>
@@ -95,7 +95,7 @@
                 <bar :data="barData2" title="元应用构建趋势" />
               </a-col>
               <a-col :xl="8" :lg="12" :md="12" :sm="24" :xs="24">
-                <rank-list title="应用排行" :list="serviceList"/>
+                <rank-list title="元应用排行" :list="metaAppRank"/>
               </a-col>
             </a-row>
           </a-tab-pane>
@@ -221,174 +221,14 @@ import {
   MiniSmoothArea
 } from '@/components'
 import { baseMixin } from '@/store/app-mixin'
-
-const barData = []
-const barData2 = []
-for (let i = 0; i < 12; i += 1) {
-  barData.push({
-    x: `${i + 1}月`,
-    y: Math.floor(Math.random() * 1000) + 200
-  })
-  barData2.push({
-    x: `${i + 1}月`,
-    y: Math.floor(Math.random() * 1000) + 200
-  })
-}
-
-const rankList = [
-  {
-    name: '复旦大学',
-    total: 102
-  },
-  {
-    name: '某研究所',
-    total: 101
-  },
-  {
-    name: '某技术公司',
-    total: 100
-  },
-  {
-    name: '某科技公司',
-    total: 99
-  },
-  {
-    name: '某股份有限公司',
-    total: 98
-  },
-  {
-    name: '张三',
-    total: 97
-  },
-  {
-    name: '李四',
-    total: 96
-  }
-]
-const serviceList = [
-  {
-    name: '无人机远程操作实训',
-    total: 20
-  },
-  {
-    name: '无人机远程救援实训',
-    total: 19
-  },
-  {
-    name: '反洗钱报告自动生成应用',
-    total: 18
-  },
-  {
-    name: '无人机虚拟仿真教学',
-    total: 18
-  },
-  {
-    name: '银行客户反洗钱风险预警',
-    total: 17
-  },
-  {
-    name: '证券客户反洗钱风险预警',
-    total: 16
-  },
-  {
-    name: '金融机构反欺诈数据分析',
-    total: 15
-  }
-]
-const searchUserData = []
-for (let i = 0; i < 7; i++) {
-  searchUserData.push({
-    x: moment().add(i, 'days').format('YYYY-MM-DD'),
-    y: Math.ceil(Math.random() * 10)
-  })
-}
-const searchUserScale = [
-  {
-    dataKey: 'x',
-    alias: '时间'
-  },
-  {
-    dataKey: 'y',
-    alias: '用户数',
-    min: 0,
-    max: 10
-  }]
-
-const searchData = [
-  {
-    index: 1,
-    keyword: '无人机状态采集微服务',
-    count: Math.floor(Math.random() * 1000),
-    range: Math.floor(Math.random() * 100),
-    status: Math.floor((Math.random() * 10) % 2)
-  },
-  {
-    index: 2,
-    keyword: '反洗钱报告自动生成微服务',
-    count: Math.floor(Math.random() * 1000),
-    range: Math.floor(Math.random() * 100),
-    status: Math.floor((Math.random() * 10) % 2)
-  },
-  {
-    index: 3,
-    keyword: '无人机视频采集微服务',
-    count: Math.floor(Math.random() * 1000),
-    range: Math.floor(Math.random() * 100),
-    status: Math.floor((Math.random() * 10) % 2)
-  },
-  {
-    index: 4,
-    keyword: '无人机视频通信微服务',
-    count: Math.floor(Math.random() * 1000),
-    range: Math.floor(Math.random() * 100),
-    status: Math.floor((Math.random() * 10) % 2)
-  },
-  {
-    index: 5,
-    keyword: '无人机视频分析微服务',
-    count: Math.floor(Math.random() * 1000),
-    range: Math.floor(Math.random() * 100),
-    status: Math.floor((Math.random() * 10) % 2)
-  },
-  {
-    index: 6,
-    keyword: '双向通信微服务',
-    count: Math.floor(Math.random() * 1000),
-    range: Math.floor(Math.random() * 100),
-    status: Math.floor((Math.random() * 10) % 2)
-  },
-  {
-    index: 7,
-    keyword: '服务间数据传递服务',
-    count: Math.floor(Math.random() * 1000),
-    range: Math.floor(Math.random() * 100),
-    status: Math.floor((Math.random() * 10) % 2)
-  }
-]
-
-const DataSet = require('@antv/data-set')
-
-const sourceData = [
-  { item: '无人机技术服务', count: 32.2 },
-  { item: '反洗钱技术服务', count: 21 },
-  { item: '智慧教育', count: 17 },
-  { item: '人工智能', count: 13 }
-]
-
-const pieScale = [{
-  dataKey: 'percent',
-  min: 0,
-  formatter: '.0%'
-}]
-
-const dv = new DataSet.View().source(sourceData)
-dv.transform({
-  type: 'percent',
-  field: 'count',
-  dimension: 'item',
-  as: 'percent'
-})
-const pieData = dv.rows
+import {
+  getBarData,
+  getMetaAppRank, getPieData,
+  getSearchData,
+  getSearchUserData,
+  getSearchUserScale,
+  getServiceRank, getSourceData
+} from '@/mock/data/analysis_data'
 
 export default {
   name: 'Analysis',
@@ -408,18 +248,23 @@ export default {
     return {
       loading: true,
       username: '',
-      rankList,
-      serviceList,
+      serviceRank: getServiceRank(),
+      metaAppRank: getMetaAppRank(),
+      dateRange: [],
       // 搜索用户数
-      searchUserData,
-      searchUserScale,
-      searchData,
-      barData,
-      barData2,
+      searchUserData: getSearchUserData(),
+      searchUserScale: getSearchUserScale(),
+      searchData: getSearchData(),
+      barData: getBarData(),
+      barData2: getBarData(),
       //
-      pieScale,
-      pieData,
-      sourceData,
+      pieScale: [{
+        dataKey: 'percent',
+        min: 0,
+        formatter: '.0%'
+      }],
+      pieData: getPieData(),
+      sourceData: getSourceData(),
       pieStyle: {
         stroke: '#fff',
         lineWidth: 1
@@ -458,6 +303,37 @@ export default {
     setTimeout(() => {
       this.loading = !this.loading
     }, 1000)
+  },
+  methods: {
+    handleDateChange(type) {
+      let start, end
+
+      switch (type) {
+        case 'day':
+          start = moment().startOf('day')
+          end = moment().endOf('day')
+          break
+        case 'week':
+          start = moment().startOf('week')
+          end = moment().endOf('week')
+          break
+        case 'month':
+          start = moment().startOf('month')
+          end = moment().endOf('month')
+          break
+        case 'year':
+          start = moment().startOf('year')
+          end = moment().endOf('year')
+          break
+        default:
+          start = moment().startOf('day')
+          end = moment().endOf('day')
+      }
+      this.dateRange = [start, end]
+    },
+    handleRangePickerChange(dates) {
+      this.dateRange = dates
+    }
   }
 }
 </script>
@@ -479,8 +355,6 @@ export default {
 
   .antd-pro-pages-dashboard-analysis-twoColLayout {
     position: relative;
-    display: flex;
-    display: block;
     flex-flow: row wrap;
   }
 

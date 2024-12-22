@@ -4,7 +4,7 @@
     <ul class="list">
       <li :key="index" v-for="(item, index) in list">
         <span :class="index < 3 ? 'active' : null">{{ index + 1 }}</span>
-        <span>{{ item.name }}</span>
+        <ellipsis :length="31" tooltip>{{ item.name }}</ellipsis>
         <span>{{ item.total }}</span>
       </li>
     </ul>
@@ -12,9 +12,13 @@
 </template>
 
 <script>
+import Ellipsis from '@/components/Ellipsis'
+
 export default {
   name: 'RankList',
-  // ['title', 'list']
+  components: {
+    Ellipsis
+  },
   props: {
     title: {
       type: String,
