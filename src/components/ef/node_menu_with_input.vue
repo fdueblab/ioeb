@@ -10,7 +10,7 @@
           <ul v-show="m.open" class="f-node-menu-ul">
             <draggable @end="end" @start="move" v-model="m.children" :options="draggableOptions">
               <li v-for="subMenu in m.children" class="ef-node-menu-li" :key="subMenu.id" :type="subMenu.type">
-                <i :class="subMenu.ico"></i> {{ subMenu.name }}
+                <i :class="subMenu.ico" style="margin-right: 8px;"></i> {{ subMenu.name }}
               </li>
             </draggable>
           </ul>
@@ -72,13 +72,7 @@
         }
       }
     },
-    mounted () {
-      // TODO: 获取微服务列表
-      // getServiceList().then(response => {
-      //   this.menuList = response.result
-      //   console.dir(response.result)
-      // })
-    },
+    mounted () {},
     methods: {
       // 根据类型获取左侧菜单对象
       getMenuByType (type) {
@@ -129,12 +123,10 @@
   }
 </script>
 
-<!-- <style>
+<style>
 .flow-menu {
   background-color: #f9f9f9;
   border-radius: 8px;
-  padding: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .ef-node-pmenu {
@@ -197,4 +189,4 @@
   background-color: rgba(0, 123, 255, 0.2);
 }
 
-</style> -->
+</style>

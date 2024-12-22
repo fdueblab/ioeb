@@ -39,13 +39,13 @@
               </a-form-item>
             </a-col>
           </a-row>
-          <a-row :gutter="20">
-            <a-col :span="6">
-              <a-form-item label="微服务名称">
-                <a-input v-model="programInfo.name" placeholder="请输入" allow-clear />
-              </a-form-item>
-            </a-col>
-          </a-row>
+          <!--          <a-row :gutter="20">-->
+          <!--            <a-col :span="6">-->
+          <!--              <a-form-item label="微服务名称">-->
+          <!--                <a-input v-model="programInfo.name" placeholder="请输入" allow-clear />-->
+          <!--              </a-form-item>-->
+          <!--            </a-col>-->
+          <!--          </a-row>-->
           <a-row :gutter="20">
             <a-col :span="6">
               <a-form-item label="程序">
@@ -122,6 +122,13 @@
                   </a-form-item>
                 </a-col>
                 <a-col :span="12">
+                  <a-form-item label="微服务名称">
+                    <a-input v-model="form.name" placeholder="请输入微服务名称"/>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <a-row :gutter="20">
+                <a-col :span="12">
                   <a-form-item label="接口配置文件">
                     <a-upload
                       accept=".yml,.yaml,.json,.ini,.conf"
@@ -133,16 +140,28 @@
                     </a-upload>
                   </a-form-item>
                 </a-col>
-              </a-row>
-              <a-row :gutter="20" style="margin-top: 30px;">
-                <a-form-item>
-                  <div style="text-align: center;">
+                <a-col :span="12">
+                  <a-form-item tooltip="value*category">
+                    <span slot="label">预发布
+                      <a-tooltip title="预发布后服务及应用运维管理中将出现未分配容器的该服务，可以将其部署在容器中，部署后可以对其进行验证与测评">
+                        <a-icon type="question-circle-o" />
+                      </a-tooltip>
+                    </span>
                     <a-button type="primary" @click="uploadService" :disabled="programFiles.length === 0" :loading="uploadServiceLoading">
                       预发布
                     </a-button>
-                  </div>
-                </a-form-item>
+                  </a-form-item>
+                </a-col>
               </a-row>
+              <!--              <a-row :gutter="20" style="margin-top: 30px;">-->
+              <!--                <a-form-item>-->
+              <!--                  <div style="text-align: center;">-->
+              <!--                    <a-button type="primary" @click="uploadService" :disabled="programFiles.length === 0" :loading="uploadServiceLoading">-->
+              <!--                      预发布-->
+              <!--                    </a-button>-->
+              <!--                  </div>-->
+              <!--                </a-form-item>-->
+              <!--              </a-row>-->
             </a-form>
           </a-card>
         </a-col>
@@ -183,6 +202,7 @@ import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
+import 'codemirror/mode/python/python.js'
 import { getApiTypeMap, getIndustryMap, getScenarioMap, getTechnologyMap } from '@/mock/data/map_data'
 
 export default {
@@ -204,10 +224,10 @@ export default {
       programInfo: {
         industry: undefined,
         scenario: undefined,
-        technology: undefined,
-        name: ''
+        technology: undefined
       },
       form: {
+        name: '',
         input: '',
         output: '',
         condition: '',
@@ -215,6 +235,14 @@ export default {
         apiType: 0
       },
       code: '',
+      codeTemplate: `def {{name}}({{input}}):
+  try:
+    # code here
+    return {{output}}
+  except Exception:
+    print('{{name}}执行出错，错误信息: ', Exception)
+    exit(1);
+`,
       programFiles: [],
       configFiles: [],
       uploadProgramLoading: false,
@@ -222,7 +250,8 @@ export default {
       programJson: null,
       apiTypeOptions: getApiTypeMap(),
       cmOptions: {
-        mode: 'application/json',
+        mode: 'python', // 设置为 Python 模式
+        // theme: 'base16-dark', // 黑暗模式主题
         gutters: ['CodeMirror-lint-markers', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
         lineNumbers: true,
         line: true,
@@ -249,6 +278,14 @@ export default {
         fontSize: '14px',
         lineHeight: '120%'
       }
+    }
+  },
+  watch: {
+    'form.input': function () {
+      this.updateCode()
+    },
+    'form.output': function () {
+      this.updateCode()
     }
   },
   mounted () {},
@@ -389,17 +426,26 @@ export default {
     removeConfigFile () {
       this.configFiles = []
     },
+    updateCode() {
+      const { input, output, name } = this.form
+      // 动态生成代码
+      this.code = this.codeTemplate
+        .replace('{{name}}', name)
+        .replace('{{input}}', input)
+        .replace('{{output}}', output)
+    },
     handleNodeClick(params) {
       const node = this.programJson.nodes.find(n => n.id === params.data.id)
       if (node) {
-        this.code = `function ${node.label}(${node.input}) {\n  // 这里是代码逻辑\n  return ${node.output};\n}`
         this.form = {
+          name: node.label,
           input: node.input,
           output: node.output,
           condition: node.condition,
           effect: node.effect,
           apiType: node.apiType
         }
+        this.updateCode()
       }
     }
   }

@@ -14,8 +14,8 @@
     -->
     <template v-slot:menuHeaderRender>
       <div>
-        <img src="@/assets/logo.svg" />
-        <div class="tit">关键技术协同</div>
+        <img src="@/assets/logo.svg" alt="" />
+        <div class="tit">{{ title }}</div>
         <div class="subtit">{{ subTitle }}</div>
       </div>
     </template>
@@ -68,7 +68,6 @@ export default {
       menus: [],
       // 侧栏收起状态
       collapsed: false,
-      title: defaultSettings.title,
       settings: {
         // 布局类型
         layout: defaultSettings.layout, // 'sidemenu', 'topmenu'
@@ -88,7 +87,8 @@ export default {
       // 媒体查询
       query: {},
       // 用户类型
-      subTitle: '研发与验证平台',
+      title: '监控技术协同',
+      subTitle: '验证与应用服务',
       // 是否手机模式
       isMobile: false
     }
@@ -103,12 +103,12 @@ export default {
     const routes = this.mainMenu.find(item => item.path === '/')
     // const routes = asyncRouterMap.find((item) => item.path === '/')
     this.menus = (routes && routes.children) || []
-    const username = localStorage.getItem('username')
-    if (username === 'user') {
-      this.subTitle = '应用平台'
-    } else {
-      this.subTitle = '研发与验证平台'
-    }
+    // const username = localStorage.getItem('username')
+    // if (username === 'user') {
+    //   this.subTitle = '应用平台'
+    // } else {
+    //   this.subTitle = '研发与验证平台'
+    // }
     // 处理侧栏收起状态
     this.$watch('collapsed', () => {
       this.$store.commit(SIDEBAR_TYPE, this.collapsed)

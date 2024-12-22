@@ -16,6 +16,7 @@ export default {
 }
 ```
 
+**注意: 使用`import { Ellipsis } from '@/components'`的引用方式目前会报错，暂时未修复。**
 
 
 ## 代码演示  [demo](https://pro.loacg.com/test/home)
