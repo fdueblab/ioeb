@@ -8,12 +8,12 @@
               <a-row :gutter="48">
                 <a-col :span="18">
                   <a-form-item label="元应用名称">
-                    <a-input v-model="queryParam.id" placeholder=""/>
+                    <a-input v-model="queryParam.id" placeholder="请输入元应用名称"/>
                   </a-form-item>
                 </a-col>
                 <a-col :span="6">
                   <div style="text-align: center;">
-                    <a-button type="primary">查询</a-button>
+                    <a-button type="primary" @click="handleSearch">查询</a-button>
                   </div>
                 </a-col>
               </a-row>
@@ -22,7 +22,7 @@
           <a-table
             ref="table"
             :columns="columns"
-            :dataSource="dataSource"
+            :dataSource="filteredDataSource"
             :row-selection="rowSelection"
             size="middle"
           >
@@ -36,23 +36,42 @@
         <a-card :bordered="false">
           <a-form>
             <a-row :gutter="20">
-              <a-col :span="12">
+              <a-col :span="8">
                 <a-form-item label="性能指标">
-                  <a-select placeholder="请选择" default-value="0">
-                    <a-select-option value="0">全部</a-select-option>
-                    <a-select-option value="1">查全率</a-select-option>
-                    <a-select-option value="2">查准率</a-select-option>
-                    <a-select-option value="3">计算效率</a-select-option>
+                  <a-select placeholder="请选择" :default-value="-1">
+                    <a-select-option :value="-1">全部</a-select-option>
+                    <a-select-option v-for="(item, index) in performanceMetricOptions" :key="index" :value="index">
+                      {{ item }}
+                    </a-select-option>
                   </a-select>
                 </a-form-item>
               </a-col>
-              <a-col :span="12">
+              <a-col :span="8">
                 <a-form-item label="数据集">
-                  <a-select placeholder="请选择" default-value="0">
-                    <a-select-option value="0">全部</a-select-option>
-                    <a-select-option value="1">平台数据集</a-select-option>
-                    <a-select-option value="2">上载数据集</a-select-option>
+                  <a-select v-model="dataSetType" placeholder="请选择" default-value="0">
+                    <a-select-option value="0">平台数据集</a-select-option>
+                    <a-select-option value="1">上载数据集</a-select-option>
                   </a-select>
+                </a-form-item>
+              </a-col>
+              <a-col v-if="dataSetType === '0'" :span="6">
+                <a-form-item label="选择数据集">
+                  <a-select placeholder="请选择" default-value="0">
+                    <a-select-option value="0">鸢尾花</a-select-option>
+                    <a-select-option value="1">肿瘤</a-select-option>
+                  </a-select>
+                </a-form-item>
+              </a-col>
+              <a-col v-if="dataSetType === '1'" :span="8">
+                <a-form-item label="上载数据集">
+                  <a-upload
+                    accept=".csv,.txt,.xls,.xlsx"
+                    :file-list="dataSetFiles"
+                    :remove="removeDataSetFile"
+                    :customRequest="customDataSetFileChose"
+                    :multiple="true">
+                    <a-button> <a-icon type="upload" /> 选择数据集 </a-button>
+                  </a-upload>
                 </a-form-item>
               </a-col>
             </a-row>
@@ -74,22 +93,19 @@
 </template>
 
 <script>
-import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
+import { ArticleListContent, StandardFormRow, TagSelect } from '@/components'
 import { getRunningAirCraftMetaApps } from '@/mock/data/services_data'
-import { getNormMap, getServiceStatusMap } from '@/mock/data/map_data'
+import { getNormMap, getPerformanceMetricMap, getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
   name: 'TableList',
   components: {
-    Ellipsis,
     TagSelect,
     StandardFormRow,
     ArticleListContent
   },
   data () {
     return {
-      // create model
-      form: this.$form.createForm(this),
       visible: false,
       confirmLoading: false,
       mdl: null,
@@ -97,6 +113,9 @@ export default {
       advanced: false,
       // 查询参数
       queryParam: {},
+      dataSetType: '0',
+      dataSetFiles: [],
+      performanceMetricOptions: getPerformanceMetricMap(),
       statusMap: getServiceStatusMap(),
       columns: [
         {
@@ -109,6 +128,7 @@ export default {
         }
       ],
       dataSource: [],
+      filteredDataSource: [],
       selectedRowKeys: [],
       selectedRows: [],
       response: ''
@@ -142,9 +162,9 @@ export default {
   methods: {
     handleSearch() {
       this.filteredDataSource = this.dataSource.filter(item => {
-        const nameMatch = item.name.includes(this.queryParam.name)
-        const statusMatch = this.queryParam.status === '-1' || item.status === Number(this.queryParam.status)
-        return nameMatch && statusMatch
+        // const statusMatch = this.queryParam.status === '-1' || item.status === Number(this.queryParam.status)
+        // return nameMatch && statusMatch
+        return item.name.includes(this.queryParam.name)
       })
     },
     handleRefresh() {
@@ -167,13 +187,54 @@ export default {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
     },
+    async customDataSetFileChose (options) {
+      const { file } = options
+      if (!file) {
+        return false
+      }
+      const url = URL.createObjectURL(file)
+      this.dataSetFiles = {
+        uid: file?.uid,
+        name: file.name,
+        status: 'done',
+        url // url 是展示在页面上的绝对链接
+      }
+    },
+    removeDataSetFile () {
+      this.dataSetFiles = []
+    },
     onTest () {
       const obj = {
         code: 200,
         message: '测试通过！'
       }
-      const newObj = JSON.stringify(obj, null, 4)
-      this.response = newObj
+      const metaAppInfo = sessionStorage.getItem('metaAppInfo')
+      if (metaAppInfo) {
+        const serviceData = {
+          ...JSON.parse(sessionStorage.getItem('metaAppInfo')),
+          status: 4,
+          norm: [
+            {
+              key: 0,
+              score: 5
+            },
+            {
+              key: 1,
+              score: 5
+            },
+            {
+              key: 2,
+              score: 5
+            },
+            {
+              key: 3,
+              score: 5
+            }
+          ]
+        }
+        sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
+      }
+      this.response = JSON.stringify(obj, null, 4)
     },
     initData () {
       this.dataSource = getRunningAirCraftMetaApps()
