@@ -127,12 +127,25 @@ export default {
         name: 'AI推荐流程',
         nodeList: [
           {
+            id: '10000',
+            name: 'metaAppAgent',
+            type: 'start',
+            url: 'ms.kxyun.net/agent',
+            left: '200px',
+            top: '0',
+            ico: 'el-icon-cpu',
+            input: 'csv File',
+            output: 'json',
+            version: '1.0',
+            state: 'success'
+          },
+          {
             id: '9000',
             name: 'preprocess',
-            type: 'start',
+            type: 'process',
             url: 'ms.kxyun.net/preprocess',
             left: '0',
-            top: '0px',
+            top: '140px',
             ico: 'el-icon-c-scale-to-original',
             input: 'csv File',
             output: 'json',
@@ -145,7 +158,7 @@ export default {
             type: 'process',
             url: 'ms.kxyun.net/evaluate',
             left: '0',
-            top: '250px',
+            top: '380px',
             ico: 'el-icon-s-data',
             state: 'success',
             input: 'json',
@@ -158,7 +171,7 @@ export default {
             type: 'process',
             url: 'ms.kxyun.net/visualize',
             left: '200px',
-            top: '120px',
+            top: '250px',
             ico: 'el-icon-pie-chart',
             state: 'warning',
             input: 'vector',
@@ -171,7 +184,7 @@ export default {
             type: 'process',
             url: 'ms.kxyun.net/generateReport',
             left: '420px',
-            top: '0px',
+            top: '140px',
             ico: 'el-icon-document-add',
             state: 'success',
             input: 'image',
@@ -184,7 +197,7 @@ export default {
             type: 'end',
             url: 'ms.kxyun.net/sendReport',
             left: '400px',
-            top: '220px',
+            top: '360px',
             ico: 'el-icon-upload',
             state: 'error',
             input: 'pdf',
@@ -193,9 +206,12 @@ export default {
           }
         ],
         lineList: [
+          { from: '10000', to: '9000' },
           { from: '9000', to: '9001' },
-          { from: '9001', to: '9002' },
-          { from: '9002', to: '9101' },
+          { from: '9001', to: '10000' },
+          { from: '10000', to: '9002' },
+          { from: '9002', to: '10000' },
+          { from: '10000', to: '9101' },
           { from: '9101', to: '9102' }
         ]
       }

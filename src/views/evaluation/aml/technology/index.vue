@@ -36,24 +36,42 @@
         <a-card :bordered="false">
           <a-form>
             <a-row :gutter="20">
-              <a-col :span="12">
+              <a-col :span="8">
                 <a-form-item label="性能指标">
-                  <a-select placeholder="请选择" default-value="0">
-                    <a-select-option value="0">全部</a-select-option>
-                    <a-select-option value="1">安全性</a-select-option>
-                    <a-select-option value="2">鲁棒性</a-select-option>
-                    <a-select-option value="3">隐私性</a-select-option>
-                    <a-select-option value="4">可信性</a-select-option>
+                  <a-select placeholder="请选择" :default-value="-1">
+                    <a-select-option :value="-1">全部</a-select-option>
+                    <a-select-option v-for="(item, index) in normOptions" :key="index" :value="index">
+                      {{ item.text }}
+                    </a-select-option>
                   </a-select>
                 </a-form-item>
               </a-col>
-              <a-col :span="12">
+              <a-col :span="8">
                 <a-form-item label="数据集">
-                  <a-select placeholder="请选择" default-value="0">
-                    <a-select-option value="0">全部</a-select-option>
-                    <a-select-option value="1">平台数据集</a-select-option>
-                    <a-select-option value="2">上载数据集</a-select-option>
+                  <a-select v-model="dataSetType" placeholder="请选择" default-value="0">
+                    <a-select-option value="0">平台数据集</a-select-option>
+                    <a-select-option value="1">上载数据集</a-select-option>
                   </a-select>
+                </a-form-item>
+              </a-col>
+              <a-col v-if="dataSetType === '0'" :span="6">
+                <a-form-item label="选择数据集">
+                  <a-select placeholder="请选择" default-value="0">
+                    <a-select-option value="0">鸢尾花</a-select-option>
+                    <a-select-option value="1">肿瘤</a-select-option>
+                  </a-select>
+                </a-form-item>
+              </a-col>
+              <a-col v-if="dataSetType === '1'" :span="8">
+                <a-form-item label="上载数据集">
+                  <a-upload
+                    accept=".csv,.txt,.xls,.xlsx"
+                    :file-list="dataSetFiles"
+                    :remove="removeDataSetFile"
+                    :customRequest="customDataSetFileChose"
+                    :multiple="true">
+                    <a-button> <a-icon type="upload" /> 选择数据集 </a-button>
+                  </a-upload>
                 </a-form-item>
               </a-col>
             </a-row>
@@ -75,14 +93,13 @@
 </template>
 
 <script>
-import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
+import { ArticleListContent, StandardFormRow, TagSelect } from '@/components'
 import { getNormMap, getServiceStatusMap } from '@/mock/data/map_data'
 import { getRunningAmlServices } from '@/mock/data/services_data'
 
 export default {
   name: 'TableList',
   components: {
-    Ellipsis,
     TagSelect,
     StandardFormRow,
     ArticleListContent
@@ -109,6 +126,9 @@ export default {
           dataIndex: 'name'
         }
       ],
+      normOptions: getNormMap(),
+      dataSetType: '0',
+      dataSetFiles: [],
       dataSource: [],
       selectedRowKeys: [],
       selectedRows: [],
@@ -161,6 +181,22 @@ export default {
     onSelectChange (selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
+    },
+    async customDataSetFileChose (options) {
+      const { file } = options
+      if (!file) {
+        return false
+      }
+      const url = URL.createObjectURL(file)
+      this.dataSetFiles = {
+        uid: file?.uid,
+        name: file.name,
+        status: 'done',
+        url // url 是展示在页面上的绝对链接
+      }
+    },
+    removeDataSetFile () {
+      this.dataSetFiles = []
     },
     onTest () {
       const obj = {

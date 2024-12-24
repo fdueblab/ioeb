@@ -56,6 +56,8 @@ const amlTechnologyMap = ['异常识别', '安全计算', '技术评测', '报�
 
 const aircraftTechnologyMap = ['线路设计', '虚拟仿真', '智能感知', '远程控制', '视频分析', '技术评价']
 
+const performanceMetricMap = ['查全率', '查准率', '计算效率']
+
 export function getServiceStatusMap() {
   return statusMap
 }
@@ -94,4 +96,8 @@ export function getTechnologyMap(type) {
 
 export function getApiTypeMap() {
   return apiTypeMap
+}
+
+export function getPerformanceMetricMap() {
+  return performanceMetricMap
 }
