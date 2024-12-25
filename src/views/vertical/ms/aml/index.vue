@@ -404,7 +404,7 @@ export default {
           resolve()
         }, 1000)
       }).then(() => {
-        this.$router.push({ path: '#/vertical/ms/aml/list' })
+        this.$router.push({ path: '#/operation/aml/container-manage' })
       })
     },
     async customProgramFilesChose (options) {

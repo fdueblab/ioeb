@@ -1,7 +1,7 @@
 <template>
   <page-header-wrapper :title="false">
     <a-card :bordered="false" class="ant-pro-components-tag-select">
-      <a-form :form="form" layout="inline">
+      <a-form layout="inline">
         <standard-form-row title="智能检索" block style="padding-bottom: 11px;">
           <a-row>
             <a-col :span="12">
@@ -170,11 +170,79 @@
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
-            <a @click="handleUse(record)">使用</a>
+            <a-button type="link" @click="handleEdit(record)">编辑</a-button>
+            <a-button type="link" @click="handleUse(record)">使用</a-button>
           </template>
         </span>
       </a-table>
     </a-card>
+    <!-- 编辑模态框 -->
+    <a-modal
+      title="编辑记录"
+      :visible="visible"
+      @ok="handleOk"
+      @cancel="handleCancel"
+      :confirmLoading="confirmLoading"
+    >
+      <a-form :form="editForm" layout="vertical">
+        <a-form-item label="服务名称">
+          <a-input
+            v-decorator="[
+              'name',
+              {
+                rules: [{ required: true, message: '请输入服务名称' }],
+                initialValue: mdl.name,
+              },
+            ]"
+          />
+        </a-form-item>
+        <a-form-item label="服务类型">
+          <a-select
+            v-decorator="[
+              'type',
+              {
+                rules: [{ required: true, message: '请选择服务类型' }],
+                initialValue: mdl.type,
+              },
+            ]"
+          >
+            <a-select-option v-for="(item, index) in typeArr" :key="index" :value="index">
+              {{ item }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="技术类型">
+          <a-select
+            v-decorator="[
+              'technology',
+              {
+                rules: [{ required: true, message: '请选择技术类型' }],
+                initialValue: mdl.technology,
+              },
+            ]"
+          >
+            <a-select-option v-for="(item, index) in technologyArr" :key="index" :value="index">
+              {{ item }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="服务状态">
+          <a-select
+            v-decorator="[
+              'status',
+              {
+                rules: [{ required: true, message: '请选择服务状态' }],
+                initialValue: mdl.status,
+              },
+            ]"
+          >
+            <a-select-option v-for="(item, index) in statusMap" :key="index" :value="index">
+              {{ item.text }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </a-modal>
     <!-- 聊天机器人容器 -->
     <div v-if="showChatBot" class="dify-chatbot-container">
       <iframe
@@ -207,10 +275,10 @@ export default {
   data () {
     return {
       // create model
-      form: this.$form.createForm(this),
+      editForm: this.$form.createForm(this),
       visible: false,
       confirmLoading: false,
-      mdl: null,
+      mdl: {},
       chatBotUrl: 'https://yufanwenshu.cn/chatbot/RcN7gYC9B3UnlUWc',
       showChatBot: false, // 控制聊天机器人是否显示
       agentSearchText: '',
@@ -344,72 +412,57 @@ export default {
     handleAdd () {
       this.$emit('onGoAdd')
     },
-    handleEdit (record) {
-      console.log(record)
+    handleEdit(record) {
+      this.visible = true // 显示模态框
+      this.mdl = { ...record } // 将选中的记录数据复制到 mdl 中
+      this.$nextTick(() => {
+        // 填充表单数据
+        this.editForm.setFieldsValue({
+          name: record.name,
+          type: record.type,
+          technology: record.technology,
+          status: record.status
+        })
+      })
+    },
+    handleOk() {
+      this.editForm.validateFields((errors, values) => {
+        if (!errors) {
+          this.confirmLoading = true
+          // 模拟异步操作
+          setTimeout(() => {
+            // 更新数据
+            const index = this.dataSource.findIndex(item => item.id === this.mdl.id)
+            if (index > -1) {
+              this.dataSource.splice(index, 1, { ...this.mdl, ...values })
+            }
+            this.visible = false
+            this.confirmLoading = false
+            this.$message.success('编辑成功')
+          }, 1000)
+        }
+      })
+    },
+    handleCancel() {
+      this.visible = false
+      this.editForm.resetFields()
     },
     handleSource (record) {
       console.log(record)
     },
     handleUse (record) {
       if (record.status === 0) {
-        this.$message.warning('服务关闭中，请启动后使用！')
+        this.$message.error('服务关闭中，请启动后使用！')
       } else if (record.status === 3) {
         this.$message.error('服务异常，暂无法使用！')
+      } else if (record.status === 5) {
+        this.$message.warning('服务部署中，暂无法使用！')
       } else {
         this.$emit('onGoUse')
       }
     },
     delConfirm() {
       this.$message.success('删除成功！')
-    },
-    handleOk () {
-      const form = this.$refs.createModal.form
-      this.confirmLoading = true
-      form.validateFields((errors, values) => {
-        if (!errors) {
-          console.log('values', values)
-          if (values.id > 0) {
-            // 修改 e.g.
-            new Promise((resolve, reject) => {
-              setTimeout(() => {
-                resolve()
-              }, 1000)
-            }).then(res => {
-              this.visible = false
-              this.confirmLoading = false
-              // 重置表单数据
-              form.resetFields()
-              // 刷新表格
-              this.$refs.table.refresh()
-
-              this.$message.info('修改成功')
-            })
-          } else {
-            // 新增
-            new Promise((resolve, reject) => {
-              setTimeout(() => {
-                resolve()
-              }, 1000)
-            }).then(res => {
-              this.visible = false
-              this.confirmLoading = false
-              // 重置表单数据
-              form.resetFields()
-              // 刷新表格
-              this.$refs.table.refresh()
-
-              this.$message.info('新增成功')
-            })
-          }
-        } else {
-          this.confirmLoading = false
-        }
-      })
-    },
-    handleCancel () {
-      this.visible = false
-      const form = this.$refs.createModal.form
-      form.resetFields() // 清理表单数据（可不做）
     },
     handleSub (record) {
       if (record.status !== 0) {
