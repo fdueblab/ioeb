@@ -390,7 +390,7 @@ export default {
           resolve()
         }, 1000)
       }).then(() => {
-        this.$router.push({ path: '#/vertical/ms/aircraft/list' })
+        this.$router.push({ path: '#/operation/aircraft/container-manage' })
       })
     },
     async customProgramFilesChose (options) {
