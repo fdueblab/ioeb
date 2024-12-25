@@ -397,15 +397,11 @@ export default {
     },
     uploadService () {
       this.uploadServiceLoading = true
-      new Promise((resolve) => {
-        setTimeout(() => {
-          this.$message.success('预发布成功！可以进行部署与测试')
-          this.uploadServiceLoading = false
-          resolve()
-        }, 1000)
-      }).then(() => {
-        this.$router.push({ path: '#/operation/aml/container-manage' })
-      })
+      setTimeout(() => {
+        sessionStorage.setItem('upload_exception_service', '1')
+        this.$message.success('预发布成功！可以进行部署与测试')
+        this.uploadServiceLoading = false
+      }, 1000)
     },
     async customProgramFilesChose (options) {
       const { file } = options

@@ -156,7 +156,7 @@ export default {
   },
   methods: {
     handleAdd () {
-      this.$router.push({ path: '#/vertical-ms/aml' })
+      this.$router.push({ path: '/vertical-ms/aml' })
     },
     // 查询
     handleSearch() {

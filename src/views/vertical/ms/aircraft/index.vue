@@ -147,7 +147,7 @@
                         <a-icon type="question-circle-o" />
                       </a-tooltip>
                     </span>
-                    <a-button type="primary" @click="uploadService" :disabled="programFiles.length === 0" :loading="uploadServiceLoading">
+                    <a-button type="primary" @click="uploadService" :loading="uploadServiceLoading">
                       预发布
                     </a-button>
                   </a-form-item>
@@ -390,7 +390,7 @@ export default {
           resolve()
         }, 1000)
       }).then(() => {
-        this.$router.push({ path: '#/operation/aircraft/container-manage' })
+        this.$router.push({ path: '/operation/aircraft/container-manage' })
       })
     },
     async customProgramFilesChose (options) {
