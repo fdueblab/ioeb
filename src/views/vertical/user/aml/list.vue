@@ -11,9 +11,9 @@
               </a-form-item>
             </a-col>
             <a-col :span="6">
-              <a-form-item label="基于知识增强通过对话检索">
-                <a-button class="dify-chatbot-bubble-button" @click="toggleChatBot">
-                  <a-icon type="robot" v-if="!showChatBot"/>
+              <a-form-item label="知识增强检索">
+                <a-button ref="ragButton" class="rag-input-bubble-button" @click="toggleRAGInput">
+                  <a-icon type="dot-chart" v-if="!showRAGInput"/>
                   <a-icon type="close" v-else/>
                 </a-button>
               </a-form-item>
@@ -88,8 +88,7 @@
           <a-popover v-for="(item, index) in text" :key="index" title="可信云技术服务溯源">
             <template slot="content">
               <p>{{ item.key | normFilter }}</p>
-              <el-rate v-model="item.score" disabled show-score text-color="#ff9900">
-              </el-rate>
+              <el-rate v-model="item.score" disabled show-score text-color="#ff9900" />
             </template>
             <a-tag color="#87d068">
               <a-icon type="check" /> {{ item.key | normFilter }}
@@ -224,31 +223,127 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="服务状态">
-          <a-select
+        <a-form-item label="技术指标">
+          <a-checkbox-group
             v-decorator="[
-              'status',
+              'norm',
               {
-                rules: [{ required: true, message: '请选择服务状态' }],
-                initialValue: mdl.status,
+                rules: [{ required: true, message: '请选择技术指标' }],
+                initialValue: mdl.norm,
               },
             ]"
           >
-            <a-select-option v-for="(item, index) in statusMap" :key="index" :value="index">
-              {{ item.text }}
-            </a-select-option>
-          </a-select>
+            <a-row>
+              <a-col :span="24" v-for="(item, index) in normMap" :key="index">
+                <a-checkbox :value="index">
+                  {{ item.text }}
+                </a-checkbox>
+                <el-rate
+                  v-if="mdl.norm.some(n => n.key === index)"
+                  v-model="mdl.norm.find(n => n.key === index).score"
+                  style="margin-left: 10px;"
+                  show-score
+                  text-color="#ff9900"
+                />
+              </a-col>
+            </a-row>
+          </a-checkbox-group>
+        </a-form-item>
+        <a-form-item label="服务溯源">
+          <a-form-item label="公司名称">
+            <a-input
+              v-decorator="[
+                'source.companyName',
+                {
+                  rules: [{ required: true, message: '请输入公司名称' }],
+                  initialValue: mdl.source.companyName,
+                },
+              ]"
+            />
+          </a-form-item>
+          <a-form-item label="公司地址">
+            <a-input
+              v-decorator="[
+                'source.companyAddress',
+                {
+                  rules: [{ required: true, message: '请输入公司地址' }],
+                  initialValue: mdl.source.companyAddress,
+                },
+              ]"
+            />
+          </a-form-item>
+          <a-form-item label="联系方式">
+            <a-input
+              v-decorator="[
+                'source.companyContact',
+                {
+                  rules: [{ required: true, message: '请输入联系方式' }],
+                  initialValue: mdl.source.companyContact,
+                },
+              ]"
+            />
+          </a-form-item>
+          <a-form-item label="微服务描述">
+            <a-textarea
+              v-decorator="[
+                'source.msIntroduce',
+                {
+                  rules: [{ required: true, message: '请输入微服务描述' }],
+                  initialValue: mdl.source.msIntroduce,
+                },
+              ]"
+            />
+          </a-form-item>
+          <a-form-item label="公司评分">
+            <el-rate
+              v-decorator="[
+                'source.companyScore',
+                {
+                  rules: [{ required: true, message: '请输入公司评分' }],
+                  initialValue: mdl.source.companyScore,
+                },
+              ]"
+              show-score
+              text-color="#ff9900"
+            />
+          </a-form-item>
+          <a-form-item label="微服务评分">
+            <el-rate
+              v-decorator="[
+                'source.msScore',
+                {
+                  rules: [{ required: true, message: '请输入微服务评分' }],
+                  initialValue: mdl.source.msScore,
+                },
+              ]"
+              show-score
+              text-color="#ff9900"
+            />
+          </a-form-item>
         </a-form-item>
       </a-form>
     </a-modal>
-    <!-- 聊天机器人容器 -->
-    <div v-if="showChatBot" class="dify-chatbot-container">
-      <iframe
-        src="https://yufanwenshu.cn/chatbot/RcN7gYC9B3UnlUWc"
-        style="width: 100%; height: 100%; min-height: 700px"
-        frameborder="0"
-        allow="microphone">
-      </iframe>
+    <!-- 知识增强容器 -->
+    <div
+      v-if="showRAGInput"
+      ref="ragContainer"
+      class="rag-input-container"
+      :style="containerStyle"
+    >
+      <a-form :form="ragForm" layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="24">
+            <a-form-item label="条件">
+              <a-input v-model="ragForm.environment" placeholder="请输入条件" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="24">
+            <a-form-item label="处理">
+              <a-input v-model="ragForm.process" placeholder="请输入处理" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
     </div>
   </page-header-wrapper>
 </template>
@@ -272,13 +367,19 @@ export default {
   },
   data () {
     return {
-      // create model
-      kvalue: 5,
       editForm: this.$form.createForm(this),
       visible: false,
       confirmLoading: false,
-      mdl: {},
-      showChatBot: false, // 控制聊天机器人是否显示
+      mdl: {
+        name: '',
+        norm: [],
+        source: {}
+      },
+      showRAGInput: false, // 是否显示知识增强输入框
+      ragForm: {
+        environment: '',
+        process: ''
+      },
       agentSearchText: '',
       agentSearchLoading: false,
       agentSearchData: [],
@@ -350,7 +451,11 @@ export default {
       domainArr: ['跨境支付AI监测服务'],
       industryArr: getIndustryMap('aml'),
       scenarioArr: getScenarioMap('aml'),
-      technologyArr: getTechnologyMap('aml')
+      technologyArr: getTechnologyMap('aml'),
+      containerStyle: {
+        top: '0',
+        left: '0'
+      }
     }
   },
   filters: {
@@ -370,7 +475,13 @@ export default {
   created () {
     this.initData()
   },
-  computed: {
+  mounted() {
+    // 监听窗口大小变化，动态调整容器位置
+    window.addEventListener('resize', this.updateContainerPosition)
+  },
+  beforeDestroy() {
+    // 移除事件监听
+    window.removeEventListener('resize', this.updateContainerPosition)
   },
   methods: {
     handleTagChange(field, e) {
@@ -422,7 +533,13 @@ export default {
           name: record.name,
           type: record.type,
           technology: record.technology,
-          status: record.status
+          norm: record.norm.map(item => item.key),
+          'source.companyName': record.source.companyName,
+          'source.companyAddress': record.source.companyAddress,
+          'source.companyContact': record.source.companyContact,
+          'source.msIntroduce': record.source.msIntroduce,
+          'source.companyScore': record.source.companyScore,
+          'source.msScore': record.source.msScore
         })
       })
     },
@@ -430,12 +547,39 @@ export default {
       this.editForm.validateFields((errors, values) => {
         if (!errors) {
           this.confirmLoading = true
+          const norm = values.norm.map(key => {
+            const existingNorm = this.mdl.norm.find(n => n.key === key)
+            return {
+              key,
+              score: existingNorm ? existingNorm.score : 5
+            }
+          })
+
+          // 更新 source 数据
+          const source = {
+            popoverTitle: '可信云技术服务溯源',
+            companyName: values['source.companyName'],
+            companyAddress: values['source.companyAddress'],
+            companyContact: values['source.companyContact'],
+            msIntroduce: values['source.msIntroduce'],
+            companyScore: values['source.companyScore'],
+            msScore: values['source.msScore']
+          }
+
+          // 更新 mdl 数据
+          this.mdl = {
+            ...this.mdl,
+            ...values,
+            norm,
+            source
+          }
+
           // 模拟异步操作
           setTimeout(() => {
             // 更新数据
             const index = this.dataSource.findIndex(item => item.id === this.mdl.id)
             if (index > -1) {
-              this.dataSource.splice(index, 1, { ...this.mdl, ...values })
+              this.dataSource.splice(index, 1, this.mdl)
             }
             this.visible = false
             this.confirmLoading = false
@@ -447,6 +591,11 @@ export default {
     handleCancel() {
       this.visible = false
       this.editForm.resetFields()
+      this.mdl = {
+        name: '',
+        norm: [],
+        source: {}
+      }
     },
     handleSource(record) {
       // console.log(record)
@@ -507,8 +656,27 @@ export default {
       this.dataSource = [...getAmlServices(), ...getAmlMetaApps()]
       this.filteredDataSource = this.dataSource
     },
-    toggleChatBot() {
-      this.showChatBot = !this.showChatBot // 切换聊天机器人的显示状态
+    toggleRAGInput() {
+      this.showRAGInput = !this.showRAGInput
+      if (this.showRAGInput) {
+        this.$nextTick(() => {
+          this.updateContainerPosition()
+        })
+      }
+    },
+    updateContainerPosition() {
+      const button = this.$refs.ragButton.$el
+      const container = this.$refs.ragContainer
+
+      if (button && container) {
+        const buttonRect = button.getBoundingClientRect()
+
+        // 设置容器的位置在按钮的右侧
+        this.containerStyle = {
+          top: `${buttonRect.top}px`,
+          left: `${buttonRect.right + 10}px` // 10px 为间距
+        }
+      }
     }
   }
 }
@@ -526,22 +694,20 @@ export default {
   margin-left: 12px;
 }
 
-.dify-chatbot-container {
+.rag-input-container {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
   z-index: 1000;
   width: 400px;
-  height: 500px;
+  padding: 20px;
   border-radius: 12px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   background: #ffffff;
   overflow: hidden;
-  transition: all 0.3s ease;
+  border: 1px solid #e8e8e8;
 }
 
 /* 按钮的样式 */
-.dify-chatbot-bubble-button {
+.rag-input-bubble-button {
   width: 40px;
   border-radius: 25%;
   border: none;
@@ -554,13 +720,13 @@ export default {
   justify-content: center;
 }
 
-.dify-chatbot-bubble-button:hover {
+.rag-input-bubble-button:hover {
   background: #40a9f0;
   transform: scale(1.1); /* 悬停时放大 */
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
-.dify-chatbot-bubble-button:active {
+.rag-input-bubble-button:active {
   transform: scale(0.95); /* 点击时缩小 */
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }

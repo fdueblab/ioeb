@@ -39,13 +39,6 @@
               </a-form-item>
             </a-col>
           </a-row>
-          <!--          <a-row :gutter="20">-->
-          <!--            <a-col :span="6">-->
-          <!--              <a-form-item label="微服务名称">-->
-          <!--                <a-input v-model="programInfo.name" placeholder="请输入" allow-clear />-->
-          <!--              </a-form-item>-->
-          <!--            </a-col>-->
-          <!--          </a-row>-->
           <a-row :gutter="20">
             <a-col :span="6">
               <a-form-item label="程序">
@@ -77,15 +70,15 @@
         <v-chart style="height: 100%; width: 100%;" :options="options" autoresize @click="handleNodeClick"/>
       </div>
     </a-card>
-    <a-card :bordered="false" style="margin-top: 10px; height: 410px;">
+    <a-card :bordered="false" style="margin-top: 10px; height: 490px;">
       <a-row :gutter="20">
         <a-col :span="12">
-          <a-card :bodyStyle="{ padding: 0 }" style="height: 360px;">
+          <a-card :bodyStyle="{ padding: 0 }" style="height: 440px;">
             <codemirror v-model="code" :style="codemirrorStyle" :options="cmOptions" />
           </a-card>
         </a-col>
         <a-col :span="12">
-          <a-card style="height: 360px;">
+          <a-card style="height: 440px;">
             <a-form>
               <a-row :gutter="20">
                 <a-col :span="12">
@@ -100,14 +93,16 @@
                 </a-col>
               </a-row>
               <a-row :gutter="20">
-                <a-col :span="12">
-                  <a-form-item label="条件参数">
-                    <a-input v-model="form.condition" placeholder="请输入Condition"/>
+                <a-col :span="24">
+                  <a-form-item label="条件（environment）">
+                    <a-input v-model="form.environment" placeholder="请输入Environment"/>
                   </a-form-item>
                 </a-col>
-                <a-col :span="12">
-                  <a-form-item label="效果参数">
-                    <a-input v-model="form.effect" placeholder="请输入Effect"/>
+              </a-row>
+              <a-row :gutter="20">
+                <a-col :span="24">
+                  <a-form-item label="处理（process）">
+                    <a-input v-model="form.process" placeholder="请输入Process"/>
                   </a-form-item>
                 </a-col>
               </a-row>
@@ -123,7 +118,7 @@
                 </a-col>
                 <a-col :span="12">
                   <a-form-item label="微服务名称">
-                    <a-input v-model="form.name" placeholder="请输入微服务名称"/>
+                    <a-input v-model="form.serviceName" placeholder="请输入微服务名称"/>
                   </a-form-item>
                 </a-col>
               </a-row>
@@ -147,7 +142,7 @@
                         <a-icon type="question-circle-o" />
                       </a-tooltip>
                     </span>
-                    <a-button type="primary" @click="uploadService" :disabled="programFiles.length === 0" :loading="uploadServiceLoading">
+                    <a-button type="primary" @click="uploadService" :disabled="uploadServiceDisabled" :loading="uploadServiceLoading">
                       预发布
                     </a-button>
                   </a-form-item>
@@ -227,17 +222,20 @@ export default {
         technology: undefined
       },
       form: {
+        serviceName: '',
         name: '',
         input: '',
         output: '',
-        condition: '',
-        effect: '',
+        environment: '',
+        process: '',
         apiType: 0
       },
       code: '',
-      codeTemplate: `def {{name}}({{input}}):
+      codeTemplate: `# 微服务名称: {{serviceName}}
+# 条件: {{environment}}
+def {{name}}({{input}}):
   try:
-    # code here
+    # 处理: {{process}}
     return {{output}}
   except Exception:
     print('{{name}}执行出错，错误信息: ', Exception)
@@ -247,6 +245,7 @@ export default {
       configFiles: [],
       uploadProgramLoading: false,
       uploadServiceLoading: false,
+      uploadServiceDisabled: true,
       programJson: null,
       apiTypeOptions: getApiTypeMap(),
       cmOptions: {
@@ -286,6 +285,15 @@ export default {
     },
     'form.output': function () {
       this.updateCode()
+    },
+    'form.environment': function () {
+      this.updateCode()
+    },
+    'form.process': function () {
+      this.updateCode()
+    },
+    'form.serviceName': function () {
+      this.updateCode()
     }
   },
   mounted () {},
@@ -299,13 +307,13 @@ export default {
           this.$message.success('解析成功，发现以下可用API及调用关系')
           this.programJson = {
             nodes: [
-              { id: '9001', x: 0, y: 150, label: 'datasets', size: 50, color: '#6F9654', input: 'rawData', output: 'processedData', condition: 'condition1', effect: 'effect1', apiType: 0 },
-              { id: '9002', x: 150, y: 150, label: 'preprocess', size: 50, color: '#E76F51', input: 'processedData', output: 'cleanedData', condition: 'condition2', effect: 'effect2', apiType: 0 },
-              { id: '9003', x: 300, y: 150, label: 'train', size: 50, color: '#2A9D8F', input: 'cleanedData', output: 'trainedModel', condition: 'condition3', effect: 'effect3', apiType: 2 },
-              { id: '9004', x: 450, y: 50, label: 'predict', size: 50, color: '#F4A261', input: 'trainedModel', output: 'predictionResult', condition: 'condition4', effect: 'effect4', apiType: 0 },
-              { id: '9005', x: 450, y: 150, label: 'evaluate', size: 50, color: '#264653', input: 'trainedModel', output: 'evaluationMetrics', condition: 'condition5', effect: 'effect5', apiType: 0 },
-              { id: '9006', x: 450, y: 250, label: 'visualize', size: 50, color: '#E9C46A', input: 'trainedModel', output: 'visualization', condition: 'condition6', effect: 'effect6', apiType: 0 },
-              { id: '9007', x: 300, y: 250, label: 'models', size: 50, color: '#A8DADC', input: 'trainedModel', output: 'modelMetadata', condition: 'condition7', effect: 'effect7', apiType: 0 }
+              { id: '9001', x: 0, y: 150, label: 'datasets', size: 50, color: '#6F9654', input: 'rawData', output: 'processedData', environment: 'environment1', process: 'process1', apiType: 0 },
+              { id: '9002', x: 150, y: 150, label: 'preprocess', size: 50, color: '#E76F51', input: 'processedData', output: 'cleanedData', environment: 'environment2', process: 'process2', apiType: 0 },
+              { id: '9003', x: 300, y: 150, label: 'train', size: 50, color: '#2A9D8F', input: 'cleanedData', output: 'trainedModel', environment: 'environment3', process: 'process3', apiType: 2 },
+              { id: '9004', x: 450, y: 50, label: 'predict', size: 50, color: '#F4A261', input: 'trainedModel', output: 'predictionResult', environment: 'environment4', process: 'process4', apiType: 0 },
+              { id: '9005', x: 450, y: 150, label: 'evaluate', size: 50, color: '#264653', input: 'trainedModel', output: 'evaluationMetrics', environment: 'environment5', process: 'process5', apiType: 0 },
+              { id: '9006', x: 450, y: 250, label: 'visualize', size: 50, color: '#E9C46A', input: 'trainedModel', output: 'visualization', environment: 'environment6', process: 'process6', apiType: 0 },
+              { id: '9007', x: 300, y: 250, label: 'models', size: 50, color: '#A8DADC', input: 'trainedModel', output: 'modelMetadata', environment: 'environment7', process: 'process7', apiType: 0 }
             ],
             edges: [
               { sourceID: '9001', targetID: '9002' }, // datasets → preprocess
@@ -384,8 +392,8 @@ export default {
           <strong>${node.label}</strong><br/>
           <span style="color: #888;">Input:</span> ${node.input}<br/>
           <span style="color: #888;">Output:</span> ${node.output}<br/>
-          <span style="color: #888;">Condition:</span> ${node.condition}<br/>
-          <span style="color: #888;">Effect:</span> ${node.effect}<br/>
+          <span style="color: #888;">Environment:</span> ${node.environment}<br/>
+          <span style="color: #888;">Process:</span> ${node.process}<br/>
           <span style="color: #888;">Interface Type:</span> ${getApiTypeMap()[node.apiType]}
         </div>
       `
@@ -396,6 +404,10 @@ export default {
       }
     },
     uploadService () {
+      if (this.form.serviceName.length === 0) {
+        this.$message.error('请输入微服务名称！')
+        return
+      }
       this.uploadServiceLoading = true
       setTimeout(() => {
         sessionStorage.setItem('upload_exception_service', '1')
@@ -437,22 +449,27 @@ export default {
       this.configFiles = []
     },
     updateCode() {
-      const { input, output, name } = this.form
+      const { serviceName, environment, process, input, output, name } = this.form
       // 动态生成代码
       this.code = this.codeTemplate
         .replace('{{name}}', name)
         .replace('{{input}}', input)
         .replace('{{output}}', output)
+        .replace('{{serviceName}}', serviceName)
+        .replace('{{environment}}', environment)
+        .replace('{{process}}', process)
     },
     handleNodeClick(params) {
       const node = this.programJson.nodes.find(n => n.id === params.data.id)
+      this.uploadServiceDisabled = false
       if (node) {
         this.form = {
+          serviceName: '',
           name: node.label,
           input: node.input,
           output: node.output,
-          condition: node.condition,
-          effect: node.effect,
+          environment: node.environment,
+          process: node.process,
           apiType: node.apiType
         }
         this.updateCode()
@@ -481,6 +498,6 @@ export default {
   height: 300px;
 }
 /deep/ .CodeMirror{
-  height: 358px;
+  height: 438px;
 }
 </style>
