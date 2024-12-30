@@ -1,37 +1,48 @@
 <template>
   <page-header-wrapper :title="false">
     <a-card :body-style="{padding: '24px 32px'}" :bordered="false">
-      <a-form @submit="handleSubmit" :form="form">
-        <a-form-item label="服务地址">
-          <a-input-search v-model="serviceUrl" name="name" placeholder="请输入服务URL" enter-button="发送" @search="onSearch">
-            <a-select slot="addonBefore" default-value="POST" style="width: 90px">
-              <a-select-option value="GET">
-                GET
-              </a-select-option>
-              <a-select-option value="POST">
-                POST
+      <a-form>
+        <a-form-item label="接口选择">
+          <div style="width: 100%; display: flex;">
+            <a-select v-model="selectedApi" @change="handleApiChange" style="width: 200px; margin-right: 20px">
+              <a-select-option v-for="(item, index) in apiList" :key="index" :value="index">
+                {{ item.name }}
               </a-select-option>
             </a-select>
-          </a-input-search>
+            <a-input-search
+              readOnly
+              :loading="sending"
+              :value="serviceUrl"
+              style="width: 100%"
+              placeholder="服务地址"
+              enter-button="发送"
+              @search="onSearch"
+            >
+              <span slot="addonBefore" style="width: 60px; text-align: center; display: inline-block;">
+                {{ method }}
+              </span>
+            </a-input-search>
+          </div>
         </a-form-item>
         <a-form-item label="服务参数">
-          <a-radio-group v-decorator="['target', { initialValue: 1 }]">
-            <a-radio :value="1">无</a-radio>
+          <a-radio-group v-model="parameterType">
+            <a-radio :value="0">无</a-radio>
+            <a-radio :value="1">path variable</a-radio>
             <a-radio :value="2">文件</a-radio>
             <a-radio :value="3">JSON</a-radio>
           </a-radio-group>
-          <a-form-item v-show="form.getFieldValue('target') === 2">
+          <a-form-item v-show="parameterType === 2">
             <a-upload
               name="file"
               :multiple="true"
               action=""
               :headers="headers"
-              @change="handleSelcetFile"
+              @change="handleSelectFile"
             >
               <a-button> <a-icon type="upload" /> 选择文件... </a-button>
             </a-upload>
           </a-form-item>
-          <a-form-item v-show="form.getFieldValue('target') === 3">
+          <a-form-item v-show="parameterType === 3">
             <codemirror v-model="code" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions"></codemirror>
           </a-form-item>
         </a-form-item>
@@ -77,15 +88,27 @@ import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
+
 export default {
   name: 'UseService',
   components: {
     codemirror
   },
+  props: {
+    apiList: {
+      type: Array,
+      default: () => []
+    }
+  },
   data () {
     return {
       form: this.$form.createForm(this),
-      serviceUrl: 'https://ms.kxyun.net/vertical-user/aircraft',
+      selectedApi: undefined, // 默认选择的接口
+      serviceUrl: '', // 服务地址
+      method: '未选择', // 请求方法
+      parameterType: 0, // 目标类型
+      fileList: [], // 文件列表
+      sending: false,
       code: '',
       response: '',
       cmOptions: {
@@ -113,22 +136,35 @@ export default {
         }
       },
       codemirrorStyle: {
-        fontSize: '18px',
-        lineHeight: '150%',
-        height: '250px',
-        border: '1px solid #EBEEF5'
+        fontSize: '14px',
+        lineHeight: '120%'
+      }
+    }
+  },
+  computed: {
+    headers () {
+      switch (this.form.getFieldValue('target')) {
+        case 2:
+          return {
+            'Content-Type': 'multipart/form-data'
+          }
+        case 3:
+          return {
+            'Content-Type': 'application/json;charset=UTF-8'
+          }
+        default:
+          return {}
       }
     }
   },
   methods: {
-    // handler
-    handleSubmit (e) {
-      e.preventDefault()
-      this.form.validateFields((err, values) => {
-        if (!err) {
-          console.log('Received values of form: ', values)
-        }
-      })
+    // 处理接口选择变化
+    handleApiChange(value) {
+      this.selectedApi = value
+      const api = this.apiList[value]
+      this.serviceUrl = api.url
+      this.method = api.method
+      this.parameterType = api.parameterType
     },
     onCmReady(cm) {
       cm.on('inputRead', (cm, obj) => {
@@ -143,16 +179,17 @@ export default {
     handleGoBack() {
       this.$emit('onGoBack')
     },
-    handleSelcetFile(info) {
+    handleSelectFile(info) {
       console.log(info)
     },
     onSearch () {
-      const obj = {
-        code: 200,
-        message: '使用成功！'
-      }
-      const newObj = JSON.stringify(obj, null, 4)
-      this.response = newObj
+      const api = this.apiList[this.selectedApi]
+      // 模拟异步请求
+      this.sending = true
+      setTimeout(() => {
+        this.response = JSON.stringify(api.response, null, 4)
+        this.sending = false
+      }, 1000)
     }
   }
 }
