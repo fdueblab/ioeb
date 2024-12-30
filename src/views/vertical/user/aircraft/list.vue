@@ -234,30 +234,17 @@
           </a-select>
         </a-form-item>
         <a-form-item label="技术指标">
-          <a-checkbox-group
-            v-decorator="[
-              'norm',
-              {
-                rules: [{ required: true, message: '请选择技术指标' }],
-                initialValue: mdl.norm,
-              },
-            ]"
-          >
-            <a-row>
-              <a-col :span="24" v-for="(item, index) in normMap" :key="index">
-                <a-checkbox :value="index">
-                  {{ item.text }}
-                </a-checkbox>
-                <el-rate
-                  v-if="mdl.norm.some(n => n.key === index)"
-                  v-model="mdl.norm.find(n => n.key === index).score"
-                  style="margin-left: 10px;"
-                  show-score
-                  text-color="#ff9900"
-                />
-              </a-col>
-            </a-row>
-          </a-checkbox-group>
+          <a-row v-for="(item, index) in normMap" :key="index">
+            <div v-if="mdl.norm.some(n => n.key === index)" style="display: flex; height: 30px">
+              {{ item.text }}
+              <el-rate
+                v-model="mdl.norm.find(n => n.key === index).score"
+                style="margin-left: 10px;"
+                show-score
+                text-color="#ff9900"
+              />
+            </div>
+          </a-row>
         </a-form-item>
         <a-form-item label="服务溯源">
           <a-form-item label="公司名称">
@@ -539,12 +526,6 @@ export default {
       }
       this.initData()
     },
-    handleToAdd() {
-      this.$refs.tempSelectModal.open()
-    },
-    handleAdd() {
-      this.$emit('onGoAdd')
-    },
     handleEdit(record) {
       this.visible = true // 显示模态框
       this.mdl = { ...record } // 将选中的记录数据复制到 mdl 中
@@ -622,14 +603,22 @@ export default {
       // console.log(record)
     },
     handleUse(record) {
-      if (record.status === 0) {
-        this.$message.error('服务关闭中，请启动后使用！')
-      } else if (record.status === 3) {
-        this.$message.error('服务异常，暂无法使用！')
-      } else if (record.status === 5) {
-        this.$message.warning('服务部署中，暂无法使用！')
-      } else {
-        this.$emit('onGoUse')
+      switch (record.status) {
+        case 0:
+          this.$message.error('服务部署失败，请重新部署后使用！')
+          break
+        case 2:
+          this.$message.warning('服务未运行，请启动后使用！')
+          break
+        case 3:
+          this.$message.error('服务异常，暂无法使用！')
+          break
+        case 5:
+          this.$message.warning('服务部署中，暂无法使用！')
+          break
+        default:
+          this.$emit('onGoUse', record.apiList || [])
+          break
       }
     },
     delConfirm() {
@@ -657,6 +646,12 @@ export default {
     handleAgentSearch() {
       if (this.agentSearchText && this.agentSearchText !== '') {
         this.agentSearchLoading = true
+        console.log(this.agentSearchText)
+        // 知识增强
+        if (this.ragForm.environment.length > 0 || this.ragForm.process.length > 0) {
+          this.$message.success('启用知识增强检索...')
+          console.log(this.ragForm)
+        }
         new Promise((resolve, reject) => {
           setTimeout(() => {
             this.agentSearchData = this.dataSource.filter((item, index) => (index % 2 === 0))

@@ -2,28 +2,32 @@
   <div>
     <component
       @onGoBack="handleGoBack"
-      @onGoUse="handleGoUse($event)"
-      :is="currentComponent">
+      @onGoUse="handleGoUse"
+      :is="currentComponent"
+      :apiList="apiList"
+    >
     </component>
   </div>
 </template>
 <script>
 import list from './list'
-import UseService from './useService'
+import UseService from '../useService'
 
 export default {
   name: 'Template',
   components: { list, UseService },
   data () {
     return {
-      currentComponent: 'list'
+      currentComponent: 'list',
+      apiList: []
     }
   },
   methods: {
     handleGoBack () {
       this.currentComponent = 'list'
     },
-    handleGoUse () {
+    handleGoUse (apiList) {
+      this.apiList = apiList
       this.currentComponent = 'UseService'
     }
   }
