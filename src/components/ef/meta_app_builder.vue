@@ -53,8 +53,15 @@
       </a-row>
       <a-row :gutter="16">
         <a-col :span="24">
-          <a-form-item label="描述">
-            <a-textarea v-decorator="['description']" placeholder="请输入元应用描述" allow-clear />
+          <a-form-item label="条件（environment）">
+            <a-input v-decorator="['environment']" placeholder="请输入Environment"/>
+          </a-form-item>
+        </a-col>
+      </a-row>
+      <a-row :gutter="16">
+        <a-col :span="24">
+          <a-form-item label="处理（process）">
+            <a-input v-decorator="['process']" placeholder="请输入Process"/>
           </a-form-item>
         </a-col>
       </a-row>

@@ -30,7 +30,38 @@ const amlServices = [
       msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
       companyScore: 5,
       msScore: 5
-    }
+    },
+    apiList: [
+      {
+        name: 'train',
+        url: 'http://myApiServer.com/safe-calculation/train',
+        method: 'POST',
+        parameterType: 2,
+        response: {
+          code: 200,
+          message: '训练完成!',
+          data: {
+            modelId: '1',
+            modelName: 'model1',
+            modelVersion: '1.0',
+            modelPath: '/appdata/aml/model/model1.pkl'
+          }
+        }
+      },
+      {
+        name: 'predict',
+        url: 'http://myApiServer.com/safe-calculation/predict',
+        method: 'POST',
+        parameterType: 2,
+        response: {
+          code: 200,
+          message: '预测成功！',
+          data: {
+            predictResult: 'predict result list'
+          }
+        }
+      }
+    ]
   },
   {
     name: '技术评测微服务',
@@ -63,7 +94,38 @@ const amlServices = [
       msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
       companyScore: 5,
       msScore: 5
-    }
+    },
+    apiList: [
+      {
+        name: 'train',
+        url: 'http://myApiServer.com/technical-assessment/train',
+        method: 'POST',
+        parameterType: 2,
+        response: {
+          code: 200,
+          message: '训练完成!',
+          data: {
+            modelId: '2',
+            modelName: 'model2',
+            modelVersion: '1.0',
+            modelPath: '/appdata/aml/model/model2.pkl'
+          }
+        }
+      },
+      {
+        name: 'predict',
+        url: 'http://myApiServer.com/technical-assessment/predict',
+        method: 'POST',
+        parameterType: 2,
+        response: {
+          code: 200,
+          message: '预测成功！',
+          data: {
+            predictResult: 'predict result list'
+          }
+        }
+      }
+    ]
   },
   {
     name: '报告生成微服务',
@@ -75,7 +137,7 @@ const amlServices = [
     netWork: 'bridge',
     port: '0.0.0.0:8002/TCP → 0.0.0.0:80002',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-    status: 3,
+    status: 1,
     number: '2330',
     norm: [
       {
@@ -100,7 +162,48 @@ const amlServices = [
       msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
       companyScore: 5,
       msScore: 5
-    }
+    },
+    apiList: [
+      {
+        name: 'getReport',
+        url: 'http://myApiServer.com/{reportId}}/get',
+        method: 'GET',
+        parameterType: 1,
+        response: {
+          code: 200,
+          message: '获取成功!',
+          data: {
+            reportRow: '报告数据'
+          }
+        }
+      },
+      {
+        name: 'sendReport',
+        url: 'http://myApiServer.com/{reportId}}/send',
+        method: 'GET',
+        parameterType: 1,
+        response: {
+          code: 200,
+          message: '发送成功！',
+          data: {
+            reportId: '1'
+          }
+        }
+      },
+      {
+        name: 'generateReport',
+        url: 'http://myApiServer.com/report-generation/generate',
+        method: 'POST',
+        parameterType: 3,
+        response: {
+          code: 200,
+          message: '生成成功！',
+          data: {
+            reportPath: '/appdata/aml/report/report1.pdf'
+          }
+        }
+      }
+    ]
   },
   {
     name: '信用评估微服务',
@@ -137,7 +240,38 @@ const amlServices = [
       msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
       companyScore: 5,
       msScore: 5
-    }
+    },
+    apiList: [
+      {
+        name: 'train',
+        url: 'http://myApiServer.com/credit-assessment/train',
+        method: 'POST',
+        parameterType: 2,
+        response: {
+          code: 200,
+          message: '训练完成!',
+          data: {
+            modelId: '4',
+            modelName: 'model4',
+            modelVersion: '1.0',
+            modelPath: '/appdata/aml/model/model3.pkl'
+          }
+        }
+      },
+      {
+        name: 'predict',
+        url: 'http://myApiServer.com/credit-assessment/predict',
+        method: 'POST',
+        parameterType: 2,
+        response: {
+          code: 200,
+          message: '预测成功！',
+          data: {
+            predictResult: 'predict result list'
+          }
+        }
+      }
+    ]
   },
   {
     name: '异常识别微服务',
@@ -174,7 +308,38 @@ const amlServices = [
       msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
       companyScore: 5,
       msScore: 5
-    }
+    },
+    apiList: [
+      {
+        name: 'train',
+        url: 'http://myApiServer.com/anomaly-detection/train',
+        method: 'POST',
+        parameterType: 2,
+        response: {
+          code: 200,
+          message: '训练完成!',
+          data: {
+            modelId: '4',
+            modelName: 'model4',
+            modelVersion: '1.0',
+            modelPath: '/appdata/aml/model/model4.pkl'
+          }
+        }
+      },
+      {
+        name: 'predict',
+        url: 'http://myApiServer.com/anomaly-detection/predict',
+        method: 'POST',
+        parameterType: 2,
+        response: {
+          code: 200,
+          message: '预测成功！',
+          data: {
+            predictResult: 'predict result list'
+          }
+        }
+      }
+    ]
   }
 ]
 
