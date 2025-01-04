@@ -73,7 +73,7 @@ const amlServices = [
     netWork: 'bridge',
     port: '0.0.0.0:8001/TCP → 0.0.0.0:80001',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-    status: 1,
+    status: 3,
     number: '8192',
     norm: [
       {
@@ -311,6 +311,22 @@ const amlServices = [
     },
     apiList: [
       {
+        name: 'preprocess',
+        url: 'http://myApiServer.com/anomaly-detection/preprocess',
+        method: 'POST',
+        parameterType: 2,
+        response: {
+          code: 200,
+          message: '预处理成功!',
+          data: {
+            modelId: '4',
+            modelName: 'model4',
+            modelVersion: '1.0',
+            modelPath: '/appdata/aml/data/data4.pkl'
+          }
+        }
+      },
+      {
         name: 'train',
         url: 'http://myApiServer.com/anomaly-detection/train',
         method: 'POST',
@@ -336,6 +352,32 @@ const amlServices = [
           message: '预测成功！',
           data: {
             predictResult: 'predict result list'
+          }
+        }
+      },
+      {
+        name: 'evaluate',
+        url: 'http://myApiServer.com/anomaly-detection/evaluate',
+        method: 'POST',
+        parameterType: 2,
+        response: {
+          code: 200,
+          message: '评估成功！',
+          data: {
+            evaluateResult: 'evaluate result list'
+          }
+        }
+      },
+      {
+        name: 'visualize',
+        url: 'http://myApiServer.com/anomaly-detection/evaluate',
+        method: 'POST',
+        parameterType: 2,
+        response: {
+          code: 200,
+          message: '可视化成功！',
+          data: {
+            visualizeResult: 'visualize result list'
           }
         }
       }
@@ -534,7 +576,7 @@ const amlMetaApps = [
     netWork: 'bridge',
     port: '0.0.0.0:1020/TCP → 0.0.0.0:10020',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/metaApp',
-    status: 4,
+    status: 0,
     norm: [
       {
         key: 0,
@@ -577,7 +619,7 @@ const airCraftMetaApps = [
     netWork: 'bridge',
     port: '0.0.0.0:8084/TCP → 0.0.0.0:80084',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aircraft/data',
-    status: 4,
+    status: 0,
     norm: [
       {
         key: 0,

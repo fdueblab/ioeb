@@ -85,8 +85,8 @@ export default {
                 },
                 {
                   id: '9005',
-                  type: 'evaluate',
-                  name: 'evaluate',
+                  type: 'predict',
+                  name: 'predict',
                   ico: 'el-icon-data-line',
                   style: {}
                 },
@@ -154,7 +154,7 @@ export default {
           },
           {
             id: '9001',
-            name: 'evaluate',
+            name: 'predict',
             type: 'process',
             url: 'ms.kxyun.net/evaluate',
             left: '0',
