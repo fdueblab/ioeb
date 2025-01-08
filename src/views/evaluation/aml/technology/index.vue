@@ -57,8 +57,8 @@
               <a-col v-if="dataSetType === '0'" :span="6">
                 <a-form-item label="选择数据集">
                   <a-select placeholder="请选择" default-value="0">
-                    <a-select-option value="0">鸢尾花</a-select-option>
-                    <a-select-option value="1">肿瘤</a-select-option>
+                    <a-select-option value="0">跨境电商</a-select-option>
+                    <a-select-option value="1">鸢尾花</a-select-option>
                   </a-select>
                 </a-form-item>
               </a-col>
@@ -83,7 +83,7 @@
             <a-form-item
               :wrapperCol="{ span: 24 }"
               style="text-align: center">
-              <a-button type="primary" @click="onTest">开始测评</a-button>
+              <a-button type="primary" :loading="testLoading" @click="onTest">开始测评</a-button>
             </a-form-item>
           </a-form>
         </a-card>
@@ -109,7 +109,7 @@ export default {
       // create model
       form: this.$form.createForm(this),
       visible: false,
-      confirmLoading: false,
+      testLoading: false,
       mdl: null,
       // 高级搜索 展开/关闭
       advanced: false,
@@ -161,23 +161,6 @@ export default {
     }
   },
   methods: {
-    handleAdd () {
-      this.$emit('onGoAdd')
-    },
-    handleEdit (record) {
-      console.log(record)
-    },
-    delConfirm() {
-      this.$message.success('删除成功！')
-    },
-    handleCancel () {
-      this.visible = false
-      const form = this.$refs.createModal.form
-      form.resetFields() // 清理表单数据（可不做）
-    },
-    handleChange (value) {
-      console.log(`selected ${value}`)
-    },
     onSelectChange (selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
@@ -199,14 +182,30 @@ export default {
       this.dataSetFiles = []
     },
     onTest () {
-      const obj = {
-        code: 200,
-        message: '测试通过！'
+      if (this.selectedRows.length === 0) {
+        this.$message.warning('请选择测评服务！')
+        return
       }
-      if (sessionStorage.getItem('upload_exception_service')) {
-        sessionStorage.setItem('upload_exception_service', '4')
-      }
-      this.response = JSON.stringify(obj, null, 4)
+      this.testLoading = true
+      // 模拟异步请求
+      setTimeout(() => {
+        this.$message.success(`${this.selectedRows[0].name} 测试完成！`)
+        const obj = {
+          code: 200,
+          message: '测试通过！',
+          data: {
+            securityResult: '5.0',
+            robustnessResult: '5.0',
+            privacyResult: '5.0',
+            credibilityResult: '5.0'
+          }
+        }
+        if (sessionStorage.getItem('upload_exception_service')) {
+          sessionStorage.setItem('upload_exception_service', '4')
+        }
+        this.response = JSON.stringify(obj, null, 4)
+        this.testLoading = false
+      }, 1000)
     }
   }
 }
