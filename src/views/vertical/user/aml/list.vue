@@ -318,15 +318,43 @@
       :style="containerStyle"
     >
       <a-form :form="ragForm" layout="vertical">
+        <a-form-item label="微服务/元应用名称">
+          <a-input v-model="ragForm.name" placeholder="请输入微服务/元应用名称" />
+        </a-form-item>
+        <a-form-item label="通用描述">
+          <a-input v-model="ragForm.description" placeholder="请输入通用描述" />
+        </a-form-item>
+        <a-form-item label="作用">
+          <a-input v-model="ragForm.purpose" placeholder="请输入作用" />
+        </a-form-item>
+        <a-form-item label="功能">
+          <a-input v-model="ragForm.feature" placeholder="请输入功能" />
+        </a-form-item>
+        <a-form-item label="技术要求">
+          <a-input v-model="ragForm.technology" placeholder="请输入技术要求" />
+        </a-form-item>
         <a-row :gutter="16">
-          <a-col :span="24">
-            <a-form-item label="条件">
-              <a-input v-model="ragForm.environment" placeholder="请输入条件" />
+          <a-col :span="12">
+            <a-form-item label="上载知识库">
+              <a-upload
+                :file-list="ragFiles"
+                :remove="removeRagFile"
+                :customRequest="customRagFileChose"
+                :multiple="true">
+                <a-button> <a-icon type="upload" /> 选择知识文件 </a-button>
+              </a-upload>
             </a-form-item>
           </a-col>
-          <a-col :span="24">
-            <a-form-item label="处理">
-              <a-input v-model="ragForm.process" placeholder="请输入处理" />
+          <a-col :span="12">
+            <a-form-item tooltip="value*category">
+              <span slot="label">提交知识库
+                <a-tooltip title="提交后可以使用该知识库进行知识增强">
+                  <a-icon type="question-circle-o" />
+                </a-tooltip>
+              </span>
+              <a-button type="primary" @click="handleRagUpload" icon="cloud-upload" :loading="ragUploadLoading">
+                提交
+              </a-button>
             </a-form-item>
           </a-col>
         </a-row>
@@ -362,11 +390,17 @@ export default {
         norm: [],
         source: {}
       },
-      showRAGInput: false, // 是否显示知识增强输入框
+      // 知识增强
+      showRAGInput: false,
       ragForm: {
-        environment: '',
-        process: ''
+        name: '',
+        description: '',
+        purpose: '',
+        feature: '',
+        technology: ''
       },
+      ragFiles: [],
+      ragUploadLoading: false,
       agentSearchText: '',
       agentSearchLoading: false,
       agentSearchData: [],
@@ -668,10 +702,43 @@ export default {
 
         // 设置容器的位置在按钮的右侧
         this.containerStyle = {
-          top: `${buttonRect.top}px`,
-          left: `${buttonRect.right + 10}px` // 10px 为间距
+          top: `${buttonRect.top - 75}px`,
+          left: `${buttonRect.right + 10}px`
         }
       }
+    },
+    // 知识增强文件
+    async customRagFileChose (options) {
+      const { file } = options
+      if (!file) {
+        return false
+      }
+      const url = URL.createObjectURL(file)
+      this.ragFiles = {
+        uid: file?.uid,
+        name: file.name,
+        status: 'done',
+        url // url 是展示在页面上的绝对链接
+      }
+    },
+    removeRagFile () {
+      this.ragFiles = []
+    },
+    handleRagUpload() {
+      this.ragUploadLoading = true
+      console.log(this.ragForm)
+      console.log(this.ragFiles)
+      // 模拟上传文件
+      setTimeout(() => {
+        this.ragUploadLoading = false
+        this.$message.success('知识库上传成功！')
+        this.showRAGInput = false
+        this.ragForm = {
+          environment: '',
+          process: ''
+        }
+        this.ragFiles = []
+      }, 1000)
     }
   }
 }
