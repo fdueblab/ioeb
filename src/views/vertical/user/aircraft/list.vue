@@ -370,7 +370,7 @@
           <a-input v-model="ragForm.technology" placeholder="请输入技术要求" />
         </a-form-item>
         <a-form-item style="margin-bottom: 0">
-          <a-button type="primary" @click="handleRagUpload" icon="file-search" :loading="ragUploadLoading">
+          <a-button type="primary" @click="handleAgentSearch" icon="file-search" :loading="ragUploadLoading">
             知识增强检索
           </a-button>
         </a-form-item>
