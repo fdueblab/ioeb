@@ -358,7 +358,7 @@
           <a-input v-model="ragForm.technology" placeholder="请输入技术要求" />
         </a-form-item>
         <a-form-item style="margin-bottom: 0">
-          <a-button type="primary" @click="handleAgentSearch" icon="file-search" :loading="ragUploadLoading">
+          <a-button type="primary" @click="handleAgentSearch" icon="file-search" :loading="agentSearchLoading">
             知识增强检索
           </a-button>
         </a-form-item>
@@ -661,13 +661,16 @@ export default {
       }
     },
     handleAgentSearch() {
-      if (this.agentSearchText && this.agentSearchText !== '') {
+      if (this.showRAGInput || this.agentSearchText) {
         this.agentSearchLoading = true
         console.log(this.agentSearchText)
         // 知识增强
         if (this.showRAGInput) {
-          this.$message.info('正在使用领域知识增强检索...')
+          this.$message.info('正在进行领域知识增强检索...')
           console.log(this.ragForm)
+        } else {
+          this.$message.info('正在进行智能检索...')
+          console.log(this.agentSearchText)
         }
         new Promise((resolve, reject) => {
           setTimeout(() => {
