@@ -6,8 +6,9 @@
           <a-row>
             <a-col :span="12">
               <a-form-item :wrapper-col="{ xs: 22, sm: 22, md: 22 }">
-                <a-input-search style="width: 100%" v-model="agentSearchText" placeholder="请输入您想要的微服务名称、功能等"
-                                @search="handleAgentSearch" :loading="agentSearchLoading" />
+                <a-form-item :wrapper-col="{ xs: 22, sm: 22, md: 22 }">
+                  <a-input-search style="width: 100%" v-model="agentSearchText" placeholder="请输入您想要的微服务名称、功能等" @search="handleAgentSearch" :loading="agentSearchLoading" :disabled="showRAGInput" />
+                </a-form-item>
               </a-form-item>
             </a-col>
             <a-col :span="6">
@@ -327,6 +328,31 @@
       class="rag-input-container"
       :style="containerStyle"
     >
+      <a-row :gutter="16">
+        <a-col :span="12">
+          <a-form-item label="上传知识库文档">
+            <a-upload
+              :file-list="ragFiles"
+              :remove="removeRagFile"
+              :customRequest="customRagFileChose"
+              :multiple="true">
+              <a-button> <a-icon type="upload" /> 选择文件 </a-button>
+            </a-upload>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item tooltip="value*category">
+            <span slot="label">上载知识库
+              <a-tooltip title="上载后可以使用该知识库进行领域知识增强检索">
+                <a-icon type="question-circle-o" />
+              </a-tooltip>
+            </span>
+            <a-button type="primary" @click="handleRagUpload" icon="cloud-upload" :loading="ragUploadLoading">
+              提交
+            </a-button>
+          </a-form-item>
+        </a-col>
+      </a-row>
       <a-form :form="ragForm" layout="vertical">
         <a-form-item label="微服务/元应用名称">
           <a-input v-model="ragForm.name" placeholder="请输入微服务/元应用名称" />
@@ -343,31 +369,11 @@
         <a-form-item label="技术要求">
           <a-input v-model="ragForm.technology" placeholder="请输入技术要求" />
         </a-form-item>
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item label="上传知识库文档">
-              <a-upload
-                :file-list="ragFiles"
-                :remove="removeRagFile"
-                :customRequest="customRagFileChose"
-                :multiple="true">
-                <a-button> <a-icon type="upload" /> 选择文件 </a-button>
-              </a-upload>
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item tooltip="value*category">
-              <span slot="label">上载知识库
-                <a-tooltip title="上载后可以使用该知识库进行领域知识增强检索">
-                  <a-icon type="question-circle-o" />
-                </a-tooltip>
-              </span>
-              <a-button type="primary" @click="handleRagUpload" icon="cloud-upload" :loading="ragUploadLoading">
-                提交
-              </a-button>
-            </a-form-item>
-          </a-col>
-        </a-row>
+        <a-form-item style="margin-bottom: 0">
+          <a-button type="primary" @click="handleRagUpload" icon="file-search" :loading="ragUploadLoading">
+            知识增强检索
+          </a-button>
+        </a-form-item>
       </a-form>
     </div>
     <!-- 聊天机器人容器 -->
@@ -413,7 +419,6 @@ export default {
       showChatBot: false, // 控制聊天机器人是否显示
       // 知识增强
       showRAGInput: false,
-      hasRagData: false,
       ragForm: {
         name: '',
         description: '',
@@ -683,8 +688,8 @@ export default {
         this.agentSearchLoading = true
         console.log(this.agentSearchText)
         // 知识增强
-        if (this.hasRagData) {
-          this.$message.info('启用领域知识增强检索...')
+        if (this.showRAGInput) {
+          this.$message.info('正在使用领域知识增强检索...')
           console.log(this.ragForm)
         }
         new Promise((resolve, reject) => {
@@ -726,7 +731,7 @@ export default {
         const buttonRect = button.getBoundingClientRect()
         // 设置容器的位置在按钮的右侧
         this.containerStyle = {
-          top: `${buttonRect.top - 75}px`,
+          top: `${buttonRect.top - 120}px`,
           left: `${buttonRect.right + 10}px`
         }
       }
@@ -754,17 +759,8 @@ export default {
       console.log(this.ragFiles)
       // 模拟上传文件
       setTimeout(() => {
-        this.hasRagData = true
         this.$message.success('知识库上传成功！')
         this.ragUploadLoading = false
-        this.showRAGInput = false
-        this.ragForm = {
-          name: '',
-          description: '',
-          purpose: '',
-          feature: '',
-          technology: ''
-        }
         this.ragFiles = []
       }, 1000)
     }
