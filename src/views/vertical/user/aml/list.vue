@@ -392,6 +392,7 @@ export default {
       },
       // 知识增强
       showRAGInput: false,
+      hasRagData: false,
       ragForm: {
         name: '',
         description: '',
@@ -621,7 +622,7 @@ export default {
           this.$message.error('服务部署失败，请重新部署后使用！')
           break
         case 2:
-          this.$message.warning('服务未运行，请启动后使用！')
+          this.$message.info('服务未运行，请启动后使用！')
           break
         case 3:
           this.$message.error('服务异常，暂无法使用！')
@@ -661,11 +662,9 @@ export default {
         this.agentSearchLoading = true
         console.log(this.agentSearchText)
         // 知识增强
-        for (const ragFormItem in this.ragForm) {
-          if (this.ragForm[ragFormItem]) {
-            this.$message.success('启用知识增强检索...')
-            console.log(this.ragForm)
-          }
+        if (this.hasRagData) {
+          this.$message.info('启用领域知识增强检索...')
+          console.log(this.ragForm)
         }
         new Promise((resolve, reject) => {
           setTimeout(() => {
@@ -701,7 +700,6 @@ export default {
 
       if (button && container) {
         const buttonRect = button.getBoundingClientRect()
-
         // 设置容器的位置在按钮的右侧
         this.containerStyle = {
           top: `${buttonRect.top - 75}px`,
@@ -732,12 +730,16 @@ export default {
       console.log(this.ragFiles)
       // 模拟上传文件
       setTimeout(() => {
-        this.ragUploadLoading = false
+        this.hasRagData = true
         this.$message.success('知识库上传成功！')
+        this.ragUploadLoading = false
         this.showRAGInput = false
         this.ragForm = {
-          environment: '',
-          process: ''
+          name: '',
+          description: '',
+          purpose: '',
+          feature: '',
+          technology: ''
         }
         this.ragFiles = []
       }, 1000)
