@@ -11,7 +11,7 @@
               </a-form-item>
             </a-col>
             <a-col :span="6">
-              <a-form-item label="知识增强检索">
+              <a-form-item label="领域知识增强检索">
                 <a-button ref="ragButton" class="rag-input-bubble-button" @click="toggleRAGInput">
                   <a-icon type="dot-chart" v-if="!showRAGInput"/>
                   <a-icon type="close" v-else/>
@@ -335,20 +335,20 @@
         </a-form-item>
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item label="上载知识库">
+            <a-form-item label="上传知识库文档">
               <a-upload
                 :file-list="ragFiles"
                 :remove="removeRagFile"
                 :customRequest="customRagFileChose"
                 :multiple="true">
-                <a-button> <a-icon type="upload" /> 选择知识文件 </a-button>
+                <a-button> <a-icon type="upload" /> 选择文件 </a-button>
               </a-upload>
             </a-form-item>
           </a-col>
           <a-col :span="12">
             <a-form-item tooltip="value*category">
-              <span slot="label">提交知识库
-                <a-tooltip title="提交后可以使用该知识库进行知识增强">
+              <span slot="label">上载知识库
+                <a-tooltip title="上载后可以使用该知识库进行领域知识增强检索">
                   <a-icon type="question-circle-o" />
                 </a-tooltip>
               </span>
@@ -661,9 +661,11 @@ export default {
         this.agentSearchLoading = true
         console.log(this.agentSearchText)
         // 知识增强
-        if (this.ragForm.environment.length > 0 || this.ragForm.process.length > 0) {
-          this.$message.success('启用知识增强检索...')
-          console.log(this.ragForm)
+        for (const ragFormItem in this.ragForm) {
+          if (this.ragForm[ragFormItem]) {
+            this.$message.success('启用知识增强检索...')
+            console.log(this.ragForm)
+          }
         }
         new Promise((resolve, reject) => {
           setTimeout(() => {
