@@ -16,7 +16,7 @@
               style="width: 100%"
               placeholder="服务地址"
               enter-button="发送"
-              @search="onSearch"
+              @search="onRequestSend"
             >
               <span slot="addonBefore" style="width: 60px; text-align: center; display: inline-block;">
                 {{ method }}
@@ -33,12 +33,10 @@
           </a-radio-group>
           <a-form-item v-show="parameterType === 2">
             <a-upload
-              name="file"
-              :multiple="true"
-              action=""
-              :headers="headers"
-              @change="handleSelectFile"
-            >
+              :file-list="fileList"
+              :remove="removeFile"
+              :customRequest="customFileChose"
+              :multiple="false">
               <a-button> <a-icon type="upload" /> 选择文件... </a-button>
             </a-upload>
           </a-form-item>
@@ -61,6 +59,7 @@
 </template>
 
 <script>
+import request from '@/utils/request'
 import { codemirror } from 'vue-codemirror'
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/addon/lint/lint'
@@ -108,6 +107,7 @@ export default {
       method: '未选择', // 请求方法
       parameterType: 0, // 目标类型
       fileList: [], // 文件列表
+      uploadFiles: [], // 上传的文件对象列表
       sending: false,
       code: '',
       response: '',
@@ -179,17 +179,79 @@ export default {
     handleGoBack() {
       this.$emit('onGoBack')
     },
-    handleSelectFile(info) {
-      console.log(info)
+    async customFileChose (options) {
+      const { file } = options
+      if (!file) {
+        return false
+      }
+      this.uploadFiles = [file]
+      const url = URL.createObjectURL(file)
+      this.fileList = [{
+        uid: file?.uid,
+        name: file.name,
+        status: 'done',
+        url // url 是展示在页面上的绝对链接
+      }]
     },
-    onSearch () {
+    removeFile () {
+      this.fileList = []
+      this.uploadFiles = []
+    },
+    // 发送请求
+    async onRequestSend() {
       const api = this.apiList[this.selectedApi]
-      // 模拟异步请求
-      this.sending = true
-      setTimeout(() => {
-        this.response = JSON.stringify(api.response, null, 4)
+      const realApi = api.url.indexOf('43.130.11.13:25001') > -1
+      // 假结果部分
+      if (!realApi) {
+        this.sending = true
+        setTimeout(() => {
+          this.response = JSON.stringify(api.response, null, 4)
+          this.sending = false
+        }, 1000)
+        return
+      }
+      try {
+        this.sending = true
+        let requestData = null
+        const headers = {}
+        // 根据参数类型构建请求数据和请求头
+        switch (this.parameterType) {
+          case 2: // 文件上传
+            const formData = new FormData()
+            this.uploadFiles.forEach(file => {
+              formData.append('file', file)
+            })
+            requestData = formData
+            headers['Content-Type'] = 'multipart/form-data'
+            break
+          case 3: // JSON 格式
+            try {
+              requestData = JSON.parse(this.code)
+            } catch (error) {
+              this.$message.error('JSON 格式错误，请检查输入')
+              return
+            }
+            headers['Content-Type'] = 'application/json;charset=UTF-8'
+            break
+          default: // 其他情况（无参数或 path variable）
+            requestData = {}
+            break
+        }
+        // 发送请求
+        const response = await request({
+          url: api.url,
+          method: api.method,
+          data: requestData,
+          headers: headers
+        })
+        // 处理响应
+        this.response = JSON.stringify(response, null, 4)
+      } catch (error) {
+        console.error('请求失败:', error)
+        this.$message.error('请求失败，请检查网络或参数')
+      } finally {
         this.sending = false
-      }, 1000)
+      }
     }
   }
 }

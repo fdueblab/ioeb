@@ -193,12 +193,12 @@ export default {
         return false
       }
       const url = URL.createObjectURL(file)
-      this.dataSetFiles = {
+      this.dataSetFiles = [{
         uid: file?.uid,
         name: file.name,
         status: 'done',
         url // url 是展示在页面上的绝对链接
-      }
+      }]
     },
     removeDataSetFile () {
       this.dataSetFiles = []

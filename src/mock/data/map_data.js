@@ -58,6 +58,8 @@ const aircraftTechnologyMap = ['线路设计', '虚拟仿真', '智能感知', '
 
 const performanceMetricMap = ['查全率', '查准率', '计算效率']
 
+const attributeMap = ['非智能体服务', '开源模型', '付费模型', '定制模型']
+
 export function getServiceStatusMap() {
   return statusMap
 }
@@ -100,4 +102,8 @@ export function getApiTypeMap() {
 
 export function getPerformanceMetricMap() {
   return performanceMetricMap
+}
+
+export function getAttributeMap() {
+  return attributeMap
 }

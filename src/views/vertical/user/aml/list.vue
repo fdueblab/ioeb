@@ -1,35 +1,59 @@
 <template>
   <page-header-wrapper :title="false">
-    <a-card :bordered="false" class="ant-pro-components-tag-select">
-      <a-form layout="inline">
-        <standard-form-row title="智能检索" block style="padding-bottom: 11px;">
-          <a-row>
-            <a-col :span="12">
-              <a-form-item :wrapper-col="{ xs: 22, sm: 22, md: 22 }">
-                <a-input-search style="width: 100%" v-model="agentSearchText" placeholder="请输入您想要的微服务名称、功能等" @search="handleAgentSearch" :loading="agentSearchLoading" :disabled="showRAGInput" />
+    <a-card>
+      <a-form :form="agentSearchForm" layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <a-form-item label="微服务/元应用名称">
+              <a-input v-model="agentSearchForm.name" placeholder="请输入微服务/元应用名称" />
+            </a-form-item>
+            <a-form-item label="通用描述">
+              <a-input v-model="agentSearchForm.description" placeholder="请输入通用描述" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form :form="agentSearchForm" layout="vertical">
+              <a-form-item label="作用">
+                <a-input v-model="agentSearchForm.purpose" placeholder="请输入作用" />
               </a-form-item>
-            </a-col>
-            <a-col :span="6">
-              <a-form-item label="领域知识增强检索">
+              <a-form-item label="技术要求">
+                <a-input v-model="agentSearchForm.technology" placeholder="请输入技术要求" />
+              </a-form-item>
+            </a-form>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="功能">
+              <a-input v-model="agentSearchForm.feature" placeholder="请输入功能" />
+            </a-form-item>
+            <a-form-item label="检索操作">
+              <a-space :size="8">
+                <a-button icon="sync" @click="handleReset">重置输入</a-button>
                 <a-button ref="ragButton" class="rag-input-bubble-button" @click="toggleRAGInput">
                   <a-icon type="dot-chart" v-if="!showRAGInput"/>
                   <a-icon type="close" v-else/>
+                  领域知识增强
                 </a-button>
-              </a-form-item>
-            </a-col>
-            <!--            <a-col :span="6">-->
-            <!--              <a-form-item>-->
-            <!--                <a-button type="primary" icon="sync" @click="handleReset">重置检索条件</a-button>-->
-            <!--              </a-form-item>-->
-            <!--            </a-col>-->
-          </a-row>
+                <a-button type="primary" icon="file-search" @click="handleAgentSearch" :loading="agentSearchLoading">智能检索</a-button>
+              </a-space>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </a-card>
+    <a-card :bordered="false" class="ant-pro-components-tag-select">
+      <a-form layout="inline">
+        <standard-form-row title="属性" block style="padding-bottom: 11px;">
+          <a-form-item>
+            <tag-select @change="handleTagChange('attribute', $event)">
+              <tag-select-option v-for="(item, index) in attributeArr" :key="index" :value="index">{{ item }}</tag-select-option>
+            </tag-select>
+          </a-form-item>
         </standard-form-row>
 
         <standard-form-row title="类型" block style="padding-bottom: 11px;">
           <a-form-item>
             <tag-select @change="handleTagChange('type', $event)">
-              <tag-select-option v-for="(item, index) in typeArr" :key="index" :value="index">{{ item
-              }}</tag-select-option>
+              <tag-select-option v-for="(item, index) in typeArr" :key="index" :value="index">{{ item }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
@@ -37,8 +61,7 @@
         <standard-form-row title="领域" block style="padding-bottom: 11px;">
           <a-form-item>
             <tag-select @change="handleTagChange('domain', $event)">
-              <tag-select-option v-for="(item, index) in domainArr" :key="index" :value="index">{{ item
-              }}</tag-select-option>
+              <tag-select-option v-for="(item, index) in domainArr" :key="index" :value="index">{{ item }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
@@ -46,8 +69,7 @@
         <standard-form-row title="行业" grid>
           <a-form-item>
             <tag-select @change="handleTagChange('industry', $event)">
-              <tag-select-option v-for="(item, index) in industryArr" :key="index" :value="index">{{ item
-              }}</tag-select-option>
+              <tag-select-option v-for="(item, index) in industryArr" :key="index" :value="index">{{ item }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
@@ -55,8 +77,7 @@
         <standard-form-row title="场景" grid>
           <a-form-item>
             <tag-select @change="handleTagChange('scenario', $event)">
-              <tag-select-option v-for="(item, index) in scenarioArr" :key="index" :value="index">{{ item
-              }}</tag-select-option>
+              <tag-select-option v-for="(item, index) in scenarioArr" :key="index" :value="index">{{ item }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
@@ -64,8 +85,7 @@
         <standard-form-row title="技术" grid>
           <a-form-item>
             <tag-select @change="handleTagChange('technology', $event)">
-              <tag-select-option v-for="(item, index) in technologyArr" :key="index" :value="index">{{ item
-              }}</tag-select-option>
+              <tag-select-option v-for="(item, index) in technologyArr" :key="index" :value="index">{{ item }}</tag-select-option>
             </tag-select>
           </a-form-item>
         </standard-form-row>
@@ -341,28 +361,6 @@
           </a-form-item>
         </a-col>
       </a-row>
-      <a-form :form="ragForm" layout="vertical">
-        <a-form-item label="微服务/元应用名称">
-          <a-input v-model="ragForm.name" placeholder="请输入微服务/元应用名称" />
-        </a-form-item>
-        <a-form-item label="通用描述">
-          <a-input v-model="ragForm.description" placeholder="请输入通用描述" />
-        </a-form-item>
-        <a-form-item label="作用">
-          <a-input v-model="ragForm.purpose" placeholder="请输入作用" />
-        </a-form-item>
-        <a-form-item label="功能">
-          <a-input v-model="ragForm.feature" placeholder="请输入功能" />
-        </a-form-item>
-        <a-form-item label="技术要求">
-          <a-input v-model="ragForm.technology" placeholder="请输入技术要求" />
-        </a-form-item>
-        <a-form-item style="margin-bottom: 0">
-          <a-button type="primary" @click="handleAgentSearch" icon="file-search" :loading="agentSearchLoading">
-            知识增强检索
-          </a-button>
-        </a-form-item>
-      </a-form>
     </div>
   </page-header-wrapper>
 </template>
@@ -371,7 +369,7 @@
 import moment from 'moment'
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
 import { getAmlMetaApps, getAmlServices } from '@/mock/data/services_data'
-import { getIndustryMap, getScenarioMap, getTechnologyMap, getNormMap, getServiceStatusMap, getServiceTypeMap } from '@/mock/data/map_data'
+import { getIndustryMap, getScenarioMap, getTechnologyMap, getNormMap, getServiceStatusMap, getServiceTypeMap, getAttributeMap } from '@/mock/data/map_data'
 
 const TagSelectOption = TagSelect.Option
 
@@ -396,22 +394,23 @@ export default {
       },
       // 知识增强
       showRAGInput: false,
-      ragForm: {
+      ragFiles: [],
+      ragUploadLoading: false,
+      hasRagData: false,
+      agentSearchLoading: false,
+      agentSearchForm: {
         name: '',
         description: '',
         purpose: '',
         feature: '',
         technology: ''
       },
-      ragFiles: [],
-      ragUploadLoading: false,
-      agentSearchText: '',
-      agentSearchLoading: false,
       agentSearchData: [],
       statusMap: getServiceStatusMap(),
       normMap: getNormMap(),
       // 查询参数
       queryParam: {
+        attribute: [],
         type: [],
         domain: [],
         industry: [],
@@ -472,6 +471,7 @@ export default {
       filteredDataSource: [],
       selectedRowKeys: [],
       selectedRows: [],
+      attributeArr: getAttributeMap(),
       typeArr: getServiceTypeMap(),
       domainArr: ['跨境支付AI监测服务'],
       industryArr: getIndustryMap('aml'),
@@ -532,16 +532,13 @@ export default {
       this.filterDataSource()
     },
     handleReset() {
-      // TODO: 要在TagSelect中添加清除方法
-      this.queryParam = {
-        type: [],
-        domain: [],
-        industry: [],
-        scenario: [],
-        technology: [],
-        name: ''
+      this.agentSearchForm = {
+        name: '',
+        description: '',
+        purpose: '',
+        feature: '',
+        technology: ''
       }
-      this.initData()
     },
     handleEdit(record) {
       this.visible = true // 显示模态框
@@ -661,16 +658,16 @@ export default {
       }
     },
     handleAgentSearch() {
-      if (this.showRAGInput || this.agentSearchText) {
+      const { name, description, purpose, feature, technology } = this.agentSearchForm
+      if (name || description || purpose || feature || technology) {
         this.agentSearchLoading = true
-        console.log(this.agentSearchText)
         // 知识增强
-        if (this.showRAGInput) {
-          this.$message.info('正在进行领域知识增强检索...')
-          console.log(this.ragForm)
+        if (this.hasRagData) {
+          this.$message.info('正在应用领域知识增强进行智能检索...')
+          console.log(this.ragFiles)
         } else {
           this.$message.info('正在进行智能检索...')
-          console.log(this.agentSearchText)
+          console.log(this.agentSearchForm)
         }
         new Promise((resolve, reject) => {
           setTimeout(() => {
@@ -679,6 +676,10 @@ export default {
           }, 1000)
         }).then(res => {
           this.filteredDataSource = this.agentSearchData
+          this.$message.success('检索完毕！')
+          // 滚动到表格处
+          const table = this.$refs.table.$el
+          table.scrollIntoView()
         }).finally(() => {
           this.agentSearchLoading = false
         })
@@ -687,7 +688,6 @@ export default {
       }
     },
     initData () {
-      this.agentSearchText = ''
       this.agentSearchData = []
       this.dataSource = [...getAmlServices(), ...getAmlMetaApps()]
       this.filteredDataSource = this.dataSource
@@ -706,10 +706,10 @@ export default {
 
       if (button && container) {
         const buttonRect = button.getBoundingClientRect()
-        // 设置容器的位置在按钮的右侧
+        // 设置容器的位置在按钮的下侧
         this.containerStyle = {
-          top: `${buttonRect.top - 120}px`,
-          left: `${buttonRect.right + 10}px`
+          top: `${buttonRect.top + 50}px`,
+          left: `${buttonRect.left - 120}px`
         }
       }
     },
@@ -720,24 +720,26 @@ export default {
         return false
       }
       const url = URL.createObjectURL(file)
-      this.ragFiles = {
+      this.ragFiles = [{
         uid: file?.uid,
         name: file.name,
         status: 'done',
         url // url 是展示在页面上的绝对链接
-      }
+      }]
     },
     removeRagFile () {
       this.ragFiles = []
     },
     handleRagUpload() {
       this.ragUploadLoading = true
-      console.log(this.ragForm)
+      console.log(this.agentSearchForm)
       console.log(this.ragFiles)
       // 模拟上传文件
       setTimeout(() => {
         this.$message.success('知识库上传成功！')
+        this.hasRagData = true
         this.ragUploadLoading = false
+        this.toggleRAGInput()
         this.ragFiles = []
       }, 1000)
     }
@@ -771,12 +773,9 @@ export default {
 
 /* 按钮的样式 */
 .rag-input-bubble-button {
-  width: 40px;
-  border-radius: 25%;
-  border: none;
-  padding: 0;
+  border: double;
+  padding: 10px;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -785,12 +784,11 @@ export default {
 
 .rag-input-bubble-button:hover {
   background: #40a9f0;
+  color: #ffffff;
   transform: scale(1.1); /* 悬停时放大 */
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
 .rag-input-bubble-button:active {
   transform: scale(0.95); /* 点击时缩小 */
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 </style>
