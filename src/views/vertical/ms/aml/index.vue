@@ -438,12 +438,12 @@ def {{name}}({{input}}):
         return false
       }
       const url = URL.createObjectURL(file)
-      this.configFiles = {
+      this.configFiles = [{
         uid: file?.uid,
         name: file.name,
         status: 'done',
         url // url 是展示在页面上的绝对链接
-      }
+      }]
     },
     removeConfigFile () {
       this.configFiles = []

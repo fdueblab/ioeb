@@ -50,16 +50,15 @@ const amlServices = [
       },
       {
         name: 'predict',
-        url: 'http://myApiServer.com/safe-calculation/predict',
+        url: 'http://43.130.11.13:25001/api/predict',
         method: 'POST',
-        parameterType: 2,
-        response: {
-          code: 200,
-          message: '预测成功！',
-          data: {
-            predictResult: 'predict result list'
-          }
-        }
+        parameterType: 2
+      },
+      {
+        name: 'healthCheck',
+        url: 'http://43.130.11.13:25001/api/health',
+        method: 'GET',
+        parameterType: 0
       }
     ]
   },

@@ -1,45 +1,68 @@
 <template>
   <page-header-wrapper :title="false">
-    <a-card :bordered="false" class="ant-pro-components-tag-select">
-      <a-form layout="inline">
-        <standard-form-row title="智能检索" block style="padding-bottom: 11px;">
-          <a-row>
-            <a-col :span="12">
-              <a-form-item :wrapper-col="{ xs: 22, sm: 22, md: 22 }">
-                <a-form-item :wrapper-col="{ xs: 22, sm: 22, md: 22 }">
-                  <a-input-search style="width: 100%" v-model="agentSearchText" placeholder="请输入您想要的微服务名称、功能等" @search="handleAgentSearch" :loading="agentSearchLoading" :disabled="showRAGInput" />
-                </a-form-item>
+    <a-card>
+      <a-form :form="agentSearchForm" layout="vertical">
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <a-form-item label="微服务/元应用名称">
+              <a-input v-model="agentSearchForm.name" placeholder="请输入微服务/元应用名称" />
+            </a-form-item>
+            <a-form-item label="通用描述">
+              <a-input v-model="agentSearchForm.description" placeholder="请输入通用描述" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form :form="agentSearchForm" layout="vertical">
+              <a-form-item label="作用">
+                <a-input v-model="agentSearchForm.purpose" placeholder="请输入作用" />
               </a-form-item>
-            </a-col>
-            <a-col :span="6">
-              <a-form-item label="领域知识增强检索">
+              <a-form-item label="技术要求">
+                <a-input v-model="agentSearchForm.technology" placeholder="请输入技术要求" />
+              </a-form-item>
+            </a-form>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="功能">
+              <a-input v-model="agentSearchForm.feature" placeholder="请输入功能" />
+            </a-form-item>
+            <a-form-item label="检索操作">
+              <a-space :size="8">
+                <a-button icon="sync" @click="handleReset">重置输入</a-button>
                 <a-button ref="ragButton" class="rag-input-bubble-button" @click="toggleRAGInput">
                   <a-icon type="dot-chart" v-if="!showRAGInput"/>
                   <a-icon type="close" v-else/>
+                  领域知识增强
                 </a-button>
-              </a-form-item>
-            </a-col>
-            <a-col :span="6">
-              <a-form-item label="嵌入聊天机器人">
-                <a-button class="dify-chatbot-bubble-button" @click="toggleChatBot">
-                  <a-icon type="robot" v-if="!showChatBot"/>
-                  <a-icon type="close" v-else/>
-                </a-button>
-              </a-form-item>
-            </a-col>
-            <!--            <a-col :span="6">-->
-            <!--              <a-form-item>-->
-            <!--                <a-button type="primary" icon="sync" @click="handleReset">重置检索条件</a-button>-->
-            <!--              </a-form-item>-->
-            <!--            </a-col>-->
-          </a-row>
-          <a-row>
-            <a-col :span="24">
-              <a-form-item :wrapper-col="{ span: 18 }" :label-col="{ span: 3 }" label-align="left" label="聊天机器人嵌入地址">
-                <a-input style="width: 100%" v-model="chatBotUrl" placeholder="聊天机器人地址" />
-              </a-form-item>
-            </a-col>
-          </a-row>
+                <a-button type="primary" icon="file-search" @click="handleAgentSearch" :loading="agentSearchLoading">智能检索</a-button>
+              </a-space>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+      <a-card>
+        <a-form-item :wrapper-col="{ span: 18 }" :label-col="{ span: 3 }" label-align="left" label="智能检索接口地址">
+          <a-input style="width: 100%" v-model="agentSearchApiUrl" placeholder="请输入">
+            <span slot="addonBefore" style="text-align: center; display: inline-block;">
+              <a-select v-model="agentSearchApiMethod" style="width: 80px">
+                <a-select-option value="GET">GET</a-select-option>
+                <a-select-option value="POST">POST</a-select-option>
+              </a-select>
+            </span>
+          </a-input>
+        </a-form-item>
+        <a-form-item :wrapper-col="{ span: 18 }" :label-col="{ span: 3 }" label-align="left" label="智能检索返回结果">
+          <a-textarea v-model="agentSearchApiResult" placeholder="" :rows="7" />
+        </a-form-item>
+      </a-card>
+    </a-card>
+    <a-card :bordered="false" class="ant-pro-components-tag-select">
+      <a-form layout="inline">
+        <standard-form-row title="属性" block style="padding-bottom: 11px;">
+          <a-form-item>
+            <tag-select @change="handleTagChange('attribute', $event)">
+              <tag-select-option v-for="(item, index) in attributeArr" :key="index" :value="index">{{ item }}</tag-select-option>
+            </tag-select>
+          </a-form-item>
         </standard-form-row>
 
         <standard-form-row title="类型" block style="padding-bottom: 11px;">
@@ -353,37 +376,18 @@
           </a-form-item>
         </a-col>
       </a-row>
-      <a-form :form="ragForm" layout="vertical">
-        <a-form-item label="微服务/元应用名称">
-          <a-input v-model="ragForm.name" placeholder="请输入微服务/元应用名称" />
+      <a-row>
+        <a-form-item label="上载知识库接口地址">
+          <a-input style="width: 100%" v-model="ragUploadUrl" placeholder="请输入">
+            <span slot="addonBefore" style="text-align: center; display: inline-block;">
+              <a-select v-model="ragUploadMethod" style="width: 80px">
+                <a-select-option value="GET">GET</a-select-option>
+                <a-select-option value="POST">POST</a-select-option>
+              </a-select>
+            </span>
+          </a-input>
         </a-form-item>
-        <a-form-item label="通用描述">
-          <a-input v-model="ragForm.description" placeholder="请输入通用描述" />
-        </a-form-item>
-        <a-form-item label="作用">
-          <a-input v-model="ragForm.purpose" placeholder="请输入作用" />
-        </a-form-item>
-        <a-form-item label="功能">
-          <a-input v-model="ragForm.feature" placeholder="请输入功能" />
-        </a-form-item>
-        <a-form-item label="技术要求">
-          <a-input v-model="ragForm.technology" placeholder="请输入技术要求" />
-        </a-form-item>
-        <a-form-item style="margin-bottom: 0">
-          <a-button type="primary" @click="handleAgentSearch" icon="file-search" :loading="agentSearchLoading">
-            知识增强检索
-          </a-button>
-        </a-form-item>
-      </a-form>
-    </div>
-    <!-- 聊天机器人容器 -->
-    <div v-if="showChatBot" class="dify-chatbot-container">
-      <iframe
-        :src="chatBotUrl"
-        style="width: 100%; height: 100%; min-height: 700px"
-        frameborder="0"
-        allow="microphone">
-      </iframe>
+      </a-row>
     </div>
   </page-header-wrapper>
 </template>
@@ -393,6 +397,7 @@ import moment from 'moment'
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
 import { getIndustryMap, getScenarioMap, getTechnologyMap, getNormMap, getServiceStatusMap, getServiceTypeMap } from '@/mock/data/map_data'
 import { getAirCraftServices, getAirCraftMetaApps } from '@/mock/data/services_data'
+import request from '@/utils/request'
 
 const TagSelectOption = TagSelect.Option
 
@@ -415,26 +420,31 @@ export default {
         norm: [],
         source: {}
       },
-      chatBotUrl: 'https://yufanwenshu.cn/chatbot/RcN7gYC9B3UnlUWc',
-      showChatBot: false, // 控制聊天机器人是否显示
       // 知识增强
       showRAGInput: false,
-      ragForm: {
+      ragFiles: [],
+      ragUploadFiles: [],
+      ragUploadUrl: 'http://43.130.11.13:25001/api/predict',
+      ragUploadMethod: 'POST',
+      ragUploadLoading: false,
+      hasRagData: false,
+      agentSearchLoading: false,
+      agentSearchForm: {
         name: '',
         description: '',
         purpose: '',
         feature: '',
         technology: ''
       },
-      ragFiles: [],
-      ragUploadLoading: false,
-      agentSearchText: '',
-      agentSearchLoading: false,
+      agentSearchApiUrl: 'http://43.130.11.13:25001/api/health',
+      agentSearchApiMethod: 'GET',
+      agentSearchApiResult: '',
       agentSearchData: [],
       statusMap: getServiceStatusMap(),
       normMap: getNormMap(),
       // 查询参数
       queryParam: {
+        attribute: [],
         type: [],
         domain: [],
         industry: [],
@@ -555,16 +565,13 @@ export default {
       this.filterDataSource()
     },
     handleReset() {
-      // TODO: 要在TagSelect中添加清除方法
-      this.queryParam = {
-        type: [],
-        domain: [],
-        industry: [],
-        scenario: [],
-        technology: [],
-        name: ''
+      this.agentSearchForm = {
+        name: '',
+        description: '',
+        purpose: '',
+        feature: '',
+        technology: ''
       }
-      this.initData()
     },
     handleEdit(record) {
       this.visible = true // 显示模态框
@@ -683,40 +690,43 @@ export default {
         date: moment(new Date())
       }
     },
-    handleAgentSearch() {
-      if (this.showRAGInput || this.agentSearchText) {
+    async handleAgentSearch() {
+      const { name, description, purpose, feature, technology } = this.agentSearchForm
+      if (name || description || purpose || feature || technology) {
         this.agentSearchLoading = true
-        console.log(this.agentSearchText)
         // 知识增强
-        if (this.showRAGInput) {
-          this.$message.info('正在进行领域知识增强检索...')
-          console.log(this.ragForm)
+        if (this.hasRagData) {
+          this.$message.info('正在应用领域知识增强进行智能检索...')
+          console.log(this.ragFiles)
         } else {
           this.$message.info('正在进行智能检索...')
-          console.log(this.agentSearchText)
+          console.log(this.agentSearchForm)
         }
-        new Promise((resolve, reject) => {
-          setTimeout(() => {
-            this.agentSearchData = this.dataSource.filter((item, index) => (index % 2 === 0))
-            resolve()
-          }, 1000)
-        }).then(res => {
-          this.filteredDataSource = this.agentSearchData
-        }).finally(() => {
+        try {
+          const response = await request({
+            url: this.agentSearchApiUrl,
+            method: this.agentSearchApiMethod,
+            data: this.agentSearchForm,
+            headers: {
+              'Content-Type': 'application/json;charset=UTF-8'
+            }
+          })
+          // 处理响应
+          this.$message.success('检索完毕！')
+          this.agentSearchApiResult = JSON.stringify(response, null, 4)
+        } catch (error) {
+          this.$message.error('请求失败:', error)
+        } finally {
           this.agentSearchLoading = false
-        })
+        }
       } else {
         this.$message.error('请先输入您的需求！')
       }
     },
     initData () {
-      this.agentSearchText = ''
       this.agentSearchData = []
       this.dataSource = [...getAirCraftServices(), ...getAirCraftMetaApps()]
       this.filteredDataSource = this.dataSource
-    },
-    toggleChatBot() {
-      this.showChatBot = !this.showChatBot // 切换聊天机器人的显示状态
     },
     toggleRAGInput() {
       this.showRAGInput = !this.showRAGInput
@@ -732,10 +742,10 @@ export default {
 
       if (button && container) {
         const buttonRect = button.getBoundingClientRect()
-        // 设置容器的位置在按钮的右侧
+        // 设置容器的位置在按钮的下侧
         this.containerStyle = {
-          top: `${buttonRect.top - 120}px`,
-          left: `${buttonRect.right + 10}px`
+          top: `${buttonRect.top + 50}px`,
+          left: `${buttonRect.left - 120}px`
         }
       }
     },
@@ -745,27 +755,46 @@ export default {
       if (!file) {
         return false
       }
+      this.ragUploadFiles = [file]
       const url = URL.createObjectURL(file)
-      this.ragFiles = {
+      this.ragFiles = [{
         uid: file?.uid,
         name: file.name,
         status: 'done',
         url // url 是展示在页面上的绝对链接
-      }
+      }]
     },
     removeRagFile () {
       this.ragFiles = []
+      this.ragUploadFiles = []
     },
-    handleRagUpload() {
+    async handleRagUpload() {
       this.ragUploadLoading = true
-      console.log(this.ragForm)
-      console.log(this.ragFiles)
-      // 模拟上传文件
-      setTimeout(() => {
-        this.$message.success('知识库上传成功！')
+      try {
+        const formData = new FormData()
+        this.ragUploadFiles.forEach(file => {
+          formData.append('file', file)
+        })
+        const response = await request({
+          url: this.ragUploadUrl,
+          method: this.ragUploadMethod,
+          data: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+        this.response = JSON.stringify(response, null, 4)
+      } catch (error) {
+        console.error('请求失败:', error)
+        this.$message.error('请求失败，请检查网络或参数')
+      } finally {
         this.ragUploadLoading = false
+        this.hasRagData = true
         this.ragFiles = []
-      }, 1000)
+        this.ragUploadFiles = []
+        this.toggleRAGInput()
+        this.$message.success('知识库上传成功！')
+      }
     }
   }
 }
@@ -797,12 +826,9 @@ export default {
 
 /* 按钮的样式 */
 .rag-input-bubble-button {
-  width: 40px;
-  border-radius: 25%;
-  border: none;
-  padding: 0;
+  border: double;
+  padding: 10px;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -811,51 +837,11 @@ export default {
 
 .rag-input-bubble-button:hover {
   background: #40a9f0;
+  color: #ffffff;
   transform: scale(1.1); /* 悬停时放大 */
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
 .rag-input-bubble-button:active {
   transform: scale(0.95); /* 点击时缩小 */
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-}
-
-.dify-chatbot-container {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
-  width: 400px;
-  height: 500px;
-  border-radius: 12px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-  background: #ffffff;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-/* 按钮的样式 */
-.dify-chatbot-bubble-button {
-  width: 40px;
-  border-radius: 25%;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dify-chatbot-bubble-button:hover {
-  background: #40a9f0;
-  transform: scale(1.1); /* 悬停时放大 */
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-}
-
-.dify-chatbot-bubble-button:active {
-  transform: scale(0.95); /* 点击时缩小 */
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 </style>
