@@ -1,25 +1,27 @@
 <template>
-  <div class="chat-container">
-    <div class="chat-output" ref="chatOutput">
-      <div v-for="(message, index) in messages" :key="index" :class="['chat-message', message.isUser ? 'user-message' : 'bot-message']">
-        <div class="message-content" v-html="message.text"></div>
+  <div class="preview-container">
+    <!-- 应用预览区域 -->
+    <div class="app-preview" ref="appPreview">
+      <!-- 初始状态：显示提示文字 -->
+      <div v-if="!showPreviewImage" class="preview-placeholder">
+        元应用预览区域
       </div>
+      <!-- 构建后：显示图片 -->
+      <img
+        v-if="showPreviewImage"
+        src="@/assets/app-preview.png"
+        alt="应用预览"
+        class="preview-image"
+      />
     </div>
+    <!-- 输入框区域 -->
     <div class="chat-input">
-      <!--      <input-->
-      <!--        type="text"-->
-      <!--        v-model="userInput"-->
-      <!--        @keyup.enter="handleUserInput"-->
-      <!--        placeholder="告诉AI你想做什么"-->
-      <!--        :disabled="!isInputEnabled"-->
-      <!--      />-->
-      <!--      <button @click="handleUserInput" :disabled="!isInputEnabled">发送</button>-->
       <a-input-search
         style="width: 100%"
         v-model="userInput"
         @search="handleUserInput"
-        placeholder="告诉AI你想做什么"
-        enter-button="发送"
+        placeholder="请输入您对应用的需求"
+        enter-button="智能构建"
         :disabled="!isInputEnabled"
         :loading="isInputLoading"
       />
@@ -29,100 +31,214 @@
 
 <script>
 export default {
+  name: 'FakeChat',
+  props: {
+    serviceType: {
+      type: String,
+      default: ''
+    }
+  },
   data() {
     return {
       userInput: '',
-      messages: [],
-      welcomeMessage: '请告诉我您的需求，我将根据您的需求提供建议',
-      currentIndex: 0,
       isInputEnabled: true,
-      isInputLoading: false
+      isInputLoading: false,
+      showPreviewImage: false // 控制是否显示图片
     }
   },
   methods: {
     handleUserInput() {
       this.isInputLoading = true
       this.isInputEnabled = false
-      this.messages.push({ text: this.userInput, isUser: true })
-      this.messages.push({ text: '', isUser: false })
-      const chosenServices = ['异常识别微服务', '报告生成微服务']
-      const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的一些相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
-      this.userInput = ''
-      this.typeWriter(outputMessage)
       this.$emit('update-services', this.getUpdatedServices())
       this.$emit('update-flow', this.getUpdatedFlow())
-    },
-    typeWriter(text) {
-      if (this.currentIndex < text.length) {
-        this.messages[this.messages.length - 1].text += text.charAt(this.currentIndex)
-        this.currentIndex++
-        setTimeout(() => this.typeWriter(text), 50)
-      } else {
+      this.$message.info('正在构建中，请稍候...')
+      // 模拟处理用户输入的逻辑
+      setTimeout(() => {
         this.isInputLoading = false
-        this.currentIndex = 0
-      }
+        this.isInputEnabled = true
+        this.showPreviewImage = true
+        this.$message.success('构建完成！')
+      }, 1600) // 模拟异步操作
     },
     getUpdatedServices() {
-      return [
-        {
-          id: '9',
-          type: 'group',
-          name: '跨境支付AI监测服务',
-          open: true,
-          children: [
-            {
-              id: '90',
-              type: 'group',
-              name: '异常识别微服务',
-              open: true,
-              children: [
-                {
-                  id: '9002',
-                  type: 'preprocess',
-                  name: 'preprocess',
-                  ico: 'el-icon-c-scale-to-original',
+      if (this.serviceType === 'aircraft') {
+        return [
+          {
+            id: '3',
+            type: 'group',
+            name: '低空飞行AI监控服务',
+            open: true,
+            children: [
+              {
+                id: '100',
+                type: 'group',
+                name: '目标识别微服务',
+                open: true,
+                children: [{
+                  id: '1001',
+                  type: 'getTargetLocation',
+                  name: 'getTargetLocation',
+                  ico: 'el-icon-location-information',
                   style: {}
-                },
-                {
-                  id: '9005',
-                  type: 'predict',
-                  name: 'predict',
-                  ico: 'el-icon-data-line',
+                }, {
+                  id: '1002',
+                  type: 'getTargetInfo',
+                  name: 'getTargetInfo',
+                  ico: 'el-icon-user',
                   style: {}
-                },
-                {
-                  id: '9006',
-                  type: 'visualize',
-                  name: 'visualize',
-                  ico: 'el-icon-pie-chart',
+                }]
+              },
+              {
+                id: '101',
+                type: 'group',
+                name: '远程控制微服务',
+                open: true,
+                children: [{
+                  id: '1101',
+                  type: 'setTargetLocation',
+                  name: 'setTargetLocation',
+                  ico: 'el-icon-add-location',
                   style: {}
-                }
-              ]
-            },
-            {
-              id: '94',
-              type: 'group',
-              name: '报告生成微服务',
-              open: true,
-              children: [{
-                id: '9401',
-                type: 'generateReport',
-                name: 'generateReport',
-                ico: 'el-icon-document-add',
-                style: {}
-              }, {
-                id: '9402',
-                type: 'sendReport',
-                name: 'sendReport',
-                ico: 'el-icon-upload',
-                style: {}
-              }]
-            }
-          ]
-        }
-      ]
+                }, {
+                  id: '1102',
+                  type: 'setMotionMode',
+                  name: 'setMotionMode',
+                  ico: 'el-icon-rank',
+                  style: {}
+                }]
+              }
+            ]
+          }
+        ]
+      } else {
+        return [
+          {
+            id: '9',
+            type: 'group',
+            name: '跨境支付AI监测服务',
+            open: true,
+            children: [
+              {
+                id: '90',
+                type: 'group',
+                name: '异常识别微服务',
+                open: true,
+                children: [
+                  {
+                    id: '9002',
+                    type: 'preprocess',
+                    name: 'preprocess',
+                    ico: 'el-icon-c-scale-to-original',
+                    style: {}
+                  },
+                  {
+                    id: '9005',
+                    type: 'predict',
+                    name: 'predict',
+                    ico: 'el-icon-data-line',
+                    style: {}
+                  },
+                  {
+                    id: '9006',
+                    type: 'visualize',
+                    name: 'visualize',
+                    ico: 'el-icon-pie-chart',
+                    style: {}
+                  }
+                ]
+              },
+              {
+                id: '94',
+                type: 'group',
+                name: '报告生成微服务',
+                open: true,
+                children: [{
+                  id: '9401',
+                  type: 'generateReport',
+                  name: 'generateReport',
+                  ico: 'el-icon-document-add',
+                  style: {}
+                }, {
+                  id: '9402',
+                  type: 'sendReport',
+                  name: 'sendReport',
+                  ico: 'el-icon-upload',
+                  style: {}
+                }]
+              }
+            ]
+          }
+        ]
+      }
     },
     getUpdatedFlow() {
+      if (this.serviceType === 'aircraft') {
+        return {
+          name: 'AI监控流程',
+          nodeList: [
+            {
+              id: '10000',
+              name: 'metaAppAgent',
+              type: 'start',
+              url: 'ms.kxyun.net/agent',
+              left: '200px',
+              top: '0',
+              ico: 'el-icon-cpu',
+              input: 'csv File',
+              output: 'json',
+              version: '1.0',
+              state: 'success'
+            },
+            {
+              id: '10001',
+              name: 'getTargetLocation',
+              type: 'process',
+              url: 'ms.kxyun.net/getTargetLocation',
+              left: '0',
+              top: '140px',
+              ico: 'el-icon-location-information',
+              state: 'success',
+              input: 'csv File',
+              output: 'json',
+              version: '1.0'
+            },
+            {
+              id: '10002',
+              name: 'getTargetInfo',
+              type: 'process',
+              url: 'ms.kxyun.net/getTargetInfo',
+              left: '200px',
+              top: '300px',
+              ico: 'el-icon-user',
+              state: 'success',
+              input: 'json',
+              output: 'json',
+              version: '1.0'
+            },
+            {
+              id: '10101',
+              name: 'setMotionMode',
+              type: 'end',
+              url: 'ms.kxyun.net/setMotionMode',
+              left: '400px',
+              top: '160px',
+              ico: 'el-icon-rank',
+              state: 'warning',
+              input: 'json',
+              output: 'json',
+              version: '1.0'
+            }
+          ],
+          lineList: [
+            { from: '10000', to: '10001' },
+            { from: '10001', to: '10000' },
+            { from: '10000', to: '10002' },
+            { from: '10002', to: '10000' },
+            { from: '10000', to: '10101' }
+          ]
+        }
+      }
       return {
         name: 'AI推荐流程',
         nodeList: [
@@ -216,15 +332,12 @@ export default {
         ]
       }
     }
-  },
-  mounted() {
-    this.messages.push({ text: this.welcomeMessage, isUser: false })
   }
 }
 </script>
 
 <style scoped>
-.chat-container {
+.preview-container {
   display: flex;
   flex-direction: column;
   width: 35vw;
@@ -234,35 +347,31 @@ export default {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.chat-output {
+.app-preview {
   flex: 1;
-  padding: 16px;
   background-color: #f9f9f9;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  aspect-ratio: 9 / 16; /* 设置宽高比为 9:16 */
 }
 
-.chat-message {
-  margin-bottom: 16px;
-  font-size: 1.1em;
-  color: #333;
-  padding: 8px 12px;
+/* 初始状态：提示文字样式 */
+.preview-placeholder {
+  font-size: 1.2em;
+  color: #666;
+  text-align: center;
+  user-select: none;
+}
+
+/* 构建后：图片样式 */
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 图片占满整个区域 */
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  max-width: 70%;
-}
-
-.user-message {
-  align-self: flex-end;
-  background-color: #4a90e2;
-  color: #fff;
-}
-
-.bot-message {
-  align-self: flex-start;
-  background-color: #fff;
 }
 
 .chat-input {
@@ -270,42 +379,5 @@ export default {
   padding: 16px;
   background-color: #fff;
   border-top: 1px solid #ccc;
-}
-
-.chat-input input {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-right: 8px;
-}
-
-.chat-input button {
-  padding: 8px 16px;
-  background-color: #4a90e2;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.chat-input button:hover {
-  background-color: #357abd;
-}
-
-.chat-input input:disabled,
-.chat-input button:disabled {
-  background-color: #f0f0f0;
-  color: #ccc;
-  cursor: not-allowed;
-}
-
-/* 添加样式以支持 <code> 标签的显示 */
-.message-content code {
-  background-color: #f4f4f4;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-family: monospace;
-  color: #d63384;
 }
 </style>

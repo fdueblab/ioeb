@@ -39,7 +39,7 @@
           </a-col>
         </a-row>
       </a-form>
-      <a-card>
+      <a-card title="测试用可编辑接口地址，只会在开发环境出现" v-if="isDev">
         <a-form-item :wrapper-col="{ span: 18 }" :label-col="{ span: 3 }" label-align="left" label="智能检索接口地址">
           <a-input style="width: 100%" v-model="agentSearchApiUrl" placeholder="请输入">
             <span slot="addonBefore" style="text-align: center; display: inline-block;">
@@ -376,7 +376,7 @@
           </a-form-item>
         </a-col>
       </a-row>
-      <a-row>
+      <a-row v-if="isDev">
         <a-form-item label="上载知识库接口地址">
           <a-input style="width: 100%" v-model="ragUploadUrl" placeholder="请输入">
             <span slot="addonBefore" style="text-align: center; display: inline-block;">
@@ -412,6 +412,7 @@ export default {
   },
   data () {
     return {
+      isDev: process.env.NODE_ENV === 'development' || process.env.VUE_APP_PREVIEW === 'true',
       editForm: this.$form.createForm(this),
       visible: false,
       confirmLoading: false,
@@ -424,7 +425,7 @@ export default {
       showRAGInput: false,
       ragFiles: [],
       ragUploadFiles: [],
-      ragUploadUrl: 'http://43.130.11.13:25001/api/predict',
+      ragUploadUrl: 'https://yufanwenshu:25001/api/predict',
       ragUploadMethod: 'POST',
       ragUploadLoading: false,
       hasRagData: false,
@@ -436,7 +437,7 @@ export default {
         feature: '',
         technology: ''
       },
-      agentSearchApiUrl: 'http://43.130.11.13:25001/api/health',
+      agentSearchApiUrl: 'https://yufanwenshu:25001/api/health',
       agentSearchApiMethod: 'GET',
       agentSearchApiResult: '',
       agentSearchData: [],
