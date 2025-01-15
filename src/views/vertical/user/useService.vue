@@ -200,7 +200,7 @@ export default {
     // 发送请求
     async onRequestSend() {
       const api = this.apiList[this.selectedApi]
-      const realApi = api.url.indexOf('43.130.11.13:25001') > -1
+      const realApi = api && api.url.indexOf('yufanwenshu') > -1
       // 假结果部分
       if (!realApi) {
         this.sending = true

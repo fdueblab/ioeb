@@ -50,13 +50,13 @@ const amlServices = [
       },
       {
         name: 'predict',
-        url: 'http://43.130.11.13:25001/api/predict',
+        url: 'https://yufanwenshu:25001/api/predict',
         method: 'POST',
         parameterType: 2
       },
       {
         name: 'healthCheck',
-        url: 'http://43.130.11.13:25001/api/health',
+        url: 'https://yufanwenshu:25001/api/health',
         method: 'GET',
         parameterType: 0
       }

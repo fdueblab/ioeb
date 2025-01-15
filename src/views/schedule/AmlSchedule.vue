@@ -1,6 +1,6 @@
 <template>
   <div class="schedule-with-input">
-    <fake-chat style="height: calc(100vh - 100px)" @update-services="updateServices" @update-flow="updateFlow" />
+    <fake-chat style="height: calc(100vh - 100px)" @update-services="updateServices" @update-flow="updateFlow" :service-type="'aml'" />
     <flow-panel
       ref="flowPanel"
       style="height: calc(100vh - 100px); width: 100%;"
