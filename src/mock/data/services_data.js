@@ -1,6 +1,7 @@
 const amlServices = [
   {
     name: '安全计算微服务',
+    attribute: 1,
     type: 0,
     domain: 0,
     industry: 0,
@@ -64,6 +65,7 @@ const amlServices = [
   },
   {
     name: '技术评测微服务',
+    attribute: 1,
     type: 0,
     domain: 0,
     industry: 1,
@@ -128,6 +130,7 @@ const amlServices = [
   },
   {
     name: '报告生成微服务',
+    attribute: 0,
     type: 0,
     domain: 0,
     industry: 2,
@@ -206,6 +209,7 @@ const amlServices = [
   },
   {
     name: '信用评估微服务',
+    attribute: 2,
     type: 0,
     domain: 0,
     industry: 3,
@@ -274,6 +278,7 @@ const amlServices = [
   },
   {
     name: '异常识别微服务',
+    attribute: 1,
     type: 0,
     domain: 0,
     industry: 0,
@@ -387,6 +392,7 @@ const amlServices = [
 const airCraftServices = [
   {
     name: '无人机虚拟仿真微服务',
+    attribute: 1,
     type: 0,
     domain: 0,
     industry: 0,
@@ -424,6 +430,7 @@ const airCraftServices = [
   },
   {
     name: '无人机低空测绘微服务',
+    attribute: 1,
     type: 0,
     domain: 0,
     industry: 1,
@@ -457,6 +464,7 @@ const airCraftServices = [
   },
   {
     name: '无人机目标识别微服务',
+    attribute: 1,
     type: 0,
     domain: 0,
     industry: 2,
@@ -490,6 +498,7 @@ const airCraftServices = [
   },
   {
     name: '无人机远程控制微服务',
+    attribute: 0,
     type: 0,
     domain: 0,
     industry: 0,
@@ -527,6 +536,7 @@ const airCraftServices = [
   },
   {
     name: '无人机视频分析微服务',
+    attribute: 2,
     type: 0,
     domain: 0,
     industry: 1,
@@ -567,6 +577,7 @@ const airCraftServices = [
 const amlMetaApps = [
   {
     name: '跨境支付评估报告生成',
+    attribute: 3,
     type: 1,
     domain: 0,
     industry: 1,
@@ -610,6 +621,7 @@ const amlMetaApps = [
 const airCraftMetaApps = [
   {
     name: '无人机智能投递',
+    attribute: 3,
     type: 0,
     domain: 0,
     industry: 1,
