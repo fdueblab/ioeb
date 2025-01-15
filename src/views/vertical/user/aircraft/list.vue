@@ -55,55 +55,148 @@
         </a-form-item>
       </a-card>
     </a-card>
-    <a-card :bordered="false" class="ant-pro-components-tag-select">
-      <a-form layout="inline">
-        <standard-form-row title="属性" block style="padding-bottom: 11px;">
-          <a-form-item>
-            <tag-select @change="handleTagChange('attribute', $event)">
-              <tag-select-option v-for="(item, index) in attributeArr" :key="index" :value="index">{{ item }}</tag-select-option>
-            </tag-select>
-          </a-form-item>
-        </standard-form-row>
+    <!--    <a-card :bordered="false" class="ant-pro-components-tag-select">-->
+    <!--      <a-form layout="inline">-->
+    <!--        <standard-form-row title="属性" block style="padding-bottom: 11px;">-->
+    <!--          <a-form-item>-->
+    <!--            <tag-select @change="handleTagChange('attribute', $event)">-->
+    <!--              <tag-select-option v-for="(item, index) in attributeArr" :key="index" :value="index">{{ item }}</tag-select-option>-->
+    <!--            </tag-select>-->
+    <!--          </a-form-item>-->
+    <!--        </standard-form-row>-->
 
-        <standard-form-row title="类型" block style="padding-bottom: 11px;">
-          <a-form-item>
-            <tag-select @change="handleTagChange('type', $event)">
-              <tag-select-option v-for="(item, index) in typeArr" :key="index" :value="index">{{ item }}</tag-select-option>
-            </tag-select>
-          </a-form-item>
-        </standard-form-row>
+    <!--        <standard-form-row title="类型" block style="padding-bottom: 11px;">-->
+    <!--          <a-form-item>-->
+    <!--            <tag-select @change="handleTagChange('type', $event)">-->
+    <!--              <tag-select-option v-for="(item, index) in typeArr" :key="index" :value="index">{{ item }}</tag-select-option>-->
+    <!--            </tag-select>-->
+    <!--          </a-form-item>-->
+    <!--        </standard-form-row>-->
 
-        <standard-form-row title="领域" block style="padding-bottom: 11px;">
-          <a-form-item>
-            <tag-select @change="handleTagChange('domain', $event)">
-              <tag-select-option v-for="(item, index) in domainArr" :key="index" :value="index">{{ item }}</tag-select-option>
-            </tag-select>
-          </a-form-item>
-        </standard-form-row>
+    <!--        <standard-form-row title="领域" block style="padding-bottom: 11px;">-->
+    <!--          <a-form-item>-->
+    <!--            <tag-select @change="handleTagChange('domain', $event)">-->
+    <!--              <tag-select-option v-for="(item, index) in domainArr" :key="index" :value="index">{{ item }}</tag-select-option>-->
+    <!--            </tag-select>-->
+    <!--          </a-form-item>-->
+    <!--        </standard-form-row>-->
 
-        <standard-form-row title="行业" grid>
-          <a-form-item>
-            <tag-select @change="handleTagChange('industry', $event)">
-              <tag-select-option v-for="(item, index) in industryArr" :key="index" :value="index">{{ item }}</tag-select-option>
-            </tag-select>
-          </a-form-item>
-        </standard-form-row>
+    <!--        <standard-form-row title="行业" grid>-->
+    <!--          <a-form-item>-->
+    <!--            <tag-select @change="handleTagChange('industry', $event)">-->
+    <!--              <tag-select-option v-for="(item, index) in industryArr" :key="index" :value="index">{{ item }}</tag-select-option>-->
+    <!--            </tag-select>-->
+    <!--          </a-form-item>-->
+    <!--        </standard-form-row>-->
 
-        <standard-form-row title="场景" grid>
-          <a-form-item>
-            <tag-select @change="handleTagChange('scenario', $event)">
-              <tag-select-option v-for="(item, index) in scenarioArr" :key="index" :value="index">{{ item }}</tag-select-option>
-            </tag-select>
-          </a-form-item>
-        </standard-form-row>
+    <!--        <standard-form-row title="场景" grid>-->
+    <!--          <a-form-item>-->
+    <!--            <tag-select @change="handleTagChange('scenario', $event)">-->
+    <!--              <tag-select-option v-for="(item, index) in scenarioArr" :key="index" :value="index">{{ item }}</tag-select-option>-->
+    <!--            </tag-select>-->
+    <!--          </a-form-item>-->
+    <!--        </standard-form-row>-->
 
-        <standard-form-row title="技术" grid>
-          <a-form-item>
-            <tag-select @change="handleTagChange('technology', $event)">
-              <tag-select-option v-for="(item, index) in technologyArr" :key="index" :value="index">{{ item }}</tag-select-option>
-            </tag-select>
-          </a-form-item>
-        </standard-form-row>
+    <!--        <standard-form-row title="技术" grid>-->
+    <!--          <a-form-item>-->
+    <!--            <tag-select @change="handleTagChange('technology', $event)">-->
+    <!--              <tag-select-option v-for="(item, index) in technologyArr" :key="index" :value="index">{{ item }}</tag-select-option>-->
+    <!--            </tag-select>-->
+    <!--          </a-form-item>-->
+    <!--        </standard-form-row>-->
+    <!--      </a-form>-->
+    <!--    </a-card>-->
+    <a-card :bordered="false">
+      <a-form layout="vertical">
+        <a-row :gutter="16">
+          <!-- 属性标签筛选（多选框） -->
+          <a-col :span="24">
+            <a-form-item label="">
+              <a-checkbox-group v-model="queryParam.attribute" @change="handleTagChange('attribute', $event)">
+                <a-checkbox v-for="(item, index) in attributeArr" :key="index" :value="index">
+                  {{ item }}
+                </a-checkbox>
+              </a-checkbox-group>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <!-- 类型标签筛选（下拉框） -->
+          <a-col :span="4">
+            <a-form-item label="类型">
+              <a-select
+                v-model="queryParam.type"
+                placeholder="请选择类型"
+                @change="handleTagChange('type', $event)"
+                allow-clear
+              >
+                <a-select-option v-for="(item, index) in typeArr" :key="index" :value="index">
+                  {{ item }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <!-- 领域标签筛选（下拉框） -->
+          <a-col :span="4">
+            <a-form-item label="领域">
+              <a-select
+                v-model="queryParam.domain"
+                placeholder="请选择领域"
+                @change="handleTagChange('domain', $event)"
+                allow-clear
+              >
+                <a-select-option v-for="(item, index) in domainArr" :key="index" :value="index">
+                  {{ item }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <!-- 行业标签筛选（下拉框） -->
+          <a-col :span="4">
+            <a-form-item label="行业">
+              <a-select
+                v-model="queryParam.industry"
+                placeholder="请选择行业"
+                @change="handleTagChange('industry', $event)"
+                allow-clear
+              >
+                <a-select-option v-for="(item, index) in industryArr" :key="index" :value="index">
+                  {{ item }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <!-- 场景标签筛选（下拉框） -->
+          <a-col :span="4">
+            <a-form-item label="场景">
+              <a-select
+                v-model="queryParam.scenario"
+                placeholder="请选择场景"
+                @change="handleTagChange('scenario', $event)"
+                allow-clear
+              >
+                <a-select-option v-for="(item, index) in scenarioArr" :key="index" :value="index">
+                  {{ item }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <!-- 技术标签筛选（下拉框） -->
+          <a-col :span="4">
+            <a-form-item label="技术">
+              <a-select
+                v-model="queryParam.technology"
+                placeholder="请选择技术"
+                @change="handleTagChange('technology', $event)"
+                allow-clear
+              >
+                <a-select-option v-for="(item, index) in technologyArr" :key="index" :value="index">
+                  {{ item }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
       </a-form>
     </a-card>
     <a-card :bordered="false" :title="agentSearchData.length > 0 ? 'AI智能检索为您推荐以下微服务' : false">
@@ -395,7 +488,15 @@
 <script>
 import moment from 'moment'
 import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-import { getIndustryMap, getScenarioMap, getTechnologyMap, getNormMap, getServiceStatusMap, getServiceTypeMap } from '@/mock/data/map_data'
+import {
+  getIndustryMap,
+  getScenarioMap,
+  getTechnologyMap,
+  getNormMap,
+  getServiceStatusMap,
+  getServiceTypeMap,
+  getAttributeMap
+} from '@/mock/data/map_data'
 import { getAirCraftServices, getAirCraftMetaApps } from '@/mock/data/services_data'
 import request from '@/utils/request'
 
@@ -506,6 +607,7 @@ export default {
       filteredDataSource: [],
       selectedRowKeys: [],
       selectedRows: [],
+      attributeArr: getAttributeMap(),
       typeArr: getServiceTypeMap(),
       domainArr: ['低空飞行AI监控服务'],
       industryArr: getIndustryMap('aircraft'),
@@ -543,23 +645,53 @@ export default {
     window.removeEventListener('resize', this.updateContainerPosition)
   },
   methods: {
-    handleTagChange(field, e) {
-      const selectedTagVal = e.value
-      const index = this.queryParam[field].indexOf(selectedTagVal)
-      if (index > -1) {
-        this.queryParam[field].splice(index, 1)
+    // handleTagChange(field, e) {
+    //   const selectedTagVal = e.value
+    //   const index = this.queryParam[field].indexOf(selectedTagVal)
+    //   if (index > -1) {
+    //     this.queryParam[field].splice(index, 1)
+    //   } else {
+    //     this.queryParam[field].push(selectedTagVal)
+    //   }
+    //   this.filterDataSource()
+    // },
+    // filterDataSource() {
+    //   this.filteredDataSource = this.dataSource.filter(item => {
+    //     return (this.queryParam.type.length > 0 ? this.queryParam.type.includes(item.type) : true) &&
+    //       (this.queryParam.domain.length > 0 ? this.queryParam.domain.includes(item.domain) : true) &&
+    //       (this.queryParam.industry.length > 0 ? this.queryParam.industry.includes(item.industry) : true) &&
+    //       (this.queryParam.scenario.length > 0 ? this.queryParam.scenario.includes(item.scenario) : true) &&
+    //       (this.queryParam.technology.length > 0 ? this.queryParam.technology.includes(item.technology) : true)
+    //   })
+    // },
+    handleTagChange(field, value) {
+      if (Array.isArray(value)) {
+        // 对于下拉框a-select来说，mode="multiple"时选择结果就是数组
+        this.queryParam[field] = value
       } else {
-        this.queryParam[field].push(selectedTagVal)
+        this.queryParam[field] = [value]
       }
       this.filterDataSource()
     },
     filterDataSource() {
       this.filteredDataSource = this.dataSource.filter(item => {
-        return (this.queryParam.type.length > 0 ? this.queryParam.type.includes(item.type) : true) &&
-          (this.queryParam.domain.length > 0 ? this.queryParam.domain.includes(item.domain) : true) &&
-          (this.queryParam.industry.length > 0 ? this.queryParam.industry.includes(item.industry) : true) &&
-          (this.queryParam.scenario.length > 0 ? this.queryParam.scenario.includes(item.scenario) : true) &&
-          (this.queryParam.technology.length > 0 ? this.queryParam.technology.includes(item.technology) : true)
+        return (
+          (this.queryParam.attribute.length > 0
+            ? this.queryParam.attribute.includes(item.attribute)
+            : true) &&
+          (this.queryParam.type.length > 0
+            ? this.queryParam.type.includes(item.type)
+            : true) &&
+          (this.queryParam.industry.length > 0
+            ? this.queryParam.industry.includes(item.industry)
+            : true) &&
+          (this.queryParam.scenario.length > 0
+            ? this.queryParam.scenario.includes(item.scenario)
+            : true) &&
+          (this.queryParam.technology.length > 0
+            ? this.queryParam.technology.includes(item.technology)
+            : true)
+        )
       })
     },
     handleSearch() {
@@ -801,13 +933,13 @@ export default {
 }
 </script>
 <style lang="less" scoped>
-.ant-pro-components-tag-select {
-  :deep(.ant-pro-tag-select .ant-tag) {
-    margin-right: 24px;
-    padding: 0 8px;
-    font-size: 14px;
-  }
-}
+//.ant-pro-components-tag-select {
+//  :deep(.ant-pro-tag-select .ant-tag) {
+//    margin-right: 24px;
+//    padding: 0 8px;
+//    font-size: 14px;
+//  }
+//}
 
 .list-articles-trigger {
   margin-left: 12px;

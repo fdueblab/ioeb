@@ -21,10 +21,12 @@
         v-model="userInput"
         @search="handleUserInput"
         placeholder="请输入您对应用的需求"
-        enter-button="智能构建"
         :disabled="!isInputEnabled"
-        :loading="isInputLoading"
-      />
+      >
+        <template #enterButton>
+          <a-button type="primary" icon="deployment-unit" :loading="isInputLoading">智能构建</a-button>
+        </template>
+      </a-input-search>
     </div>
   </div>
 </template>
