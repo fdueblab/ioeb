@@ -11,20 +11,21 @@
             </a-select>
             <a-input-search
               readOnly
-              :loading="sending"
               :value="serviceUrl"
               style="width: 100%"
-              placeholder="服务地址"
-              enter-button="发送"
+              placeholder="请选择接口"
               @search="onRequestSend"
             >
               <span slot="addonBefore" style="width: 60px; text-align: center; display: inline-block;">
                 {{ method }}
               </span>
+              <template #enterButton>
+                <a-button type="primary" icon="api" :loading="sending" :disabled="!serviceUrl">调用</a-button>
+              </template>
             </a-input-search>
           </div>
         </a-form-item>
-        <a-form-item label="服务参数">
+        <a-form-item label="接口参数">
           <a-radio-group v-model="parameterType">
             <a-radio :value="0">无</a-radio>
             <a-radio :value="1">path variable</a-radio>
