@@ -14,16 +14,16 @@
           <a-col :span="8">
             <a-form :form="agentSearchForm" layout="vertical">
               <a-form-item label="作用">
-                <a-input v-model="agentSearchForm.purpose" placeholder="请输入作用" />
+                <a-input v-model="agentSearchForm.role" placeholder="请输入作用" />
               </a-form-item>
               <a-form-item label="技术要求">
-                <a-input v-model="agentSearchForm.technology" placeholder="请输入技术要求" />
+                <a-input v-model="agentSearchForm.requirement" placeholder="请输入技术要求" />
               </a-form-item>
             </a-form>
           </a-col>
           <a-col :span="8">
             <a-form-item label="功能">
-              <a-input v-model="agentSearchForm.feature" placeholder="请输入功能" />
+              <a-input v-model="agentSearchForm.function" placeholder="请输入功能" />
             </a-form-item>
             <a-form-item label="检索操作">
               <a-space :size="8">
@@ -409,9 +409,18 @@
 
 <script>
 import moment from 'moment'
-import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
+import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
 import { getAmlMetaApps, getAmlServices } from '@/mock/data/services_data'
-import { getIndustryMap, getScenarioMap, getTechnologyMap, getNormMap, getServiceStatusMap, getServiceTypeMap, getAttributeMap } from '@/mock/data/map_data'
+import {
+  getAttributeMap,
+  getIndustryMap,
+  getNormMap,
+  getScenarioMap,
+  getServiceStatusMap,
+  getServiceTypeMap,
+  getTechnologyMap
+} from '@/mock/data/map_data'
+import request from '@/utils/request'
 
 const TagSelectOption = TagSelect.Option
 
@@ -437,16 +446,22 @@ export default {
       // 知识增强
       showRAGInput: false,
       ragFiles: [],
+      ragUploadFiles: [],
+      ragUploadUrl: 'http://124.222.217.145:8086/api/predict',
+      ragUploadMethod: 'POST',
       ragUploadLoading: false,
       hasRagData: false,
       agentSearchLoading: false,
       agentSearchForm: {
         name: '',
         description: '',
-        purpose: '',
-        feature: '',
-        technology: ''
+        role: '',
+        function: '',
+        requirement: ''
       },
+      agentSearchApiUrl: 'http://124.222.217.145:8086/api/predict',
+      agentSearchApiMethod: 'POST',
+      agentSearchApiResult: { answer: '' },
       agentSearchData: [],
       statusMap: getServiceStatusMap(),
       normMap: getNormMap(),
@@ -588,9 +603,9 @@ export default {
       this.agentSearchForm = {
         name: '',
         description: '',
-        purpose: '',
-        feature: '',
-        technology: ''
+        role: '',
+        function: '',
+        requirement: ''
       }
     },
     handleEdit(record) {
@@ -710,9 +725,9 @@ export default {
         date: moment(new Date())
       }
     },
-    handleAgentSearch() {
-      const { name, description, purpose, feature, technology } = this.agentSearchForm
-      if (name || description || purpose || feature || technology) {
+    async handleAgentSearch() {
+      const { name, description, role, function: feature, requirement } = this.agentSearchForm
+      if (name || description || role || feature || requirement) {
         this.agentSearchLoading = true
         // 知识增强
         if (this.hasRagData) {
@@ -722,20 +737,30 @@ export default {
           this.$message.info('正在进行智能检索...')
           console.log(this.agentSearchForm)
         }
-        new Promise((resolve, reject) => {
-          setTimeout(() => {
-            this.agentSearchData = this.dataSource.filter((item, index) => (index % 2 === 0))
-            resolve()
-          }, 1000)
-        }).then(res => {
-          this.filteredDataSource = this.agentSearchData
-          this.$message.success('检索完毕！')
-          // 滚动到表格处
-          const table = this.$refs.table.$el
-          table.scrollIntoView()
-        }).finally(() => {
+        try {
+          // 处理响应
+          this.agentSearchApiResult = await request({
+            url: this.agentSearchApiUrl,
+            method: this.agentSearchApiMethod,
+            data: this.agentSearchForm,
+            headers: {
+              'Content-Type': 'application/json;charset=UTF-8'
+            }
+          })
+          this.agentSearchData = this.agentSearchApiResult.answer.split('\n')
+          this.filteredDataSource = this.dataSource.filter(item => this.agentSearchData.includes(item.name))
+          this.$nextTick(() => {
+            this.$message.success('检索完毕！')
+            // 滚动到表格处
+            const table = this.$refs.table.$el
+            table.scrollIntoView()
+          })
+        } catch (error) {
+          console.log(error)
+          this.$message.error('请求异常，请稍后重试！')
+        } finally {
           this.agentSearchLoading = false
-        })
+        }
       } else {
         this.$message.error('请先输入您的需求！')
       }
@@ -782,6 +807,7 @@ export default {
     },
     removeRagFile () {
       this.ragFiles = []
+      this.ragUploadFiles = []
     },
     handleRagUpload() {
       this.ragUploadLoading = true
@@ -789,11 +815,12 @@ export default {
       console.log(this.ragFiles)
       // 模拟上传文件
       setTimeout(() => {
-        this.$message.success('知识库上传成功！')
-        this.hasRagData = true
         this.ragUploadLoading = false
-        this.toggleRAGInput()
+        this.hasRagData = true
         this.ragFiles = []
+        this.ragUploadFiles = []
+        this.toggleRAGInput()
+        this.$message.success('知识库上传成功！')
       }, 1000)
     }
   }

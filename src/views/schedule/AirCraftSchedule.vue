@@ -46,7 +46,7 @@ export default {
   },
   data () {
     return {
-      isDev: process.env.NODE_ENV === 'development' || process.env.VUE_APP_PREVIEW === 'true',
+      isDev: this.$route.query.isDev === 'true' || process.env.NODE_ENV === 'development' || process.env.VUE_APP_PREVIEW === 'true',
       chatBotUrl: 'https://yufanwenshu.cn/chatbot/l3XNgHzLlECqrr0r',
       flowUrl: 'https://yufanwenshu.cn/app/d999c955-66bb-492a-aa98-9327b39ade39/workflow',
       initFlow: {},

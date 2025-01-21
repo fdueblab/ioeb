@@ -14,16 +14,16 @@
           <a-col :span="8">
             <a-form :form="agentSearchForm" layout="vertical">
               <a-form-item label="作用">
-                <a-input v-model="agentSearchForm.purpose" placeholder="请输入作用" />
+                <a-input v-model="agentSearchForm.role" placeholder="请输入作用" />
               </a-form-item>
               <a-form-item label="技术要求">
-                <a-input v-model="agentSearchForm.technology" placeholder="请输入技术要求" />
+                <a-input v-model="agentSearchForm.requirement" placeholder="请输入技术要求" />
               </a-form-item>
             </a-form>
           </a-col>
           <a-col :span="8">
             <a-form-item label="功能">
-              <a-input v-model="agentSearchForm.feature" placeholder="请输入功能" />
+              <a-input v-model="agentSearchForm.function" placeholder="请输入功能" />
             </a-form-item>
             <a-form-item label="检索操作">
               <a-space :size="8">
@@ -513,7 +513,7 @@ export default {
   },
   data () {
     return {
-      isDev: process.env.NODE_ENV === 'development' || process.env.VUE_APP_PREVIEW === 'true',
+      isDev: this.$route.query.isDev === 'true' || process.env.NODE_ENV === 'development' || process.env.VUE_APP_PREVIEW === 'true',
       editForm: this.$form.createForm(this),
       visible: false,
       confirmLoading: false,
@@ -526,7 +526,7 @@ export default {
       showRAGInput: false,
       ragFiles: [],
       ragUploadFiles: [],
-      ragUploadUrl: 'https://yufanwenshu:25001/api/predict',
+      ragUploadUrl: 'http://124.222.217.145:8086/api/predict',
       ragUploadMethod: 'POST',
       ragUploadLoading: false,
       hasRagData: false,
@@ -534,12 +534,12 @@ export default {
       agentSearchForm: {
         name: '',
         description: '',
-        purpose: '',
-        feature: '',
-        technology: ''
+        role: '',
+        function: '',
+        requirement: ''
       },
-      agentSearchApiUrl: 'https://yufanwenshu:25001/api/health',
-      agentSearchApiMethod: 'GET',
+      agentSearchApiUrl: 'http://124.222.217.145:8086/api/predict',
+      agentSearchApiMethod: 'POST',
       agentSearchApiResult: '',
       agentSearchData: [],
       statusMap: getServiceStatusMap(),
@@ -701,9 +701,9 @@ export default {
       this.agentSearchForm = {
         name: '',
         description: '',
-        purpose: '',
-        feature: '',
-        technology: ''
+        role: '',
+        function: '',
+        requirement: ''
       }
     },
     handleEdit(record) {
@@ -824,8 +824,8 @@ export default {
       }
     },
     async handleAgentSearch() {
-      const { name, description, purpose, feature, technology } = this.agentSearchForm
-      if (name || description || purpose || feature || technology) {
+      const { name, description, role, function: feature, requirement } = this.agentSearchForm
+      if (name || description || role || feature || requirement) {
         this.agentSearchLoading = true
         // 知识增强
         if (this.hasRagData) {
@@ -845,10 +845,19 @@ export default {
             }
           })
           // 处理响应
-          this.$message.success('检索完毕！')
           this.agentSearchApiResult = JSON.stringify(response, null, 4)
+          // 先用假结果
+          this.agentSearchData = ['无人机虚拟仿真微服务', '无人机目标识别微服务', '无人机远程控制微服务']
+          this.filteredDataSource = this.dataSource.filter(item => this.agentSearchData.includes(item.name))
+          this.$nextTick(() => {
+            this.$message.success('检索完毕！')
+            // 滚动到表格处
+            const table = this.$refs.table.$el
+            table.scrollIntoView()
+          })
         } catch (error) {
-          this.$message.error('请求失败:', error)
+          console.log(error)
+          this.$message.error('请求异常，请稍后重试！')
         } finally {
           this.agentSearchLoading = false
         }
