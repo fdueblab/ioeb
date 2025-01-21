@@ -51,13 +51,13 @@ const amlServices = [
       },
       {
         name: 'predict',
-        url: 'https://yufanwenshu:25001/api/predict',
+        url: 'http://124.222.217.145:8086/api/predict',
         method: 'POST',
-        parameterType: 2
+        parameterType: 3
       },
       {
         name: 'healthCheck',
-        url: 'https://yufanwenshu:25001/api/health',
+        url: 'http://124.222.217.145:8086/api/health',
         method: 'GET',
         parameterType: 0
       }
