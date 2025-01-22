@@ -51,13 +51,13 @@ const amlServices = [
       },
       {
         name: 'predict',
-        url: 'http://124.222.217.145:8086/api/predict',
+        url: 'http://43.130.11.13:25001/api/predict',
         method: 'POST',
         parameterType: 3
       },
       {
         name: 'healthCheck',
-        url: 'http://124.222.217.145:8086/api/health',
+        url: 'http://43.130.11.13:25001/api/health',
         method: 'GET',
         parameterType: 0
       }

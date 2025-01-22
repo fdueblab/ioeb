@@ -26,7 +26,7 @@
               <a-input v-model="agentSearchForm.function" placeholder="请输入功能" />
             </a-form-item>
             <a-form-item label="检索操作">
-              <a-space :size="8">
+              <div style="display: flex; flex-direction: row; justify-content: space-between">
                 <a-button icon="sync" @click="handleReset">重置输入</a-button>
                 <a-button ref="ragButton" class="rag-input-bubble-button" @click="toggleRAGInput">
                   <a-icon type="dot-chart" v-if="!showRAGInput"/>
@@ -34,12 +34,12 @@
                   领域知识增强
                 </a-button>
                 <a-button type="primary" icon="file-search" @click="handleAgentSearch" :loading="agentSearchLoading">智能检索</a-button>
-              </a-space>
+              </div>
             </a-form-item>
           </a-col>
         </a-row>
       </a-form>
-      <a-card title="测试用可编辑接口地址，只会在开发环境出现" v-if="isDev">
+      <a-card title="用于测试的可编辑接口地址，只会在开发环境出现" v-if="isDev">
         <a-form-item :wrapper-col="{ span: 18 }" :label-col="{ span: 3 }" label-align="left" label="智能检索接口地址">
           <a-input style="width: 100%" v-model="agentSearchApiUrl" placeholder="请输入">
             <span slot="addonBefore" style="text-align: center; display: inline-block;">
@@ -50,8 +50,11 @@
             </span>
           </a-input>
         </a-form-item>
+        <a-form-item :wrapper-col="{ span: 18 }" :label-col="{ span: 3 }" label-align="left" label="智能检索接口参数">
+          <a-textarea v-model="agentSearchFormText" placeholder="" :rows="7" :readonly="true" />
+        </a-form-item>
         <a-form-item :wrapper-col="{ span: 18 }" :label-col="{ span: 3 }" label-align="left" label="智能检索返回结果">
-          <a-textarea v-model="agentSearchApiResult" placeholder="" :rows="7" />
+          <a-textarea v-model="agentSearchApiResultText" placeholder="" :rows="4" :readonly="true" />
         </a-form-item>
       </a-card>
     </a-card>
@@ -526,7 +529,7 @@ export default {
       showRAGInput: false,
       ragFiles: [],
       ragUploadFiles: [],
-      ragUploadUrl: 'http://124.222.217.145:8086/api/predict',
+      ragUploadUrl: 'https://apirag.xyz:8086/api/predict',
       ragUploadMethod: 'POST',
       ragUploadLoading: false,
       hasRagData: false,
@@ -538,9 +541,9 @@ export default {
         function: '',
         requirement: ''
       },
-      agentSearchApiUrl: 'http://124.222.217.145:8086/api/predict',
+      agentSearchApiUrl: 'https://apirag.xyz:8086/api/predict',
       agentSearchApiMethod: 'POST',
-      agentSearchApiResult: '',
+      agentSearchApiResult: { answer: '' },
       agentSearchData: [],
       statusMap: getServiceStatusMap(),
       normMap: getNormMap(),
@@ -617,6 +620,15 @@ export default {
         top: '0',
         left: '0'
       }
+    }
+  },
+  // dev用
+  computed: {
+    agentSearchApiResultText () {
+      return JSON.stringify(this.agentSearchApiResult, null, 4)
+    },
+    agentSearchFormText () {
+      return JSON.stringify(this.agentSearchForm, null, 4)
     }
   },
   filters: {
@@ -836,7 +848,7 @@ export default {
           console.log(this.agentSearchForm)
         }
         try {
-          const response = await request({
+          this.agentSearchApiResult = await request({
             url: this.agentSearchApiUrl,
             method: this.agentSearchApiMethod,
             data: this.agentSearchForm,
@@ -844,17 +856,16 @@ export default {
               'Content-Type': 'application/json;charset=UTF-8'
             }
           })
-          // 处理响应
-          this.agentSearchApiResult = JSON.stringify(response, null, 4)
-          // 先用假结果
-          this.agentSearchData = ['无人机虚拟仿真微服务', '无人机目标识别微服务', '无人机远程控制微服务']
-          this.filteredDataSource = this.dataSource.filter(item => this.agentSearchData.includes(item.name))
-          this.$nextTick(() => {
-            this.$message.success('检索完毕！')
-            // 滚动到表格处
-            const table = this.$refs.table.$el
-            table.scrollIntoView()
-          })
+          if (!this.isDev) {
+            this.agentSearchData = this.agentSearchApiResult.answer.split('\n')
+            this.filteredDataSource = this.dataSource.filter(item => this.agentSearchData.includes(item.name))
+            this.$nextTick(() => {
+              this.$message.success('检索完毕！')
+              // 滚动到表格处
+              const table = this.$refs.table.$el
+              table.scrollIntoView()
+            })
+          }
         } catch (error) {
           console.log(error)
           this.$message.error('请求异常，请稍后重试！')

@@ -26,7 +26,7 @@
               <a-input v-model="agentSearchForm.function" placeholder="请输入功能" />
             </a-form-item>
             <a-form-item label="检索操作">
-              <a-space :size="8">
+              <div style="display: flex; flex-direction: row; justify-content: space-between">
                 <a-button icon="sync" @click="handleReset">重置输入</a-button>
                 <a-button ref="ragButton" class="rag-input-bubble-button" @click="toggleRAGInput">
                   <a-icon type="dot-chart" v-if="!showRAGInput"/>
@@ -34,7 +34,7 @@
                   领域知识增强
                 </a-button>
                 <a-button type="primary" icon="file-search" @click="handleAgentSearch" :loading="agentSearchLoading">智能检索</a-button>
-              </a-space>
+              </div>
             </a-form-item>
           </a-col>
         </a-row>
@@ -447,7 +447,7 @@ export default {
       showRAGInput: false,
       ragFiles: [],
       ragUploadFiles: [],
-      ragUploadUrl: 'http://124.222.217.145:8086/api/predict',
+      ragUploadUrl: 'https://apirag.xyz:8086/api/predict',
       ragUploadMethod: 'POST',
       ragUploadLoading: false,
       hasRagData: false,
@@ -459,7 +459,7 @@ export default {
         function: '',
         requirement: ''
       },
-      agentSearchApiUrl: 'http://124.222.217.145:8086/api/predict',
+      agentSearchApiUrl: 'https://apirag.xyz:8086/api/predict',
       agentSearchApiMethod: 'POST',
       agentSearchApiResult: { answer: '' },
       agentSearchData: [],
