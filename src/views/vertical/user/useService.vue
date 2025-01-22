@@ -201,9 +201,9 @@ export default {
     // 发送请求
     async onRequestSend() {
       const api = this.apiList[this.selectedApi]
-      const realApi = api && api.url.indexOf('yufanwenshu') > -1
+      const isFakeApi = api && api.isFake
       // 假结果部分
-      if (!realApi) {
+      if (isFakeApi) {
         this.sending = true
         setTimeout(() => {
           this.response = JSON.stringify(api.response, null, 4)
