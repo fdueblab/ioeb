@@ -40,21 +40,34 @@
         </a-row>
       </a-form>
       <a-card title="用于测试的可编辑接口地址，只会在开发环境出现" v-if="isDev">
-        <a-form-item :wrapper-col="{ span: 18 }" :label-col="{ span: 3 }" label-align="left" label="智能检索接口地址">
-          <a-input style="width: 100%" v-model="agentSearchApiUrl" placeholder="请输入">
-            <span slot="addonBefore" style="text-align: center; display: inline-block;">
-              <a-select v-model="agentSearchApiMethod" style="width: 80px">
-                <a-select-option value="GET">GET</a-select-option>
-                <a-select-option value="POST">POST</a-select-option>
-              </a-select>
-            </span>
-          </a-input>
-        </a-form-item>
-        <a-form-item :wrapper-col="{ span: 18 }" :label-col="{ span: 3 }" label-align="left" label="智能检索接口参数">
-          <a-textarea v-model="agentSearchFormText" placeholder="" :rows="7" :readonly="true" />
-        </a-form-item>
-        <a-form-item :wrapper-col="{ span: 18 }" :label-col="{ span: 3 }" label-align="left" label="智能检索返回结果">
-          <a-textarea v-model="agentSearchApiResultText" placeholder="" :rows="4" :readonly="true" />
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <a-form-item label="智能检索接口地址（可编辑）">
+              <a-input style="width: 100%" v-model="agentSearchApiUrl" placeholder="请输入">
+                <span slot="addonBefore" style="text-align: center; display: inline-block;">
+                  <a-select v-model="agentSearchApiMethod" style="width: 80px">
+                    <a-select-option value="GET">GET</a-select-option>
+                    <a-select-option value="POST">POST</a-select-option>
+                    <a-select-option value="PUT">PUT</a-select-option>
+                    <a-select-option value="DELETE">DELETE</a-select-option>
+                  </a-select>
+                </span>
+              </a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="智能检索接口请求头（可编辑）">
+              <a-textarea v-model="agentSearchApiHeaderText" :rows="4" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="智能检索接口参数（根据检索条件变化）">
+              <a-textarea v-model="agentSearchFormText" :rows="7" :readonly="true" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-form-item label="智能检索返回结果">
+          <a-textarea v-model="agentSearchApiResultText" :rows="5" :readonly="true" />
         </a-form-item>
       </a-card>
     </a-card>
@@ -543,6 +556,9 @@ export default {
       },
       agentSearchApiUrl: 'https://apirag.xyz:8086/api/predict',
       agentSearchApiMethod: 'POST',
+      agentSearchApiHeader: { 'Content-Type': 'application/json;charset=UTF-8' },
+      // dev用
+      agentSearchApiHeaderText: JSON.stringify({ 'Content-Type': 'application/json;charset=UTF-8' }, null, 4),
       agentSearchApiResult: { answer: '' },
       agentSearchData: [],
       statusMap: getServiceStatusMap(),
@@ -848,13 +864,19 @@ export default {
           console.log(this.agentSearchForm)
         }
         try {
+          if (this.isDev) {
+            try {
+              this.agentSearchApiHeader = JSON.parse(this.agentSearchApiHeaderText)
+            } catch (error) {
+              this.$message.error('请求头JSON格式错误，请检查')
+              return
+            }
+          }
           this.agentSearchApiResult = await request({
             url: this.agentSearchApiUrl,
             method: this.agentSearchApiMethod,
             data: this.agentSearchForm,
-            headers: {
-              'Content-Type': 'application/json;charset=UTF-8'
-            }
+            headers: this.agentSearchApiHeader
           })
           if (!this.isDev) {
             this.agentSearchData = this.agentSearchApiResult.answer.split('\n')
@@ -865,6 +887,8 @@ export default {
               const table = this.$refs.table.$el
               table.scrollIntoView()
             })
+          } else {
+            this.$message.success('结果已返回！')
           }
         } catch (error) {
           console.log(error)

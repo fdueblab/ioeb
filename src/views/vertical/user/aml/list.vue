@@ -461,6 +461,7 @@ export default {
       },
       agentSearchApiUrl: 'https://apirag.xyz:8086/api/predict',
       agentSearchApiMethod: 'POST',
+      agentSearchApiHeader: { 'Content-Type': 'application/json;charset=UTF-8' },
       agentSearchApiResult: { answer: '' },
       agentSearchData: [],
       statusMap: getServiceStatusMap(),
@@ -743,9 +744,7 @@ export default {
             url: this.agentSearchApiUrl,
             method: this.agentSearchApiMethod,
             data: this.agentSearchForm,
-            headers: {
-              'Content-Type': 'application/json;charset=UTF-8'
-            }
+            headers: this.agentSearchApiHeader
           })
           this.agentSearchData = this.agentSearchApiResult.answer.split('\n')
           this.filteredDataSource = this.dataSource.filter(item => this.agentSearchData.includes(item.name))
