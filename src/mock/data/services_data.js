@@ -35,6 +35,7 @@ const amlServices = [
     apiList: [
       {
         name: 'train',
+        isFake: true,
         url: 'http://myApiServer.com/safe-calculation/train',
         method: 'POST',
         parameterType: 2,
@@ -53,7 +54,7 @@ const amlServices = [
         name: 'predict',
         url: 'http://43.130.11.13:25001/api/predict',
         method: 'POST',
-        parameterType: 3
+        parameterType: 2
       },
       {
         name: 'healthCheck',
@@ -99,6 +100,7 @@ const amlServices = [
     apiList: [
       {
         name: 'train',
+        isFake: true,
         url: 'http://myApiServer.com/technical-assessment/train',
         method: 'POST',
         parameterType: 2,
@@ -115,6 +117,7 @@ const amlServices = [
       },
       {
         name: 'predict',
+        isFake: true,
         url: 'http://myApiServer.com/technical-assessment/predict',
         method: 'POST',
         parameterType: 2,
@@ -168,6 +171,7 @@ const amlServices = [
     apiList: [
       {
         name: 'getReport',
+        isFake: true,
         url: 'http://myApiServer.com/{reportId}}/get',
         method: 'GET',
         parameterType: 1,
@@ -181,6 +185,7 @@ const amlServices = [
       },
       {
         name: 'sendReport',
+        isFake: true,
         url: 'http://myApiServer.com/{reportId}}/send',
         method: 'GET',
         parameterType: 1,
@@ -194,6 +199,7 @@ const amlServices = [
       },
       {
         name: 'generateReport',
+        isFake: true,
         url: 'http://myApiServer.com/report-generation/generate',
         method: 'POST',
         parameterType: 3,
@@ -247,6 +253,7 @@ const amlServices = [
     apiList: [
       {
         name: 'train',
+        isFake: true,
         url: 'http://myApiServer.com/credit-assessment/train',
         method: 'POST',
         parameterType: 2,
@@ -263,6 +270,7 @@ const amlServices = [
       },
       {
         name: 'predict',
+        isFake: true,
         url: 'http://myApiServer.com/credit-assessment/predict',
         method: 'POST',
         parameterType: 2,
@@ -316,6 +324,7 @@ const amlServices = [
     apiList: [
       {
         name: 'preprocess',
+        isFake: true,
         url: 'http://myApiServer.com/anomaly-detection/preprocess',
         method: 'POST',
         parameterType: 2,
@@ -332,6 +341,7 @@ const amlServices = [
       },
       {
         name: 'train',
+        isFake: true,
         url: 'http://myApiServer.com/anomaly-detection/train',
         method: 'POST',
         parameterType: 2,
@@ -348,6 +358,7 @@ const amlServices = [
       },
       {
         name: 'predict',
+        isFake: true,
         url: 'http://myApiServer.com/anomaly-detection/predict',
         method: 'POST',
         parameterType: 2,
@@ -361,6 +372,7 @@ const amlServices = [
       },
       {
         name: 'evaluate',
+        isFake: true,
         url: 'http://myApiServer.com/anomaly-detection/evaluate',
         method: 'POST',
         parameterType: 2,
@@ -374,6 +386,7 @@ const amlServices = [
       },
       {
         name: 'visualize',
+        isFake: true,
         url: 'http://myApiServer.com/anomaly-detection/evaluate',
         method: 'POST',
         parameterType: 2,
