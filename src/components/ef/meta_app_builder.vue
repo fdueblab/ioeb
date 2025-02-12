@@ -1,6 +1,7 @@
 <template>
   <a-modal
-    :width="800"
+    :width="1000"
+    :dialogStyle="{ top: '30px' }"
     :visible="visible"
     title="构建元应用"
     @ok="handleOk"
@@ -8,9 +9,9 @@
     ok-text="预发布"
     cancel-text="取消"
   >
-    <div style="display: flex; justify-content: space-between">
+    <div style="display: flex; justify-content: space-around">
       <!-- 应用预览区域 -->
-      <div style="width: 45%">
+      <div style="width: 30%">
         <!-- 动态标题 -->
         <span class="title">元应用预览</span>
         <div class="app-preview">
@@ -137,8 +138,8 @@ export default {
       scenarioOptions: getScenarioMap('aml'),
       technologyOptions: getTechnologyMap('aml'),
       form: this.$form.createForm(this),
-      inputText: '', // 输入内容
-      outputText: '预发布后即可试用元应用哦~' // 输出内容
+      inputText: '',
+      outputText: '预发布后即可试用此元应用'
     }
   },
   methods: {
@@ -214,6 +215,8 @@ export default {
 /* 应用预览区域 */
 .app-preview {
   width: 100%;
+  aspect-ratio: 9 / 19; /* 设置宽高比 */
+  overflow-y: auto; /* 使高度限制生效 */
   background-color: #f9f9f9;
   border: 1px solid #e8e8e8;
   border-radius: 8px;
@@ -225,7 +228,7 @@ export default {
 .app-title {
   font-size: 16px;
   font-weight: bold;
-  background-color: #69c0ff;
+  background-color: #1890ff;
   color: #fff;
   text-align: center;
   display: block;
