@@ -57,8 +57,9 @@
               <a-col v-if="dataSetType === '0'" :span="6">
                 <a-form-item label="选择数据集">
                   <a-select placeholder="请选择" default-value="0">
-                    <a-select-option value="0">鸢尾花</a-select-option>
-                    <a-select-option value="1">肿瘤</a-select-option>
+                    <a-select-option value="0">无人机轨迹</a-select-option>
+                    <a-select-option value="1">目标识别</a-select-option>
+                    <a-select-option value="2">课题组</a-select-option>
                   </a-select>
                 </a-form-item>
               </a-col>
@@ -204,37 +205,47 @@ export default {
       this.dataSetFiles = []
     },
     onTest () {
-      const obj = {
-        code: 200,
-        message: '测试通过！'
+      if (this.selectedRows.length === 0) {
+        this.$message.warning('请选择应用！')
+        return
       }
-      const metaAppInfo = sessionStorage.getItem('metaAppInfo')
-      if (metaAppInfo) {
-        const serviceData = {
-          ...JSON.parse(sessionStorage.getItem('metaAppInfo')),
-          status: 4,
-          norm: [
-            {
-              key: 0,
-              score: 5
-            },
-            {
-              key: 1,
-              score: 5
-            },
-            {
-              key: 2,
-              score: 5
-            },
-            {
-              key: 3,
-              score: 5
-            }
-          ]
+      this.testLoading = true
+      // 模拟异步请求
+      setTimeout(() => {
+        this.$message.success(`${this.selectedRows[0].name} 验证完成！`)
+        const obj = {
+          code: 200,
+          message: '验证通过！'
         }
-        sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
-      }
-      this.response = JSON.stringify(obj, null, 4)
+        const metaAppInfo = sessionStorage.getItem('metaAppInfo')
+        if (metaAppInfo) {
+          const serviceData = {
+            ...JSON.parse(sessionStorage.getItem('metaAppInfo')),
+            status: 4,
+            norm: [
+              {
+                key: 0,
+                score: 5
+              },
+              {
+                key: 1,
+                score: 5
+              },
+              {
+                key: 2,
+                score: 5
+              },
+              {
+                key: 3,
+                score: 5
+              }
+            ]
+          }
+          sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
+        }
+        this.response = JSON.stringify(obj, null, 4)
+        this.testLoading = false
+      }, 1000)
     },
     initData () {
       this.dataSource = getRunningAirCraftMetaApps()

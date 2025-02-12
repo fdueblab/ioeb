@@ -2,16 +2,9 @@ const amlServiceNodes = [
   {
     id: '90',
     type: 'group',
-    name: '异常识别微服务',
+    name: '课题一风险识别模型推理微服务',
     open: true,
     children: [
-      {
-        id: '9001',
-        type: 'datasets',
-        name: 'datasets',
-        ico: 'el-icon-s-data',
-        style: {}
-      },
       {
         id: '9002',
         type: 'preprocess',
@@ -20,23 +13,9 @@ const amlServiceNodes = [
         style: {}
       },
       {
-        id: '9003',
-        type: 'train',
-        name: 'train',
-        ico: 'el-icon-s-opportunity',
-        style: {}
-      },
-      {
-        id: '9004',
+        id: '9005',
         type: 'predict',
         name: 'predict',
-        ico: 'el-icon-s-marketing',
-        style: {}
-      },
-      {
-        id: '9005',
-        type: 'evaluate',
-        name: 'evaluate',
         ico: 'el-icon-data-line',
         style: {}
       },
@@ -46,41 +25,62 @@ const amlServiceNodes = [
         name: 'visualize',
         ico: 'el-icon-pie-chart',
         style: {}
-      },
-      {
-        id: '9007',
-        type: 'models',
-        name: 'models',
-        ico: 'el-icon-s-platform',
-        style: {}
       }
     ]
   },
   {
     id: '91',
     type: 'group',
-    name: '安全计算微服务',
+    name: '异常识别微服务',
     open: true,
     children: [
       {
         id: '9101',
-        type: 'securityCalculation',
-        name: 'securityCalculation',
+        type: 'datasets',
+        name: 'datasets',
         ico: 'el-icon-s-data',
         style: {}
       },
       {
         id: '9102',
-        type: 'encrypt',
-        name: 'encrypt',
-        ico: 'el-icon-lock',
+        type: 'preprocess',
+        name: 'preprocess',
+        ico: 'el-icon-c-scale-to-original',
         style: {}
       },
       {
         id: '9103',
-        type: 'decrypt',
-        name: 'decrypt',
-        ico: 'el-icon-unlock',
+        type: 'train',
+        name: 'train',
+        ico: 'el-icon-s-opportunity',
+        style: {}
+      },
+      {
+        id: '9104',
+        type: 'predict',
+        name: 'predict',
+        ico: 'el-icon-s-marketing',
+        style: {}
+      },
+      {
+        id: '9105',
+        type: 'evaluate',
+        name: 'evaluate',
+        ico: 'el-icon-data-line',
+        style: {}
+      },
+      {
+        id: '9106',
+        type: 'visualize',
+        name: 'visualize',
+        ico: 'el-icon-pie-chart',
+        style: {}
+      },
+      {
+        id: '9107',
+        type: 'models',
+        name: 'models',
+        ico: 'el-icon-s-platform',
         style: {}
       }
     ]
@@ -146,7 +146,7 @@ const amlServiceNodes = [
   {
     id: '94',
     type: 'group',
-    name: '报告生成微服务',
+    name: '课题一报告生成微服务',
     open: true,
     children: [
       {

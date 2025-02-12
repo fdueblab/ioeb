@@ -124,7 +124,7 @@ export default {
               {
                 id: '90',
                 type: 'group',
-                name: '异常识别微服务',
+                name: '课题一风险识别模型推理微服务',
                 open: true,
                 children: [
                   {
@@ -153,7 +153,7 @@ export default {
               {
                 id: '94',
                 type: 'group',
-                name: '报告生成微服务',
+                name: '课题一报告生成微服务',
                 open: true,
                 children: [{
                   id: '9401',
@@ -177,7 +177,7 @@ export default {
     getUpdatedFlow() {
       if (this.serviceType === 'aircraft') {
         return {
-          name: 'AI监控流程',
+          name: 'AI推荐流程',
           nodeList: [
             {
               id: '10000',
@@ -268,7 +268,7 @@ export default {
             input: 'csv File',
             output: 'json',
             version: '1.0',
-            state: 'success'
+            state: 'error'
           },
           {
             id: '9001',
@@ -291,7 +291,7 @@ export default {
             left: '200px',
             top: '250px',
             ico: 'el-icon-pie-chart',
-            state: 'warning',
+            state: 'error',
             input: 'vector',
             output: 'image',
             version: '1.2'
@@ -304,7 +304,7 @@ export default {
             left: '420px',
             top: '140px',
             ico: 'el-icon-document-add',
-            state: 'success',
+            state: 'warning',
             input: 'image',
             output: 'pdf',
             version: '1.0'
@@ -342,7 +342,7 @@ export default {
 .preview-container {
   display: flex;
   flex-direction: column;
-  width: 35vw;
+  width: 30vw;
   border: 1px solid #ccc;
   border-radius: 8px;
   overflow: hidden;
