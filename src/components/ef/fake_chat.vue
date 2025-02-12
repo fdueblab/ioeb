@@ -1,19 +1,26 @@
 <template>
   <div class="preview-container">
-    <!-- 应用预览区域 -->
-    <div class="app-preview" ref="appPreview">
-      <!-- 初始状态：显示提示文字 -->
-      <div v-if="!showPreviewImage" class="preview-placeholder">
-        元应用预览区域
+    <div class="chat-output" ref="chatOutput">
+      <div v-for="(message, index) in messages" :key="index" :class="['chat-message', message.isUser ? 'user-message' : 'bot-message']">
+        <div class="message-content" v-html="message.text"></div>
       </div>
-      <!-- 构建后：显示图片 -->
-      <img
-        v-if="showPreviewImage"
-        src="@/assets/app-preview.png"
-        alt="应用预览"
-        class="preview-image"
-      />
     </div>
+
+    <!-- 应用预览区域 -->
+    <!--    <div class="app-preview" ref="appPreview">-->
+    <!-- 初始状态：显示提示文字 -->
+    <!--      <div v-if="!showPreviewImage" class="preview-placeholder">-->
+    <!--        元应用预览区域-->
+    <!--      </div>-->
+    <!-- 构建后：显示图片 -->
+    <!--      <img-->
+    <!--        v-if="showPreviewImage"-->
+    <!--        src="@/assets/app-preview.png"-->
+    <!--        alt="应用预览"-->
+    <!--        class="preview-image"-->
+    <!--      />-->
+    <!--    </div>-->
+
     <!-- 输入框区域 -->
     <div class="chat-input">
       <a-input-search
@@ -24,7 +31,7 @@
         :disabled="!isInputEnabled"
       >
         <template #enterButton>
-          <a-button type="primary" icon="deployment-unit" :loading="isInputLoading">智能构建</a-button>
+          <a-button type="primary" icon="deployment-unit" :loading="isInputLoading">智能生成</a-button>
         </template>
       </a-input-search>
     </div>
@@ -40,28 +47,61 @@ export default {
       default: ''
     }
   },
+  mounted() {
+    this.messages.push({ text: '请告诉我您对应用的需求，我将根据您的需求生成元应用工作流', isUser: false })
+  },
   data() {
     return {
       userInput: '',
+      messages: [],
+      isUser: [],
+      currentIndex: 0,
       isInputEnabled: true,
       isInputLoading: false,
       showPreviewImage: false // 控制是否显示图片
     }
   },
   methods: {
+    // handleUserInput() {
+    //   this.isInputLoading = true
+    //   this.isInputEnabled = false
+    //   this.$emit('update-services', this.getUpdatedServices())
+    //   this.$emit('update-flow', this.getUpdatedFlow())
+    //   this.$message.info('正在构建中，请稍候...')
+    //   // 模拟处理用户输入的逻辑
+    //   setTimeout(() => {
+    //     this.isInputLoading = false
+    //     this.isInputEnabled = true
+    //     this.showPreviewImage = true
+    //     this.$message.success('构建完成！')
+    //   }, 1600) // 模拟异步操作
+    // },
     handleUserInput() {
       this.isInputLoading = true
       this.isInputEnabled = false
+      this.messages.push({ text: this.userInput, isUser: true })
+      this.messages.push({ text: '', isUser: false })
+      const chosenServices = ['课题一风险识别模型推理微服务', '课题一报告生成微服务']
+      const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的一些相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
+      this.userInput = ''
+      this.typeWriter(outputMessage)
       this.$emit('update-services', this.getUpdatedServices())
       this.$emit('update-flow', this.getUpdatedFlow())
-      this.$message.info('正在构建中，请稍候...')
       // 模拟处理用户输入的逻辑
       setTimeout(() => {
         this.isInputLoading = false
         this.isInputEnabled = true
-        this.showPreviewImage = true
-        this.$message.success('构建完成！')
       }, 1600) // 模拟异步操作
+    },
+    typeWriter(text) {
+      if (this.currentIndex < text.length) {
+        this.messages[this.messages.length - 1].text += text.charAt(this.currentIndex)
+        this.currentIndex++
+        setTimeout(() => this.typeWriter(text), 20)
+      } else {
+        this.isInputLoading = false
+        this.currentIndex = 0
+      }
     },
     getUpdatedServices() {
       if (this.serviceType === 'aircraft') {
@@ -349,31 +389,35 @@ export default {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.app-preview {
+.chat-output {
   flex: 1;
+  padding: 16px;
   background-color: #f9f9f9;
-  overflow: hidden;
+  overflow-y: auto;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  aspect-ratio: 9 / 16; /* 设置宽高比为 9:16 */
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-/* 初始状态：提示文字样式 */
-.preview-placeholder {
-  font-size: 1.2em;
-  color: #666;
-  text-align: center;
-  user-select: none;
-}
-
-/* 构建后：图片样式 */
-.preview-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* 图片占满整个区域 */
+.chat-message {
+  margin-bottom: 16px;
+  font-size: 1.1em;
+  color: #333;
+  padding: 8px 12px;
   border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 70%;
+}
+
+.user-message {
+  align-self: flex-end;
+  background-color: #4a90e2;
+  color: #fff;
+}
+
+.bot-message {
+  align-self: flex-start;
+  background-color: #fff;
 }
 
 .chat-input {
@@ -381,5 +425,14 @@ export default {
   padding: 16px;
   background-color: #fff;
   border-top: 1px solid #ccc;
+}
+
+/* 添加样式以支持 <code> 标签的显示 */
+.message-content code {
+  background-color: #f4f4f4;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: monospace;
+  color: #d63384;
 }
 </style>

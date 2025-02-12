@@ -54,6 +54,8 @@
       v-if="metaAppBuilderVisible"
       ref="metaAppBuilder"
       :service-type="serviceType"
+      :input-name="serviceType === 'aml' ? '跨境支付数据' : '智能飞行器参数'"
+      :output-name="serviceType === 'aml' ? '跨境支付风险评估报告' : '智能飞行器任务结果'"
       @close="metaAppBuilderVisible = false"
     />
   </div>
@@ -574,10 +576,14 @@ export default {
     },
     addMetaApp() {
       if (this.data.nodeList.length > 0) {
-        this.metaAppBuilderVisible = true
-        this.$nextTick(() => {
-          this.$refs.metaAppBuilder.init()
-        })
+        this.$message.info('正在构建元应用...')
+        setTimeout(() => {
+          this.metaAppBuilderVisible = true
+          this.$message.success('构建完成！')
+          this.$nextTick(() => {
+            this.$refs.metaAppBuilder.init()
+          })
+        }, 2000)
       } else {
         this.$message.error('请先创建元应用流程！')
       }
