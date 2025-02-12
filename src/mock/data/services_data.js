@@ -1,6 +1,6 @@
 const amlServices = [
   {
-    name: '安全计算微服务',
+    name: '课题一风险识别模型推理微服务',
     attribute: 1,
     type: 0,
     domain: 0,
@@ -34,9 +34,9 @@ const amlServices = [
     },
     apiList: [
       {
-        name: 'train',
+        name: 'preprocess',
         isFake: true,
-        url: 'http://myApiServer.com/safe-calculation/train',
+        url: 'http://myApiServer.com/safe-calculation/preprocess',
         method: 'POST',
         parameterType: 2,
         response: {
@@ -132,7 +132,7 @@ const amlServices = [
     ]
   },
   {
-    name: '报告生成微服务',
+    name: '课题一报告生成微服务',
     attribute: 0,
     type: 0,
     domain: 0,
@@ -170,23 +170,23 @@ const amlServices = [
     },
     apiList: [
       {
-        name: 'getReport',
+        name: 'getReportData',
         isFake: true,
-        url: 'http://myApiServer.com/{reportId}}/get',
+        url: 'http://myApiServer.com/{reportId}/get',
         method: 'GET',
         parameterType: 1,
         response: {
           code: 200,
           message: '获取成功!',
           data: {
-            reportRow: '报告数据'
+            result: '基于图神经网络的跨境贸易支付监测模型的推理结果已经产生。模型在数据集上的表现如下：\n\n在100个节点中，有93个节点被判定为类别0，7个节点被判定为类别2。具体结果如下：\n\n- 类别0：节点1，节点2，节点3，节点4，节点9，节点10，节点11，节点12，节点13，节点14，节点15，节点16，节点17，节点\n18，节点19，节点20，节点21，节点22，节点23，节点24，节点25，节点26，节点27，节点28，节点29，节点30，节点31，节点\n32，节点33，节点34，节点35，节点36，节点37，节点38，节点39，节点40，节点41，节点42，节点43，节点44，节点45，节点\n46，节点47，节点48，节点49，节点50，节点51，节点52，节点53，节点54，节点55，节点56，节点57，节点58，节点59，节点\n60，节点61，节点62，节点63，节点65，节点66，节点67，节点68，节点69，节点70，节点71，节点72，节点73，节点74，节点\n75，节点76，节点77，节点78，节点79，节点80，节点81，节点82，节点83，节点84，节点85，节点86，节点87，节点88，节点\n89，节点90，节点91，节点92，节点93，节点94，节点95，节点96。\n\n- 类别2：节点0，节点5，节点6，节点7，节点8，节点64，节点97，节点98，节点99。\n\n总结，大多数节点（93%）被分类为类别0，而较小的部分（7%）被分类为类别2。这可能反映了在训练集中类别0的样本数量更多\n，模型在识别类别0的能力上表现得更好。同时，模型对于类别2的识别也有一定的能力。'
           }
         }
       },
       {
         name: 'sendReport',
         isFake: true,
-        url: 'http://myApiServer.com/{reportId}}/send',
+        url: 'http://myApiServer.com/{reportId}/send',
         method: 'GET',
         parameterType: 1,
         response: {
@@ -623,7 +623,8 @@ const amlMetaApps = [
       companyName: '复旦大学',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
+      companyIntroduce: '复旦大学课题组',
+      msIntroduce: '用于跨境支付的风险评估和报告生成的元应用',
       companyScore: 5,
       msScore: 5
     },

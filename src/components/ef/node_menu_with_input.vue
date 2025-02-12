@@ -2,11 +2,11 @@
   <div class="flow-menu" ref="tool">
     <div v-for="menu in menuList" :key="menu.id">
       <span class="ef-node-pmenu" @click="menu.open = !menu.open"><i
-        :class="{'el-icon-caret-bottom': menu.open,'el-icon-caret-right': !menu.open}"></i>&nbsp;{{ menu.name }}</span>
+        :class="{'el-icon-caret-bottom': menu.open,'el-icon-caret-right': !menu.open}"></i>{{ menu.name }}</span>
       <ul v-show="menu.open" class="flow-menu">
         <div v-for="(m, index) in menu.children" :key="index">
           <span class="ef-node-psubmenu" @click="m.open = !m.open"><i
-            :class="{'el-icon-caret-bottom': m.open,'el-icon-caret-right': !m.open}"></i>&nbsp;{{ m.name }}</span>
+            :class="{'el-icon-caret-bottom': m.open,'el-icon-caret-right': !m.open}"></i>{{ m.name }}</span>
           <ul v-show="m.open" class="f-node-menu-ul">
             <draggable @end="end" @start="move" v-model="m.children" :options="draggableOptions">
               <li v-for="subMenu in m.children" class="ef-node-menu-li" :key="subMenu.id" :type="subMenu.type">
@@ -154,9 +154,10 @@
 }
 
 .ef-node-psubmenu {
+  width: auto;
   display: flex;
   align-items: center;
-  padding: 8px;
+  line-height: 16px;
   cursor: pointer;
   color: #555;
   transition: background-color 0.3s;
