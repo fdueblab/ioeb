@@ -42,6 +42,8 @@ const normMap = [
 
 const apiTypeMap = ['RESTful API', 'GraphQL API', 'WebSocket API']
 
+const methodTypeMap = ['GET', 'POST', 'PUT', 'DELETE']
+
 const serviceTypeMap = ['原子微服务', '元应用服务']
 
 const amlIndustryMap = ['金融风控', '自贸监管', '跨境贸易', '跨境电商']
@@ -98,6 +100,10 @@ export function getTechnologyMap(type) {
 
 export function getApiTypeMap() {
   return apiTypeMap
+}
+
+export function getMethodTypeMap() {
+  return methodTypeMap
 }
 
 export function getPerformanceMetricMap() {

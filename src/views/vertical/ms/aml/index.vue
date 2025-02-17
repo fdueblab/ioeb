@@ -70,25 +70,51 @@
         <v-chart style="height: 100%; width: 100%;" :options="options" autoresize @click="handleNodeClick"/>
       </div>
     </a-card>
-    <a-card :bordered="false" style="margin-top: 10px; height: 490px;">
+    <a-card :bordered="false" style="margin-top: 10px; height: 610px;">
       <a-row :gutter="20">
         <a-col :span="12">
-          <a-card :bodyStyle="{ padding: 0 }" style="height: 440px;">
+          <a-card :bodyStyle="{ padding: 0 }" style="height: 560px;">
             <codemirror v-model="code" :style="codemirrorStyle" :options="cmOptions" />
           </a-card>
         </a-col>
         <a-col :span="12">
-          <a-card style="height: 440px;">
+          <a-card style="height: 560px;">
             <a-form>
+              <a-divider>接口配置</a-divider>
+              <a-row :gutter="20">
+                <a-col :span="12">
+                  <a-form-item label="API名称" required>
+                    <a-input v-model="form.apiName" placeholder="接口地址与方法名"/>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="6">
+                  <a-form-item label="API类型" required>
+                    <a-select v-model="form.apiType" placeholder="请选择">
+                      <a-select-option v-for="(item, index) in apiTypeOptions" :key="index" :value="index">
+                        {{ item }}
+                      </a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="6">
+                  <a-form-item label="请求方法" required>
+                    <a-select v-model="form.methodType" placeholder="请选择">
+                      <a-select-option v-for="(item, index) in methodTypeOptions" :key="index" :value="index">
+                        {{ item }}
+                      </a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+              </a-row>
               <a-row :gutter="20">
                 <a-col :span="12">
                   <a-form-item label="输入参数">
-                    <a-input v-model="form.input" placeholder="请输入Input"/>
+                    <a-input v-model="form.input" disabled/>
                   </a-form-item>
                 </a-col>
                 <a-col :span="12">
                   <a-form-item label="输出参数">
-                    <a-input v-model="form.output" placeholder="请输入Output"/>
+                    <a-input v-model="form.output" disabled/>
                   </a-form-item>
                 </a-col>
               </a-row>
@@ -106,25 +132,15 @@
                   </a-form-item>
                 </a-col>
               </a-row>
+              <a-divider>微服务配置</a-divider>
               <a-row :gutter="20">
                 <a-col :span="12">
-                  <a-form-item label="API类型">
-                    <a-select v-model="form.apiType" placeholder="请选择">
-                      <a-select-option v-for="(item, index) in apiTypeOptions" :key="index" :value="index">
-                        {{ item }}
-                      </a-select-option>
-                    </a-select>
-                  </a-form-item>
-                </a-col>
-                <a-col :span="12">
-                  <a-form-item label="微服务名称">
+                  <a-form-item label="微服务名称" required>
                     <a-input v-model="form.serviceName" placeholder="请输入微服务名称"/>
                   </a-form-item>
                 </a-col>
-              </a-row>
-              <a-row :gutter="20">
-                <a-col :span="12">
-                  <a-form-item label="接口配置文件">
+                <a-col :span="6">
+                  <a-form-item label="配置文件">
                     <a-upload
                       accept=".yml,.yaml,.json,.ini,.conf"
                       :file-list="configFiles"
@@ -135,10 +151,10 @@
                     </a-upload>
                   </a-form-item>
                 </a-col>
-                <a-col :span="12">
+                <a-col :span="6">
                   <a-form-item tooltip="value*category">
                     <span slot="label">预发布
-                      <a-tooltip title="预发布后服务及应用运维管理中将出现未分配容器的该服务，可以将其部署在容器中，部署后可以对其进行验证与测评">
+                      <a-tooltip title="预发布后服务及应用运维管理中将出现部署在容器中的该服务，可以管理其部署状态并对其进行验证与测评">
                         <a-icon type="question-circle-o" />
                       </a-tooltip>
                     </span>
@@ -148,15 +164,6 @@
                   </a-form-item>
                 </a-col>
               </a-row>
-              <!--              <a-row :gutter="20" style="margin-top: 30px;">-->
-              <!--                <a-form-item>-->
-              <!--                  <div style="text-align: center;">-->
-              <!--                    <a-button type="primary" @click="uploadService" :disabled="programFiles.length === 0" :loading="uploadServiceLoading">-->
-              <!--                      预发布-->
-              <!--                    </a-button>-->
-              <!--                  </div>-->
-              <!--                </a-form-item>-->
-              <!--              </a-row>-->
             </a-form>
           </a-card>
         </a-col>
@@ -198,7 +205,7 @@ import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
 import 'codemirror/mode/python/python.js'
-import { getApiTypeMap, getIndustryMap, getScenarioMap, getTechnologyMap } from '@/mock/data/map_data'
+import { getApiTypeMap, getIndustryMap, getMethodTypeMap, getScenarioMap, getTechnologyMap } from '@/mock/data/map_data'
 
 export default {
   name: 'TableList',
@@ -223,23 +230,40 @@ export default {
       },
       form: {
         serviceName: '',
-        name: '',
         input: '',
         output: '',
         environment: '',
         process: '',
-        apiType: 0
+        apiType: 0,
+        apiName: '',
+        methodType: 1
       },
       code: '',
       codeTemplate: `# 微服务名称: {{serviceName}}
-# 条件: {{environment}}
-def {{name}}({{input}}):
-  try:
-    # 处理: {{process}}
-    return {{output}}
-  except Exception:
-    print('{{name}}执行出错，错误信息: ', Exception)
-    exit(1);
+
+@ns.route('/{{apiName}}')
+class {{apiName}}({{input}}):
+  @ns.doc(responses={
+    200: 'Success',
+    400: 'Validation Error',
+    500: 'Internal Server Error'
+  })
+
+
+  # 条件: {{environment}}
+  def {{methodType}}(self):
+    try:
+      logger.debug('开始处理{{apiName}}请求')
+
+      # 处理: {{process}}
+      """{{apiName}} source code"""
+
+      logger.debug('{{apiName}}请求处理完成')
+      return {{output}}
+
+    except Exception:
+      logger.exception('{{apiName}}处理过程出错，错误信息: ', Exception)
+      return {'error': f'处理过程出错: {str(Exception)}'}, 500
 `,
       programFiles: [],
       configFiles: [],
@@ -248,6 +272,7 @@ def {{name}}({{input}}):
       uploadServiceDisabled: true,
       programJson: null,
       apiTypeOptions: getApiTypeMap(),
+      methodTypeOptions: getMethodTypeMap(),
       cmOptions: {
         mode: 'python', // 设置为 Python 模式
         // theme: 'base16-dark', // 黑暗模式主题
@@ -280,10 +305,10 @@ def {{name}}({{input}}):
     }
   },
   watch: {
-    'form.input': function () {
+    'form.apiName': function () {
       this.updateCode()
     },
-    'form.output': function () {
+    'form.methodType': function () {
       this.updateCode()
     },
     'form.environment': function () {
@@ -307,13 +332,13 @@ def {{name}}({{input}}):
           this.$message.success('解析成功，发现以下可用API及调用关系')
           this.programJson = {
             nodes: [
-              { id: '9001', x: 0, y: 150, label: 'datasets', size: 50, color: '#6F9654', input: 'rawData', output: 'processedData', environment: 'environment1', process: 'process1', apiType: 0 },
-              { id: '9002', x: 150, y: 150, label: 'preprocess', size: 50, color: '#E76F51', input: 'processedData', output: 'cleanedData', environment: 'environment2', process: 'process2', apiType: 0 },
-              { id: '9003', x: 300, y: 150, label: 'train', size: 50, color: '#2A9D8F', input: 'cleanedData', output: 'trainedModel', environment: 'environment3', process: 'process3', apiType: 2 },
-              { id: '9004', x: 450, y: 50, label: 'predict', size: 50, color: '#F4A261', input: 'trainedModel', output: 'predictionResult', environment: 'environment4', process: 'process4', apiType: 0 },
-              { id: '9005', x: 450, y: 150, label: 'evaluate', size: 50, color: '#264653', input: 'trainedModel', output: 'evaluationMetrics', environment: 'environment5', process: 'process5', apiType: 0 },
-              { id: '9006', x: 450, y: 250, label: 'visualize', size: 50, color: '#E9C46A', input: 'trainedModel', output: 'visualization', environment: 'environment6', process: 'process6', apiType: 0 },
-              { id: '9007', x: 300, y: 250, label: 'models', size: 50, color: '#A8DADC', input: 'trainedModel', output: 'modelMetadata', environment: 'environment7', process: 'process7', apiType: 0 }
+              { id: '9001', x: 0, y: 150, label: 'datasets', size: 50, color: '#6F9654', input: 'rawData', output: 'processedData', environment: '', process: '', apiType: 0, methodType: 0 },
+              { id: '9002', x: 150, y: 150, label: 'preprocess', size: 50, color: '#E76F51', input: 'processedData', output: 'cleanedData', environment: '', process: '', apiType: 0, methodType: 1 },
+              { id: '9003', x: 300, y: 150, label: 'train', size: 50, color: '#2A9D8F', input: 'cleanedData', output: 'trainedModel', environment: '', process: '', apiType: 2, methodType: 1 },
+              { id: '9004', x: 450, y: 50, label: 'predict', size: 50, color: '#F4A261', input: 'trainedModel', output: 'predictionResult', environment: '', process: '', apiType: 0, methodType: 0 },
+              { id: '9005', x: 450, y: 150, label: 'evaluate', size: 50, color: '#264653', input: 'trainedModel', output: 'evaluationMetrics', environment: '', process: '', apiType: 0, methodType: 1 },
+              { id: '9006', x: 450, y: 250, label: 'visualize', size: 50, color: '#E9C46A', input: 'trainedModel', output: 'visualization', environment: '', process: '', apiType: 0, methodType: 1 },
+              { id: '9007', x: 300, y: 250, label: 'models', size: 50, color: '#A8DADC', input: 'trainedModel', output: 'modelMetadata', environment: '', process: '', apiType: 0, methodType: 1 }
             ],
             edges: [
               { sourceID: '9001', targetID: '9002' }, // datasets → preprocess
@@ -395,6 +420,7 @@ def {{name}}({{input}}):
           <span style="color: #888;">Environment:</span> ${node.environment}<br/>
           <span style="color: #888;">Process:</span> ${node.process}<br/>
           <span style="color: #888;">Interface Type:</span> ${getApiTypeMap()[node.apiType]}
+          <span style="color: #888;">Method Type:</span> ${getMethodTypeMap()[node.methodType]}
         </div>
       `
             }
@@ -450,15 +476,17 @@ def {{name}}({{input}}):
       this.configFiles = []
     },
     updateCode() {
-      const { serviceName, environment, process, input, output, name } = this.form
+      const { serviceName, environment, process, input, output, apiName, methodType } = this.form
+      const methods = ['get', 'post', 'put', 'delete']
       // 动态生成代码
       this.code = this.codeTemplate
-        .replace('{{name}}', name)
-        .replace('{{input}}', input)
-        .replace('{{output}}', output)
-        .replace('{{serviceName}}', serviceName)
-        .replace('{{environment}}', environment)
-        .replace('{{process}}', process)
+        .replace(/\{\{apiName}}/g, apiName)
+        .replace(/\{\{methodType}}/g, methods[methodType])
+        .replace(/\{\{input}}/g, input)
+        .replace(/\{\{output}}/g, output)
+        .replace(/\{\{serviceName}}/g, serviceName)
+        .replace(/\{\{environment}}/g, environment)
+        .replace(/\{\{process}}/g, process)
     },
     handleNodeClick(params) {
       const node = this.programJson.nodes.find(n => n.id === params.data.id)
@@ -466,12 +494,13 @@ def {{name}}({{input}}):
       if (node) {
         this.form = {
           serviceName: '',
-          name: node.label,
           input: node.input,
           output: node.output,
           environment: node.environment,
           process: node.process,
-          apiType: node.apiType
+          apiType: node.apiType,
+          apiName: node.label,
+          methodType: node.methodType
         }
         this.updateCode()
       }
@@ -499,6 +528,6 @@ def {{name}}({{input}}):
   height: 300px;
 }
 /deep/ .CodeMirror{
-  height: 438px;
+  height: 558px;
 }
 </style>
