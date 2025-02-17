@@ -57,9 +57,8 @@
               <a-col v-if="dataSetType === '0'" :span="6">
                 <a-form-item label="选择数据集">
                   <a-select placeholder="请选择" default-value="0">
-                    <a-select-option value="0">无人机轨迹</a-select-option>
-                    <a-select-option value="1">目标识别</a-select-option>
-                    <a-select-option value="2">课题组</a-select-option>
+                    <a-select-option value="0">无人机任务</a-select-option>
+                    <a-select-option value="1">课题组</a-select-option>
                   </a-select>
                 </a-form-item>
               </a-col>

@@ -177,7 +177,7 @@ export default {
             console.log(serviceData.name)
             serviceData.apiList = [
               {
-                name: 'report',
+                name: 'pj1_report_app',
                 url: 'http://43.130.11.13:5000/api/pj1_report_app',
                 method: 'POST',
                 parameterType: 2
@@ -186,6 +186,7 @@ export default {
           }
           sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
           this.visible = false
+          this.$message.success('预发布成功！可进行评测与验证')
           this.$emit('close')
           window.location.href = `#/evaluation/${this.serviceType}/emulation`
         } else {

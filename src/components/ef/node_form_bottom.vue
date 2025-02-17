@@ -8,7 +8,7 @@
             <el-row>
               <el-col :span="12">
                 <el-form-item label="调用地址">
-                  <el-input v-model="node.type" :disabled="true"></el-input>
+                  <el-input v-model="node.url" :disabled="true"></el-input>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
