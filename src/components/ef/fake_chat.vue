@@ -27,11 +27,11 @@
         style="width: 100%"
         v-model="userInput"
         @search="handleUserInput"
-        placeholder="请输入您对应用的需求"
+        :placeholder="placeholder"
         :disabled="!isInputEnabled"
       >
         <template #enterButton>
-          <a-button type="primary" icon="deployment-unit" :loading="isInputLoading">智能生成</a-button>
+          <a-button type="primary" icon="deployment-unit" :loading="isInputLoading" :disabled="!userInput">智能生成</a-button>
         </template>
       </a-input-search>
     </div>
@@ -53,6 +53,7 @@ export default {
   data() {
     return {
       userInput: '',
+      placeholder: '请输入您对应用的需求',
       messages: [],
       isUser: [],
       currentIndex: 0,
@@ -62,36 +63,33 @@ export default {
     }
   },
   methods: {
-    // handleUserInput() {
-    //   this.isInputLoading = true
-    //   this.isInputEnabled = false
-    //   this.$emit('update-services', this.getUpdatedServices())
-    //   this.$emit('update-flow', this.getUpdatedFlow())
-    //   this.$message.info('正在构建中，请稍候...')
-    //   // 模拟处理用户输入的逻辑
-    //   setTimeout(() => {
-    //     this.isInputLoading = false
-    //     this.isInputEnabled = true
-    //     this.showPreviewImage = true
-    //     this.$message.success('构建完成！')
-    //   }, 1600) // 模拟异步操作
-    // },
     handleUserInput() {
       this.isInputLoading = true
       this.isInputEnabled = false
       this.messages.push({ text: this.userInput, isUser: true })
       this.messages.push({ text: '', isUser: false })
-      const chosenServices = ['课题一风险识别模型推理微服务', '课题一报告生成微服务']
-      const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的一些相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
-      this.userInput = ''
-      this.typeWriter(outputMessage)
-      this.$emit('update-services', this.getUpdatedServices())
-      this.$emit('update-flow', this.getUpdatedFlow())
-      // 模拟处理用户输入的逻辑
-      setTimeout(() => {
-        this.isInputLoading = false
-        this.isInputEnabled = true
-      }, 1600) // 模拟异步操作
+      if (this.userInput.includes('课题一')) {
+        const chosenServices = ['课题一风险识别模型推理微服务', '课题一报告生成微服务']
+        const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
+        this.typeWriter(outputMessage)
+        this.$emit('update-services', this.getUpdatedServices())
+        this.$emit('update-flow', this.getUpdatedFlow())
+        // 模拟处理用户输入的逻辑
+        setTimeout(() => {
+          this.userInput = ''
+          this.placeholder = '已智能生成微服务工作流'
+          this.isInputLoading = false
+        }, 1600) // 模拟异步操作
+      } else {
+        const outputMessage = '抱歉，未理解您的需求，请提供进一步的描述。'
+        this.userInput = ''
+        this.typeWriter(outputMessage)
+        // 模拟处理用户输入的逻辑
+        setTimeout(() => {
+          this.isInputLoading = false
+          this.isInputEnabled = true
+        }, 800) // 模拟异步操作
+      }
     },
     typeWriter(text) {
       if (this.currentIndex < text.length) {
@@ -191,23 +189,26 @@ export default {
                 ]
               },
               {
-                id: '94',
+                id: '91',
                 type: 'group',
                 name: '课题一报告生成微服务',
                 open: true,
-                children: [{
-                  id: '9401',
-                  type: 'generateReport',
-                  name: 'generateReport',
-                  ico: 'el-icon-document-add',
-                  style: {}
-                }, {
-                  id: '9402',
-                  type: 'sendReport',
-                  name: 'sendReport',
-                  ico: 'el-icon-upload',
-                  style: {}
-                }]
+                children: [
+                  {
+                    id: '9101',
+                    name: 'generateReport',
+                    type: 'process',
+                    ico: 'el-icon-document-add',
+                    style: {}
+                  },
+                  {
+                    id: '9102',
+                    name: 'getReportData',
+                    type: 'process',
+                    ico: 'el-icon-zoom-in',
+                    style: {}
+                  }
+                ]
               }
             ]
           }
@@ -288,14 +289,14 @@ export default {
             id: '10000',
             name: 'metaAppAgent',
             type: 'start',
-            url: 'ms.kxyun.net/agent',
+            url: 'http://43.130.11.13:5000/api/pj1_report_app',
             left: '200px',
             top: '0',
             ico: 'el-icon-cpu',
-            input: 'csv File',
+            input: 'zip File',
             output: 'json',
             version: '1.0',
-            state: 'success'
+            state: 'running'
           },
           {
             id: '9000',
@@ -303,74 +304,60 @@ export default {
             type: 'process',
             url: 'ms.kxyun.net/preprocess',
             left: '0',
-            top: '140px',
+            top: '130px',
             ico: 'el-icon-c-scale-to-original',
-            input: 'csv File',
-            output: 'json',
-            version: '1.0',
-            state: 'error'
+            input: 'zip File',
+            output: 'vector',
+            version: '2.0',
+            state: 'success'
           },
           {
             id: '9001',
             name: 'predict',
             type: 'process',
-            url: 'ms.kxyun.net/evaluate',
-            left: '0',
+            url: 'http://43.130.11.13:25001/api/predict',
+            left: '75px',
             top: '380px',
             ico: 'el-icon-s-data',
             state: 'success',
-            input: 'json',
+            input: 'vector',
             output: 'vector',
             version: '1.1'
-          },
-          {
-            id: '9002',
-            name: 'visualize',
-            type: 'process',
-            url: 'ms.kxyun.net/visualize',
-            left: '200px',
-            top: '250px',
-            ico: 'el-icon-pie-chart',
-            state: 'error',
-            input: 'vector',
-            output: 'image',
-            version: '1.2'
           },
           {
             id: '9101',
             name: 'generateReport',
             type: 'process',
             url: 'ms.kxyun.net/generateReport',
-            left: '420px',
-            top: '140px',
+            left: '300px',
+            top: '300px',
             ico: 'el-icon-document-add',
             state: 'warning',
-            input: 'image',
+            input: 'vector',
             output: 'pdf',
-            version: '1.0'
+            version: '0.9'
           },
           {
             id: '9102',
-            name: 'sendReport',
-            type: 'end',
-            url: 'ms.kxyun.net/sendReport',
-            left: '400px',
-            top: '360px',
-            ico: 'el-icon-upload',
-            state: 'error',
+            name: 'getReportData',
+            type: 'process',
+            url: 'ms.kxyun.net/getReportData',
+            left: '450px',
+            top: '80px',
+            ico: 'el-icon-zoom-in',
+            state: 'warning',
             input: 'pdf',
-            output: '',
-            version: '0.8'
+            output: 'json',
+            version: '0.9'
           }
         ],
         lineList: [
           { from: '10000', to: '9000' },
           { from: '9000', to: '9001' },
           { from: '9001', to: '10000' },
-          { from: '10000', to: '9002' },
-          { from: '9002', to: '10000' },
           { from: '10000', to: '9101' },
-          { from: '9101', to: '9102' }
+          { from: '9101', to: '9102' },
+          { from: '9102', to: '10000' }
         ]
       }
     }

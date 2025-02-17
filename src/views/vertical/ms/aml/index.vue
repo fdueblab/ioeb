@@ -411,8 +411,9 @@ def {{name}}({{input}}):
       this.uploadServiceLoading = true
       setTimeout(() => {
         sessionStorage.setItem('upload_exception_service', '1')
-        this.$message.success('预发布成功！可以进行部署与测试')
+        this.$message.success('预发布成功！可进行技术评测')
         this.uploadServiceLoading = false
+        window.location.href = `#/evaluation/aml/technology`
       }, 1000)
     },
     async customProgramFilesChose (options) {

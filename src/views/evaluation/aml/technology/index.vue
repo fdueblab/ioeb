@@ -57,7 +57,7 @@
               <a-col v-if="dataSetType === '0'" :span="6">
                 <a-form-item label="选择数据集">
                   <a-select placeholder="请选择" default-value="0">
-                    <a-select-option value="0">跨境电商</a-select-option>
+                    <a-select-option value="0">跨境贸易</a-select-option>
                     <a-select-option value="1">课题一</a-select-option>
                   </a-select>
                 </a-form-item>
