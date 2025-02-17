@@ -46,10 +46,9 @@
               <a-input style="width: 100%" v-model="agentSearchApiUrl" placeholder="请输入">
                 <span slot="addonBefore" style="text-align: center; display: inline-block;">
                   <a-select v-model="agentSearchApiMethod" style="width: 80px">
-                    <a-select-option value="GET">GET</a-select-option>
-                    <a-select-option value="POST">POST</a-select-option>
-                    <a-select-option value="PUT">PUT</a-select-option>
-                    <a-select-option value="DELETE">DELETE</a-select-option>
+                    <a-select-option v-for="(item, index) in methodTypeOptions" :key="index" :value="index">
+                      {{ item }}
+                    </a-select-option>
                   </a-select>
                 </span>
               </a-input>
@@ -490,8 +489,9 @@
           <a-input style="width: 100%" v-model="ragUploadUrl" placeholder="请输入">
             <span slot="addonBefore" style="text-align: center; display: inline-block;">
               <a-select v-model="ragUploadMethod" style="width: 80px">
-                <a-select-option value="GET">GET</a-select-option>
-                <a-select-option value="POST">POST</a-select-option>
+                <a-select-option v-for="(item, index) in methodTypeOptions" :key="index" :value="index">
+                  {{ item }}
+                </a-select-option>
               </a-select>
             </span>
           </a-input>
@@ -511,7 +511,8 @@ import {
   getNormMap,
   getServiceStatusMap,
   getServiceTypeMap,
-  getAttributeMap
+  getAttributeMap,
+  getMethodTypeMap
 } from '@/mock/data/map_data'
 import { getAirCraftServices, getAirCraftMetaApps } from '@/mock/data/services_data'
 import request from '@/utils/request'
@@ -543,7 +544,8 @@ export default {
       ragFiles: [],
       ragUploadFiles: [],
       ragUploadUrl: 'https://apirag.xyz:8086/api/predict',
-      ragUploadMethod: 'POST',
+      ragUploadMethod: 1,
+      methodTypeOptions: getMethodTypeMap(),
       ragUploadLoading: false,
       hasRagData: false,
       agentSearchLoading: false,
@@ -555,7 +557,7 @@ export default {
         requirement: ''
       },
       agentSearchApiUrl: 'https://apirag.xyz:8086/api/predict',
-      agentSearchApiMethod: 'POST',
+      agentSearchApiMethod: 1,
       agentSearchApiHeader: { 'Content-Type': 'application/json;charset=UTF-8' },
       // dev用
       agentSearchApiHeaderText: JSON.stringify({ 'Content-Type': 'application/json;charset=UTF-8' }, null, 4),
@@ -874,7 +876,7 @@ export default {
           }
           this.agentSearchApiResult = await request({
             url: this.agentSearchApiUrl,
-            method: this.agentSearchApiMethod,
+            method: this.methodTypeOptions[this.agentSearchApiMethod],
             data: this.agentSearchForm,
             headers: this.agentSearchApiHeader
           })
@@ -954,7 +956,7 @@ export default {
         })
         const response = await request({
           url: this.ragUploadUrl,
-          method: this.ragUploadMethod,
+          method: this.methodTypeOptions[this.ragUploadMethod],
           data: formData,
           headers: {
             'Content-Type': 'multipart/form-data'
