@@ -700,7 +700,7 @@ export default {
           this.$message.warning('服务部署中，暂无法使用！')
           break
         default:
-          this.$emit('onGoUse', record.apiList || [])
+          this.$emit('onGoUse', record)
           break
       }
     },

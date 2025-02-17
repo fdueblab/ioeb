@@ -1,60 +1,50 @@
 <template>
   <page-header-wrapper :title="false">
     <a-card :body-style="{padding: '24px 32px'}" :bordered="false">
-      <a-form>
-        <a-form-item label="接口选择">
-          <div style="width: 100%; display: flex;">
-            <a-select v-model="selectedApi" @change="handleApiChange" style="width: 200px; margin-right: 20px">
-              <a-select-option v-for="(item, index) in apiList" :key="index" :value="index">
-                {{ item.name }}
-              </a-select-option>
-            </a-select>
-            <a-input-search
-              :readOnly="parameterType === 2 || parameterType === 3"
-              v-model="serviceUrl"
-              style="width: 100%"
-              placeholder="请选择接口"
-              @search="onRequestSend"
-            >
-              <span slot="addonBefore" style="width: 60px; text-align: center; display: inline-block;">
-                {{ method }}
-              </span>
-              <template #enterButton>
-                <a-button type="primary" icon="api" :loading="sending" :disabled="!serviceUrl">调用</a-button>
-              </template>
-            </a-input-search>
+      <div style="display: flex; justify-content: space-between">
+        <div style="width: 30%">
+          <div class="app-preview" v-if="apiList[0]">
+            <span class="app-title">{{ apiList[0].name }}</span>
+            <div class="input-output-container">
+              <!-- 输入区域 -->
+              <div>
+                <span class="section-title">{{ apiList[0].inputName }}</span>
+                <a-upload
+                  v-show="apiList[0].parameterType === 2"
+                  :file-list="fileList"
+                  :remove="removeFile"
+                  :customRequest="customFileChose"
+                  :multiple="false">
+                  <a-button> <a-icon type="upload" /> 选择数据文件 </a-button>
+                </a-upload>
+                <codemirror v-show="apiList[0].parameterType === 3" v-model="code" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions"></codemirror>
+                <a-button class="submit-button" type="primary" @click="onRequestSend">
+                  {{ apiList[0].submitButtonText }}
+                </a-button>
+              </div>
+              <!-- 输出区域 -->
+              <div>
+                <span class="section-title">{{ apiList[0].outputName }}</span>
+                <a-textarea v-model="response" class="output-box" placeholder="" :rows="8" readOnly />
+                <div class="image-box">
+                  {{ apiList[0].outputName }}可视化区域
+                </div>
+              </div>
+            </div>
           </div>
-        </a-form-item>
-        <a-form-item label="接口参数">
-          <a-radio-group v-model="parameterType">
-            <a-radio :value="0">无</a-radio>
-            <a-radio :value="1">url参数</a-radio>
-            <a-radio :value="2">文件</a-radio>
-            <a-radio :value="3">JSON</a-radio>
-          </a-radio-group>
-          <a-form-item v-show="parameterType === 2">
-            <a-upload
-              :file-list="fileList"
-              :remove="removeFile"
-              :customRequest="customFileChose"
-              :multiple="false">
-              <a-button> <a-icon type="upload" /> 选择文件... </a-button>
-            </a-upload>
-          </a-form-item>
-          <a-form-item v-show="parameterType === 3">
-            <codemirror v-model="code" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions"></codemirror>
-          </a-form-item>
-        </a-form-item>
-        <a-form-item label="响应结果">
-          <a-textarea v-model="response" placeholder="" :rows="8" readOnly />
-        </a-form-item>
-        <a-form-item
-          :wrapperCol="{ span: 24 }"
-          style="text-align: center"
-        >
-          <a-button type="primary" @click="handleGoBack">返回</a-button>
-        </a-form-item>
-      </a-form>
+          <div class="image-box" v-else>
+            数据缺失
+          </div>
+        </div>
+        <div style="width: 65%">
+          <div class="image-box">
+            元应用工作流
+          </div>
+        </div>
+      </div>
+      <div style="width: 100%; text-align: center; margin-top: 20px">
+        <a-button type="primary" @click="handleGoBack">返回</a-button>
+      </div>
     </a-card>
   </page-header-wrapper>
 </template>
@@ -90,7 +80,7 @@ import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
 
 export default {
-  name: 'UseService',
+  name: 'UseMetaApp',
   components: {
     codemirror
   },
@@ -102,11 +92,6 @@ export default {
   },
   data () {
     return {
-      form: this.$form.createForm(this),
-      selectedApi: undefined, // 默认选择的接口
-      serviceUrl: '', // 服务地址
-      method: '未选择', // 请求方法
-      parameterType: 0, // 参数类型
       fileList: [], // 文件列表
       uploadFiles: [], // 上传的文件对象列表
       sending: false,
@@ -114,10 +99,10 @@ export default {
       response: '',
       cmOptions: {
         mode: 'application/json',
-        gutters: ['CodeMirror-lint-markers', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+        gutters: [],
         tabSize: 4, // 制表符
         indentUnit: 2, // 缩进位数
-        lineNumbers: true,
+        lineNumbers: false,
         line: true,
         lint: true,
         lineWrapping: true,
@@ -139,21 +124,27 @@ export default {
         }
       },
       codemirrorStyle: {
+        width: '100%',
+        border: '1px solid #d9d9d9',
         fontSize: '14px',
         lineHeight: '120%'
-      }
+      },
+      // 工作流部分
+      initFlow: {},
+      initServices: [
+        {
+          id: '9',
+          type: 'group',
+          name: '跨境支付AI监测服务',
+          open: true,
+          children: []
+        }
+      ],
+      loadingServices: false,
+      loadingFlow: false
     }
   },
   methods: {
-    // 处理接口选择变化
-    handleApiChange(value) {
-      this.selectedApi = value
-      const api = this.apiList[value]
-      this.serviceUrl = api.url
-      this.method = api.method
-      this.parameterType = api.parameterType
-      this.response = ''
-    },
     onCmReady(cm) {
       cm.on('inputRead', (cm, obj) => {
         if (obj.text && obj.text.length > 0) {
@@ -187,7 +178,7 @@ export default {
     },
     // 发送请求
     async onRequestSend() {
-      const api = this.apiList[this.selectedApi]
+      const api = this.apiList[0]
       const isFakeApi = api && api.isFake
       // 假结果部分
       if (isFakeApi) {
@@ -227,7 +218,7 @@ export default {
         }
         // 发送请求
         const response = await request({
-          url: this.serviceUrl,
+          url: api.url,
           method: api.method,
           data: requestData,
           headers: headers
@@ -248,5 +239,80 @@ export default {
 <style scoped lang="less">
 .CodeMirror-hints {
   z-index: 30000 !important;
+}
+/deep/ .CodeMirror{
+  height: 120px;
+}
+
+.app-preview {
+  width: 100%;
+  aspect-ratio: 9 / 19; /* 设置宽高比 */
+  overflow-y: auto; /* 使高度限制生效 */
+  background-color: #f9f9f9;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.app-title {
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #1890ff;
+  color: #fff;
+  text-align: center;
+  display: block;
+  line-height: 35px;
+  border-radius: 6px 6px 0 0;
+}
+
+/* 输入输出容器 */
+.input-output-container {
+  margin: 16px;
+}
+
+/* 输入输出标题 */
+.section-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  margin: 8px;
+  line-height: 30px;
+}
+
+.submit-button {
+  width: 50%;
+  margin: 8px 0;
+  left: 25%;
+}
+
+/* 输出框 */
+.output-box {
+  width: 100%;
+  min-height: 100px;
+  padding: 8px;
+  background-color: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* 图片框 */
+.image-box {
+  width: 100%;
+  min-height: 150px;
+  margin-top: 16px;
+  padding: 16px;
+  background-color: #e8e8e8;
+  border: 1px dashed #d9d9d9;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
 }
 </style>
