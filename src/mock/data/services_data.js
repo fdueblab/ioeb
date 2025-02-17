@@ -589,7 +589,7 @@ const airCraftServices = [
 
 const amlMetaApps = [
   {
-    name: '跨境支付评估报告生成',
+    name: '技术评测元应用',
     attribute: 3,
     type: 1,
     domain: 0,
@@ -599,7 +599,7 @@ const amlMetaApps = [
     netWork: 'bridge',
     port: '0.0.0.0:1020/TCP → 0.0.0.0:10020',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/metaApp',
-    status: 0,
+    status: 1,
     norm: [
       {
         key: 0,
@@ -628,6 +628,28 @@ const amlMetaApps = [
       companyScore: 5,
       msScore: 5
     },
+    apiList: [
+      {
+        name: '技术评测元应用',
+        isFake: true,
+        inputName: '技术评测数据',
+        outputName: '技术评测报告',
+        submitButtonText: '开始评测',
+        url: 'http://43.130.11.13:5000/api/pj1_report_app',
+        method: 'POST',
+        parameterType: 3,
+        response: {
+          code: 200,
+          message: '评测完毕！',
+          data: {
+            securityResult: '5.0',
+            robustnessResult: '5.0',
+            privacyResult: '5.0',
+            credibilityResult: '5.0'
+          }
+        }
+      }
+    ],
     number: '2342'
   }
 ]
@@ -672,6 +694,7 @@ const airCraftMetaApps = [
       companyScore: 5,
       msScore: 5
     },
+    apiList: [],
     number: '2342'
   }
 ]
