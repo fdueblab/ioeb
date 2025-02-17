@@ -10,8 +10,8 @@
               </a-select-option>
             </a-select>
             <a-input-search
-              readOnly
-              :value="serviceUrl"
+              :readOnly="parameterType === 2 || parameterType === 3"
+              v-model="serviceUrl"
               style="width: 100%"
               placeholder="请选择接口"
               @search="onRequestSend"
@@ -28,7 +28,7 @@
         <a-form-item label="接口参数">
           <a-radio-group v-model="parameterType">
             <a-radio :value="0">无</a-radio>
-            <a-radio :value="1">path variable</a-radio>
+            <a-radio :value="1">url参数</a-radio>
             <a-radio :value="2">文件</a-radio>
             <a-radio :value="3">JSON</a-radio>
           </a-radio-group>
@@ -46,7 +46,7 @@
           </a-form-item>
         </a-form-item>
         <a-form-item label="响应结果">
-          <a-textarea v-model="response" placeholder="" :rows="8" />
+          <a-textarea v-model="response" placeholder="" :rows="8" readOnly />
         </a-form-item>
         <a-form-item
           :wrapperCol="{ span: 24 }"
@@ -166,6 +166,7 @@ export default {
       this.serviceUrl = api.url
       this.method = api.method
       this.parameterType = api.parameterType
+      this.response = ''
     },
     onCmReady(cm) {
       cm.on('inputRead', (cm, obj) => {
@@ -240,15 +241,16 @@ export default {
         }
         // 发送请求
         const response = await request({
-          url: api.url,
+          url: this.serviceUrl,
           method: api.method,
           data: requestData,
           headers: headers
         })
         // 处理响应
         this.response = JSON.stringify(response, null, 4)
+        this.$message.success('请求成功！')
       } catch (error) {
-        console.error('请求失败:', error)
+        this.response = error
         this.$message.error('请求失败，请检查网络或参数')
       } finally {
         this.sending = false
