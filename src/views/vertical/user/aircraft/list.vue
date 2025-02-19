@@ -530,7 +530,8 @@ export default {
   },
   data () {
     return {
-      isDev: this.$route.query.isDev === 'true' || process.env.NODE_ENV === 'development' || process.env.VUE_APP_PREVIEW === 'true',
+      // isDev: this.$route.query.isDev === 'true' || process.env.NODE_ENV === 'development' || process.env.VUE_APP_PREVIEW === 'true',
+      isDev: this.$route.query.isDev === 'true',
       editForm: this.$form.createForm(this),
       visible: false,
       confirmLoading: false,
