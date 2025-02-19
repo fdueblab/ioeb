@@ -44,6 +44,8 @@ const apiTypeMap = ['RESTful API', 'GraphQL API', 'WebSocket API']
 
 const methodTypeMap = ['GET', 'POST', 'PUT', 'DELETE']
 
+const ioTypeMap = ['无', '字符串数据', '文件', '数据流']
+
 const serviceTypeMap = ['原子微服务', '元应用服务']
 
 const amlIndustryMap = ['金融风控', '自贸监管', '跨境贸易', '跨境电商']
@@ -104,6 +106,10 @@ export function getApiTypeMap() {
 
 export function getMethodTypeMap() {
   return methodTypeMap
+}
+
+export function getIOTypeMap() {
+  return ioTypeMap
 }
 
 export function getPerformanceMetricMap() {
