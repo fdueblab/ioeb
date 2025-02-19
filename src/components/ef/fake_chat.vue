@@ -2,26 +2,11 @@
   <div class="preview-container">
     <div class="chat-output" ref="chatOutput">
       <div v-for="(message, index) in messages" :key="index" :class="['chat-message', message.isUser ? 'user-message' : 'bot-message']">
-        <div class="message-content" v-html="message.text"></div>
+        <a-icon v-if="message.text === 'agentLoading'" type="loading" />
+        <div v-else class="message-content" v-html="message.text" />
       </div>
     </div>
 
-    <!-- 应用预览区域 -->
-    <!--    <div class="app-preview" ref="appPreview">-->
-    <!-- 初始状态：显示提示文字 -->
-    <!--      <div v-if="!showPreviewImage" class="preview-placeholder">-->
-    <!--        元应用预览区域-->
-    <!--      </div>-->
-    <!-- 构建后：显示图片 -->
-    <!--      <img-->
-    <!--        v-if="showPreviewImage"-->
-    <!--        src="@/assets/app-preview.png"-->
-    <!--        alt="应用预览"-->
-    <!--        class="preview-image"-->
-    <!--      />-->
-    <!--    </div>-->
-
-    <!-- 输入框区域 -->
     <div class="chat-input">
       <a-input-search
         style="width: 100%"
@@ -67,33 +52,29 @@ export default {
       this.isInputLoading = true
       this.isInputEnabled = false
       this.messages.push({ text: this.userInput, isUser: true })
-      this.messages.push({ text: '', isUser: false })
-      if (this.userInput.includes('课题一')) {
-        const chosenServices = ['课题一风险识别模型推理微服务', '课题一报告生成微服务']
-        const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
-        this.typeWriter(outputMessage)
-        this.$emit('update-services', this.getUpdatedServices())
-        this.$emit('update-flow', this.getUpdatedFlow())
-        // 模拟处理用户输入的逻辑
-        setTimeout(() => {
+      this.messages.push({ text: 'agentLoading', isUser: false })
+      setTimeout(() => {
+        if (this.userInput.includes('课题一')) {
+          const chosenServices = ['课题一风险识别模型推理微服务', '课题一报告生成微服务']
+          const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
+          this.typeWriter(outputMessage)
+          this.$emit('update-services', this.getUpdatedServices())
+          this.$emit('update-flow', this.getUpdatedFlow())
           this.userInput = ''
           this.placeholder = '已智能生成微服务工作流'
           this.isInputLoading = false
-        }, 1600) // 模拟异步操作
-      } else {
-        const outputMessage = '抱歉，未理解您的需求，请提供进一步的描述。'
-        this.userInput = ''
-        this.typeWriter(outputMessage)
-        // 模拟处理用户输入的逻辑
-        setTimeout(() => {
+        } else {
+          const outputMessage = '抱歉，未理解您的需求，请提供进一步的描述。'
+          this.userInput = ''
+          this.typeWriter(outputMessage)
           this.isInputLoading = false
           this.isInputEnabled = true
-        }, 800) // 模拟异步操作
-      }
+        }
+      }, 1600)
     },
     typeWriter(text) {
       if (this.currentIndex < text.length) {
-        this.messages[this.messages.length - 1].text += text.charAt(this.currentIndex)
+        this.messages[this.messages.length - 1].text = text.substring(0, this.currentIndex + 1)
         this.currentIndex++
         setTimeout(() => this.typeWriter(text), 20)
       } else {
@@ -421,5 +402,17 @@ export default {
   border-radius: 4px;
   font-family: monospace;
   color: #d63384;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 0.2;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.2;
+  }
 }
 </style>

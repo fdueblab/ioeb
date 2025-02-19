@@ -54,9 +54,9 @@
       v-if="metaAppBuilderVisible"
       ref="metaAppBuilder"
       :service-type="serviceType"
-      :pre-name="serviceType === 'aml' ? '跨境支付报告生成' : '智能飞行控制'"
-      :pre-input-name="serviceType === 'aml' ? '跨境支付数据' : '智能飞行器参数'"
-      :pre-output-name="serviceType === 'aml' ? '跨境支付风险评估报告' : '智能飞行器任务结果'"
+      :pre-name="serviceType === 'aml' ? '课题一跨境支付风险识别报告生成' : '智能飞行控制'"
+      :pre-input-name="serviceType === 'aml' ? '课题一跨境支付数据' : '智能飞行器参数'"
+      :pre-output-name="serviceType === 'aml' ? '课题一跨境支付风险评估报告' : '智能飞行器任务结果'"
       @close="metaAppBuilderVisible = false"
     />
   </div>

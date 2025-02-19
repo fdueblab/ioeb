@@ -107,13 +107,27 @@
                 </a-col>
               </a-row>
               <a-row :gutter="20">
-                <a-col :span="12">
-                  <a-form-item label="输入参数">
+                <a-col :span="6">
+                  <a-form-item label="输入类型">
+                    <a-select v-model="form.inputType" disabled >
+                      <a-select-option v-for="(item, index) in ioTypeOptions" :key="index" :value="index">{{ item }}</a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="6">
+                  <a-form-item label="输入">
                     <a-input v-model="form.input" disabled/>
                   </a-form-item>
                 </a-col>
-                <a-col :span="12">
-                  <a-form-item label="输出参数">
+                <a-col :span="6">
+                  <a-form-item label="输出类型">
+                    <a-select v-model="form.outputType" disabled >
+                      <a-select-option v-for="(item, index) in ioTypeOptions" :key="index" :value="index">{{ item }}</a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="6">
+                  <a-form-item label="输出">
                     <a-input v-model="form.output" disabled/>
                   </a-form-item>
                 </a-col>
@@ -214,7 +228,14 @@ import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
 import 'codemirror/mode/python/python.js'
-import { getApiTypeMap, getIndustryMap, getMethodTypeMap, getScenarioMap, getTechnologyMap } from '@/mock/data/map_data'
+import {
+  getApiTypeMap,
+  getIndustryMap,
+  getIOTypeMap,
+  getMethodTypeMap,
+  getScenarioMap,
+  getTechnologyMap
+} from '@/mock/data/map_data'
 
 export default {
   name: 'TableList',
@@ -241,6 +262,8 @@ export default {
         serviceName: '',
         input: '',
         output: '',
+        inputType: 0,
+        outputType: 0,
         environment: '',
         process: '',
         apiType: 0,
@@ -282,6 +305,7 @@ class {{apiName}}({{input}}):
       programJson: null,
       apiTypeOptions: getApiTypeMap(),
       methodTypeOptions: getMethodTypeMap(),
+      ioTypeOptions: getIOTypeMap(),
       cmOptions: {
         mode: 'python', // 设置为 Python 模式
         // theme: 'base16-dark', // 黑暗模式主题
@@ -339,10 +363,10 @@ class {{apiName}}({{input}}):
         this.$message.success('解析成功，发现以下可用API及调用关系')
         this.programJson = {
           nodes: [
-            { id: '1000', x: 200, y: 50, label: 'getTargetFeature', size: 50, color: '#F6BD16', input: 'imageData', output: 'targetFeature', environment: '', process: '', apiType: 2, methodType: 0 },
-            { id: '1001', x: 50, y: 200, label: 'getTargetLocation', size: 50, color: '#5B8FF9', input: 'gpsCoordinates', output: 'targetLocation', environment: '', process: '', apiType: 2, methodType: 0 },
-            { id: '1002', x: 200, y: 150, label: 'getTargetInfo', size: 50, color: '#5AD8A6', input: 'targetFeature, targetLocation', output: 'targetInfo', environment: '', process: '', apiType: 0, methodType: 0 },
-            { id: '1003', x: 350, y: 200, label: 'getTargetType', size: 50, color: '#5D7092', input: 'targetInfo', output: 'targetType', environment: '', process: '', apiType: 0, methodType: 0 }
+            { id: '1000', x: 200, y: 50, label: 'getTargetFeature', size: 50, color: '#F6BD16', input: 'imageData', output: 'targetFeature', environment: '', process: '', apiType: 2, methodType: 0, inputType: 2, outputType: 1 },
+            { id: '1001', x: 50, y: 200, label: 'getTargetLocation', size: 50, color: '#5B8FF9', input: 'gpsCoordinates', output: 'targetLocation', environment: '', process: '', apiType: 2, methodType: 0, inputType: 2, outputType: 1 },
+            { id: '1002', x: 200, y: 150, label: 'getTargetInfo', size: 50, color: '#5AD8A6', input: 'targetFeature, targetLocation', output: 'targetInfo', environment: '', process: '', apiType: 0, methodType: 0, inputType: 2, outputType: 1 },
+            { id: '1003', x: 350, y: 200, label: 'getTargetType', size: 50, color: '#5D7092', input: 'targetInfo', output: 'targetType', environment: '', process: '', apiType: 0, methodType: 0, inputType: 2, outputType: 1 }
           ],
           edges: [
             { sourceID: '1000', targetID: '1002' },
@@ -494,7 +518,9 @@ class {{apiName}}({{input}}):
           process: node.process,
           apiType: node.apiType,
           apiName: node.label,
-          methodType: node.methodType
+          methodType: node.methodType,
+          inputType: node.inputType,
+          outputType: node.outputType
         }
         this.updateCode()
       }
