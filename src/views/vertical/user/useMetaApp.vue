@@ -37,8 +37,21 @@
           </div>
         </div>
         <div style="width: 65%">
-          <div class="image-box">
-            元应用工作流
+          <div style="display: flex;height: calc(100% - 47px);">
+            <div id="efContainer" ref="efContainer" class="container" v-flowDrag style="flex: 1; position: relative; background-color: #f0f2f7">
+              <div v-if="loadingFlow" class="loading-overlay">
+                <i class="el-icon-loading" />
+              </div>
+              <template v-for="node in data.nodeList">
+                <flow-node :id="node.id" :key="node.id" :node="node" :activeElement="activeElement"
+                           @changeNodeSite="changeNodeSite" @nodeRightMenu="nodeRightMenu" @clickNode="clickNode">
+                </flow-node>
+              </template>
+              <div style="position: fixed; bottom: 0; border-left: 1px solid #dce3e8; border-top: 1px solid #dce3e8; background-color: #FBFBFB; z-index: 999">
+                <flow-node-form ref="nodeForm" @setLineLabel="setLineLabel" @repaintEverything="repaintEverything"
+                                :flow-data="data" :data-reload-clear="dataReloadClear"></flow-node-form>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -78,11 +91,20 @@ import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
+/* eslint-disable */
+import draggable from 'vuedraggable'
+import { easyFlowMixin } from '@/components/ef/mixins'
+import flowNode from '@/components/ef/node'
+import nodeMenu from '@/components/ef/node_menu_with_input'
+import FlowInfo from '@/components/ef/info'
+import FlowNodeForm from '@/components/ef/node_form_bottom'
+import lodash from 'lodash'
+import { getPj1Flow } from '@/mock/data/flow_data'
 
 export default {
   name: 'UseMetaApp',
   components: {
-    codemirror
+    codemirror, draggable, flowNode, nodeMenu, FlowInfo, FlowNodeForm
   },
   props: {
     apiList: {
@@ -130,19 +152,103 @@ export default {
         lineHeight: '120%'
       },
       // 工作流部分
-      initFlow: {},
-      initServices: [
-        {
-          id: '9',
-          type: 'group',
-          name: '跨境支付AI监测服务',
-          open: true,
-          children: []
+      loadingFlow: false,
+      jsPlumb: null,
+      easyFlowVisible: true,
+      flowInfoVisible: false,
+      servicesAdderVisible: false,
+      metaAppBuilderVisible: false,
+      loadEasyFlowFinish: false,
+      services: [],
+      data: {
+        name: '新的流程图',
+        nodeList: [],
+        lineList: []
+      },
+      activeElement: {
+        type: undefined,
+        nodeId: undefined,
+        sourceId: undefined,
+        targetId: undefined
+      },
+      zoom: 0.5,
+      jsplumbSetting: {
+        Connector: ['Bezier', { curviness: 50 }],
+        Anchors: ['TopCenter', 'RightMiddle', 'BottomCenter', 'LeftMiddle'],
+        PaintStyle: {
+          strokeWidth: 2,
+          stroke: '#5c96bc',
+          outlineStroke: 'transparent',
+          outlineWidth: 4
+        },
+        HoverPaintStyle: {
+          strokeWidth: 2,
+          stroke: '#ffcc00'
+        },
+        EndpointStyle: {
+          fill: '#5c96bc',
+          outlineStroke: 'transparent',
+          outlineWidth: 2
+        },
+        EndpointHoverStyle: {
+          fill: '#ffcc00'
+        },
+        MaxConnections: -1,
+        ConnectionsDetachable: true,
+        Container: null,
+        DragOptions: {
+          cursor: 'pointer',
+          zIndex: 2000
         }
-      ],
-      loadingServices: false,
-      loadingFlow: false
+      }
     }
+  },
+  mixins: [easyFlowMixin],
+  directives: {
+    'flowDrag': {
+      bind(el, binding) {
+        if (!binding) {
+          return
+        }
+        el.onmousedown = (e) => {
+          if (e.button === 2) {
+            return
+          }
+          let disX = e.clientX
+          let disY = e.clientY
+          el.style.cursor = 'move'
+
+          document.onmousemove = function (e) {
+            e.preventDefault()
+            const left = e.clientX - disX
+            disX = e.clientX
+            el.scrollLeft += -left
+
+            const top = e.clientY - disY
+            disY = e.clientY
+            el.scrollTop += -top
+          }
+
+          document.onmouseup = function (e) {
+            el.style.cursor = 'auto'
+            document.onmousemove = null
+            document.onmouseup = null
+          }
+        }
+      }
+    }
+  },
+  mounted() {
+    this.loadingFlow = true
+    this.jsPlumb = jsPlumb.getInstance()
+    this.$nextTick(() => {
+      this.jsPlumbInit()
+    })
+    setTimeout(() => {
+      this.dataReload(getPj1Flow())
+      this.loadingFlow = false
+    }, 1200)
+
   },
   methods: {
     onCmReady(cm) {
@@ -232,6 +338,224 @@ export default {
       } finally {
         this.sending = false
       }
+    },
+    // 工作流区域
+    jsPlumbInit() {
+      this.jsPlumb.ready(() => {
+        this.jsPlumb.importDefaults(this.jsplumbSetting)
+        this.jsPlumb.setSuspendDrawing(false, true)
+        this.loadEasyFlow()
+        this.jsPlumb.bind('click', (conn, originalEvent) => {
+          this.activeElement.type = 'line'
+          this.activeElement.sourceId = conn.sourceId
+          this.activeElement.targetId = conn.targetId
+          this.$refs.nodeForm.lineInit({
+            from: conn.sourceId,
+            to: conn.targetId,
+            label: conn.getLabel()
+          })
+        })
+        this.jsPlumb.bind('connection', (evt) => {
+          const from = evt.source.id
+          const to = evt.target.id
+          if (this.loadEasyFlowFinish) {
+            this.data.lineList.push({ from: from, to: to })
+          }
+        })
+
+        this.jsPlumb.bind('connectionDetached', (evt) => {
+          this.deleteLine(evt.sourceId, evt.targetId)
+        })
+
+        this.jsPlumb.bind('connectionMoved', (evt) => {
+          this.changeLine(evt.originalSourceId, evt.originalTargetId)
+        })
+
+        this.jsPlumb.bind('contextmenu', (evt) => {
+          console.log('contextmenu', evt)
+        })
+
+        this.jsPlumb.bind('beforeDrop', (evt) => {
+          const from = evt.sourceId
+          const to = evt.targetId
+          if (from === to) {
+            this.$message.error('节点不支持连接自己')
+            return false
+          }
+          if (this.hasLine(from, to)) {
+            this.$message.error('该关系已存在,不允许重复创建')
+            return false
+          }
+          if (this.hashOppositeLine(from, to)) {
+            this.$message.error('不支持两个节点之间连线回环')
+            return false
+          }
+          console.log(evt)
+          console.log(to)
+
+          this.$message.success('连接成功')
+          return true
+        })
+
+        this.jsPlumb.bind('beforeDetach', (evt) => {
+          console.log('beforeDetach', evt)
+        })
+        this.jsPlumb.setContainer(this.$refs.efContainer)
+      })
+    },
+    loadEasyFlow() {
+      for (let i = 0; i < this.data.nodeList.length; i++) {
+        const node = this.data.nodeList[i]
+        this.jsPlumb.makeSource(node.id, this.jsplumbSourceOptions)
+        this.jsPlumb.makeTarget(node.id, this.jsplumbTargetOptions)
+        this.jsPlumb.draggable(node.id, {
+          containment: 'parent'
+        })
+      }
+
+      // 初始化连线
+      for (let j = 0; j < this.data.lineList.length; j++) {
+        const line = this.data.lineList[j]
+        let connParam = {
+          source: line.from,
+          target: line.to,
+          label: line.label ? line.label : '',
+          connector: ['Bezier'],
+          anchors: line.anchors ? line.anchors : undefined,
+          paintStyle: line.paintStyle ? line.paintStyle : undefined
+        }
+        this.jsPlumb.connect(connParam, this.jsplumbConnectOptions)
+      }
+
+      this.$nextTick(() => {
+        this.loadEasyFlowFinish = true
+      })
+    },
+    setLineLabel(from, to, label) {
+      let conn = this.jsPlumb.getConnections({
+        source: from,
+        target: to
+      })[0]
+      if (!label || label === '') {
+        conn.removeClass('flowLabel')
+        conn.addClass('emptyFlowLabel')
+      } else {
+        conn.addClass('flowLabel')
+      }
+      conn.setLabel({
+        label: label
+      })
+      this.data.lineList.forEach(function (line) {
+        if (line.from === from && line.to === to) {
+          line.label = label
+        }
+      })
+    },
+    deleteElement() {
+      if (this.activeElement.type === 'node') {
+        this.deleteNode(this.activeElement.nodeId)
+      } else if (this.activeElement.type === 'line') {
+        this.$confirm('确定删除所点击的线吗?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          let conn = this.jsPlumb.getConnections({
+            source: this.activeElement.sourceId,
+            target: this.activeElement.targetId
+          })[0]
+          this.jsPlumb.deleteConnection(conn)
+        }).catch(() => {
+        })
+      }
+    },
+    deleteLine(from, to) {
+      this.data.lineList = this.data.lineList.filter(function (line) {
+        return !(line.from === from && line.to === to);
+
+      })
+    },
+    changeLine(oldFrom, oldTo) {
+      this.deleteLine(oldFrom, oldTo)
+    },
+    changeNodeSite(data) {
+      for (let i = 0; i < this.data.nodeList.length; i++) {
+        const node = this.data.nodeList[i]
+        if (node.id === data.nodeId) {
+          node.left = data.left
+          node.top = data.top
+        }
+      }
+    },
+    clickNode(nodeId) {
+      this.activeElement.type = 'node'
+      this.activeElement.nodeId = nodeId
+      // this.$refs.nodeForm.nodeInit(this.data, nodeId)
+    },
+    hasLine(from, to) {
+      for (let i = 0; i < this.data.lineList.length; i++) {
+        let line = this.data.lineList[i]
+        if (line.from === from && line.to === to) {
+          return true
+        }
+      }
+      return false
+    },
+    hashOppositeLine(from, to) {
+      return this.hasLine(to, from)
+    },
+    nodeRightMenu(nodeId, evt) {
+      this.menu.show = true
+      this.menu.curNodeId = nodeId
+      this.menu.left = evt.x + 'px'
+      this.menu.top = evt.y + 'px'
+    },
+    repaintEverything() {
+      this.jsPlumb.repaint()
+    },
+    dataInfo() {
+      this.flowInfoVisible = true
+      this.$nextTick(function () {
+        this.$refs.flowInfo.init()
+      })
+    },
+    dataReload(data) {
+      this.easyFlowVisible = false
+      this.data.nodeList = []
+      this.data.lineList = []
+      this.$nextTick(() => {
+        data = lodash.cloneDeep(data)
+        this.easyFlowVisible = true
+        this.data = data
+        this.$nextTick(() => {
+          this.jsPlumb = jsPlumb.getInstance()
+          this.$nextTick(() => {
+            this.jsPlumbInit()
+          })
+        })
+      })
+    },
+    updateInitialFlow(newFlow) {
+      this.dataReload(newFlow)
+    },
+    dataReloadClear() {
+      this.dataReload(this.data)
+    },
+    zoomAdd() {
+      if (this.zoom >= 1) {
+        return
+      }
+      this.zoom = this.zoom + 0.1
+      this.$refs.efContainer.style.transform = `scale(${this.zoom})`
+      this.jsPlumb.setZoom(this.zoom)
+    },
+    zoomSub() {
+      if (this.zoom <= 0) {
+        return
+      }
+      this.zoom = this.zoom - 0.1
+      this.$refs.efContainer.style.transform = `scale(${this.zoom})`
+      this.jsPlumb.setZoom(this.zoom)
     }
   }
 }
@@ -314,5 +638,21 @@ export default {
   font-size: 14px;
   color: #666;
   font-style: italic;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  i {
+    font-size: 30px;
+  }
 }
 </style>
