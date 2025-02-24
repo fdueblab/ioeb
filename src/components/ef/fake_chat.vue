@@ -24,12 +24,14 @@
 </template>
 
 <script>
+import { getAircraftFlow, getPj1Flow } from '@/mock/data/flow_data'
+
 export default {
   name: 'FakeChat',
   props: {
     serviceType: {
       type: String,
-      default: ''
+      default: 'aml'
     }
   },
   mounted() {
@@ -53,24 +55,35 @@ export default {
       this.isInputEnabled = false
       this.messages.push({ text: this.userInput, isUser: true })
       this.messages.push({ text: 'agentLoading', isUser: false })
-      setTimeout(() => {
-        if (this.userInput.includes('课题一')) {
-          const chosenServices = ['课题一风险识别模型推理微服务', '课题一报告生成微服务']
-          const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
-          this.typeWriter(outputMessage)
-          this.$emit('update-services', this.getUpdatedServices())
-          this.$emit('update-flow', this.getUpdatedFlow())
-          this.userInput = ''
-          this.placeholder = '已智能生成微服务工作流'
-          this.isInputLoading = false
-        } else {
-          const outputMessage = '抱歉，未理解您的需求，请提供进一步的描述。'
-          this.userInput = ''
-          this.typeWriter(outputMessage)
-          this.isInputLoading = false
-          this.isInputEnabled = true
-        }
-      }, 1600)
+      if (this.serviceType === 'aircraft') {
+        const chosenServices = ['目标识别微服务', '远程控制微服务']
+        const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
+        this.typeWriter(outputMessage)
+        this.$emit('update-services', this.getUpdatedServices())
+        this.$emit('update-flow', this.getUpdatedFlow())
+        this.userInput = ''
+        this.placeholder = '已智能生成微服务工作流'
+        this.isInputLoading = false
+      } else {
+        setTimeout(() => {
+          if (this.userInput.includes('课题一')) {
+            const chosenServices = ['课题一风险识别模型推理微服务', '课题一报告生成微服务']
+            const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
+            this.typeWriter(outputMessage)
+            this.$emit('update-services', this.getUpdatedServices())
+            this.$emit('update-flow', this.getUpdatedFlow())
+            this.userInput = ''
+            this.placeholder = '已智能生成微服务工作流'
+            this.isInputLoading = false
+          } else {
+            const outputMessage = '抱歉，未理解您的需求，请提供进一步的描述。'
+            this.userInput = ''
+            this.typeWriter(outputMessage)
+            this.isInputLoading = false
+            this.isInputEnabled = true
+          }
+        }, 1600)
+      }
     },
     typeWriter(text) {
       if (this.currentIndex < text.length) {
@@ -198,148 +211,9 @@ export default {
     },
     getUpdatedFlow() {
       if (this.serviceType === 'aircraft') {
-        return {
-          name: 'AI推荐流程',
-          nodeList: [
-            {
-              id: '10000',
-              name: 'metaAppAgent',
-              type: 'start',
-              url: 'ms.kxyun.net/agent',
-              left: '200px',
-              top: '0',
-              ico: 'el-icon-cpu',
-              input: 'csv File',
-              output: 'json',
-              version: '1.0',
-              state: 'success'
-            },
-            {
-              id: '10001',
-              name: 'getTargetLocation',
-              type: 'process',
-              url: 'ms.kxyun.net/getTargetLocation',
-              left: '0',
-              top: '140px',
-              ico: 'el-icon-location-information',
-              state: 'success',
-              input: 'csv File',
-              output: 'json',
-              version: '1.0'
-            },
-            {
-              id: '10002',
-              name: 'getTargetInfo',
-              type: 'process',
-              url: 'ms.kxyun.net/getTargetInfo',
-              left: '200px',
-              top: '300px',
-              ico: 'el-icon-user',
-              state: 'success',
-              input: 'json',
-              output: 'json',
-              version: '1.0'
-            },
-            {
-              id: '10101',
-              name: 'setMotionMode',
-              type: 'end',
-              url: 'ms.kxyun.net/setMotionMode',
-              left: '400px',
-              top: '160px',
-              ico: 'el-icon-rank',
-              state: 'warning',
-              input: 'json',
-              output: 'json',
-              version: '1.0'
-            }
-          ],
-          lineList: [
-            { from: '10000', to: '10001' },
-            { from: '10001', to: '10000' },
-            { from: '10000', to: '10002' },
-            { from: '10002', to: '10000' },
-            { from: '10000', to: '10101' }
-          ]
-        }
-      }
-      return {
-        name: 'AI推荐流程',
-        nodeList: [
-          {
-            id: '10000',
-            name: 'metaAppAgent',
-            type: 'start',
-            url: 'http://43.130.11.13:5000/api/pj1_report_app',
-            left: '200px',
-            top: '0',
-            ico: 'el-icon-cpu',
-            input: 'zip File',
-            output: 'json',
-            version: '1.0',
-            state: 'running'
-          },
-          {
-            id: '9000',
-            name: 'preprocess',
-            type: 'process',
-            url: 'ms.kxyun.net/preprocess',
-            left: '0',
-            top: '130px',
-            ico: 'el-icon-c-scale-to-original',
-            input: 'zip File',
-            output: 'vector',
-            version: '2.0',
-            state: 'success'
-          },
-          {
-            id: '9001',
-            name: 'predict',
-            type: 'process',
-            url: 'http://43.130.11.13:25001/api/predict',
-            left: '75px',
-            top: '380px',
-            ico: 'el-icon-s-data',
-            state: 'success',
-            input: 'vector',
-            output: 'vector',
-            version: '1.1'
-          },
-          {
-            id: '9101',
-            name: 'generateReport',
-            type: 'process',
-            url: 'ms.kxyun.net/generateReport',
-            left: '300px',
-            top: '300px',
-            ico: 'el-icon-document-add',
-            state: 'warning',
-            input: 'vector',
-            output: 'pdf',
-            version: '0.9'
-          },
-          {
-            id: '9102',
-            name: 'getReportData',
-            type: 'process',
-            url: 'ms.kxyun.net/getReportData',
-            left: '450px',
-            top: '80px',
-            ico: 'el-icon-zoom-in',
-            state: 'warning',
-            input: 'pdf',
-            output: 'json',
-            version: '0.9'
-          }
-        ],
-        lineList: [
-          { from: '10000', to: '9000' },
-          { from: '9000', to: '9001' },
-          { from: '9001', to: '10000' },
-          { from: '10000', to: '9101' },
-          { from: '9101', to: '9102' },
-          { from: '9102', to: '10000' }
-        ]
+        return getAircraftFlow()
+      } else {
+        return getPj1Flow()
       }
     }
   }

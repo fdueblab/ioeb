@@ -29,7 +29,7 @@
       :initial-services="initServices"
       :loading-services="loadingServices"
       :loading-flow="loadingFlow"
-      :service-type="'aml'"
+      :service-type="'aircraft'"
     />
   </div>
 </template>

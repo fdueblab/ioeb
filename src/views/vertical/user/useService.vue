@@ -10,7 +10,6 @@
               </a-select-option>
             </a-select>
             <a-input-search
-              :readOnly="parameterType === 2 || parameterType === 3"
               v-model="serviceUrl"
               style="width: 100%"
               placeholder="请选择接口"
@@ -25,28 +24,31 @@
             </a-input-search>
           </div>
         </a-form-item>
-        <a-form-item label="接口参数">
-          <a-radio-group v-model="parameterType">
-            <a-radio :value="0">无</a-radio>
-            <a-radio :value="1">url参数</a-radio>
-            <a-radio :value="2">文件</a-radio>
-            <a-radio :value="3">JSON</a-radio>
-          </a-radio-group>
-          <a-form-item v-show="parameterType === 2">
-            <a-upload
-              :file-list="fileList"
-              :remove="removeFile"
-              :customRequest="customFileChose"
-              :multiple="false">
-              <a-button> <a-icon type="upload" /> 选择文件... </a-button>
-            </a-upload>
-          </a-form-item>
-          <a-form-item v-show="parameterType === 3">
-            <codemirror v-model="code" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions"></codemirror>
-          </a-form-item>
+        <a-form-item label="接口参数" v-if="parameterType !== 0">
+          <div style="width: 50%">
+            <a-table
+              :columns="parameterColumns"
+              :data-source="parameterData"
+              :pagination="false"
+              size="middle"
+              bordered
+            >
+              <template slot="parameterVal" slot-scope="text, record">
+                <a-upload
+                  v-if="record.name === 'file'"
+                  :file-list="fileList"
+                  :remove="removeFile"
+                  :customRequest="customFileChose"
+                  :multiple="false">
+                  <a-button> <a-icon type="upload" /> 选择文件 </a-button>
+                </a-upload>
+                <a-input v-else v-model="record.value" :placeholder="`请输入${record.name}`" />
+              </template>
+            </a-table>
+          </div>
         </a-form-item>
         <a-form-item label="响应结果">
-          <a-textarea v-model="response" placeholder="" :rows="8" readOnly />
+          <codemirror v-model="response" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions" />
         </a-form-item>
         <a-form-item
           :wrapperCol="{ span: 24 }"
@@ -109,8 +111,9 @@ export default {
       parameterType: 0, // 参数类型
       fileList: [], // 文件列表
       uploadFiles: [], // 上传的文件对象列表
+      parameterNames: [], // 参数名列表
+      parameterData: [], // 参数表格数据
       sending: false,
-      code: '',
       response: '',
       cmOptions: {
         mode: 'application/json',
@@ -131,6 +134,7 @@ export default {
         styleSelectedText: true,
         styleActiveLine: true,
         autoRefresh: true,
+        readOnly: true,
         highlightSelectionMatches: {
           minChars: 2,
           trim: true,
@@ -141,7 +145,20 @@ export default {
       codemirrorStyle: {
         fontSize: '14px',
         lineHeight: '120%'
-      }
+      },
+      parameterColumns: [
+        {
+          title: '参数名',
+          dataIndex: 'name',
+          key: 'name'
+        },
+        {
+          title: '参数值',
+          dataIndex: 'value',
+          key: 'value',
+          scopedSlots: { customRender: 'parameterVal' }
+        }
+      ]
     }
   },
   methods: {
@@ -152,6 +169,8 @@ export default {
       this.serviceUrl = api.url
       this.method = api.method
       this.parameterType = api.parameterType
+      this.parameterNames = api.parameterNames || []
+      this.parameterData = this.parameterNames.map(name => ({ name, value: '' })) // 初始化参数表格
       this.response = ''
     },
     onCmReady(cm) {
@@ -193,7 +212,7 @@ export default {
       if (isFakeApi) {
         this.sending = true
         setTimeout(() => {
-          this.response = JSON.stringify(api.response, null, 4)
+          this.response = JSON.stringify(api.response, null, 2)
           this.sending = false
         }, 1000)
         return
@@ -204,24 +223,40 @@ export default {
         const headers = {}
         // 根据参数类型构建请求数据和请求头
         switch (this.parameterType) {
-          case 2: // 文件上传
+          case 1: // URL参数
+            const queryParams = this.parameterData
+              .filter(param => param.value) // 过滤掉空值
+              .map(param => `${param.name}=${encodeURIComponent(param.value)}`)
+              .join('&')
+            this.serviceUrl = `${api.url}?${queryParams}`
+            requestData = {}
+            break
+          case 2:
+            // todo: 目前假定文件的参数名为file，后续需要进一步修改
             const formData = new FormData()
-            this.uploadFiles.forEach(file => {
-              formData.append('file', file)
+            this.parameterData.forEach(param => {
+              if (param.name === 'file') {
+                this.uploadFiles.forEach(file => {
+                  formData.append('file', file)
+                })
+              } else if (param.value) {
+                formData.append(param.name, param.value)
+              }
             })
             requestData = formData
             headers['Content-Type'] = 'multipart/form-data'
             break
           case 3: // JSON 格式
-            try {
-              requestData = JSON.parse(this.code)
-            } catch (error) {
-              this.$message.error('JSON 格式错误，请检查输入')
-              return
-            }
+            requestData = this.parameterData.reduce((acc, param) => {
+              if (param.value) {
+                acc[param.name] = param.value
+              }
+              return acc
+            }, {})
             headers['Content-Type'] = 'application/json;charset=UTF-8'
             break
-          default: // 其他情况（无参数或 path variable）
+          // todo: path variable
+          default: // 无参数
             requestData = {}
             break
         }
@@ -233,10 +268,10 @@ export default {
           headers: headers
         })
         // 处理响应
-        this.response = JSON.stringify(response, null, 4)
+        this.response = JSON.stringify(response, null, 2)
         this.$message.success('请求成功！')
       } catch (error) {
-        this.response = error
+        this.response = JSON.stringify(error, null, 2)
         this.$message.error('请求失败，请检查网络或参数')
       } finally {
         this.sending = false
@@ -245,6 +280,7 @@ export default {
   }
 }
 </script>
+
 <style scoped lang="less">
 .CodeMirror-hints {
   z-index: 30000 !important;
