@@ -59,7 +59,7 @@
                 <a-radio-group v-model="parameterType">
                   <a-radio :value="1">无</a-radio>
                   <a-radio :value="2">文件</a-radio>
-                  <a-radio :value="3">JSON</a-radio>
+                  <a-radio :value="3">文本</a-radio>
                 </a-radio-group>
               </a-form-item>
             </a-col>
@@ -148,7 +148,7 @@ export default {
   props: {
     serviceType: {
       type: String,
-      default: ''
+      default: 'aml'
     },
     preName: {
       type: String,
@@ -166,16 +166,20 @@ export default {
   data() {
     return {
       visible: false,
-      industryOptions: getIndustryMap('aml'),
-      scenarioOptions: getScenarioMap('aml'),
-      technologyOptions: getTechnologyMap('aml'),
+      industryOptions: [],
+      scenarioOptions: [],
+      technologyOptions: [],
       form: this.$form.createForm(this),
       parameterType: 2
     }
   },
   methods: {
     init() {
+      console.log(this.serviceType)
       this.visible = true
+      this.industryOptions = getIndustryMap(this.serviceType)
+      this.scenarioOptions = getScenarioMap(this.serviceType)
+      this.technologyOptions = getTechnologyMap(this.serviceType)
     },
     handleSubmit() {
       // 这里可以处理提交逻辑
@@ -194,11 +198,11 @@ export default {
             volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/metaApp',
             source: {
               popoverTitle: '可信云技术服务溯源',
-              companyName: '暂无内容',
+              companyName: '复旦大学课题组',
               companyAddress: '暂无内容',
               companyContact: '暂无内容',
-              companyIntroduce: '暂无内容',
-              msIntroduce: 'publisher构建的元应用',
+              companyIntroduce: '课题五',
+              msIntroduce: values.process || 'publisher构建的元应用',
               companyScore: 5,
               msScore: 5
             },

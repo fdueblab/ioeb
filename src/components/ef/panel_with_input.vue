@@ -54,9 +54,9 @@
       v-if="metaAppBuilderVisible"
       ref="metaAppBuilder"
       :service-type="serviceType"
-      :pre-name="serviceType === 'aml' ? '课题一跨境支付风险识别报告生成' : '智能飞行控制'"
-      :pre-input-name="serviceType === 'aml' ? '课题一跨境支付数据' : '智能飞行器参数'"
-      :pre-output-name="serviceType === 'aml' ? '课题一跨境支付风险评估报告' : '智能飞行器任务结果'"
+      :pre-name="data.preName"
+      :pre-input-name="data.preInputName"
+      :pre-output-name="data.preOutputName"
       @close="metaAppBuilderVisible = false"
     />
   </div>
@@ -110,7 +110,10 @@ export default {
       loadEasyFlowFinish: false,
       services: [],
       data: {
-        name: '新的流程图',
+        name: '新工作流',
+        preName: '元应用名称',
+        preInputName: '输入内容',
+        preOutputName: '输出内容',
         nodeList: [],
         lineList: []
       },
@@ -480,8 +483,14 @@ export default {
     },
     dataReload(data) {
       this.easyFlowVisible = false
-      this.data.nodeList = []
-      this.data.lineList = []
+      this.data = {
+        name: '新工作流',
+        preName: '元应用名称',
+        preInputName: '输入内容',
+        preOutputName: '输出内容',
+        nodeList: [],
+        lineList: []
+      }
       this.$nextTick(() => {
         data = lodash.cloneDeep(data)
         this.easyFlowVisible = true

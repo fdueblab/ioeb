@@ -17,7 +17,7 @@
                   :multiple="false">
                   <a-button> <a-icon type="upload" /> 选择数据文件 </a-button>
                 </a-upload>
-                <codemirror v-show="apiList[0].parameterType === 3" v-model="code" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions"></codemirror>
+                <a-textarea v-show="apiList[0].parameterType === 3" v-model="code" class="input-box" placeholder="" :rows="4" />
                 <a-button class="submit-button" type="primary" @click="onRequestSend">
                   {{ apiList[0].submitButtonText }}
                 </a-button>
@@ -25,7 +25,7 @@
               <!-- 输出区域 -->
               <div>
                 <span class="section-title">{{ apiList[0].outputName }}</span>
-                <a-textarea v-model="response" class="output-box" placeholder="" :rows="8" readOnly />
+                <codemirror v-model="response" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions" />
                 <div class="image-box">
                   {{ apiList[0].outputName }}可视化区域
                 </div>
@@ -99,7 +99,7 @@ import nodeMenu from '@/components/ef/node_menu_with_input'
 import FlowInfo from '@/components/ef/info'
 import FlowNodeForm from '@/components/ef/node_form_bottom'
 import lodash from 'lodash'
-import { getPj1Flow } from '@/mock/data/flow_data'
+import { getAircraftFlow, getPj1Flow, getTecTempFlow } from '@/mock/data/flow_data'
 
 export default {
   name: 'UseMetaApp',
@@ -138,6 +138,7 @@ export default {
         styleSelectedText: true,
         styleActiveLine: true,
         autoRefresh: true,
+        readOnly: true,
         highlightSelectionMatches: {
           minChars: 2,
           trim: true,
@@ -161,7 +162,10 @@ export default {
       loadEasyFlowFinish: false,
       services: [],
       data: {
-        name: '新的流程图',
+        name: '新工作流',
+        preName: '元应用名称',
+        preInputName: '输入内容',
+        preOutputName: '输出内容',
         nodeList: [],
         lineList: []
       },
@@ -245,7 +249,16 @@ export default {
       this.jsPlumbInit()
     })
     setTimeout(() => {
-      this.dataReload(getPj1Flow())
+      switch (this.apiList[0].name) {
+        case '技术评测元应用':
+          this.dataReload(getTecTempFlow())
+          break
+        case '无人机智能投递':
+          this.dataReload(getAircraftFlow())
+          break
+        default:
+          this.dataReload(getPj1Flow())
+      }
       this.loadingFlow = false
     }, 1200)
 
@@ -611,8 +624,7 @@ export default {
   left: 25%;
 }
 
-/* 输出框 */
-.output-box {
+.input-box {
   width: 100%;
   min-height: 100px;
   padding: 8px;

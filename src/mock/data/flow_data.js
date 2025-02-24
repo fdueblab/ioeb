@@ -1,5 +1,8 @@
 const pj1Flow = {
-  name: 'AI推荐流程',
+  name: '元应用工作流',
+  preName: '课题一风险识别报告生成元应用',
+  preInputName: '课题一跨境支付数据',
+  preOutputName: '课题一风险评估报告',
   nodeList: [
     {
       id: '10000',
@@ -77,6 +80,121 @@ const pj1Flow = {
   ]
 }
 
+const tecTempFlow = {
+  name: '元应用工作流',
+  preName: '技术评测元应用',
+  preInputName: '',
+  preOutputName: '',
+  nodeList: [
+    {
+      id: '10000',
+      name: 'metaAppAgent',
+      type: 'start',
+      url: 'http://43.130.11.13:5000/api/tec_test_app',
+      left: '200px',
+      top: '0',
+      ico: 'el-icon-cpu',
+      input: 'zip File',
+      output: 'json',
+      version: '1.0',
+      state: 'running'
+    },
+    {
+      id: '9001',
+      name: 'predict',
+      type: 'process',
+      url: 'http://43.130.11.13:25001/api/predict',
+      left: '350px',
+      top: '200px',
+      ico: 'el-icon-s-data',
+      state: 'success',
+      input: 'vector',
+      output: 'vector',
+      version: '0.9'
+    }
+  ],
+  lineList: [
+    { from: '10000', to: '9001' },
+    { from: '9001', to: '10000' }
+  ]
+}
+
+const aircraftFlow = {
+  name: '元应用工作流',
+  preName: '智能飞行控制',
+  preInputName: '智能飞行器参数',
+  preOutputName: '智能飞行器任务结果',
+  nodeList: [
+    {
+      id: '10000',
+      name: 'metaAppAgent',
+      type: 'start',
+      url: 'ms.kxyun.net/agent',
+      left: '200px',
+      top: '0',
+      ico: 'el-icon-cpu',
+      input: 'csv File',
+      output: 'json',
+      version: '1.0',
+      state: 'success'
+    },
+    {
+      id: '10001',
+      name: 'getTargetLocation',
+      type: 'process',
+      url: 'ms.kxyun.net/getTargetLocation',
+      left: '0',
+      top: '140px',
+      ico: 'el-icon-location-information',
+      state: 'success',
+      input: 'csv File',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '10002',
+      name: 'getTargetInfo',
+      type: 'process',
+      url: 'ms.kxyun.net/getTargetInfo',
+      left: '200px',
+      top: '300px',
+      ico: 'el-icon-user',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '10101',
+      name: 'setMotionMode',
+      type: 'end',
+      url: 'ms.kxyun.net/setMotionMode',
+      left: '400px',
+      top: '160px',
+      ico: 'el-icon-rank',
+      state: 'warning',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    }
+  ],
+  lineList: [
+    { from: '10000', to: '10001' },
+    { from: '10001', to: '10000' },
+    { from: '10000', to: '10002' },
+    { from: '10002', to: '10000' },
+    { from: '10000', to: '10101' }
+  ]
+}
+
 export function getPj1Flow() {
   return pj1Flow
+}
+
+export function getTecTempFlow() {
+  return tecTempFlow
+}
+
+export function getAircraftFlow() {
+  return aircraftFlow
 }
