@@ -8,25 +8,32 @@
             <div class="input-output-container">
               <!-- 输入区域 -->
               <div>
-                <span class="section-title">{{ apiList[0].inputName }}</span>
-                <a-upload
-                  v-show="apiList[0].parameterType === 2"
-                  :file-list="fileList"
-                  :remove="removeFile"
-                  :customRequest="customFileChose"
-                  :multiple="false">
-                  <a-button> <a-icon type="upload" /> 选择数据文件 </a-button>
-                </a-upload>
-                <a-textarea v-show="apiList[0].parameterType === 3" v-model="code" class="input-box" placeholder="" :rows="4" />
-                <a-button class="submit-button" type="primary" @click="onRequestSend">
-                  {{ apiList[0].submitButtonText }}
-                </a-button>
+                <span v-show="apiList[0].parameterType !== 0" class="section-title">{{ apiList[0].inputName }}</span>
+                <div style="width: 100%; display: flex; justify-content: center">
+                  <a-upload
+                    v-show="apiList[0].parameterType === 2"
+                    :file-list="fileList"
+                    :remove="removeFile"
+                    :customRequest="customFileChose"
+                    :multiple="false">
+                    <a-button> <a-icon type="upload" /> 选择数据文件 </a-button>
+                  </a-upload>
+                </div>
+                <a-textarea v-show="apiList[0].parameterType === 1 || apiList[0].parameterType === 3" v-model="code" class="input-box" placeholder="" :rows="4" />
+                <div style="width: 100%">
+                  <a-button class="submit-button" type="primary" @click="onRequestSend">
+                    {{ apiList[0].submitButtonText }}
+                  </a-button>
+                </div>
               </div>
               <!-- 输出区域 -->
               <div>
                 <span class="section-title">{{ apiList[0].outputName }}</span>
-                <codemirror v-model="response" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions" />
-                <div class="image-box">
+                <div v-if="apiList[0].responseType === 2">
+                  <a-button :disabled="!fileUrl" icon="download" @click="downloadFile">下载结果文件</a-button>
+                </div>
+                <codemirror v-else v-model="response" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions" />
+                <div v-show="apiList[0].outputVisualization" class="image-box">
                   {{ apiList[0].outputName }}可视化区域
                 </div>
               </div>
@@ -119,11 +126,10 @@ export default {
       sending: false,
       code: '',
       response: '',
+      fileUrl: '',
       cmOptions: {
         mode: 'application/json',
         gutters: [],
-        tabSize: 4, // 制表符
-        indentUnit: 2, // 缩进位数
         lineNumbers: false,
         line: true,
         lint: true,
@@ -303,7 +309,7 @@ export default {
       if (isFakeApi) {
         this.sending = true
         setTimeout(() => {
-          this.response = JSON.stringify(api.response, null, 4)
+          this.response = JSON.stringify(api.response, null, 2)
           this.sending = false
         }, 1000)
         return
@@ -335,15 +341,25 @@ export default {
             requestData = {}
             break
         }
-        // 发送请求
-        const response = await request({
-          url: api.url,
-          method: api.method,
-          data: requestData,
-          headers: headers
-        })
-        // 处理响应
-        this.response = JSON.stringify(response, null, 4)
+        // 文件类型
+        if (this.responseType === 2) {
+          const response = await request({
+            url: this.serviceUrl,
+            method: api.method,
+            data: requestData,
+            headers: headers,
+            responseType: 'blob'
+          })
+          this.fileUrl = window.URL.createObjectURL(response)
+        } else {
+          const response = await request({
+            url: this.serviceUrl,
+            method: api.method,
+            data: requestData,
+            headers: headers
+          })
+          this.response = JSON.stringify(response, null, 2)
+        }
         this.$message.success('请求成功！')
       } catch (error) {
         this.response = error
@@ -351,6 +367,17 @@ export default {
       } finally {
         this.sending = false
       }
+    },
+    downloadFile () {
+      const link = document.createElement('a')
+      const fileName = this.apiList[this.selectedApi].responseFileName
+      link.href = this.fileUrl
+      if (fileName) {
+        link.setAttribute('download', fileName)
+      }
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     },
     // 工作流区域
     jsPlumbInit() {

@@ -120,7 +120,7 @@ export default {
       parameterData: [], // 参数表格数据
       sending: false,
       response: '',
-      fileUrl: '', // 文件下载链接
+      fileUrl: '',
       cmOptions: {
         mode: 'application/json',
         gutters: ['CodeMirror-lint-markers', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
@@ -289,7 +289,7 @@ export default {
         }
         this.$message.success('请求成功！')
       } catch (error) {
-        this.response = JSON.stringify(error, null, 2)
+        this.response = error
         this.$message.error('请求失败，请检查网络或参数')
       } finally {
         this.sending = false

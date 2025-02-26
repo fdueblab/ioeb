@@ -206,6 +206,15 @@ export default {
       this.visible = true
       validateFields((errors, values) => {
         if (!errors) {
+          const { name, inputName, outputName, outputVisualization, submitButtonText } = values
+          let url = 'http://myApiServer.com/metaApp'
+          let method = 'POST'
+          let isFake = true
+          if (name.includes('课题一')) {
+            url = 'http://43.130.11.13:5000/api/pj1_report_app'
+            method = 'POST'
+            isFake = false
+          }
           const serviceData = {
             ...values,
             type: 1,
@@ -225,16 +234,16 @@ export default {
             },
             apiList: [
               {
-                name: values.name,
-                inputName: values.inputName,
-                outputName: values.outputName,
-                outputVisualization: values.outputVisualization,
-                submitButtonText: values.submitButtonText,
-                isFake: true,
-                url: 'http://myApiServer.com/metaApp',
-                method: 'POST',
-                parameterType: values.inputType,
-                responseType: values.outputType,
+                name,
+                inputName,
+                outputName,
+                outputVisualization,
+                submitButtonText,
+                isFake,
+                url,
+                method,
+                parameterType: this.inputType,
+                responseType: this.outputType,
                 response: {
                   code: 200,
                   message: '调用成功！'
@@ -242,24 +251,6 @@ export default {
               }
             ],
             number: '0'
-          }
-          if (serviceData.name.includes('课题一')) {
-            console.log(serviceData.name)
-            serviceData.apiList = [
-              {
-                name: values.name,
-                inputName: values.inputName,
-                outputName: values.outputName,
-                inputType: values.inputType,
-                outputType: values.outputType,
-                outputVisualization: values.outputVisualization,
-                submitButtonText: values.submitButtonText,
-                url: 'http://43.130.11.13:5000/api/pj1_report_app',
-                method: 'POST',
-                parameterType: values.inputType,
-                responseType: values.outputType
-              }
-            ]
           }
           sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
           this.visible = false
