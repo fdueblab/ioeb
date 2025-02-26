@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 
 # 安装 yarn（如果基础镜像未预装）
-RUN npm install -g yarn
+# RUN npm install -g yarn
 
 # 安装依赖
 RUN yarn install
