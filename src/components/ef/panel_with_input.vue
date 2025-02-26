@@ -31,13 +31,24 @@
           <i class="el-icon-loading" />
         </div>
         <template v-for="node in data.nodeList">
-          <flow-node :id="node.id" :key="node.id" :node="node" :activeElement="activeElement"
-                     @changeNodeSite="changeNodeSite" @nodeRightMenu="nodeRightMenu" @clickNode="clickNode">
-          </flow-node>
+          <flow-node
+            :id="node.id"
+            :key="node.id"
+            :node="node"
+            :activeElement="activeElement"
+            @changeNodeSite="changeNodeSite"
+            @nodeRightMenu="nodeRightMenu"
+            @clickNode="clickNode"
+          />
         </template>
         <div style="position: fixed; bottom: 0; border-left: 1px solid #dce3e8; border-top: 1px solid #dce3e8; background-color: #FBFBFB; z-index: 999">
-          <flow-node-form ref="nodeForm" @setLineLabel="setLineLabel" @repaintEverything="repaintEverything"
-                          :flow-data="data" :data-reload-clear="dataReloadClear"></flow-node-form>
+          <flow-node-form
+            ref="nodeForm"
+            @setLineLabel="setLineLabel"
+            @repaintEverything="repaintEverything"
+            :flow-data="data"
+            :data-reload-clear="dataReloadClear"
+          />
         </div>
       </div>
     </div>
