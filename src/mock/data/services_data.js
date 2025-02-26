@@ -777,7 +777,7 @@ const airCraftMetaApps = [
   {
     name: '无人机智能投递',
     attribute: 3,
-    type: 0,
+    type: 1,
     domain: 0,
     industry: 1,
     scenario: 2,
@@ -785,7 +785,7 @@ const airCraftMetaApps = [
     netWork: 'bridge',
     port: '0.0.0.0:8084/TCP → 0.0.0.0:80084',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aircraft/data',
-    status: 0,
+    status: 1,
     norm: [
       {
         key: 0,
