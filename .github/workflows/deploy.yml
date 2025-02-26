@@ -34,10 +34,10 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t your-dockerhub-username/your-repo-name:latest .
+        run: docker build -t polarsnowleopard/ioeb:latest .
 
       - name: Push Docker image
-        run: docker push your-dockerhub-username/your-repo-name:latest
+        run: docker push polarsnowleopard/ioeb:latest
 
       - name: Deploy to server
         env:
@@ -50,10 +50,10 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
           ssh ubuntu@$SERVER_IP << EOF
-            docker pull your-dockerhub-username/your-repo-name:latest
-            docker stop your-container-name || true
-            docker rm your-container-name || true
-            docker run -d --name your-container-name -p 80:80 -p 443:443 \
+            docker pull polarsnowleopard/ioeb:latest
+            docker stop ioeb || true
+            docker rm ioeb || true
+            docker run -d --name ioeb -p 80:80 -p 443:443 \
               -v /var/fdueblab.cn_nginx:/etc/nginx/ssl \
-              your-dockerhub-username/your-repo-name:latest
+              polarsnowleopard/ioeb:latest
           EOF
