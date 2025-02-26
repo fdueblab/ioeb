@@ -62,6 +62,15 @@ export default {
     },
     clearFlow() {
       this.$refs.flowPanel.dataReloadClear()
+      this.$refs.flowPanel.setServices([
+        {
+          id: '9',
+          type: 'group',
+          name: '跨境支付AI监测服务',
+          open: true,
+          children: []
+        }
+      ])
     }
   }
 }

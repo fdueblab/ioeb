@@ -87,6 +87,15 @@ export default {
     },
     clearFlow() {
       this.$refs.flowPanel.dataReloadClear()
+      this.$refs.flowPanel.setServices([
+        {
+          id: '3',
+          type: 'group',
+          name: '低空飞行AI监控服务',
+          open: true,
+          children: []
+        }
+      ])
     }
   }
 }
