@@ -38,7 +38,8 @@ const amlServices = [
         url: 'http://43.130.11.13:25001/api/predict',
         method: 'POST',
         parameterType: 2,
-        parameterNames: ['file']
+        parameterNames: ['file'],
+        responseType: 1
       },
       {
         name: 'healthCheck',
@@ -88,6 +89,7 @@ const amlServices = [
         url: 'http://myApiServer.com/technical-assessment/train',
         method: 'POST',
         parameterType: 2,
+        responseType: 1,
         response: {
           code: 200,
           message: '训练完成!',
@@ -105,6 +107,7 @@ const amlServices = [
         url: 'http://myApiServer.com/technical-assessment/predict',
         method: 'POST',
         parameterType: 2,
+        responseType: 1,
         response: {
           code: 200,
           message: '预测成功！',
@@ -160,6 +163,7 @@ const amlServices = [
         method: 'GET',
         parameterType: 1,
         parameterNames: ['reportId'],
+        responseType: 1,
         response: {
           code: 200,
           message: '获取成功!',
@@ -175,6 +179,7 @@ const amlServices = [
         method: 'GET',
         parameterType: 1,
         parameterNames: ['reportId'],
+        responseType: 1,
         response: {
           code: 200,
           message: '发送成功！',
@@ -190,6 +195,7 @@ const amlServices = [
         method: 'POST',
         parameterType: 3,
         parameterNames: ['reportData'],
+        responseType: 1,
         response: {
           code: 200,
           message: '生成成功！',
@@ -244,6 +250,7 @@ const amlServices = [
         url: 'http://myApiServer.com/credit-assessment/train',
         method: 'POST',
         parameterType: 2,
+        responseType: 1,
         response: {
           code: 200,
           message: '训练完成!',
@@ -261,6 +268,7 @@ const amlServices = [
         url: 'http://myApiServer.com/credit-assessment/predict',
         method: 'POST',
         parameterType: 2,
+        responseType: 1,
         response: {
           code: 200,
           message: '预测成功！',
@@ -315,6 +323,7 @@ const amlServices = [
         url: 'http://myApiServer.com/anomaly-detection/preprocess',
         method: 'POST',
         parameterType: 2,
+        responseType: 1,
         response: {
           code: 200,
           message: '预处理成功!',
@@ -332,6 +341,7 @@ const amlServices = [
         url: 'http://myApiServer.com/anomaly-detection/train',
         method: 'POST',
         parameterType: 2,
+        responseType: 1,
         response: {
           code: 200,
           message: '训练完成!',
@@ -349,6 +359,7 @@ const amlServices = [
         url: 'http://myApiServer.com/anomaly-detection/predict',
         method: 'POST',
         parameterType: 2,
+        responseType: 1,
         response: {
           code: 200,
           message: '预测成功！',
@@ -363,6 +374,7 @@ const amlServices = [
         url: 'http://myApiServer.com/anomaly-detection/evaluate',
         method: 'POST',
         parameterType: 2,
+        responseType: 1,
         response: {
           code: 200,
           message: '评估成功！',
@@ -377,6 +389,7 @@ const amlServices = [
         url: 'http://myApiServer.com/anomaly-detection/visualize',
         method: 'POST',
         parameterType: 2,
+        responseType: 1,
         response: {
           code: 200,
           message: '可视化成功！',
@@ -384,6 +397,69 @@ const amlServices = [
             visualizeResult: 'visualize result list'
           }
         }
+      }
+    ]
+  },
+  {
+    name: '课题三金融风险报告生成微服务',
+    attribute: 2,
+    type: 0,
+    domain: 0,
+    industry: 3,
+    scenario: 4,
+    technology: 4,
+    netWork: 'bridge',
+    port: '0.0.0.0:8005/TCP → 0.0.0.0:80005',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
+    status: 4,
+    number: '2342',
+    norm: [
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '课题三',
+      msIntroduce: '金融风险报告生成',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'generate-report',
+        url: 'http://43.130.11.13:25003/api/generate-report',
+        method: 'GET',
+        parameterType: 1,
+        parameterNames: ['query'],
+        responseType: 2,
+        responseFileName: 'financial_report.pdf'
+      },
+      {
+        name: 'nl2gql',
+        url: 'http://43.130.11.13:25003/api/nl2gql',
+        method: 'GET',
+        parameterType: 1,
+        parameterNames: ['query'],
+        responseType: 1
+      },
+      {
+        name: 'healthCheck',
+        url: 'http://43.130.11.13:25003/api/health',
+        method: 'GET',
+        parameterType: 0
       }
     ]
   },
@@ -396,7 +472,7 @@ const amlServices = [
     scenario: 4,
     technology: 4,
     netWork: 'bridge',
-    port: '0.0.0.0:8005/TCP → 0.0.0.0:80005',
+    port: '0.0.0.0:8006/TCP → 0.0.0.0:80006',
     volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
     status: 4,
     number: '2342',
@@ -430,7 +506,8 @@ const amlServices = [
         url: 'http://43.130.11.13:25004/safety/safety-fingerprint',
         method: 'POST',
         parameterType: 2,
-        parameterNames: ['file', 'model_name']
+        parameterNames: ['file', 'model_name'],
+        responseType: 1
       },
       {
         name: 'healthCheck',
@@ -674,10 +751,12 @@ const amlMetaApps = [
         isFake: true,
         inputName: '技术评测数据',
         outputName: '技术评测报告',
+        outputVisualization: true,
         submitButtonText: '开始评测',
-        url: 'http://43.130.11.13:5000/api/pj1_report_app',
+        url: 'http://myApiServer.com/metaApp',
         method: 'POST',
         parameterType: 3,
+        responseType: 1,
         response: {
           code: 200,
           message: '评测完毕！',
@@ -744,6 +823,7 @@ const airCraftMetaApps = [
         url: 'http://myApiServer.com/air/target',
         method: 'POST',
         parameterType: 3,
+        responseType: 1,
         response: {
           code: 200,
           message: '任务已开始'

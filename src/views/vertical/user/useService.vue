@@ -48,7 +48,11 @@
           </div>
         </a-form-item>
         <a-form-item label="响应结果">
-          <codemirror v-model="response" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions" />
+          <!-- 返回文件的情况-->
+          <div v-if="responseType === 2">
+            <a-button :disabled="!fileUrl" icon="download" @click="downloadFile">下载结果文件</a-button>
+          </div>
+          <codemirror v-else v-model="response" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions" />
         </a-form-item>
         <a-form-item
           :wrapperCol="{ span: 24 }"
@@ -109,12 +113,14 @@ export default {
       serviceUrl: '', // 服务地址
       method: '未选择', // 请求方法
       parameterType: 0, // 参数类型
+      responseType: 0, // 返回类型
       fileList: [], // 文件列表
       uploadFiles: [], // 上传的文件对象列表
       parameterNames: [], // 参数名列表
       parameterData: [], // 参数表格数据
       sending: false,
       response: '',
+      fileUrl: '', // 文件下载链接
       cmOptions: {
         mode: 'application/json',
         gutters: ['CodeMirror-lint-markers', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
@@ -169,9 +175,11 @@ export default {
       this.serviceUrl = api.url
       this.method = api.method
       this.parameterType = api.parameterType
+      this.responseType = api.responseType
       this.parameterNames = api.parameterNames || []
       this.parameterData = this.parameterNames.map(name => ({ name, value: '' })) // 初始化参数表格
       this.response = ''
+      this.fileUrl = ''
     },
     onCmReady(cm) {
       cm.on('inputRead', (cm, obj) => {
@@ -260,15 +268,25 @@ export default {
             requestData = {}
             break
         }
-        // 发送请求
-        const response = await request({
-          url: this.serviceUrl,
-          method: api.method,
-          data: requestData,
-          headers: headers
-        })
-        // 处理响应
-        this.response = JSON.stringify(response, null, 2)
+        // 文件类型
+        if (this.responseType === 2) {
+          const response = await request({
+            url: this.serviceUrl,
+            method: api.method,
+            data: requestData,
+            headers: headers,
+            responseType: 'blob'
+          })
+          this.fileUrl = window.URL.createObjectURL(response)
+        } else {
+          const response = await request({
+            url: this.serviceUrl,
+            method: api.method,
+            data: requestData,
+            headers: headers
+          })
+          this.response = JSON.stringify(response, null, 2)
+        }
         this.$message.success('请求成功！')
       } catch (error) {
         this.response = JSON.stringify(error, null, 2)
@@ -276,6 +294,17 @@ export default {
       } finally {
         this.sending = false
       }
+    },
+    downloadFile () {
+      const link = document.createElement('a')
+      const fileName = this.apiList[this.selectedApi].responseFileName
+      link.href = this.fileUrl
+      if (fileName) {
+        link.setAttribute('download', fileName)
+      }
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     }
   }
 }

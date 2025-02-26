@@ -11,7 +11,7 @@
   >
     <div style="display: flex; justify-content: space-around">
       <!-- 应用预览区域 -->
-      <div style="width: 30%">
+      <div style="width: 35%">
         <span class="title">元应用预览</span>
         <div class="app-preview">
           <span class="app-title">{{ form.getFieldValue('name') || preName }}</span>
@@ -20,12 +20,14 @@
             <div>
               <span class="section-title">{{ form.getFieldValue('inputName') || preInputName }}</span>
               <a-textarea
-                v-show="parameterType === 3"
+                v-show="inputType === 1 || inputType === 3"
                 placeholder="欢迎使用AI中台为您构建的元应用!"
                 :auto-size="{ minRows: 4, maxRows: 6 }"
                 class="input-box"
               />
-              <div style="width: 100%; display: flex; justify-content: center"><a-button v-show="parameterType === 2"> <a-icon type="upload" /> 选择数据文件 </a-button></div>
+              <div style="width: 100%; display: flex; justify-content: center">
+                <a-button v-show="inputType === 2"> <a-icon type="upload" /> 选择数据文件 </a-button>
+              </div>
               <div style="width: 100%">
                 <a-button class="submit-button" type="primary" @click="handleSubmit">
                   {{ form.getFieldValue('submitButtonText') || '获取结果' }}
@@ -38,7 +40,7 @@
               <div class="output-box">
                 预发布后即可试用此元应用
               </div>
-              <div class="image-box">
+              <div v-show="form.getFieldValue('visualization')" class="image-box">
                 {{ form.getFieldValue('outputName') || preOutputName }}可视化区域
               </div>
             </div>
@@ -48,39 +50,48 @@
 
       <!-- 元应用信息区域 -->
       <div style="width: 50%">
-        <span class="title">元应用信息</span>
+        <span class="title">元应用属性</span>
         <a-form :form="form" layout="vertical">
+          <a-divider>视觉配置</a-divider>
           <a-row :gutter="16">
-            <a-form-item label="名称">
-              <a-input v-decorator="['name', { rules: [{ required: true, message: '请填写元应用名称!' }], initialValue: preName }]" placeholder="请输入元应用名称" />
-            </a-form-item>
-            <a-col :span="12">
-              <a-form-item label="输入类型" required>
-                <a-radio-group v-model="parameterType">
-                  <a-radio :value="1">无</a-radio>
-                  <a-radio :value="2">文件</a-radio>
-                  <a-radio :value="3">文本</a-radio>
-                </a-radio-group>
+            <a-col :span="24">
+              <a-form-item label="名称">
+                <a-input v-decorator="['name', { rules: [{ required: true, message: '请填写元应用名称!' }], initialValue: preName }]" placeholder="请输入元应用名称" />
               </a-form-item>
             </a-col>
-            <a-col :span="12">
+            <!--            <a-col :span="18">-->
+            <!--              <a-form-item label="输入类型" required>-->
+            <!--                <a-radio-group v-model="parameterType">-->
+            <!--                  <a-radio v-for="(item, index) in ioTypeOptions" :key="index" :value="index">{{ item }}</a-radio>-->
+            <!--                </a-radio-group>-->
+            <!--              </a-form-item>-->
+            <!--            </a-col>-->
+            <a-col v-if="inputType !== 0" :span="12">
               <a-form-item label="输入数据名称">
                 <a-input v-decorator="['inputName', { rules: [{ required: true, message: '请填写输入数据名称!' }], initialValue: preInputName }]"/>
               </a-form-item>
             </a-col>
-          </a-row>
-          <a-row :gutter="16">
+            <a-col v-if="outputType !== 0" :span="12">
+              <a-form-item label="输出数据名称">
+                <a-input v-decorator="['outputName', { rules: [{ required: true, message: '请填写输出数据名称!' }], initialValue: preOutputName }]"/>
+              </a-form-item>
+            </a-col>
             <a-col :span="12">
               <a-form-item label="获取结果按钮文本">
                 <a-input v-decorator="['submitButtonText', { rules: [{ required: true, message: '请填写获取结果按钮文本!' }], initialValue: '获取结果' }]"/>
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="输出数据名称">
-                <a-input v-decorator="['outputName', { rules: [{ required: true, message: '请填写输出数据名称!' }], initialValue: preOutputName }]"/>
+              <a-form-item label="结果可视化">
+                <div style="height:32px; display: flex; justify-content: space-between; align-items: center">
+                  <a-checkbox v-decorator="['visualization']">
+                    结果可视化展示
+                  </a-checkbox>
+                </div>
               </a-form-item>
             </a-col>
           </a-row>
+          <a-divider>应用信息</a-divider>
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="领域">
@@ -150,6 +161,14 @@ export default {
       type: String,
       default: 'aml'
     },
+    inputType: {
+      type: Number,
+      default: 0
+    },
+    outputType: {
+      type: Number,
+      default: 0
+    },
     preName: {
       type: String,
       default: '元应用名称'
@@ -169,13 +188,11 @@ export default {
       industryOptions: [],
       scenarioOptions: [],
       technologyOptions: [],
-      form: this.$form.createForm(this),
-      parameterType: 2
+      form: this.$form.createForm(this)
     }
   },
   methods: {
     init() {
-      console.log(this.serviceType)
       this.visible = true
       this.industryOptions = getIndustryMap(this.serviceType)
       this.scenarioOptions = getScenarioMap(this.serviceType)
@@ -206,6 +223,24 @@ export default {
               companyScore: 5,
               msScore: 5
             },
+            apiList: [
+              {
+                name: values.name,
+                inputName: values.inputName,
+                outputName: values.outputName,
+                outputVisualization: values.outputVisualization,
+                submitButtonText: values.submitButtonText,
+                isFake: true,
+                url: 'http://myApiServer.com/metaApp',
+                method: 'POST',
+                parameterType: values.inputType,
+                responseType: values.outputType,
+                response: {
+                  code: 200,
+                  message: '调用成功！'
+                }
+              }
+            ],
             number: '0'
           }
           if (serviceData.name.includes('课题一')) {
@@ -215,10 +250,14 @@ export default {
                 name: values.name,
                 inputName: values.inputName,
                 outputName: values.outputName,
+                inputType: values.inputType,
+                outputType: values.outputType,
+                outputVisualization: values.outputVisualization,
                 submitButtonText: values.submitButtonText,
                 url: 'http://43.130.11.13:5000/api/pj1_report_app',
                 method: 'POST',
-                parameterType: 2
+                parameterType: values.inputType,
+                responseType: values.outputType
               }
             ]
           }
