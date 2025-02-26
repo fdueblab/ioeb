@@ -31,7 +31,7 @@
                 <a-button ref="ragButton" class="rag-input-bubble-button" @click="toggleRAGInput">
                   <a-icon type="dot-chart" v-if="!showRAGInput"/>
                   <a-icon type="close" v-else/>
-                  领域知识增强
+                  领域增强
                 </a-button>
                 <a-button type="primary" icon="file-search" @click="handleAgentSearch" :loading="agentSearchLoading">智能检索</a-button>
               </div>

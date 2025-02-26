@@ -33,6 +33,18 @@
               size="middle"
               bordered
             >
+              <template slot="parameterName" slot-scope="text, record" >
+                <span>
+                  {{ record.name }}
+                  <a-tooltip>
+                    <template #title>
+                      text
+                      <!-- todo: env和process配置和使用 -->
+                    </template>
+                    <a-icon type="question-circle-o" />
+                  </a-tooltip>
+                </span>
+              </template>
               <template slot="parameterVal" slot-scope="text, record">
                 <a-upload
                   v-if="record.name === 'file'"
@@ -94,10 +106,12 @@ import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
+import Template from '@/views/vertical/user/aircraft'
 
 export default {
   name: 'UseService',
   components: {
+    Template,
     codemirror
   },
   props: {
@@ -156,7 +170,8 @@ export default {
         {
           title: '参数名',
           dataIndex: 'name',
-          key: 'name'
+          key: 'name',
+          scopedSlots: { customRender: 'parameterName' }
         },
         {
           title: '参数值',

@@ -38,7 +38,7 @@
             <div>
               <span class="section-title">{{ form.getFieldValue('outputName') || preOutputName }}</span>
               <div class="output-box">
-                预发布后即可试用此元应用
+                预发布后即可验证此元应用
               </div>
               <div v-show="form.getFieldValue('visualization')" class="image-box">
                 {{ form.getFieldValue('outputName') || preOutputName }}可视化区域

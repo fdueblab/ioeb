@@ -146,7 +146,7 @@ const amlServiceNodes = [
   {
     id: '94',
     type: 'group',
-    name: '课题一报告生成微服务',
+    name: '样例报告生成微服务',
     open: true,
     children: [
       {

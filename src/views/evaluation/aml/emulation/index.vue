@@ -37,7 +37,7 @@
           <a-form>
             <a-row :gutter="20">
               <a-col :span="8">
-                <a-form-item label="性能指标">
+                <a-form-item label="验证指标">
                   <a-select placeholder="请选择" :default-value="-1">
                     <a-select-option :value="-1">全部</a-select-option>
                     <a-select-option v-for="(item, index) in performanceMetricOptions" :key="index" :value="index">

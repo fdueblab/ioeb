@@ -209,8 +209,8 @@ const pj3Flow = {
       left: '200px',
       top: '0',
       ico: 'el-icon-cpu',
-      input: 'json',
-      output: 'json',
+      input: 'text',
+      output: 'pdf',
       version: '1.0',
       state: 'running'
     },
@@ -265,35 +265,9 @@ const pj1Pj4Flow = {
       top: '0',
       ico: 'el-icon-cpu',
       input: 'vector',
-      output: 'vector',
+      output: 'json',
       version: '1.0',
       state: 'running'
-    },
-    {
-      id: '9000',
-      name: 'preprocess',
-      type: 'process',
-      url: 'ms.kxyun.net/preprocess',
-      left: '0',
-      top: '130px',
-      ico: 'el-icon-c-scale-to-original',
-      input: 'zip File',
-      output: 'vector',
-      version: '2.0',
-      state: 'success'
-    },
-    {
-      id: '9001',
-      name: 'predict',
-      type: 'process',
-      url: 'http://43.130.11.13:25001/api/predict',
-      left: '75px',
-      top: '380px',
-      ico: 'el-icon-s-data',
-      state: 'success',
-      input: 'vector',
-      output: 'vector',
-      version: '1.1'
     },
     {
       id: '11000',
@@ -310,9 +284,6 @@ const pj1Pj4Flow = {
     }
   ],
   lineList: [
-    { from: '10000', to: '9000' },
-    { from: '9000', to: '9001' },
-    { from: '9001', to: '10000' },
     { from: '10000', to: '11000' },
     { from: '11000', to: '10000' }
   ]
@@ -326,7 +297,7 @@ export function getPj3Flow() {
   return pj3Flow
 }
 
-export function getPj1Pj4Flow() {
+export function getPj4Flow() {
   return pj1Pj4Flow
 }
 
