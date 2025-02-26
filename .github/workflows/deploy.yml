@@ -50,9 +50,18 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
           ssh ubuntu@$SERVER_IP << EOF
-            docker pull polarsnowleopard/ioeb:latest
+            # 拉取镜像（添加重试逻辑）
+            for i in {1..5}; do
+              docker pull polarsnowleopard/ioeb:latest && break
+              echo "Retrying Docker pull (attempt $i)..."
+              sleep 5
+            done
+
+            # 停止并删除旧容器（如果存在）
             docker stop ioeb || true
             docker rm ioeb || true
+
+            # 运行新容器
             docker run -d --name ioeb -p 80:80 -p 443:443 \
               -v /var/fdueblab.cn_nginx:/etc/nginx/ssl \
               polarsnowleopard/ioeb:latest
