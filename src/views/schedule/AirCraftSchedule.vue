@@ -10,7 +10,13 @@
         allow="microphone">
       </iframe>
     </div>
-    <fake-chat v-else style="height: calc(100vh - 100px)" @update-services="updateServices" @update-flow="updateFlow" :service-type="'aircraft'" />
+    <fake-chat
+      v-else
+      style="height: calc(100vh - 100px)"
+      @update-services="updateServices"
+      @update-flow="updateFlow"
+      @clear-flow="clearFlow"
+      :service-type="'aircraft'" />
     <div style="height: 100%; width: 100%;" v-if="isDev">
       流程图嵌入地址（仅开发环境可见）：
       <a-input v-model="flowUrl" placeholder="请输入流程图嵌入地址" />
@@ -78,6 +84,9 @@ export default {
         this.$refs.flowPanel.updateInitialFlow(newFlow)
         this.loadingFlow = false
       }, 1600)
+    },
+    clearFlow() {
+      this.$refs.flowPanel.dataReloadClear()
     }
   }
 }
