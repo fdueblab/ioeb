@@ -3,6 +3,8 @@ const pj1Flow = {
   preName: '课题一风险识别报告生成元应用',
   preInputName: '课题一跨境支付数据',
   preOutputName: '课题一风险评估报告',
+  inputType: 2,
+  outputType: 1,
   nodeList: [
     {
       id: '10000',
@@ -85,6 +87,8 @@ const tecTempFlow = {
   preName: '技术评测元应用',
   preInputName: '',
   preOutputName: '',
+  inputType: 1,
+  outputType: 1,
   nodeList: [
     {
       id: '10000',
@@ -124,6 +128,8 @@ const aircraftFlow = {
   preName: '智能飞行控制',
   preInputName: '智能飞行器参数',
   preOutputName: '智能飞行器任务结果',
+  inputType: 1,
+  outputType: 1,
   nodeList: [
     {
       id: '10000',

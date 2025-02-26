@@ -54,6 +54,8 @@
       v-if="metaAppBuilderVisible"
       ref="metaAppBuilder"
       :service-type="serviceType"
+      :input-type="data.inputType"
+      :output-type="data.outputType"
       :pre-name="data.preName"
       :pre-input-name="data.preInputName"
       :pre-output-name="data.preOutputName"
@@ -114,6 +116,8 @@ export default {
         preName: '元应用名称',
         preInputName: '输入内容',
         preOutputName: '输出内容',
+        inputType: 0,
+        outputType: 0,
         nodeList: [],
         lineList: []
       },
