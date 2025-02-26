@@ -1,9 +1,15 @@
 <template>
   <div class="schedule-with-input">
-    <fake-chat style="height: calc(100vh - 100px)" @update-services="updateServices" @update-flow="updateFlow" :service-type="'aml'" />
+    <fake-chat
+      style="height: calc(100vh - 100px)"
+      @update-services="updateServices"
+      @update-flow="updateFlow"
+      @clear-flow="clearFlow"
+      :service-type="'aml'"
+    />
     <flow-panel
       ref="flowPanel"
-      style="height: calc(100vh - 100px); width: 100%;"
+      style="height: calc(100vh - 100px); width: 100%"
       :initial-flow="initFlow"
       :initial-services="initServices"
       :loading-services="loadingServices"
@@ -53,6 +59,9 @@ export default {
         this.$refs.flowPanel.updateInitialFlow(newFlow)
         this.loadingFlow = false
       }, 1600)
+    },
+    clearFlow() {
+      this.$refs.flowPanel.dataReloadClear()
     }
   }
 }

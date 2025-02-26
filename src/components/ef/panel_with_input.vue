@@ -24,7 +24,7 @@
         <div v-if="loadingServices" class="loading-overlay">
           <i class="el-icon-loading" />
         </div>
-        <node-menu @addNode="addNode" ref="nodeMenu" :menu-list="services"></node-menu>
+        <node-menu @addNode="addNode" ref="nodeMenu" :menu-list="services" />
       </div>
       <div id="efContainer" ref="efContainer" class="container" v-flowDrag style="flex: 1; position: relative; background-color: #f0f2f7">
         <div v-if="loadingFlow" class="loading-overlay">
