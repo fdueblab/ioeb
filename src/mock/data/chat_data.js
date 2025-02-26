@@ -1,4 +1,4 @@
-import { getAircraftFlow, getPj1Flow, getPj1Pj4Flow, getPj3Flow } from '@/mock/data/flow_data'
+import { getAircraftFlow, getPj1Flow, getPj4Flow, getPj3Flow } from '@/mock/data/flow_data'
 
 const aircraftPj = {
   chosenServices: ['目标识别微服务', '远程控制微服务'],
@@ -54,7 +54,7 @@ const aircraftPj = {
 }
 
 const pj1 = {
-  chosenServices: ['课题一风险识别模型推理微服务', '课题一报告生成微服务'],
+  chosenServices: ['课题一风险识别模型推理微服务', '样例报告生成微服务'],
   serviceNodes: [
     {
       id: '9',
@@ -94,7 +94,7 @@ const pj1 = {
         {
           id: '91',
           type: 'group',
-          name: '课题一报告生成微服务',
+          name: '样例报告生成微服务',
           open: true,
           children: [
             {
@@ -158,7 +158,7 @@ const pj3 = {
   flowData: getPj3Flow()
 }
 
-const pj1Pj4 = {
+const pj4 = {
   chosenServices: ['课题一风险识别模型推理微服务', '课题四模型评测-安全性指纹微服务'],
   serviceNodes: [
     {
@@ -167,28 +167,6 @@ const pj1Pj4 = {
       name: '跨境支付AI监测服务',
       open: true,
       children: [
-        {
-          id: '90',
-          type: 'group',
-          name: '课题一风险识别模型推理微服务',
-          open: true,
-          children: [
-            {
-              id: '9002',
-              type: 'preprocess',
-              name: 'preprocess',
-              ico: 'el-icon-c-scale-to-original',
-              style: {}
-            },
-            {
-              id: '9005',
-              type: 'predict',
-              name: 'predict',
-              ico: 'el-icon-data-line',
-              style: {}
-            }
-          ]
-        },
         {
           id: '94',
           type: 'group',
@@ -208,7 +186,7 @@ const pj1Pj4 = {
       ]
     }
   ],
-  flowData: getPj1Pj4Flow()
+  flowData: getPj4Flow()
 }
 
 export function getChatData(serviceType, userInput) {
@@ -222,7 +200,7 @@ export function getChatData(serviceType, userInput) {
       } else if (userInput.includes('课题三')) {
         resolve(pj3)
       } else if (userInput.includes('课题四')) {
-        resolve(pj1Pj4)
+        resolve(pj4)
       } else {
         reject(new Error())
       }

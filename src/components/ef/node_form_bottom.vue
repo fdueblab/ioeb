@@ -54,7 +54,7 @@
             <el-row>
               <el-col :span="24">
                 <el-form-item>
-                  <el-button icon="el-icon-close">重置</el-button>
+                  <el-button type="danger" icon="el-icon-delete" @click="deleteElement">删除</el-button>
                   <el-button type="primary" icon="el-icon-check" @click="save">保存</el-button>
                 </el-form-item>
               </el-col>
@@ -72,7 +72,7 @@
             <el-row>
               <el-col :span="24">
                 <el-form-item>
-                  <el-button icon="el-icon-close">重置</el-button>
+                  <el-button icon="el-icon-delete" @click="deleteElement">删除</el-button>
                   <el-button type="primary" icon="el-icon-check" @click="saveLine">保存</el-button>
                 </el-form-item>
               </el-col>
@@ -80,38 +80,6 @@
           </el-form>
         </div>
       </el-tab-pane>
-
-      <!--      <el-tab-pane label="构建为元应用">-->
-      <!--        <el-form :model="services" ref="dataForm" label-width="80px">-->
-      <!--          <el-row>-->
-      <!--            <el-col :span="12">-->
-      <!--              <el-form-item label="名称">-->
-      <!--                <el-input v-model="services.api"></el-input>-->
-      <!--              </el-form-item>-->
-      <!--            </el-col>-->
-      <!--            <el-col :span="12">-->
-      <!--              <el-form-item label="领域">-->
-      <!--                <el-input v-model="services.name" :disabled="true"></el-input>-->
-      <!--              </el-form-item>-->
-      <!--            </el-col>-->
-      <!--          </el-row>-->
-      <!--          <el-row>-->
-      <!--            <el-col :span="24">-->
-      <!--              <el-form-item label="描述">-->
-      <!--                <el-input v-model="services.description" :rows="3" type="textarea" placeholder="请输入内容"></el-input>-->
-      <!--              </el-form-item>-->
-      <!--            </el-col>-->
-      <!--          </el-row>-->
-      <!--          <el-row>-->
-      <!--            <el-col :span="24">-->
-      <!--              <el-form-item>-->
-      <!--                <el-button icon="el-icon-close">重置</el-button>-->
-      <!--                <el-button type="primary" icon="el-icon-check" @click="addScheduledService">保存</el-button>-->
-      <!--              </el-form-item>-->
-      <!--            </el-col>-->
-      <!--          </el-row>-->
-      <!--        </el-form>-->
-      <!--      </el-tab-pane>-->
     </el-tabs>
   </div>
 
@@ -174,6 +142,9 @@ export default {
           this.$emit('repaintEverything')
         }
       })
+    },
+    deleteElement () {
+      this.$emit('deleteElement')
     },
     // 向服务器提交编排的service信息
     addScheduledService () {

@@ -16,7 +16,7 @@
         :disabled="!isInputEnabled"
       >
         <template #enterButton>
-          <a-button type="primary" icon="deployment-unit" :loading="isInputLoading" :disabled="!userInput">智能生成</a-button>
+          <a-button type="primary" icon="deployment-unit" :loading="isInputLoading" :disabled="!userInput" />
         </template>
       </a-input-search>
     </div>
@@ -60,7 +60,7 @@ export default {
         this.typeWriter(outputMessage)
         this.$emit('update-services', serviceNodes)
         this.$emit('update-flow', flowData)
-        this.placeholder = '已智能生成微服务工作流'
+        this.placeholder = '已智能生成工作流'
         this.isGenerated = true
       }).catch(() => {
         const outputMessage = '抱歉，未理解您的需求，请提供进一步的描述。'

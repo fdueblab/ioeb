@@ -44,7 +44,7 @@ const apiTypeMap = ['RESTful API', 'GraphQL API', 'WebSocket API']
 
 const methodTypeMap = ['GET', 'POST', 'PUT', 'DELETE']
 
-const ioTypeMap = ['无', '字符串数据', '文件', '数据流']
+const ioTypeMap = ['none', 'string', 'formData', 'json']
 
 const serviceTypeMap = ['原子微服务', '元应用服务']
 

@@ -38,6 +38,7 @@ const amlServices = [
         url: 'http://43.130.11.13:25001/api/predict',
         method: 'POST',
         parameterType: 2,
+        // todo: parameterNames改为parameters并调整结构
         parameterNames: ['file'],
         responseType: 1
       },
@@ -119,7 +120,7 @@ const amlServices = [
     ]
   },
   {
-    name: '课题一报告生成微服务',
+    name: '样例报告生成微服务',
     attribute: 0,
     type: 0,
     domain: 0,

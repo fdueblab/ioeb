@@ -4,16 +4,16 @@
       <el-col :span="24">
         <div class="ef-tooltar">
           <el-link type="primary" :underline="false">{{ data.name }}</el-link>
-          <el-divider direction="vertical"></el-divider>
-          <el-button type="text" icon="el-icon-delete" size="large" @click="deleteElement"
-                     :disabled="!this.activeElement.type"></el-button>
+          <!--  <el-divider direction="vertical"></el-divider>-->
+          <!--  <el-button type="text" icon="el-icon-delete" size="large" @click="deleteElement"-->
+          <!--                     :disabled="!this.activeElement.type"></el-button>-->
           <el-divider direction="vertical"></el-divider>
           <el-button type="text" icon="el-icon-download" size="large" @click="downloadData"></el-button>
           <el-button plain round @click="addMetaApp" icon="el-icon-s-grid" type="success" size="large">构建为元应用</el-button>
           <div style="float: right;margin-right: 5px">
             <el-button plain round icon="el-icon-document" @click="dataInfo" size="mini">流程数据</el-button>
-            <el-button plain round @click="dataReloadClear" icon="el-icon-refresh" size="mini">清空画布</el-button>
-            <el-button plain round @click="test" icon="el-icon-connection" size="mini">{{ this.isTesting ? '停止测试' : '测试连接' }}</el-button>
+            <el-button plain round @click="dataReloadClear" icon="el-icon-refresh" size="mini">清空工作流</el-button>
+            <!--  <el-button plain round @click="test" icon="el-icon-connection" size="mini">{{ this.isTesting ? '停止测试' : '测试连接' }}</el-button>-->
             <el-button plain round @click="addServices" icon="el-icon-plus" size="mini">添加微服务</el-button>
           </div>
         </div>
@@ -44,6 +44,7 @@
         <div style="position: fixed; bottom: 0; border-left: 1px solid #dce3e8; border-top: 1px solid #dce3e8; background-color: #FBFBFB; z-index: 999">
           <flow-node-form
             ref="nodeForm"
+            @delete-element="deleteElement"
             @setLineLabel="setLineLabel"
             @repaintEverything="repaintEverything"
             :flow-data="data"
@@ -308,7 +309,7 @@ export default {
       })
     },
     loadEasyFlow() {
-      for (var i = 0; i < this.data.nodeList.length; i++) {
+      for (let i = 0; i < this.data.nodeList.length; i++) {
         const node = this.data.nodeList[i];
         this.jsPlumb.makeSource(node.id, this.jsplumbSourceOptions);
         this.jsPlumb.makeTarget(node.id, this.jsplumbTargetOptions);
@@ -318,9 +319,9 @@ export default {
       }
 
       // 初始化连线
-      for (var i = 0; i < this.data.lineList.length; i++) {
+      for (let i = 0; i < this.data.lineList.length; i++) {
         const line = this.data.lineList[i];
-        var connParam = {
+        let connParam = {
           source: line.from,
           target: line.to,
           label: line.label ? line.label : '',
@@ -336,7 +337,7 @@ export default {
       });
     },
     setLineLabel(from, to, label) {
-      var conn = this.jsPlumb.getConnections({
+      let conn = this.jsPlumb.getConnections({
         source: from,
         target: to
       })[0]
@@ -364,7 +365,7 @@ export default {
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          var conn = this.jsPlumb.getConnections({
+          let conn = this.jsPlumb.getConnections({
             source: this.activeElement.sourceId,
             target: this.activeElement.targetId
           })[0]
@@ -385,7 +386,7 @@ export default {
       this.deleteLine(oldFrom, oldTo)
     },
     changeNodeSite(data) {
-      for (var i = 0; i < this.data.nodeList.length; i++) {
+      for (let i = 0; i < this.data.nodeList.length; i++) {
         const node = this.data.nodeList[i]
         if (node.id === data.nodeId) {
           node.left = data.left
@@ -394,10 +395,10 @@ export default {
       }
     },
     addNode(evt, nodeMenu, mousePosition) {
-      var screenX = evt.originalEvent.clientX; var screenY = evt.originalEvent.clientY
+      let screenX = evt.originalEvent.clientX; let screenY = evt.originalEvent.clientY
       const efContainer = this.$refs.efContainer
-      var containerRect = efContainer.getBoundingClientRect()
-      var left = screenX; var top = screenY
+      let containerRect = efContainer.getBoundingClientRect()
+      let left = screenX; let top = screenY
       if (left < containerRect.x || left > containerRect.width + containerRect.x || top < containerRect.y || containerRect.y > containerRect.y + containerRect.height) {
         this.$message.error('请把节点拖入到画布中')
         return
@@ -406,13 +407,13 @@ export default {
       top = top - containerRect.y + efContainer.scrollTop
       left -= 85
       top -= 16
-      var nodeId = this.getUUID()
-      var origName = nodeMenu.name
-      var nodeName = origName
-      var index = 1
+      let nodeId = this.getUUID()
+      let origName = nodeMenu.name
+      let nodeName = origName
+      let index = 1
       while (index < 10000) {
-        var repeat = false
-        for (var i = 0; i < this.data.nodeList.length; i++) {
+        let repeat = false
+        for (let i = 0; i < this.data.nodeList.length; i++) {
           const node = this.data.nodeList[i]
           if (node.name === nodeName) {
             nodeName = origName + index
@@ -425,7 +426,7 @@ export default {
         }
         break
       }
-      var node = {
+      let node = {
         id: nodeId,
         name: nodeName,
         type: nodeMenu.type,
@@ -445,17 +446,14 @@ export default {
       })
     },
     deleteNode(nodeId) {
-      this.$confirm('确定要删除节点' + nodeId + '?', '提示', {
+      this.$confirm('确定要删除所选节点节点吗?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning',
         closeOnClickModal: false
       }).then(() => {
         this.data.nodeList = this.data.nodeList.filter(function (node) {
-          if (node.id === nodeId) {
-            return false
-          }
-          return true
+          return node.id !== nodeId
         })
         this.$nextTick(function () {
           this.jsPlumb.removeAllEndpoints(nodeId)
@@ -470,8 +468,8 @@ export default {
       this.$refs.nodeForm.nodeInit(this.data, nodeId)
     },
     hasLine(from, to) {
-      for (var i = 0; i < this.data.lineList.length; i++) {
-        var line = this.data.lineList[i]
+      for (let i = 0; i < this.data.lineList.length; i++) {
+        let line = this.data.lineList[i]
         if (line.from === from && line.to === to) {
           return true
         }
@@ -550,8 +548,8 @@ export default {
         type: 'warning',
         closeOnClickModal: false
       }).then(() => {
-        var datastr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(this.data, null, '\t'))
-        var downloadAnchorNode = document.createElement('a')
+        let datastr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(this.data, null, '\t'))
+        let downloadAnchorNode = document.createElement('a')
         downloadAnchorNode.setAttribute('href', datastr)
         downloadAnchorNode.setAttribute('download', 'data.json')
         downloadAnchorNode.click()
