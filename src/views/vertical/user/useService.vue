@@ -24,8 +24,8 @@
             </a-input-search>
           </div>
         </a-form-item>
-        <p v-if="selectedApi && apiList[selectedApi].des">
-          <b>描述：</b> {{ apiList[selectedApi].des }}
+        <p v-if="typeof selectedApi !== 'undefined' && apiList[selectedApi].des">
+          <b>接口描述：</b> {{ apiList[selectedApi].des }}
         </p>
         <a-form-item label="接口参数" v-if="parameterType !== 0">
           <div style="width: 50%">

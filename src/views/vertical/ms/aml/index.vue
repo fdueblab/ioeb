@@ -356,13 +356,13 @@ class {{apiName}}({{input}}):
           this.$message.success('解析成功，发现以下可用API及调用关系')
           this.programJson = {
             nodes: [
-              { id: '9001', x: 0, y: 150, label: 'datasets', size: 50, color: '#6F9654', input: 'rawData', output: 'processedData', environment: '', process: '', apiType: 0, methodType: 0, inputType: 2, outputType: 2 },
-              { id: '9002', x: 150, y: 150, label: 'preprocess', size: 50, color: '#E76F51', input: 'processedData', output: 'cleanedData', environment: '', process: '', apiType: 0, methodType: 1, inputType: 2, outputType: 2 },
-              { id: '9003', x: 300, y: 150, label: 'train', size: 50, color: '#2A9D8F', input: 'cleanedData', output: 'trainedModel', environment: '', process: '', apiType: 2, methodType: 1, inputType: 2, outputType: 2 },
-              { id: '9004', x: 450, y: 50, label: 'predict', size: 50, color: '#F4A261', input: 'trainedModel', output: 'predictionResult', environment: '', process: '', apiType: 0, methodType: 0, inputType: 2, outputType: 1 },
-              { id: '9005', x: 450, y: 150, label: 'evaluate', size: 50, color: '#264653', input: 'trainedModel', output: 'evaluationMetrics', environment: '', process: '', apiType: 0, methodType: 1, inputType: 2, outputType: 1 },
-              { id: '9006', x: 450, y: 250, label: 'visualize', size: 50, color: '#E9C46A', input: 'trainedModel', output: 'visualization', environment: '', process: '', apiType: 0, methodType: 1, inputType: 2, outputType: 3 },
-              { id: '9007', x: 300, y: 250, label: 'models', size: 50, color: '#A8DADC', input: 'trainedModel', output: 'modelMetadata', environment: '', process: '', apiType: 0, methodType: 1, inputType: 2, outputType: 1 }
+              { id: '9001', x: 0, y: 150, label: 'datasets', size: 50, input: 'rawData', output: 'processedData', environment: '', process: '', apiType: 0, methodType: 0, inputType: 2, outputType: 2 },
+              { id: '9002', x: 150, y: 150, label: 'preprocess', size: 50, input: 'processedData', output: 'cleanedData', environment: '', process: '', apiType: 0, methodType: 1, inputType: 2, outputType: 2 },
+              { id: '9003', x: 300, y: 150, label: 'train', size: 50, input: 'cleanedData', output: 'trainedModel', environment: '', process: '', apiType: 2, methodType: 1, inputType: 2, outputType: 2 },
+              { id: '9004', x: 450, y: 50, label: 'predict', size: 50, input: 'trainedModel', output: 'predictionResult', environment: '', process: '', apiType: 0, methodType: 0, inputType: 2, outputType: 1 },
+              { id: '9005', x: 450, y: 150, label: 'evaluate', size: 50, input: 'trainedModel', output: 'evaluationMetrics', environment: '', process: '', apiType: 0, methodType: 1, inputType: 2, outputType: 1 },
+              { id: '9006', x: 450, y: 250, label: 'visualize', size: 50, input: 'trainedModel', output: 'visualization', environment: '', process: '', apiType: 0, methodType: 1, inputType: 2, outputType: 3 },
+              { id: '9007', x: 300, y: 250, label: 'models', size: 50, input: 'trainedModel', output: 'modelMetadata', environment: '', process: '', apiType: 0, methodType: 1, inputType: 2, outputType: 1 }
             ],
             edges: [
               { sourceID: '9001', targetID: '9002' }, // datasets → preprocess
