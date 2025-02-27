@@ -24,6 +24,9 @@
             </a-input-search>
           </div>
         </a-form-item>
+        <p v-if="selectedApi && apiList[selectedApi].des">
+          <b>描述：</b> {{ apiList[selectedApi].des }}
+        </p>
         <a-form-item label="接口参数" v-if="parameterType !== 0">
           <div style="width: 50%">
             <a-table
@@ -36,10 +39,9 @@
               <template slot="parameterName" slot-scope="text, record" >
                 <span>
                   {{ record.name }}
-                  <a-tooltip>
+                  <a-tooltip v-if="record.des">
                     <template #title>
-                      text
-                      <!-- todo: env和process配置和使用 -->
+                      {{ record.des }}
                     </template>
                     <a-icon type="question-circle-o" />
                   </a-tooltip>
@@ -130,7 +132,7 @@ export default {
       responseType: 0, // 返回类型
       fileList: [], // 文件列表
       uploadFiles: [], // 上传的文件对象列表
-      parameterNames: [], // 参数名列表
+      parameters: [], // 参数名列表
       parameterData: [], // 参数表格数据
       sending: false,
       response: '',
@@ -191,8 +193,8 @@ export default {
       this.method = api.method
       this.parameterType = api.parameterType
       this.responseType = api.responseType
-      this.parameterNames = api.parameterNames || []
-      this.parameterData = this.parameterNames.map(name => ({ name, value: '' })) // 初始化参数表格
+      this.parameters = api.parameters || []
+      this.parameterData = this.parameters.map(item => ({ name: item.name, value: '', des: item.des, type: item.type })) // 初始化参数表格
       this.response = ''
       this.fileUrl = ''
     },

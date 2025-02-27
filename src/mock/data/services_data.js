@@ -37,15 +37,20 @@ const amlServices = [
         name: 'predict',
         url: 'http://43.130.11.13:25001/api/predict',
         method: 'POST',
+        des: '模型推理接口，基于数据集和参数配置得到风险识别结果',
         parameterType: 2,
-        // todo: parameterNames改为parameters并调整结构
-        parameterNames: ['file'],
+        parameters: [{
+          name: 'file',
+          type: 'file',
+          des: '数据集和参数配置文件的zip压缩包'
+        }],
         responseType: 1
       },
       {
         name: 'healthCheck',
         url: 'http://43.130.11.13:25001/api/health',
         method: 'GET',
+        des: '判断微服务状态是否正常可用',
         parameterType: 0
       }
     ]
@@ -163,7 +168,10 @@ const amlServices = [
         url: 'http://myApiServer.com/report/get',
         method: 'GET',
         parameterType: 1,
-        parameterNames: ['reportId'],
+        parameters: [{
+          name: 'reportId',
+          type: 'int'
+        }],
         responseType: 1,
         response: {
           code: 200,
@@ -179,7 +187,10 @@ const amlServices = [
         url: 'http://myApiServer.com/report/send',
         method: 'GET',
         parameterType: 1,
-        parameterNames: ['reportId'],
+        parameters: [{
+          name: 'reportId',
+          type: 'int'
+        }],
         responseType: 1,
         response: {
           code: 200,
@@ -194,8 +205,13 @@ const amlServices = [
         isFake: true,
         url: 'http://myApiServer.com/report-generation/generate',
         method: 'POST',
+        des: '报告生成接口样例',
         parameterType: 3,
-        parameterNames: ['reportData'],
+        parameters: [{
+          name: 'reportData',
+          type: 'string',
+          des: '用于生成报告的数据'
+        }],
         responseType: 1,
         response: {
           code: 200,
@@ -443,8 +459,13 @@ const amlServices = [
         name: 'generate-report',
         url: 'http://43.130.11.13:25003/api/generate-report',
         method: 'GET',
+        des: '根据自然语言需求生成风险评估报告',
         parameterType: 1,
-        parameterNames: ['query'],
+        parameters: [{
+          name: 'query',
+          type: 'string',
+          des: '用自然语言描述想要生成的报告'
+        }],
         responseType: 2,
         responseFileName: 'financial_report.pdf'
       },
@@ -452,14 +473,20 @@ const amlServices = [
         name: 'nl2gql',
         url: 'http://43.130.11.13:25003/api/nl2gql',
         method: 'GET',
+        des: '根据自然语言需求生成gql语句并得到查询结果',
         parameterType: 1,
-        parameterNames: ['query'],
+        parameters: [{
+          name: 'query',
+          type: 'string',
+          des: '用自然语言描述查询需求'
+        }],
         responseType: 1
       },
       {
         name: 'healthCheck',
         url: 'http://43.130.11.13:25003/api/health',
         method: 'GET',
+        des: '判断微服务状态是否正常可用',
         parameterType: 0
       }
     ]
@@ -507,7 +534,18 @@ const amlServices = [
         url: 'http://43.130.11.13:25004/safety/safety-fingerprint',
         method: 'POST',
         parameterType: 2,
-        parameterNames: ['file', 'model_name'],
+        parameters: [
+          {
+            name: 'file',
+            type: 'file',
+            des: '数据集和配置文件的zip压缩包'
+          },
+          {
+            name: 'model_name',
+            type: 'string',
+            des: '模型名称，目前只支持HattenGCN'
+          }
+        ],
         responseType: 1
       },
       {
