@@ -41,7 +41,7 @@ const amlServices = [
         parameterType: 2,
         parameters: [{
           name: 'file',
-          type: 'file',
+          type: 'zip file',
           des: '数据集和参数配置文件的zip压缩包'
         }],
         responseType: 1

@@ -49,7 +49,7 @@
               </template>
               <template slot="parameterVal" slot-scope="text, record">
                 <a-upload
-                  v-if="record.name === 'file'"
+                  v-if="record.type.includes('file')"
                   :file-list="fileList"
                   :remove="removeFile"
                   :customRequest="customFileChose"
@@ -257,12 +257,11 @@ export default {
             requestData = {}
             break
           case 2:
-            // todo: 目前假定文件的参数名为file，后续需要进一步修改
             const formData = new FormData()
             this.parameterData.forEach(param => {
-              if (param.name === 'file') {
+              if (param.type.includes('file')) {
                 this.uploadFiles.forEach(file => {
-                  formData.append('file', file)
+                  formData.append(param.name, file)
                 })
               } else if (param.value) {
                 formData.append(param.name, param.value)
