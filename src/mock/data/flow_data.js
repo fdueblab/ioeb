@@ -36,7 +36,7 @@ const pj1Flow = {
       id: '9001',
       name: 'predict',
       type: 'process',
-      url: 'http://43.130.11.13:25001/api/predict',
+      url: 'http://localhost:25001/api/predict',
       left: '75px',
       top: '380px',
       ico: 'el-icon-s-data',
