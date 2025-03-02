@@ -79,39 +79,39 @@ jobs:
           ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
           
           # 创建部署目录
-          ssh ubuntu@$SERVER_IP "mkdir -p ~/ioeb-deploy"
+          ssh ubuntu@$SERVER_IP "mkdir -p ~/ioeb"
           
           # 拷贝配置文件到服务器
-          scp docker-compose.yml ubuntu@$SERVER_IP:~/ioeb-deploy/
-          scp nginx.conf ubuntu@$SERVER_IP:~/ioeb-deploy/
-          scp -r api ubuntu@$SERVER_IP:~/ioeb-deploy/
+          scp docker-compose.yml ubuntu@$SERVER_IP:~/ioeb/
+          scp nginx.conf ubuntu@$SERVER_IP:~/ioeb/
+          scp -r api ubuntu@$SERVER_IP:~/ioeb/
           
           
           # 确保数据目录存在
           ssh ubuntu@$SERVER_IP << EOF
-            mkdir -p ~/ioeb-deploy/api/Project_1/checkpoint
-            mkdir -p ~/ioeb-deploy/api/Project-3/data
-            mkdir -p ~/ioeb-deploy/api/Project-4/eval_config
-            mkdir -p ~/ioeb-deploy/api/Project-4/eval_result
-            mkdir -p ~/ioeb-deploy/api/Project-4/graph_dataset
+            mkdir -p ~/ioeb/api/Project_1/checkpoint
+            mkdir -p ~/ioeb/api/Project-3/data
+            mkdir -p ~/ioeb/api/Project-4/eval_config
+            mkdir -p ~/ioeb/api/Project-4/eval_result
+            mkdir -p ~/ioeb/api/Project-4/graph_dataset
             
             # 拉取最新镜像
             docker pull polarsnowleopard/ioeb-frontend:latest
             docker pull polarsnowleopard/ioeb-project1:latest
             docker pull polarsnowleopard/ioeb-project3:latest
             docker pull polarsnowleopard/ioeb-project4:latest
-            
+
             # 修改docker-compose.yml中的路径为绝对路径
-            cd ~/ioeb-deploy
-            sed -i 's|\\./api/Project_1/checkpoint|/home/ubuntu/ioeb-deploy/api/Project_1/checkpoint|g' docker-compose.yml
-            sed -i 's|\\./api/Project-3/data|/home/ubuntu/ioeb-deploy/api/Project-3/data|g' docker-compose.yml
-            sed -i 's|\\./api/Project-4/eval_config|/home/ubuntu/ioeb-deploy/api/Project-4/eval_config|g' docker-compose.yml
-            sed -i 's|\\./api/Project-4/eval_result|/home/ubuntu/ioeb-deploy/api/Project-4/eval_result|g' docker-compose.yml
-            sed -i 's|\\./api/Project-4/graph_dataset|/home/ubuntu/ioeb-deploy/api/Project-4/graph_dataset|g' docker-compose.yml
-            
+            cd ~/ioeb
+            sed -i 's|\\./api/Project_1/checkpoint|/home/ubuntu/ioeb/api/Project_1/checkpoint|g' docker-compose.yml
+            sed -i 's|\\./api/Project-3/data|/home/ubuntu/ioeb/api/Project-3/data|g' docker-compose.yml
+            sed -i 's|\\./api/Project-4/eval_config|/home/ubuntu/ioeb/api/Project-4/eval_config|g' docker-compose.yml
+            sed -i 's|\\./api/Project-4/eval_result|/home/ubuntu/ioeb/api/Project-4/eval_result|g' docker-compose.yml
+            sed -i 's|\\./api/Project-4/graph_dataset|/home/ubuntu/ioeb/api/Project-4/graph_dataset|g' docker-compose.yml
+
             # 停止并移除现有容器
             docker-compose down || true
-            
+
             # 启动所有服务
             docker-compose up -d
           EOF
