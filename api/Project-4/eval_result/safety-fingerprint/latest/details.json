@@ -1,0 +1,12 @@
+{
+    "safety-fingerprint": {
+        "safety-fingerprint_score(cln mode)": {
+            "value": "0.6441",
+            "range": "[0, 1]"
+        },
+        "safety-fingerprint_score(atk mode)": {
+            "value": "0.6441",
+            "range": "[0, 1]"
+        }
+    }
+}

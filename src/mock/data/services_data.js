@@ -35,7 +35,8 @@ const amlServices = [
     apiList: [
       {
         name: 'predict',
-        url: 'http://localhost:25001/api/predict',
+        // url: 'http://43.130.11.13:25001/api/predict',
+        url: '/api/project1/api/predict',
         method: 'POST',
         des: '模型推理接口，基于数据集和参数配置得到风险识别结果',
         parameterType: 2,
@@ -48,7 +49,8 @@ const amlServices = [
       },
       {
         name: 'healthCheck',
-        url: 'http://localhost:25001/api/health',
+        // url: 'http://43.130.11.13:25001/api/health',
+        url: '/api/project1/api/health',
         method: 'GET',
         des: '判断微服务状态是否正常可用',
         parameterType: 0

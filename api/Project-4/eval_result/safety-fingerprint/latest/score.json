@@ -1,0 +1,78 @@
+{
+    "safety-fingerprint": {
+        "Results under cln mode": 0,
+        "sensi_Max(cln)": {
+            "value": 0.6325,
+            "description": "最大敏感度（cln模式）"
+        },
+        "sensi_point_ratio_origin_gt90.0(cln)": {
+            "value": 0.0,
+            "description": "指纹点敏感度大于90.0%的占比（cln模式）"
+        },
+        "sensi_point_ratio_origin_gt80.0(cln)": {
+            "value": 0.0,
+            "description": "指纹点敏感度大于80.0%的占比（cln模式）"
+        },
+        "sensi_point_ratio_origin_gt70.0(cln)": {
+            "value": 0.0,
+            "description": "指纹点敏感度大于70.0%的占比（cln模式）"
+        },
+        "sensi_point_ratio_origin_gt60.0(cln)": {
+            "value": 0.1541,
+            "description": "指纹点敏感度大于60.0%的占比（cln模式）"
+        },
+        "sensi_point_ratio_origin_gt50.0(cln)": {
+            "value": 0.1541,
+            "description": "指纹点敏感度大于50.0%的占比（cln模式）"
+        },
+        "num_positive_model(cln)": {
+            "value": 829,
+            "description": "总篡改模型个数（cln模式）"
+        },
+        "detection_success_rate_origin(cln)": {
+            "value": 64.415,
+            "description": "模型篡改检测成功率（cln模式）"
+        },
+        "fingerprint_score(cln)": {
+            "value": 0.6441,
+            "description": "最终指纹得分（cln模式）"
+        },
+        "Results under atk mode": 0,
+        "sensi_Max(atk)": {
+            "value": 0.6325,
+            "description": "最大敏感度（atk模式）"
+        },
+        "sensi_point_ratio_origin_gt90.0(atk)": {
+            "value": 0.0,
+            "description": "指纹点敏感度大于90.0%的占比（atk模式）"
+        },
+        "sensi_point_ratio_origin_gt80.0(atk)": {
+            "value": 0.0,
+            "description": "指纹点敏感度大于80.0%的占比（atk模式）"
+        },
+        "sensi_point_ratio_origin_gt70.0(atk)": {
+            "value": 0.0,
+            "description": "指纹点敏感度大于70.0%的占比（atk模式）"
+        },
+        "sensi_point_ratio_origin_gt60.0(atk)": {
+            "value": 0.1541,
+            "description": "指纹点敏感度大于60.0%的占比（atk模式）"
+        },
+        "sensi_point_ratio_origin_gt50.0(atk)": {
+            "value": 0.1541,
+            "description": "指纹点敏感度大于50.0%的占比（atk模式）"
+        },
+        "num_positive_model(atk)": {
+            "value": 829,
+            "description": "总篡改模型个数（atk模式）"
+        },
+        "detection_success_rate_origin(atk)": {
+            "value": 64.415,
+            "description": "模型篡改检测成功率（atk模式）"
+        },
+        "fingerprint_score(atk)": {
+            "value": 0.6441,
+            "description": "最终指纹得分（atk模式）"
+        }
+    }
+}

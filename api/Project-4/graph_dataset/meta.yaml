@@ -1,0 +1,108 @@
+dataset_name: hetero_dataset
+separator: ','
+edge_data:
+- file_name: edges_1.csv
+  etype: [user, edges_1, app]
+- file_name: edges_2.csv
+  etype: [app, edges_2, mchnt]
+- file_name: edges_3.csv
+  etype: [app, edges_3, acqr]
+- file_name: edges_4.csv
+  etype: [app, edges_4, dvlpsd]
+- file_name: edges_5.csv
+  etype: [app, edges_5, dvlpr]
+- file_name: edges_6.csv
+  etype: [app, edges_6, depbank]
+- file_name: edges_7.csv
+  etype: [app, edges_7, stl_acc]
+- file_name: edges_8.csv
+  etype: [app, edges_8, stl_bank]
+- file_name: edges_9.csv
+  etype: [app, edges_9, mchnt_con]
+- file_name: edges_10.csv
+  etype: [app, edges_10, lgrps]
+- file_name: edges_11.csv
+  etype: [app, edges_11, stlacc]
+- file_name: edges_12.csv
+  etype: [app, edges_12, cust]
+- file_name: edges_13.csv
+  etype: [app, edges_13, province]
+- file_name: edges_14.csv
+  etype: [app, edges_14, city]
+- file_name: edges_15.csv
+  etype: [app, edges_15, county]
+- file_name: edges_16.csv
+  etype: [app, edges_16, benefit_card]
+- file_name: edges_17.csv
+  etype: [app, edges_17, mchntctrl]
+- file_name: edges_18.csv
+  etype: [app, edges_18, user]
+- file_name: edges_19.csv
+  etype: [mchnt, edges_19, app]
+- file_name: edges_20.csv
+  etype: [acqr, edges_20, app]
+- file_name: edges_21.csv
+  etype: [dvlpsd, edges_21, app]
+- file_name: edges_22.csv
+  etype: [dvlpr, edges_22, app]
+- file_name: edges_23.csv
+  etype: [depbank, edges_23, app]
+- file_name: edges_24.csv
+  etype: [stl_acc, edges_24, app]
+- file_name: edges_25.csv
+  etype: [stl_bank, edges_25, app]
+- file_name: edges_26.csv
+  etype: [mchnt_con, edges_26, app]
+- file_name: edges_27.csv
+  etype: [lgrps, edges_27, app]
+- file_name: edges_28.csv
+  etype: [stlacc, edges_28, app]
+- file_name: edges_29.csv
+  etype: [cust, edges_29, app]
+- file_name: edges_30.csv
+  etype: [province, edges_30, app]
+- file_name: edges_31.csv
+  etype: [city, edges_31, app]
+- file_name: edges_32.csv
+  etype: [county, edges_32, app]
+- file_name: edges_33.csv
+  etype: [benefit_card, edges_33, app]
+- file_name: edges_34.csv
+  etype: [mchntctrl, edges_34, app]
+node_data:
+- file_name: nodes_0.csv
+  ntype: app #应用
+- file_name: nodes_1.csv
+  ntype: user #交易对手
+- file_name: nodes_2.csv
+  ntype: mchnt #商户
+- file_name: nodes_3.csv
+  ntype: acqr #收单机构
+- file_name: nodes_4.csv
+  ntype: dvlpsd #商户发展方
+- file_name: nodes_5.csv
+  ntype: dvlpr #商户发展部门
+- file_name: nodes_6.csv
+  ntype: depbank #发展银行
+- file_name: nodes_7.csv
+  ntype: stl_acc #结算账户
+- file_name: nodes_8.csv
+  ntype: stl_bank #结算行
+- file_name: nodes_9.csv
+  ntype: mchnt_con #联系人
+- file_name: nodes_10.csv
+  ntype: lgrps #法人
+- file_name: nodes_11.csv
+  ntype: stlacc #结算账户
+- file_name: nodes_12.csv
+  ntype: cust #客户
+- file_name: nodes_13.csv
+  ntype: province #省
+- file_name: nodes_14.csv
+  ntype: city #市
+- file_name: nodes_15.csv
+  ntype: county #县
+- file_name: nodes_16.csv
+  ntype: benefit_card #受益人
+- file_name: nodes_17.csv
+  ntype: mchntctrl #实际控制人

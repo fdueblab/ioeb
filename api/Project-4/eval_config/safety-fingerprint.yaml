@@ -1,0 +1,29 @@
+data_path: "./graph_dataset"
+save_file_name: "latest" 
+init_type: "random"
+train_ratio: 0.7  # 训练集比例
+val_ratio: 0.15  # 验证集比例
+test_ratio: 0.15  # 测试集比例
+train_split_ratio: 1.0  # 训练集再划分比例
+seed: 42 #data_loader打乱的seed
+# device: 'cuda'  # 训练设备
+device: 'cpu'  # 推理设备
+#以上均为dataset加载必要参数
+hid_dim: 211
+out_feats: 3
+model_type: HatthGCN  # 模型类型可选：HGCN, HGAT, HGraphSAGE
+task: safety-fingerprint
+weight_decay: 0.000001
+#以上为必要模型加载和任务选择必要参数
+epoch: 50  # 训练轮次
+lr: 0.01
+### 你可能想要更改：
+model_path: "./weights/model_atthgcn.pt"  # ======= 传入模型的地址 =======
+PRINT_STAGES: True  # 是否在控制台输出训练过程
+mr_threshold: 1  # 设置mr低于这个值就认为被篡改了100%为1 10%为0.1 以此类推
+bd_ratio: 0.3  # 抽取多少百分比的数据作为指纹
+info: 2  # 添加到保存的log命名，防止重复用
+result_log_path: "./result/fingerprint/HGCN_1.txt"
+result_model_path: "./result/fingerprint/HGCN_1.pt"
+#以上为保存结果的地址 ------------------- 需要跟上面的info和model_type对应  ------------------
+
