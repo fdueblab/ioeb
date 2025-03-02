@@ -1,0 +1,10 @@
+requests==2.32.3
+reportlab==4.3.1
+flask==3.1.0
+flask-restx==1.3.0
+flask_cors
+werkzeug==3.1.3 
+packaging
+setuptools
+PyYAML
+pydantic

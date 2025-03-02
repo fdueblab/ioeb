@@ -1,0 +1,66 @@
+version: '3'
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  # 前端服务
+  frontend:
+    image: polarsnowleopard/ioeb-frontend:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/fdueblab.cn_nginx:/etc/nginx/ssl
+    networks:
+      - app-network
+    depends_on:
+      - project-1
+      - project-3
+      - project-4
+    restart: unless-stopped
+
+  # 后端服务1
+  project-1:
+    image: polarsnowleopard/ioeb-project1:latest
+    ports:
+      - "25001:5000"
+    volumes:
+      - ./api/Project_1/checkpoint:/app/checkpoint
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # 后端服务2
+  project-3:
+    image: polarsnowleopard/ioeb-project3:latest
+    ports:
+      - "25003:5000"
+    volumes:
+      - ./api/Project-3/data:/app/data
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # 后端服务3
+  project-4:
+    image: polarsnowleopard/ioeb-project4:latest
+    ports:
+      - "25004:5000"
+    volumes:
+      - ./api/Project-4/eval_config:/app/eval_config
+      - ./api/Project-4/eval_result:/app/eval_result
+      - ./api/Project-4/graph_dataset:/app/graph_dataset
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+    networks:
+      - app-network
+    restart: unless-stopped

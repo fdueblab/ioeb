@@ -13,6 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 前端构建
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -24,21 +25,48 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Build project
+      - name: Build frontend
         run: yarn build
 
+      # 登录Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Build Docker image
-        run: docker build -t polarsnowleopard/ioeb:latest .
+      # 构建并推送前端镜像
+      - name: Build and push frontend Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-frontend:latest .
+          docker push polarsnowleopard/ioeb-frontend:latest
 
-      - name: Push Docker image
-        run: docker push polarsnowleopard/ioeb:latest
+      # 构建并推送后端服务镜像
+      - name: Build and push Project_1 Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-project1:latest ./api/Project_1
+          docker push polarsnowleopard/ioeb-project1:latest
 
+      - name: Build and push Project-3 Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-project3:latest ./api/Project-3
+          docker push polarsnowleopard/ioeb-project3:latest
+
+      - name: Build and push Project-4 Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-project4:latest ./api/Project-4
+          docker push polarsnowleopard/ioeb-project4:latest
+
+      # 修改docker-compose.yml文件使用推送的镜像而不是本地构建
+      - name: Update docker-compose.yml to use pushed images
+        run: |
+          sed -i 's|build:|image: polarsnowleopard/ioeb-frontend:latest|g; s|dockerfile: Dockerfile||g; s|context: .||g' docker-compose.yml
+          sed -i 's|build:|image: polarsnowleopard/ioeb-project1:latest|g; s|dockerfile: Dockerfile||g; s|context: ./api/Project_1||g' docker-compose.yml
+          sed -i 's|build:|image: polarsnowleopard/ioeb-project3:latest|g; s|dockerfile: Dockerfile||g; s|context: ./api/Project-3||g' docker-compose.yml
+          sed -i 's|build:|image: polarsnowleopard/ioeb-project4:latest|g; s|dockerfile: Dockerfile||g; s|context: ./api/Project-4||g' docker-compose.yml
+        continue-on-error: true
+
+      # 部署到服务器
       - name: Deploy to server
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -49,20 +77,39 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+          
+          # 创建部署目录
+          ssh ubuntu@$SERVER_IP "mkdir -p ~/ioeb-deploy"
+          
+          # 拷贝配置文件到服务器
+          scp docker-compose.yml ubuntu@$SERVER_IP:~/ioeb-deploy/
+          scp nginx.conf ubuntu@$SERVER_IP:~/ioeb-deploy/
+          
+          # 确保数据目录存在
           ssh ubuntu@$SERVER_IP << EOF
-            # 拉取镜像（添加重试逻辑）
-            for i in {1..5}; do
-              docker pull polarsnowleopard/ioeb:latest && break
-              echo "Retrying Docker pull (attempt $i)..."
-              sleep 5
-            done
-
-            # 停止并删除旧容器（如果存在）
-            docker stop ioeb || true
-            docker rm ioeb || true
-
-            # 运行新容器
-            docker run -d --name ioeb -p 80:80 -p 443:443 \
-              -v /var/fdueblab.cn_nginx:/etc/nginx/ssl \
-              polarsnowleopard/ioeb:latest
+            mkdir -p ~/ioeb-deploy/api/Project_1/checkpoint
+            mkdir -p ~/ioeb-deploy/api/Project-3/data
+            mkdir -p ~/ioeb-deploy/api/Project-4/eval_config
+            mkdir -p ~/ioeb-deploy/api/Project-4/eval_result
+            mkdir -p ~/ioeb-deploy/api/Project-4/graph_dataset
+            
+            # 拉取最新镜像
+            docker pull polarsnowleopard/ioeb-frontend:latest
+            docker pull polarsnowleopard/ioeb-project1:latest
+            docker pull polarsnowleopard/ioeb-project3:latest
+            docker pull polarsnowleopard/ioeb-project4:latest
+            
+            # 修改docker-compose.yml中的路径为绝对路径
+            cd ~/ioeb-deploy
+            sed -i 's|\\./api/Project_1/checkpoint|/home/ubuntu/ioeb-deploy/api/Project_1/checkpoint|g' docker-compose.yml
+            sed -i 's|\\./api/Project-3/data|/home/ubuntu/ioeb-deploy/api/Project-3/data|g' docker-compose.yml
+            sed -i 's|\\./api/Project-4/eval_config|/home/ubuntu/ioeb-deploy/api/Project-4/eval_config|g' docker-compose.yml
+            sed -i 's|\\./api/Project-4/eval_result|/home/ubuntu/ioeb-deploy/api/Project-4/eval_result|g' docker-compose.yml
+            sed -i 's|\\./api/Project-4/graph_dataset|/home/ubuntu/ioeb-deploy/api/Project-4/graph_dataset|g' docker-compose.yml
+            
+            # 停止并移除现有容器
+            docker-compose down || true
+            
+            # 启动所有服务
+            docker-compose up -d
           EOF

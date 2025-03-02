@@ -2,6 +2,14 @@
 node_modules
 /dist
 
+# python
+**/__pycache__
+**/.DS_Store
+**/.env
+**/.vscode
+**/__pycache__
+**/*.pdf
+
 # local env files
 .env.local
 .env.*.local
