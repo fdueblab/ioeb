@@ -84,6 +84,8 @@ jobs:
           # 拷贝配置文件到服务器
           scp docker-compose.yml ubuntu@$SERVER_IP:~/ioeb-deploy/
           scp nginx.conf ubuntu@$SERVER_IP:~/ioeb-deploy/
+          scp -r api ubuntu@$SERVER_IP:~/ioeb-deploy/
+          
           
           # 确保数据目录存在
           ssh ubuntu@$SERVER_IP << EOF
