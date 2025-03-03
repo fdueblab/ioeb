@@ -50,7 +50,8 @@ const amlServices = [
       {
         name: 'healthCheck',
         // url: 'http://43.130.11.13:25001/api/health',
-        url: '/api/project1/api/health',
+        // url: '/api/project1/api/health',
+        url: 'http:/124.223.185.136:25001/api/health',
         method: 'GET',
         des: '判断微服务状态是否正常可用',
         parameterType: 0
