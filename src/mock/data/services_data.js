@@ -487,7 +487,8 @@ const amlServices = [
       },
       {
         name: 'healthCheck',
-        url: 'http://43.130.11.13:25003/api/health',
+        // url: 'http://43.130.11.13:25003/api/health',
+        url: '/api/project3/api/health',
         method: 'GET',
         des: '判断微服务状态是否正常可用',
         parameterType: 0
