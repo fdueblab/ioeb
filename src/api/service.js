@@ -1,7 +1,7 @@
 import { axios } from '@/utils/request'
 
 // 修改默认前缀
-axios.defaults.baseURL = 'http://localhost/'
+axios.defaults.baseURL = ''
 
 // container id
 export function serviceDetection () {
