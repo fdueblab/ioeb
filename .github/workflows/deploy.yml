@@ -3,7 +3,7 @@ name: Deploy to Server
 on:
   push:
     branches:
-      - lyx
+      - zfy
 
 jobs:
   build-and-deploy:
@@ -97,9 +97,9 @@ jobs:
             
             # 拉取最新镜像
             docker pull polarsnowleopard/ioeb-frontend:latest
-            docker pull polarsnowleopard/ioeb-project1:latest
-            docker pull polarsnowleopard/ioeb-project3:latest
-            docker pull polarsnowleopard/ioeb-project4:latest
+            # docker pull polarsnowleopard/ioeb-project1:latest
+            # docker pull polarsnowleopard/ioeb-project3:latest
+            # docker pull polarsnowleopard/ioeb-project4:latest
 
             # 修改docker-compose.yml中的路径为绝对路径
             cd ~/ioeb
