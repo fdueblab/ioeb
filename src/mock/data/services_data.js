@@ -36,7 +36,7 @@ const amlServices = [
       {
         name: 'predict',
         // url: 'http://43.130.11.13:25001/api/predict',
-        url: '/api/project1/api/predict',
+        url: '/api/project1/predict',
         method: 'POST',
         des: '模型推理接口，基于数据集和参数配置得到风险识别结果',
         parameterType: 2,
@@ -50,7 +50,7 @@ const amlServices = [
       {
         name: 'healthCheck',
         // url: 'http://43.130.11.13:25001/api/health',
-        url: '/api/project1/api/health',
+        url: '/api/project1/health',
         // url: 'http://124.223.185.136:25001/api/health',
         method: 'GET',
         des: '判断微服务状态是否正常可用',
@@ -460,7 +460,8 @@ const amlServices = [
     apiList: [
       {
         name: 'generate-report',
-        url: 'http://43.130.11.13:25003/api/generate-report',
+        // url: 'http://43.130.11.13:25003/api/generate-report',
+        url: '/api/project3/generate-report',
         method: 'GET',
         des: '根据自然语言需求生成风险评估报告',
         parameterType: 1,
@@ -474,7 +475,8 @@ const amlServices = [
       },
       {
         name: 'nl2gql',
-        url: 'http://43.130.11.13:25003/api/nl2gql',
+        // url: 'http://43.130.11.13:25003/api/nl2gql',
+        url: '/api/project3/nl2gql',
         method: 'GET',
         des: '根据自然语言需求生成gql语句并得到查询结果',
         parameterType: 1,
@@ -488,7 +490,7 @@ const amlServices = [
       {
         name: 'healthCheck',
         // url: 'http://43.130.11.13:25003/api/health',
-        url: '/api/project3/api/health',
+        url: '/api/project3/health',
         method: 'GET',
         des: '判断微服务状态是否正常可用',
         parameterType: 0
@@ -535,7 +537,8 @@ const amlServices = [
     apiList: [
       {
         name: 'safety-fingerprint',
-        url: 'http://43.130.11.13:25004/safety/safety-fingerprint',
+        // url: 'http://43.130.11.13:25004/safety/safety-fingerprint',
+        url: '/api/project4/safety/safety-fingerprint',
         method: 'POST',
         parameterType: 2,
         parameters: [
@@ -554,7 +557,8 @@ const amlServices = [
       },
       {
         name: 'healthCheck',
-        url: 'http://43.130.11.13:25004/safety/health',
+        // url: 'http://43.130.11.13:25004/safety/health',
+        url: '/api/project4/safety/health',
         method: 'GET',
         parameterType: 0
       }

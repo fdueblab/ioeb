@@ -140,7 +140,8 @@ const pj3 = {
               name: 'nl2gql',
               ico: 'el-icon-connection',
               style: {},
-              url: 'http://43.130.11.13:25003/api/nl2gql'
+              // url: 'http://43.130.11.13:25003/api/nl2gql'
+              url: '/api/project3/nl2gql'
             },
             {
               id: '9302',
@@ -148,7 +149,8 @@ const pj3 = {
               name: 'generateReport',
               ico: 'el-icon-document-add',
               style: {},
-              url: 'http://43.130.11.13:25003/api/generate-report'
+              // url: 'http://43.130.11.13:25003/api/generate-report'
+              url: '/api/project3/generate-report'
             }
           ]
         }
@@ -179,7 +181,8 @@ const pj4 = {
               name: 'safetyFingerprint',
               ico: 'el-icon-finished',
               style: {},
-              url: 'http://43.130.11.13:25004/safety/safety-fingerprint'
+              // url: 'http://43.130.11.13:25004/safety/safety-fingerprint'
+              url: '/api/project4/safety-fingerprint'
             }
           ]
         }
