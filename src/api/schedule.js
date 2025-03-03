@@ -6,7 +6,7 @@ const api = {
   saveFile: '/schedule/saveFile'
 }
 
-axios.defaults.baseURL = 'http://localhost:8080' // 仅修改所在文件
+axios.defaults.baseURL = 'http://localhost' // 仅修改所在文件
 // axios.defaults.baseURL = 'http://124.222.217.145:8089'  //仅修改所在文件
 export function getServiceList () {
   return axios({
