@@ -41,21 +41,21 @@ jobs:
           docker build -t polarsnowleopard/ioeb-frontend:latest .
           docker push polarsnowleopard/ioeb-frontend:latest
 
-      # 构建并推送后端服务镜像
-      - name: Build and push Project_1 Docker image
-        run: |
-          docker build -t polarsnowleopard/ioeb-project1:latest ./api/Project_1
-          docker push polarsnowleopard/ioeb-project1:latest
+      # # 构建并推送后端服务镜像
+      # - name: Build and push Project_1 Docker image
+      #   run: |
+      #     docker build -t polarsnowleopard/ioeb-project1:latest ./api/Project_1
+      #     docker push polarsnowleopard/ioeb-project1:latest
 
-      - name: Build and push Project-3 Docker image
-        run: |
-          docker build -t polarsnowleopard/ioeb-project3:latest ./api/Project-3
-          docker push polarsnowleopard/ioeb-project3:latest
+      # - name: Build and push Project-3 Docker image
+      #   run: |
+      #     docker build -t polarsnowleopard/ioeb-project3:latest ./api/Project-3
+      #     docker push polarsnowleopard/ioeb-project3:latest
 
-      - name: Build and push Project-4 Docker image
-        run: |
-          docker build -t polarsnowleopard/ioeb-project4:latest ./api/Project-4
-          docker push polarsnowleopard/ioeb-project4:latest
+      # - name: Build and push Project-4 Docker image
+      #   run: |
+      #     docker build -t polarsnowleopard/ioeb-project4:latest ./api/Project-4
+      #     docker push polarsnowleopard/ioeb-project4:latest
 
       # 修改docker-compose.yml文件使用推送的镜像而不是本地构建
       - name: Update docker-compose.yml to use pushed images
@@ -97,9 +97,9 @@ jobs:
             
             # 拉取最新镜像
             docker pull polarsnowleopard/ioeb-frontend:latest
-            docker pull polarsnowleopard/ioeb-project1:latest
-            docker pull polarsnowleopard/ioeb-project3:latest
-            docker pull polarsnowleopard/ioeb-project4:latest
+            # docker pull polarsnowleopard/ioeb-project1:latest
+            # docker pull polarsnowleopard/ioeb-project3:latest
+            # docker pull polarsnowleopard/ioeb-project4:latest
 
             # 修改docker-compose.yml中的路径为绝对路径
             cd ~/ioeb
