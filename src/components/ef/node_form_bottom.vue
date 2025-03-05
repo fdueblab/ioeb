@@ -144,7 +144,7 @@ export default {
       })
     },
     deleteElement () {
-      this.$emit('deleteElement')
+      this.$emit('delete-element')
     },
     // 向服务器提交编排的service信息
     addScheduledService () {

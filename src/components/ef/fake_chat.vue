@@ -6,7 +6,7 @@
         <div v-else class="message-content" v-html="message.text" />
       </div>
     </div>
-    <a-button v-if="isGenerated" class="retry-button" icon="sync" @click="refresh">重新生成</a-button>
+    <a-button v-if="isGenerated && !isInputLoading" class="retry-button" icon="sync" @click="refresh">重新生成</a-button>
     <div class="chat-input">
       <a-input-search
         style="width: 100%"
@@ -54,7 +54,9 @@ export default {
       this.isInputEnabled = false
       this.messages.push({ text: this.userInput, isUser: true })
       this.messages.push({ text: 'agentLoading', isUser: false })
-      getChatData(this.serviceType, this.userInput).then((res) => {
+      const input = this.userInput
+      this.userInput = ''
+      getChatData(this.serviceType, input).then((res) => {
         const { chosenServices, serviceNodes, flowData } = res
         const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
         this.typeWriter(outputMessage)

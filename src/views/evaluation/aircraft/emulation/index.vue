@@ -24,6 +24,7 @@
             :columns="columns"
             :dataSource="filteredDataSource"
             :row-selection="rowSelection"
+            :loading="dataLoading"
             size="middle"
           >
             <span slot="serial" slot-scope="text, record, index">
@@ -94,7 +95,7 @@
 
 <script>
 import { ArticleListContent, StandardFormRow, TagSelect } from '@/components'
-import { getRunningAirCraftMetaApps } from '@/mock/data/services_data'
+import { getMetaAppData } from '@/mock/data/services_data'
 import { getNormMap, getPerformanceMetricMap, getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
@@ -127,6 +128,7 @@ export default {
           dataIndex: 'name'
         }
       ],
+      dataLoading: false,
       dataSource: [],
       filteredDataSource: [],
       selectedRowKeys: [],
@@ -170,11 +172,10 @@ export default {
     handleRefresh() {
       if (this.isRefreshing) return
       this.isRefreshing = true
-      setTimeout(() => {
-        this.initData()
+      this.initData().then(() => {
         this.$message.success('刷新成功')
         this.isRefreshing = false
-      }, 1000)
+      })
     },
     handleReset() {
       this.queryParam = { name: '', status: '-1' }
@@ -246,9 +247,11 @@ export default {
         this.testLoading = false
       }, 1000)
     },
-    initData () {
-      this.dataSource = getRunningAirCraftMetaApps()
+    async initData() {
+      this.dataLoading = true
+      this.dataSource = await getMetaAppData('aircraft', true)
       this.filteredDataSource = this.dataSource
+      this.dataLoading = false
     }
   }
 }

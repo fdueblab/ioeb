@@ -35,6 +35,7 @@
         ref="table"
         :columns="columns"
         :dataSource="filteredDataSource"
+        :loading="dataLoading"
       >
         <span slot="serial" slot-scope="text, record, index">
           {{ index + 1 }}
@@ -49,7 +50,7 @@
 
 <script>
 import { TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-import { getAirCraftMetaApps, getAirCraftServices } from '@/mock/data/services_data'
+import { getMetaAppData, getServiceData } from '@/mock/data/services_data'
 import { getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
@@ -95,6 +96,7 @@ export default {
           scopedSlots: { customRender: 'status' }
         }
       ],
+      dataLoading: false,
       dataSource: [],
       filteredDataSource: [],
       selectedRowKeys: [],
@@ -122,22 +124,28 @@ export default {
         return nameMatch && statusMatch
       })
     },
-    handleRefresh() {
-      if (this.isRefreshing) return
-      this.isRefreshing = true
-      setTimeout(() => {
-        this.initData()
-        this.$message.success('刷新成功')
-        this.isRefreshing = false
-      }, 1000)
-    },
     handleReset() {
       this.queryParam = { name: '', status: '-1' }
       this.filteredDataSource = this.dataSource
     },
-    initData () {
-      this.dataSource = [...getAirCraftServices(), ...getAirCraftMetaApps()]
+    handleRefresh() {
+      if (this.isRefreshing) return
+      this.isRefreshing = true
+      this.initData().then(() => {
+        this.$message.success('刷新成功')
+        this.isRefreshing = false
+      })
+    },
+    async initData() {
+      this.dataLoading = true
+      // 使用 Promise.all 并行加载两个异步请求
+      const [serviceData, metaData] = await Promise.all([
+        getServiceData('aircraft'),
+        getMetaAppData('aircraft')
+      ])
+      this.dataSource = [...serviceData, ...metaData]
       this.filteredDataSource = this.dataSource
+      this.dataLoading = false
     }
   }
 }

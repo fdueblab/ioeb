@@ -24,6 +24,7 @@
             :columns="columns"
             :dataSource="dataSource"
             :row-selection="rowSelection"
+            :loading="dataLoading"
             size="middle"
           >
             <span slot="serial" slot-scope="text, record, index">
@@ -95,7 +96,7 @@
 <script>
 import { ArticleListContent, StandardFormRow, TagSelect } from '@/components'
 import { getNormMap, getServiceStatusMap } from '@/mock/data/map_data'
-import { getRunningAmlServices } from '@/mock/data/services_data'
+import { getServiceData } from '@/mock/data/services_data'
 
 export default {
   name: 'TableList',
@@ -129,6 +130,7 @@ export default {
       normOptions: getNormMap(),
       dataSetType: '0',
       dataSetFiles: [],
+      dataLoading: false,
       dataSource: [],
       selectedRowKeys: [],
       selectedRows: [],
@@ -150,7 +152,7 @@ export default {
     }
   },
   created () {
-    this.dataSource = getRunningAmlServices()
+    this.initData()
   },
   computed: {
     rowSelection () {
@@ -161,6 +163,11 @@ export default {
     }
   },
   methods: {
+    async initData() {
+      this.dataLoading = true
+      this.dataSource = await getServiceData('aml', true)
+      this.dataLoading = false
+    },
     onSelectChange (selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows

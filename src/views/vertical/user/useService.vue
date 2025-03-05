@@ -284,10 +284,22 @@ export default {
             requestData = {}
             break
         }
+        // url地址
+        let url
+        switch (process.env.NODE_ENV) {
+          case 'development':
+            url = `https://fdueblab.cn${this.serviceUrl}`
+            break
+          case 'ums':
+            // todo: 银联使用需要获取本机ipv4地址和服务对应端口
+            // eslint-disable-next-line no-fallthrough
+          default:
+            url = this.serviceUrl
+        }
         // 文件类型
         if (this.responseType === 2) {
           const response = await request({
-            url: this.serviceUrl,
+            url,
             method: api.method,
             data: requestData,
             headers: headers,
@@ -296,7 +308,7 @@ export default {
           this.fileUrl = window.URL.createObjectURL(response)
         } else {
           const response = await request({
-            url: this.serviceUrl,
+            url,
             method: api.method,
             data: requestData,
             headers: headers
