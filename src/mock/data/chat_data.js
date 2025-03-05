@@ -225,12 +225,12 @@ export function getChatData(serviceType, userInput) {
       if (serviceType === 'aircraft') {
         resolve(aircraftPj)
       }
-      if (userInput.includes('课题一')) {
-        resolve(pj1)
-      } else if (userInput.includes('课题三')) {
+      if (userInput.includes('课题三')) {
         resolve(pj1pj4pj3)
       } else if (userInput.includes('课题四')) {
         resolve(pj4)
+      } else if (userInput.includes('课题一')) {
+        resolve(pj1)
       } else {
         reject(new Error())
       }
