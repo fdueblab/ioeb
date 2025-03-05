@@ -19,6 +19,10 @@ const errorHandler = (error) => {
     const data = error.response.data
     // 从 localstorage 获取 token
     const token = storage.get(ACCESS_TOKEN)
+    // Bad Request结构适配
+    if (data && data.error) {
+      return Promise.reject(data.error)
+    }
     if (error.response.status === 403) {
       notification.error({
         message: 'Forbidden',

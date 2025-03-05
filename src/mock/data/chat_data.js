@@ -174,7 +174,7 @@ const pj1pj3 = {
 }
 
 const pj4 = {
-  chosenServices: ['课题一风险识别模型推理微服务', '课题四模型评测-安全性指纹微服务'],
+  chosenServices: ['课题四模型评测-安全性指纹微服务'],
   serviceNodes: [
     {
       id: '9',
