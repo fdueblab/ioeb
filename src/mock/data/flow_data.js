@@ -82,47 +82,6 @@ const pj1Flow = {
   ]
 }
 
-const tecTempFlow = {
-  name: '元应用工作流',
-  preName: '技术评测元应用',
-  preInputName: '',
-  preOutputName: '',
-  inputType: 1,
-  outputType: 1,
-  nodeList: [
-    {
-      id: '10000',
-      name: 'metaAppAgent',
-      type: 'start',
-      url: 'ms.kxyun.net/agent',
-      left: '200px',
-      top: '0',
-      ico: 'el-icon-cpu',
-      input: 'zip File',
-      output: 'json',
-      version: '1.0',
-      state: 'running'
-    },
-    {
-      id: '9001',
-      name: 'predict',
-      type: 'process',
-      url: '/api/project1/predict',
-      left: '350px',
-      top: '200px',
-      ico: 'el-icon-s-data',
-      state: 'success',
-      input: 'vector',
-      output: 'vector',
-      version: '0.9'
-    }
-  ],
-  lineList: [
-    { from: '10000', to: '9001' },
-    { from: '9001', to: '10000' }
-  ]
-}
-
 const aircraftFlow = {
   name: '元应用工作流',
   preName: '智能飞行控制',
@@ -193,7 +152,7 @@ const aircraftFlow = {
   ]
 }
 
-const pj1pj3Flow = {
+const pj1pj4pj3Flow = {
   name: '元应用工作流',
   preName: '金融风险报告生成',
   preInputName: '跨境贸易数据',
@@ -241,13 +200,26 @@ const pj1pj3Flow = {
       version: '1.1'
     },
     {
+      id: '11000',
+      name: 'safetyFingerprint',
+      type: 'process',
+      url: '/api/project4/safety/safety-fingerprint',
+      left: '280px',
+      top: '360px',
+      ico: 'el-icon-finished',
+      input: 'vector',
+      output: 'json',
+      version: '2.0',
+      state: 'success'
+    },
+    {
       id: '9101',
       name: 'generateReport',
       type: 'process',
       url: '/api/project3/generate-report',
-      left: '440px',
-      top: '190px',
-      ico: 'el-icon-s-data',
+      left: '460px',
+      top: '200px',
+      ico: 'el-icon-document-add',
       state: 'success',
       input: 'text',
       output: 'pdf',
@@ -258,6 +230,8 @@ const pj1pj3Flow = {
     { from: '10000', to: '9000' },
     { from: '9000', to: '9001' },
     { from: '9001', to: '10000' },
+    { from: '10000', to: '11000' },
+    { from: '11000', to: '10000' },
     { from: '10000', to: '9101' },
     { from: '9101', to: '10000' }
   ]
@@ -308,8 +282,8 @@ export function getPj1Flow() {
   return pj1Flow
 }
 
-export function getPj1Pj3Flow() {
-  return pj1pj3Flow
+export function getPj1Pj4Pj3Flow() {
+  return pj1pj4pj3Flow
 }
 
 export function getPj4Flow() {
@@ -317,7 +291,7 @@ export function getPj4Flow() {
 }
 
 export function getTecTempFlow() {
-  return tecTempFlow
+  return pj4Flow
 }
 
 export function getAircraftFlow() {
