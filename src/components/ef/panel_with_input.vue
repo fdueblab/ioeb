@@ -357,6 +357,8 @@ export default {
       })
     },
     deleteElement() {
+      console.log('this.activeElement=============')
+      console.log(this.activeElement)
       if (this.activeElement.type === 'node') {
         this.deleteNode(this.activeElement.nodeId)
       } else if (this.activeElement.type === 'line') {

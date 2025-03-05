@@ -36,7 +36,6 @@ const pj1Flow = {
       id: '9001',
       name: 'predict',
       type: 'process',
-      // url: 'http://43.130.11.13:25001/api/predict',
       url: '/api/project1/predict',
       left: '75px',
       top: '380px',
@@ -63,7 +62,7 @@ const pj1Flow = {
       id: '9102',
       name: 'getReportData',
       type: 'process',
-      url: 'ms.kxyun.net/getReportData',
+      url: 'http://myApiServer.com/report/get',
       left: '450px',
       top: '80px',
       ico: 'el-icon-zoom-in',
@@ -80,48 +79,6 @@ const pj1Flow = {
     { from: '10000', to: '9101' },
     { from: '9101', to: '9102' },
     { from: '9102', to: '10000' }
-  ]
-}
-
-const tecTempFlow = {
-  name: '元应用工作流',
-  preName: '技术评测元应用',
-  preInputName: '',
-  preOutputName: '',
-  inputType: 1,
-  outputType: 1,
-  nodeList: [
-    {
-      id: '10000',
-      name: 'metaAppAgent',
-      type: 'start',
-      url: 'http://43.130.11.13:5000/api/tec_test_app',
-      left: '200px',
-      top: '0',
-      ico: 'el-icon-cpu',
-      input: 'zip File',
-      output: 'json',
-      version: '1.0',
-      state: 'running'
-    },
-    {
-      id: '9001',
-      name: 'predict',
-      type: 'process',
-      // url: 'http://43.130.11.13:25001/api/predict',
-      url: '/api/project1/predict',
-      left: '350px',
-      top: '200px',
-      ico: 'el-icon-s-data',
-      state: 'success',
-      input: 'vector',
-      output: 'vector',
-      version: '0.9'
-    }
-  ],
-  lineList: [
-    { from: '10000', to: '9001' },
-    { from: '9001', to: '10000' }
   ]
 }
 
@@ -195,11 +152,11 @@ const aircraftFlow = {
   ]
 }
 
-const pj3Flow = {
+const pj1pj4pj3Flow = {
   name: '元应用工作流',
-  preName: '课题三金融风险报告生成',
-  preInputName: '课题三金融数据',
-  preOutputName: '课题三金融风险报告',
+  preName: '金融风险报告生成',
+  preInputName: '跨境贸易数据',
+  preOutputName: '金融风险报告',
   inputType: 2,
   outputType: 1,
   nodeList: [
@@ -218,27 +175,51 @@ const pj3Flow = {
     },
     {
       id: '9000',
-      name: 'nl2gql',
+      name: 'preprocess',
       type: 'process',
-      // url: 'http://43.130.11.13:25003/api/nl2gql',
-      url: '/api/project3/nl2gql',
+      url: 'ms.kxyun.net/preprocess',
       left: '0',
       top: '130px',
       ico: 'el-icon-c-scale-to-original',
-      input: 'text',
-      output: 'json',
+      input: 'zip File',
+      output: 'vector',
       version: '2.0',
       state: 'success'
     },
     {
       id: '9001',
+      name: 'predict',
+      type: 'process',
+      url: '/api/project1/predict',
+      left: '75px',
+      top: '380px',
+      ico: 'el-icon-s-data',
+      state: 'success',
+      input: 'vector',
+      output: 'vector',
+      version: '1.1'
+    },
+    {
+      id: '11000',
+      name: 'safetyFingerprint',
+      type: 'process',
+      url: '/api/project4/safety/safety-fingerprint',
+      left: '280px',
+      top: '360px',
+      ico: 'el-icon-finished',
+      input: 'vector',
+      output: 'json',
+      version: '2.0',
+      state: 'success'
+    },
+    {
+      id: '9101',
       name: 'generateReport',
       type: 'process',
-      // url: 'http://43.130.11.13:25003/api/generate-report',
       url: '/api/project3/generate-report',
-      left: '320px',
-      top: '260px',
-      ico: 'el-icon-s-data',
+      left: '460px',
+      top: '200px',
+      ico: 'el-icon-document-add',
       state: 'success',
       input: 'text',
       output: 'pdf',
@@ -248,11 +229,15 @@ const pj3Flow = {
   lineList: [
     { from: '10000', to: '9000' },
     { from: '9000', to: '9001' },
-    { from: '9001', to: '10000' }
+    { from: '9001', to: '10000' },
+    { from: '10000', to: '11000' },
+    { from: '11000', to: '10000' },
+    { from: '10000', to: '9101' },
+    { from: '9101', to: '10000' }
   ]
 }
 
-const pj1Pj4Flow = {
+const pj4Flow = {
   name: '元应用工作流',
   preName: '课题四模型评测-安全性指纹',
   preInputName: '课题四模型数据',
@@ -277,7 +262,6 @@ const pj1Pj4Flow = {
       id: '11000',
       name: 'safetyFingerprint',
       type: 'process',
-      // url: 'http://43.130.11.13:25004/safety/safety-fingerprint',
       url: '/api/project4/safety/safety-fingerprint',
       left: '410px',
       top: '180px',
@@ -298,16 +282,16 @@ export function getPj1Flow() {
   return pj1Flow
 }
 
-export function getPj3Flow() {
-  return pj3Flow
+export function getPj1Pj4Pj3Flow() {
+  return pj1pj4pj3Flow
 }
 
 export function getPj4Flow() {
-  return pj1Pj4Flow
+  return pj4Flow
 }
 
 export function getTecTempFlow() {
-  return tecTempFlow
+  return pj4Flow
 }
 
 export function getAircraftFlow() {
