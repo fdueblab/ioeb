@@ -195,11 +195,11 @@ const aircraftFlow = {
   ]
 }
 
-const pj3Flow = {
+const pj1pj3Flow = {
   name: '元应用工作流',
-  preName: '课题三金融风险报告生成',
-  preInputName: '课题三金融数据',
-  preOutputName: '课题三金融风险报告',
+  preName: '金融风险报告生成',
+  preInputName: '跨境贸易数据',
+  preOutputName: '金融风险报告',
   inputType: 2,
   outputType: 1,
   nodeList: [
@@ -218,26 +218,37 @@ const pj3Flow = {
     },
     {
       id: '9000',
-      name: 'nl2gql',
+      name: 'preprocess',
       type: 'process',
-      // url: 'http://43.130.11.13:25003/api/nl2gql',
-      url: '/api/project3/nl2gql',
+      url: 'ms.kxyun.net/preprocess',
       left: '0',
       top: '130px',
       ico: 'el-icon-c-scale-to-original',
-      input: 'text',
-      output: 'json',
+      input: 'zip File',
+      output: 'vector',
       version: '2.0',
       state: 'success'
     },
     {
       id: '9001',
+      name: 'predict',
+      type: 'process',
+      url: '/api/project1/predict',
+      left: '75px',
+      top: '380px',
+      ico: 'el-icon-s-data',
+      state: 'success',
+      input: 'vector',
+      output: 'vector',
+      version: '1.1'
+    },
+    {
+      id: '9101',
       name: 'generateReport',
       type: 'process',
-      // url: 'http://43.130.11.13:25003/api/generate-report',
       url: '/api/project3/generate-report',
-      left: '320px',
-      top: '260px',
+      left: '440px',
+      top: '190px',
       ico: 'el-icon-s-data',
       state: 'success',
       input: 'text',
@@ -248,11 +259,13 @@ const pj3Flow = {
   lineList: [
     { from: '10000', to: '9000' },
     { from: '9000', to: '9001' },
-    { from: '9001', to: '10000' }
+    { from: '9001', to: '10000' },
+    { from: '10000', to: '9101' },
+    { from: '9101', to: '10000' }
   ]
 }
 
-const pj1Pj4Flow = {
+const pj4Flow = {
   name: '元应用工作流',
   preName: '课题四模型评测-安全性指纹',
   preInputName: '课题四模型数据',
@@ -298,12 +311,12 @@ export function getPj1Flow() {
   return pj1Flow
 }
 
-export function getPj3Flow() {
-  return pj3Flow
+export function getPj1Pj3Flow() {
+  return pj1pj3Flow
 }
 
 export function getPj4Flow() {
-  return pj1Pj4Flow
+  return pj4Flow
 }
 
 export function getTecTempFlow() {

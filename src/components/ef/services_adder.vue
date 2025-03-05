@@ -27,7 +27,7 @@
         class="service-tree"
       >
         <span slot-scope="{ node, data }" class="custom-tree-node">
-          <i :class="data.ico" class="node-icon"></i>
+          <i v-if="data.ico" :class="data.ico" class="node-icon" />
           <span class="node-label">{{ node.label }}</span>
         </span>
       </el-tree>

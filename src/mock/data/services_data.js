@@ -881,7 +881,7 @@ const airCraftMetaApps = [
   }
 ]
 
-export function getAmlServices() {
+function getAmlServices() {
   if (sessionStorage.getItem('upload_exception_service')) {
     amlServices.find(item => item.name === '异常识别微服务').status = Number(sessionStorage.getItem('upload_exception_service'))
     return amlServices
@@ -890,19 +890,19 @@ export function getAmlServices() {
   }
 }
 
-export function getRunningAmlServices() {
+function getRunningAmlServices() {
   return getAmlServices().filter(item => item.status === 1 || item.status === 4)
 }
 
-export function getAirCraftServices() {
+function getAirCraftServices() {
   return airCraftServices
 }
 
-export function getRunningAirCraftServices() {
+function getRunningAirCraftServices() {
   return airCraftServices.filter(item => item.status === 1 || item.status === 4)
 }
 
-export function getAmlMetaApps() {
+function getAmlMetaApps() {
   if (sessionStorage.getItem('metaAppInfo')) {
     const metaAppInfo = JSON.parse(sessionStorage.getItem('metaAppInfo'))
     return [...amlMetaApps, metaAppInfo]
@@ -911,14 +911,38 @@ export function getAmlMetaApps() {
   }
 }
 
-export function getRunningAmlMetaApps() {
+function getRunningAmlMetaApps() {
   return getAmlMetaApps().filter(item => item.status === 1 || item.status === 4)
 }
 
-export function getAirCraftMetaApps() {
+function getAirCraftMetaApps() {
   return airCraftMetaApps
 }
 
-export function getRunningAirCraftMetaApps() {
+function getRunningAirCraftMetaApps() {
   return airCraftMetaApps.filter(item => item.status === 1 || item.status === 4)
+}
+
+export function getServiceData(serviceType, onlyRunning = false) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (serviceType === 'aircraft') {
+        resolve(onlyRunning ? getRunningAirCraftServices() : getAirCraftServices())
+      } else {
+        resolve(onlyRunning ? getRunningAmlServices() : getAmlServices())
+      }
+    }, 500)
+  })
+}
+
+export function getMetaAppData(serviceType, onlyRunning = false) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (serviceType === 'aircraft') {
+        resolve(onlyRunning ? getRunningAirCraftMetaApps() : getAirCraftMetaApps())
+      } else {
+        resolve(onlyRunning ? getRunningAmlMetaApps() : getAmlMetaApps())
+      }
+    }, 500)
+  })
 }

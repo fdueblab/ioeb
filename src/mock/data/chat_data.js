@@ -1,4 +1,4 @@
-import { getAircraftFlow, getPj1Flow, getPj4Flow, getPj3Flow } from '@/mock/data/flow_data'
+import { getAircraftFlow, getPj1Flow, getPj4Flow, getPj1Pj3Flow } from '@/mock/data/flow_data'
 
 const aircraftPj = {
   chosenServices: ['目标识别微服务', '远程控制微服务'],
@@ -119,8 +119,8 @@ const pj1 = {
   flowData: getPj1Flow()
 }
 
-const pj3 = {
-  chosenServices: ['课题三金融风险报告生成微服务'],
+const pj1pj3 = {
+  chosenServices: ['课题一风险识别模型推理微服务', '课题三金融风险报告生成微服务'],
   serviceNodes: [
     {
       id: '9',
@@ -129,20 +129,33 @@ const pj3 = {
       open: true,
       children: [
         {
+          id: '90',
+          type: 'group',
+          name: '课题一风险识别模型推理微服务',
+          open: true,
+          children: [
+            {
+              id: '9002',
+              type: 'preprocess',
+              name: 'preprocess',
+              ico: 'el-icon-c-scale-to-original',
+              style: {}
+            },
+            {
+              id: '9005',
+              type: 'predict',
+              name: 'predict',
+              ico: 'el-icon-data-line',
+              style: {}
+            }
+          ]
+        },
+        {
           id: '93',
           type: 'group',
           name: '课题三金融风险报告生成微服务',
           open: true,
           children: [
-            {
-              id: '9301',
-              type: 'nl2gql',
-              name: 'nl2gql',
-              ico: 'el-icon-connection',
-              style: {},
-              // url: 'http://43.130.11.13:25003/api/nl2gql'
-              url: '/api/project3/nl2gql'
-            },
             {
               id: '9302',
               type: 'generateReport',
@@ -157,7 +170,7 @@ const pj3 = {
       ]
     }
   ],
-  flowData: getPj3Flow()
+  flowData: getPj1Pj3Flow()
 }
 
 const pj4 = {
@@ -201,7 +214,7 @@ export function getChatData(serviceType, userInput) {
       if (userInput.includes('课题一')) {
         resolve(pj1)
       } else if (userInput.includes('课题三')) {
-        resolve(pj3)
+        resolve(pj1pj3)
       } else if (userInput.includes('课题四')) {
         resolve(pj4)
       } else {

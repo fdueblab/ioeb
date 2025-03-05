@@ -138,6 +138,7 @@
         ref="table"
         :columns="columns"
         :dataSource="filteredDataSource"
+        :loading="dataLoading"
       >
         <span slot="serial" slot-scope="text, record, index">
           {{ index + 1 }}
@@ -410,7 +411,7 @@
 <script>
 import moment from 'moment'
 import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
-import { getAmlMetaApps, getAmlServices } from '@/mock/data/services_data'
+import { getMetaAppData, getServiceData } from '@/mock/data/services_data'
 import {
   getAttributeMap,
   getIndustryMap,
@@ -525,6 +526,7 @@ export default {
           scopedSlots: { customRender: 'action' }
         }
       ],
+      dataLoading: false,
       dataSource: [],
       filteredDataSource: [],
       selectedRowKeys: [],
@@ -764,10 +766,17 @@ export default {
         this.$message.error('请先输入您的需求！')
       }
     },
-    initData () {
+    async initData() {
+      this.dataLoading = true
       this.agentSearchData = []
-      this.dataSource = [...getAmlServices(), ...getAmlMetaApps()]
+      // 使用 Promise.all 并行加载两个异步请求
+      const [serviceData, metaData] = await Promise.all([
+        getServiceData('aml'),
+        getMetaAppData('aml')
+      ])
+      this.dataSource = [...serviceData, ...metaData]
       this.filteredDataSource = this.dataSource
+      this.dataLoading = false
     },
     toggleRAGInput() {
       this.showRAGInput = !this.showRAGInput
