@@ -3,7 +3,7 @@ name: Deploy to Server
 on:
   push:
     branches:
-      - zfy
+      - master
 
 jobs:
   build-and-deploy:
@@ -41,7 +41,7 @@ jobs:
           docker build -t polarsnowleopard/ioeb-frontend:latest .
           docker push polarsnowleopard/ioeb-frontend:latest
 
-      # 构建并推送后端服务镜像
+      # # 构建并推送后端服务镜像
       # - name: Build and push Project_1 Docker image
       #   run: |
       #     docker build -t polarsnowleopard/ioeb-project1:latest ./api/Project_1
