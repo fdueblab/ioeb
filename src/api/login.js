@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 const userApi = {
   Login: '/auth/login',
-  Login2: '/auth/login2',
+  Login2: '/auth/login',
   Logout: '/auth/logout',
   ForgePassword: '/auth/forge-password',
   Register: '/auth/register',
@@ -10,9 +10,9 @@ const userApi = {
   SendSms: '/account/sms',
   SendSmsErr: '/account/sms_err',
   // get my info
-  UserInfo: '/user/info',
-  UserInfo2: '/user/info2',
-  UserInfo3: '/user/info3',
+  UserInfo: '/auth/info',
+  UserInfo2: '/auth/info',
+  UserInfo3: '/auth/info',
   UserMenu: '/user/nav'
 }
 
