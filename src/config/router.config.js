@@ -36,6 +36,12 @@ export const asyncRouterMap = [
             name: 'vertical-user-aircraft',
             meta: { title: '低空飞行AI监控', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/aircraft')
+          },
+          {
+            path: '/vertical-user/health',
+            name: 'vertical-user-health',
+            meta: { title: '农村医疗AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: () => import('@/views/vertical/user/health')
           }
         ]
       },
@@ -58,6 +64,12 @@ export const asyncRouterMap = [
             name: 'vertical-ms-aircraft',
             meta: { title: '低空飞行AI监控服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/ms/aircraft')
+          },
+          {
+            path: '/vertical-ms/health',
+            name: 'vertical-ms-health',
+            meta: { title: '农村医疗AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: () => import('@/views/vertical/ms/health')
           }
         ]
       },
@@ -80,6 +92,12 @@ export const asyncRouterMap = [
             name: 'vertical-atom-app-aircraft',
             component: () => import('@/views/schedule/AirCraftSchedule'),
             meta: { title: '低空元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+          },
+          {
+            path: '/vertical-atom-app/health',
+            name: 'vertical-atom-app-health',
+            component: () => import('@/views/schedule/HealthSchedule'),
+            meta: { title: '农医元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
           }
         ]
       },
@@ -124,10 +142,30 @@ export const asyncRouterMap = [
                 meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
               },
               {
-                path: '/evaluation/aircraft//emulation',
+                path: '/evaluation/aircraft/emulation',
                 name: 'atom-app-evaluation-aircraft',
                 meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
                 component: () => import('@/views/evaluation/aircraft/emulation')
+              }
+            ]
+          },
+          {
+            path: '/evaluation/health',
+            name: 'evaluation-health',
+            meta: { title: '农村医疗AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: RouteView,
+            children: [
+              {
+                path: '/evaluation/health/technology',
+                name: 'evaluation-health-technology',
+                component: () => import('@/views/evaluation/health/technology'),
+                meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
+              },
+              {
+                path: '/evaluation/health/emulation',
+                name: 'atom-app-evaluation-health',
+                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
+                component: () => import('@/views/evaluation/health/emulation')
               }
             ]
           }

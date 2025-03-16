@@ -278,6 +278,91 @@ const pj4Flow = {
   ]
 }
 
+const healthFlow = {
+  name: '元应用工作流',
+  preName: '农村医疗AI辅助诊断元应用',
+  preInputName: '患者医疗数据',
+  preOutputName: '诊断与健康管理方案',
+  inputType: 2,
+  outputType: 1,
+  nodeList: [
+    {
+      id: '10000',
+      name: 'metaAppAgent',
+      type: 'start',
+      url: 'http://myApiServer.com/health/metaApp',
+      left: '200px',
+      top: '0',
+      ico: 'el-icon-cpu',
+      input: 'multipart',
+      output: 'json',
+      version: '1.0',
+      state: 'running'
+    },
+    {
+      id: '8001',
+      name: 'transcribe',
+      type: 'process',
+      url: 'http://myApiServer.com/health/voice/transcribe',
+      left: '0',
+      top: '155px',
+      ico: 'el-icon-microphone',
+      input: 'audio file',
+      output: 'json',
+      version: '1.2',
+      state: 'success'
+    },
+    {
+      id: '8101',
+      name: 'diagnose',
+      type: 'process',
+      url: 'http://myApiServer.com/health/diagnose',
+      left: '125px',
+      top: '340px',
+      ico: 'el-icon-picture',
+      state: 'success',
+      input: 'image file',
+      output: 'json',
+      version: '1.1'
+    },
+    {
+      id: '8201',
+      name: 'analyze',
+      type: 'process',
+      url: 'http://myApiServer.com/health/monitor/analyze',
+      left: '350px',
+      top: '340px',
+      ico: 'el-icon-data-analysis',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '8202',
+      name: 'alert',
+      type: 'process',
+      url: 'http://myApiServer.com/health/monitor/alert',
+      left: '460px',
+      top: '75px',
+      ico: 'el-icon-bell',
+      state: 'warning',
+      input: 'json',
+      output: 'json',
+      version: '0.9'
+    }
+  ],
+  lineList: [
+    { from: '10000', to: '8001' },
+    { from: '8001', to: '10000' },
+    { from: '10000', to: '8101' },
+    { from: '8101', to: '10000' },
+    { from: '10000', to: '8201' },
+    { from: '8201', to: '8202' },
+    { from: '8202', to: '10000' }
+  ]
+}
+
 export function getPj1Flow() {
   return pj1Flow
 }
@@ -296,4 +381,8 @@ export function getTecTempFlow() {
 
 export function getAircraftFlow() {
   return aircraftFlow
+}
+
+export function getHealthFlow() {
+  return healthFlow
 }

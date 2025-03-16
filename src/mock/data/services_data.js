@@ -590,7 +590,7 @@ const airCraftServices = [
       companyName: '复旦大学',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      companyIntroduce: '复旦大学校名取自《尚书大传》之“日月光华，旦复旦兮”，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部“长江学者”特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，“中国大学智库论坛”秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
+      companyIntroduce: '复旦大学校名取自《尚书大传》之"日月光华，旦复旦兮"，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部"长江学者"特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，"中国大学智库论坛"秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
       msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
       companyScore: 5,
       msScore: 5
@@ -624,7 +624,7 @@ const airCraftServices = [
       companyName: '复旦大学',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      companyIntroduce: '复旦大学校名取自《尚书大传》之“日月光华，旦复旦兮”，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部“长江学者”特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，“中国大学智库论坛”秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
+      companyIntroduce: '复旦大学校名取自《尚书大传》之"日月光华，旦复旦兮"，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部"长江学者"特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，"中国大学智库论坛"秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
       msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
       companyScore: 5,
       msScore: 5
@@ -658,7 +658,7 @@ const airCraftServices = [
       companyName: '复旦大学',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      companyIntroduce: '复旦大学校名取自《尚书大传》之“日月光华，旦复旦兮”，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部“长江学者”特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，“中国大学智库论坛”秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
+      companyIntroduce: '复旦大学校名取自《尚书大传》之"日月光华，旦复旦兮"，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部"长江学者"特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，"中国大学智库论坛"秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
       msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
       companyScore: 5,
       msScore: 5
@@ -696,7 +696,7 @@ const airCraftServices = [
       companyName: '复旦大学',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      companyIntroduce: '复旦大学校名取自《尚书大传》之“日月光华，旦复旦兮”，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部“长江学者”特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，“中国大学智库论坛”秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
+      companyIntroduce: '复旦大学校名取自《尚书大传》之"日月光华，旦复旦兮"，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部"长江学者"特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，"中国大学智库论坛"秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
       msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
       companyScore: 5,
       msScore: 5
@@ -734,12 +734,388 @@ const airCraftServices = [
       companyName: '复旦大学',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      companyIntroduce: '复旦大学校名取自《尚书大传》之“日月光华，旦复旦兮”，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部“长江学者”特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，“中国大学智库论坛”秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
+      companyIntroduce: '复旦大学校名取自《尚书大传》之"日月光华，旦复旦兮"，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部"长江学者"特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，"中国大学智库论坛"秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
       msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
       companyScore: 5,
       msScore: 5
     },
     number: '2342'
+  }
+]
+
+const healthServices = [
+  {
+    name: '基层医疗影像辅助诊断微服务',
+    attribute: 1,
+    type: 0,
+    domain: 0,
+    industry: 0,
+    scenario: 1,
+    technology: 0,
+    netWork: 'bridge',
+    port: '0.0.0.0:8100/TCP → 0.0.0.0:81000',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/health/data',
+    status: 4,
+    number: '256',
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 4
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '乡村医疗科技有限公司',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642111',
+      companyIntroduce: '农村AI医疗解决方案提供商',
+      msIntroduce: '基于轻量化模型的医疗影像辅助诊断服务',
+      companyScore: 5,
+      msScore: 4
+    },
+    apiList: [
+      {
+        name: 'diagnose',
+        isFake: true,
+        url: 'http://myApiServer.com/health/diagnose',
+        method: 'POST',
+        des: '模型推理接口，基于医学影像数据进行辅助诊断',
+        parameterType: 2,
+        parameters: [{
+          name: 'file',
+          type: 'image file',
+          des: '医学影像文件（支持CT、X光、超声等图像）'
+        }],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '诊断完成！',
+          data: {
+            diagnosisResult: '高度疑似肺部感染，建议进一步检查',
+            confidence: 0.89,
+            annotations: {
+              regions: [
+                { x: 120, y: 150, width: 50, height: 40 },
+                { x: 200, y: 180, width: 30, height: 25 }
+              ],
+              type: '异常区域'
+            }
+          }
+        }
+      },
+      {
+        name: 'healthCheck',
+        isFake: true,
+        url: 'http://myApiServer.com/health/health',
+        method: 'GET',
+        des: '判断微服务状态是否正常可用',
+        parameterType: 0,
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '服务运行正常',
+          data: {
+            status: 'healthy',
+            uptime: '72h 15m'
+          }
+        }
+      }
+    ]
+  },
+  {
+    name: '慢性病管理监测微服务',
+    attribute: 1,
+    type: 0,
+    domain: 2,
+    industry: 0,
+    scenario: 2,
+    technology: 2,
+    netWork: 'bridge',
+    port: '0.0.0.0:8101/TCP → 0.0.0.0:81001',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/health/data',
+    status: 4,
+    number: '128',
+    norm: [
+      {
+        key: 1,
+        score: 4
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '健康云科技有限公司',
+      companyAddress: '上海市浦东新区张江高科技园区',
+      companyContact: '021-58885555',
+      companyIntroduce: '专注于慢性病管理和健康监测',
+      msIntroduce: '基于物联网和AI的慢性病监测服务',
+      companyScore: 4,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'analyze',
+        isFake: true,
+        url: 'http://myApiServer.com/health/monitor/analyze',
+        method: 'POST',
+        des: '分析健康数据并提供管理建议',
+        parameterType: 2,
+        parameters: [{
+          name: 'data',
+          type: 'json',
+          des: '来自可穿戴设备和家用医疗设备的健康数据'
+        }],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '分析完成！',
+          data: {
+            patientStatus: '血糖水平波动较大',
+            riskLevel: '中等',
+            recommendations: [
+              '增加餐后30分钟测量频率',
+              '调整胰岛素用量',
+              '每日30分钟低强度运动'
+            ],
+            nextCheckupDate: '2023-06-15'
+          }
+        }
+      },
+      {
+        name: 'alert',
+        isFake: true,
+        url: 'http://myApiServer.com/health/monitor/alert',
+        method: 'POST',
+        des: '设置健康预警阈值和通知',
+        parameterType: 2,
+        responseType: 0,
+        response: {
+          code: 200,
+          message: '预警设置成功！',
+          data: {
+            alertId: '12345',
+            thresholds: {
+              bloodPressureHigh: '140/90',
+              bloodPressureLow: '90/60',
+              bloodSugarHigh: '11.1',
+              bloodSugarLow: '3.9'
+            },
+            notificationChannels: ['SMS', 'App', 'Family']
+          }
+        }
+      }
+    ]
+  },
+  {
+    name: '方言语音识别转写微服务',
+    attribute: 2,
+    type: 0,
+    domain: 1,
+    industry: 0,
+    scenario: 0,
+    technology: 1,
+    netWork: 'bridge',
+    port: '0.0.0.0:8102/TCP → 0.0.0.0:81002',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/health/data',
+    status: 4,
+    number: '384',
+    norm: [
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 4
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '智语科技有限公司',
+      companyAddress: '北京市海淀区中关村科技园',
+      companyContact: '010-62345678',
+      companyIntroduce: '专注于多方言语音识别技术',
+      msIntroduce: '农村方言语音识别转写服务',
+      companyScore: 4,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'transcribe',
+        isFake: true,
+        url: 'http://myApiServer.com/health/voice/transcribe',
+        method: 'POST',
+        des: '将方言语音转写为标准文字',
+        parameterType: 2,
+        parameters: [{
+          name: 'audio',
+          type: 'audio file',
+          des: '语音文件（支持方言）'
+        }],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '转写成功！',
+          data: {
+            originalDialect: '四川方言',
+            standardText: '我最近感觉身体不太舒服，头晕头痛，想挂号看医生',
+            confidence: 0.92,
+            duration: '15秒',
+            medicalTerms: [
+              { term: '头晕', standard: true },
+              { term: '头痛', standard: true }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  {
+    name: '农村医疗资源调度微服务',
+    attribute: 0,
+    type: 0,
+    domain: 2,
+    industry: 1,
+    scenario: 3,
+    technology: 3,
+    netWork: 'bridge',
+    port: '0.0.0.0:8103/TCP → 0.0.0.0:81003',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/health/data',
+    status: 3,
+    number: '192',
+    norm: [
+      {
+        key: 0,
+        score: 4
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '医卫智能科技有限公司',
+      companyAddress: '武汉市光谷科技园',
+      companyContact: '027-87654321',
+      companyIntroduce: '专注于医疗资源智能调度',
+      msIntroduce: '基于强化学习的医疗资源优化调度服务',
+      companyScore: 5,
+      msScore: 4
+    },
+    apiList: [
+      {
+        name: 'allocate',
+        isFake: true,
+        url: 'http://myApiServer.com/health/resource/allocate',
+        method: 'POST',
+        des: '根据急诊情况优化医疗资源调度',
+        parameterType: 2,
+        parameters: [{
+          name: 'data',
+          type: 'json',
+          des: '急诊信息和可用资源数据'
+        }],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '资源调度完成！',
+          data: {
+            emergencyLevel: '中度紧急',
+            allocatedResources: [
+              { type: '救护车', eta: '15分钟', distance: '8.5公里' },
+              { type: '急诊医师', status: '待命', specialty: '内科' }
+            ],
+            nearestHospital: {
+              name: '县人民医院',
+              distance: '12公里',
+              availableBeds: 3,
+              specialtyAvailable: ['内科', '外科', '急诊']
+            },
+            alternativeFacilities: [
+              { name: '镇卫生院', distance: '3公里', capabilities: '基础处理' }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  {
+    name: '流行病预测分析微服务',
+    attribute: 2,
+    type: 0,
+    domain: 3,
+    industry: 1,
+    scenario: 4,
+    technology: 2,
+    netWork: 'bridge',
+    port: '0.0.0.0:8104/TCP → 0.0.0.0:81004',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/health/data',
+    status: 4,
+    number: '512',
+    norm: [
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '公共卫生数据科技公司',
+      companyAddress: '广州市天河区科技园',
+      companyContact: '020-38889999',
+      companyIntroduce: '专注于流行病学数据分析',
+      msIntroduce: '基于时序数据分析的流行病预测服务',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'predict',
+        isFake: true,
+        url: 'http://myApiServer.com/health/epidemic/predict',
+        method: 'POST',
+        des: '分析历史数据预测流行病发展趋势',
+        parameterType: 2,
+        parameters: [{
+          name: 'data',
+          type: 'json',
+          des: '历史疫情数据和环境因素'
+        }],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '预测分析完成！',
+          data: {
+            diseaseName: '季节性流感',
+            riskLevel: '高',
+            predictedPeakTime: '2023年12月上旬',
+            affectedAreas: [
+              { name: '晓庄村', riskLevel: '极高', population: 1200 },
+              { name: '河西镇', riskLevel: '高', population: 5000 },
+              { name: '东林县', riskLevel: '中', population: 32000 }
+            ],
+            preventionRecommendations: [
+              '提前两周开始疫苗接种',
+              '加强学校和公共场所消毒',
+              '准备充足医疗物资'
+            ],
+            predictionAccuracy: '85%'
+          }
+        }
+      }
+    ]
   }
 ]
 
@@ -873,6 +1249,180 @@ const airCraftMetaApps = [
   }
 ]
 
+const healthMetaApps = [
+  {
+    name: '农村医疗AI辅助诊断元应用',
+    attribute: 3,
+    type: 1,
+    domain: 0,
+    industry: 0,
+    scenario: 1,
+    technology: 0,
+    netWork: 'bridge',
+    port: '0.0.0.0:8120/TCP → 0.0.0.0:81020',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/health/metaApp',
+    status: 1,
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 1,
+        score: 4
+      },
+      {
+        key: 2,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '乡村医疗科技有限公司',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642111',
+      companyIntroduce: '农村AI医疗解决方案提供商',
+      msIntroduce: '针对基层医疗机构的AI辅助诊断元应用，整合了医学影像处理和方言语音识别功能',
+      companyScore: 5,
+      msScore: 4
+    },
+    apiList: [
+      {
+        name: '农村医疗AI辅助诊断元应用',
+        isFake: true,
+        inputName: '诊断数据',
+        outputName: '诊断结果报告',
+        outputVisualization: true,
+        submitButtonText: '开始诊断',
+        url: 'http://myApiServer.com/health/metaApp',
+        method: 'POST',
+        parameterType: 3,
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '诊断完成！',
+          data: {
+            patientInfo: {
+              age: 65,
+              gender: '男',
+              symptoms: ['胸闷', '咳嗽', '发热'],
+              medicalHistory: '高血压，2型糖尿病'
+            },
+            diagnosisResult: {
+              primaryDiagnosis: '肺部感染',
+              confidence: 0.92,
+              alternativeDiagnosis: ['慢性支气管炎', '肺气肿'],
+              riskLevel: '中高风险'
+            },
+            recommendations: [
+              '建议进行抗生素治疗',
+              '密切监测血氧水平',
+              '一周后复查'
+            ],
+            referralNeeded: true,
+            referToSpecialist: '呼吸科专家'
+          }
+        }
+      }
+    ],
+    number: '1024'
+  },
+  {
+    name: '农村公共卫生监测元应用',
+    attribute: 3,
+    type: 1,
+    domain: 3,
+    industry: 1,
+    scenario: 4,
+    technology: 2,
+    netWork: 'bridge',
+    port: '0.0.0.0:8121/TCP → 0.0.0.0:81021',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/health/metaApp',
+    status: 1,
+    norm: [
+      {
+        key: 0,
+        score: 4
+      },
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 4
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '公共卫生数据科技公司',
+      companyAddress: '广州市天河区科技园',
+      companyContact: '020-38889999',
+      companyIntroduce: '专注于流行病学数据分析',
+      msIntroduce: '农村地区公共卫生监测元应用，整合流行病预测和医疗资源调度功能',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: '农村公共卫生监测元应用',
+        isFake: true,
+        inputName: '区域卫生数据',
+        outputName: '监测与预警报告',
+        outputVisualization: true,
+        submitButtonText: '开始分析',
+        url: 'http://myApiServer.com/health/publicHealth/monitor',
+        method: 'POST',
+        parameterType: 3,
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '分析完成！',
+          data: {
+            regionOverview: {
+              name: '东林县及周边乡镇',
+              population: 120000,
+              medicalFacilities: 15,
+              healthcareWorkers: 230
+            },
+            epidemicStatus: {
+              currentOutbreaks: [
+                { disease: '季节性流感', cases: 325, trend: '上升' },
+                { disease: '手足口病', cases: 48, trend: '稳定' }
+              ],
+              predictions: [
+                { disease: '季节性流感', peakTime: '2023年12月上旬', estimatedCases: 500 },
+                { disease: '腹泻', peakTime: '2023年7月', estimatedCases: 200 }
+              ]
+            },
+            resourceAllocation: {
+              criticalShortages: ['儿科医生', '呼吸科专家'],
+              recommendedDistribution: [
+                { resource: '流感疫苗', allocateTo: ['河西镇', '晓庄村'], quantity: 2000 },
+                { resource: '防护口罩', allocateTo: ['所有学校', '养老院'], quantity: 10000 }
+              ]
+            },
+            preventionActions: [
+              '加强学校晨检',
+              '提前启动疫苗接种计划',
+              '农村医生培训'
+            ]
+          }
+        }
+      }
+    ],
+    number: '768'
+  }
+]
+
 function getAmlServices() {
   if (sessionStorage.getItem('upload_exception_service')) {
     amlServices.find(item => item.name === '异常识别微服务').status = Number(sessionStorage.getItem('upload_exception_service'))
@@ -915,26 +1465,58 @@ function getRunningAirCraftMetaApps() {
   return airCraftMetaApps.filter(item => item.status === 1 || item.status === 4)
 }
 
+function getHealthServices() {
+  if (sessionStorage.getItem('upload_health_service')) {
+    const uploadedService = healthServices.find(item => item.name === '基层医疗影像辅助诊断微服务')
+    if (uploadedService) {
+      uploadedService.status = Number(sessionStorage.getItem('upload_health_service'))
+    }
+    return healthServices
+  } else {
+    return healthServices
+  }
+}
+
+function getRunningHealthServices() {
+  return healthServices.filter(item => item.status === 4)
+}
+
+function getHealthMetaApps() {
+  return healthMetaApps
+}
+
+function getRunningHealthMetaApps() {
+  return healthMetaApps.filter(item => item.status === 1 || item.status === 4)
+}
+
 export function getServiceData(serviceType, onlyRunning = false) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      if (serviceType === 'aircraft') {
-        resolve(onlyRunning ? getRunningAirCraftServices() : getAirCraftServices())
-      } else {
-        resolve(onlyRunning ? getRunningAmlServices() : getAmlServices())
+      switch (serviceType) {
+        case 'aml':
+          resolve(onlyRunning ? getRunningAmlServices() : getAmlServices())
+          break
+        case 'aircraft':
+          resolve(onlyRunning ? getRunningAirCraftServices() : getAirCraftServices())
+          break
+        case 'health':
+          resolve(onlyRunning ? getRunningHealthServices() : getHealthServices())
+          break
+        default:
+          resolve(onlyRunning ? getRunningAmlServices() : getAmlServices())
       }
     }, 500)
   })
 }
 
 export function getMetaAppData(serviceType, onlyRunning = false) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (serviceType === 'aircraft') {
-        resolve(onlyRunning ? getRunningAirCraftMetaApps() : getAirCraftMetaApps())
-      } else {
-        resolve(onlyRunning ? getRunningAmlMetaApps() : getAmlMetaApps())
-      }
-    }, 500)
-  })
+  if (serviceType === 'aml') {
+    return onlyRunning ? getRunningAmlMetaApps() : getAmlMetaApps()
+  } else if (serviceType === 'aircraft') {
+    return onlyRunning ? getRunningAirCraftMetaApps() : getAirCraftMetaApps()
+  } else if (serviceType === 'health') {
+    return onlyRunning ? getRunningHealthMetaApps() : getHealthMetaApps()
+  } else {
+    return onlyRunning ? getRunningAirCraftMetaApps() : getAirCraftMetaApps()
+  }
 }

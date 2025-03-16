@@ -1,4 +1,4 @@
-import { getAircraftFlow, getPj1Flow, getPj4Flow, getPj1Pj4Pj3Flow } from '@/mock/data/flow_data'
+import { getAircraftFlow, getPj1Flow, getPj4Flow, getPj1Pj4Pj3Flow, getHealthFlow } from '@/mock/data/flow_data'
 
 const aircraftPj = {
   chosenServices: ['目标识别微服务', '远程控制微服务'],
@@ -219,11 +219,88 @@ const pj4 = {
   flowData: getPj4Flow()
 }
 
+const healthAI = {
+  chosenServices: ['基层医疗影像辅助诊断微服务', '方言语音识别转写微服务', '慢性病管理监测微服务'],
+  serviceNodes: [
+    {
+      id: '8',
+      type: 'group',
+      name: '农村医疗AI服务',
+      open: true,
+      children: [
+        {
+          id: '80',
+          type: 'group',
+          name: '方言语音识别转写微服务',
+          open: true,
+          children: [
+            {
+              id: '8001',
+              type: 'transcribe',
+              name: 'transcribe',
+              ico: 'el-icon-microphone',
+              style: {}
+            }
+          ]
+        },
+        {
+          id: '81',
+          type: 'group',
+          name: '基层医疗影像辅助诊断微服务',
+          open: true,
+          children: [
+            {
+              id: '8101',
+              type: 'diagnose',
+              name: 'diagnose',
+              ico: 'el-icon-picture',
+              style: {}
+            },
+            {
+              id: '8102',
+              type: 'healthCheck',
+              name: 'healthCheck',
+              ico: 'el-icon-first-aid-kit',
+              style: {}
+            }
+          ]
+        },
+        {
+          id: '82',
+          type: 'group',
+          name: '慢性病管理监测微服务',
+          open: true,
+          children: [
+            {
+              id: '8201',
+              type: 'analyze',
+              name: 'analyze',
+              ico: 'el-icon-data-analysis',
+              style: {}
+            },
+            {
+              id: '8202',
+              type: 'alert',
+              name: 'alert',
+              ico: 'el-icon-bell',
+              style: {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  flowData: getHealthFlow()
+}
+
 export function getChatData(serviceType, userInput) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       if (serviceType === 'aircraft') {
         resolve(aircraftPj)
+      }
+      if (serviceType === 'health') {
+        resolve(healthAI)
       }
       if (userInput.includes('课题三')) {
         resolve(pj1pj4pj3)
