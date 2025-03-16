@@ -39,88 +39,7 @@
           </a-col>
         </a-row>
       </a-form>
-      <a-card title="用于测试的可编辑接口地址，只会在开发环境出现" v-if="isDev">
-        <a-row :gutter="16">
-          <a-col :span="8">
-            <a-form-item label="智能检索接口地址（可编辑）">
-              <a-input style="width: 100%" v-model="agentSearchApiUrl" placeholder="请输入">
-                <span slot="addonBefore" style="text-align: center; display: inline-block;">
-                  <a-select v-model="agentSearchApiMethod" style="width: 80px">
-                    <a-select-option v-for="(item, index) in methodTypeOptions" :key="index" :value="index">
-                      {{ item }}
-                    </a-select-option>
-                  </a-select>
-                </span>
-              </a-input>
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="智能检索接口请求头（可编辑）">
-              <a-textarea v-model="agentSearchApiHeaderText" :rows="4" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="智能检索接口参数（根据检索条件变化）">
-              <a-textarea v-model="agentSearchFormText" :rows="7" :readonly="true" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-form-item label="智能检索返回结果">
-          <a-textarea v-model="agentSearchApiResultText" :rows="5" :readonly="true" />
-        </a-form-item>
-      </a-card>
     </a-card>
-    <!--    <a-card :bordered="false" class="ant-pro-components-tag-select">-->
-    <!--      <a-form layout="inline">-->
-    <!--        <standard-form-row title="属性" block style="padding-bottom: 11px;">-->
-    <!--          <a-form-item>-->
-    <!--            <tag-select @change="handleTagChange('attribute', $event)">-->
-    <!--              <tag-select-option v-for="(item, index) in attributeArr" :key="index" :value="index">{{ item }}</tag-select-option>-->
-    <!--            </tag-select>-->
-    <!--          </a-form-item>-->
-    <!--        </standard-form-row>-->
-
-    <!--        <standard-form-row title="类型" block style="padding-bottom: 11px;">-->
-    <!--          <a-form-item>-->
-    <!--            <tag-select @change="handleTagChange('type', $event)">-->
-    <!--              <tag-select-option v-for="(item, index) in typeArr" :key="index" :value="index">{{ item }}</tag-select-option>-->
-    <!--            </tag-select>-->
-    <!--          </a-form-item>-->
-    <!--        </standard-form-row>-->
-
-    <!--        <standard-form-row title="领域" block style="padding-bottom: 11px;">-->
-    <!--          <a-form-item>-->
-    <!--            <tag-select @change="handleTagChange('domain', $event)">-->
-    <!--              <tag-select-option v-for="(item, index) in domainArr" :key="index" :value="index">{{ item }}</tag-select-option>-->
-    <!--            </tag-select>-->
-    <!--          </a-form-item>-->
-    <!--        </standard-form-row>-->
-
-    <!--        <standard-form-row title="行业" grid>-->
-    <!--          <a-form-item>-->
-    <!--            <tag-select @change="handleTagChange('industry', $event)">-->
-    <!--              <tag-select-option v-for="(item, index) in industryArr" :key="index" :value="index">{{ item }}</tag-select-option>-->
-    <!--            </tag-select>-->
-    <!--          </a-form-item>-->
-    <!--        </standard-form-row>-->
-
-    <!--        <standard-form-row title="场景" grid>-->
-    <!--          <a-form-item>-->
-    <!--            <tag-select @change="handleTagChange('scenario', $event)">-->
-    <!--              <tag-select-option v-for="(item, index) in scenarioArr" :key="index" :value="index">{{ item }}</tag-select-option>-->
-    <!--            </tag-select>-->
-    <!--          </a-form-item>-->
-    <!--        </standard-form-row>-->
-
-    <!--        <standard-form-row title="技术" grid>-->
-    <!--          <a-form-item>-->
-    <!--            <tag-select @change="handleTagChange('technology', $event)">-->
-    <!--              <tag-select-option v-for="(item, index) in technologyArr" :key="index" :value="index">{{ item }}</tag-select-option>-->
-    <!--            </tag-select>-->
-    <!--          </a-form-item>-->
-    <!--        </standard-form-row>-->
-    <!--      </a-form>-->
-    <!--    </a-card>-->
     <a-card :bordered="false">
       <a-form layout="vertical">
         <a-row :gutter="16">
@@ -485,37 +404,23 @@
           </a-form-item>
         </a-col>
       </a-row>
-      <a-row v-if="isDev">
-        <a-form-item label="上载知识库接口地址">
-          <a-input style="width: 100%" v-model="ragUploadUrl" placeholder="请输入">
-            <span slot="addonBefore" style="text-align: center; display: inline-block;">
-              <a-select v-model="ragUploadMethod" style="width: 80px">
-                <a-select-option v-for="(item, index) in methodTypeOptions" :key="index" :value="index">
-                  {{ item }}
-                </a-select-option>
-              </a-select>
-            </span>
-          </a-input>
-        </a-form-item>
-      </a-row>
     </div>
   </page-header-wrapper>
 </template>
 
 <script>
 import moment from 'moment'
-import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
+import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
+import { getMetaAppData, getServiceData } from '@/mock/data/services_data'
 import {
+  getAttributeMap,
   getIndustryMap,
-  getScenarioMap,
-  getTechnologyMap,
   getNormMap,
+  getScenarioMap,
   getServiceStatusMap,
   getServiceTypeMap,
-  getAttributeMap,
-  getMethodTypeMap
+  getTechnologyMap
 } from '@/mock/data/map_data'
-import { getServiceData, getMetaAppData } from '@/mock/data/services_data'
 import request from '@/utils/request'
 
 const TagSelectOption = TagSelect.Option
@@ -531,8 +436,6 @@ export default {
   },
   data () {
     return {
-      // isDev: this.$route.query.isDev === 'true' || process.env.NODE_ENV === 'development' || process.env.VUE_APP_PREVIEW === 'true',
-      isDev: this.$route.query.isDev === 'true',
       editForm: this.$form.createForm(this),
       visible: false,
       confirmLoading: false,
@@ -546,8 +449,7 @@ export default {
       ragFiles: [],
       ragUploadFiles: [],
       ragUploadUrl: 'https://apirag.xyz:8086/api/predict',
-      ragUploadMethod: 1,
-      methodTypeOptions: getMethodTypeMap(),
+      ragUploadMethod: 'POST',
       ragUploadLoading: false,
       hasRagData: false,
       agentSearchLoading: false,
@@ -559,10 +461,8 @@ export default {
         requirement: ''
       },
       agentSearchApiUrl: 'https://apirag.xyz:8086/api/predict',
-      agentSearchApiMethod: 1,
+      agentSearchApiMethod: 'POST',
       agentSearchApiHeader: { 'Content-Type': 'application/json;charset=UTF-8' },
-      // dev用
-      agentSearchApiHeaderText: JSON.stringify({ 'Content-Type': 'application/json;charset=UTF-8' }, null, 4),
       agentSearchApiResult: { answer: '' },
       agentSearchData: [],
       statusMap: getServiceStatusMap(),
@@ -633,23 +533,14 @@ export default {
       selectedRows: [],
       attributeArr: getAttributeMap(),
       typeArr: getServiceTypeMap(),
-      domainArr: ['低空飞行AI监控服务'],
-      industryArr: getIndustryMap('aircraft'),
-      scenarioArr: getScenarioMap('aircraft'),
-      technologyArr: getTechnologyMap('aircraft'),
+      domainArr: ['农村医疗AI智能服务'],
+      industryArr: getIndustryMap('health'),
+      scenarioArr: getScenarioMap('health'),
+      technologyArr: getTechnologyMap('health'),
       containerStyle: {
         top: '0',
         left: '0'
       }
-    }
-  },
-  // dev用
-  computed: {
-    agentSearchApiResultText () {
-      return JSON.stringify(this.agentSearchApiResult, null, 4)
-    },
-    agentSearchFormText () {
-      return JSON.stringify(this.agentSearchForm, null, 4)
     }
   },
   filters: {
@@ -678,25 +569,6 @@ export default {
     window.removeEventListener('resize', this.updateContainerPosition)
   },
   methods: {
-    // handleTagChange(field, e) {
-    //   const selectedTagVal = e.value
-    //   const index = this.queryParam[field].indexOf(selectedTagVal)
-    //   if (index > -1) {
-    //     this.queryParam[field].splice(index, 1)
-    //   } else {
-    //     this.queryParam[field].push(selectedTagVal)
-    //   }
-    //   this.filterDataSource()
-    // },
-    // filterDataSource() {
-    //   this.filteredDataSource = this.dataSource.filter(item => {
-    //     return (this.queryParam.type.length > 0 ? this.queryParam.type.includes(item.type) : true) &&
-    //       (this.queryParam.domain.length > 0 ? this.queryParam.domain.includes(item.domain) : true) &&
-    //       (this.queryParam.industry.length > 0 ? this.queryParam.industry.includes(item.industry) : true) &&
-    //       (this.queryParam.scenario.length > 0 ? this.queryParam.scenario.includes(item.scenario) : true) &&
-    //       (this.queryParam.technology.length > 0 ? this.queryParam.technology.includes(item.technology) : true)
-    //   })
-    // },
     handleTagChange(field, value) {
       if (Array.isArray(value)) {
         // 对于下拉框a-select来说，mode="multiple"时选择结果就是数组
@@ -869,32 +741,21 @@ export default {
           console.log(this.agentSearchForm)
         }
         try {
-          if (this.isDev) {
-            try {
-              this.agentSearchApiHeader = JSON.parse(this.agentSearchApiHeaderText)
-            } catch (error) {
-              this.$message.error('请求头JSON格式错误，请检查')
-              return
-            }
-          }
+          // 处理响应
           this.agentSearchApiResult = await request({
             url: this.agentSearchApiUrl,
-            method: this.methodTypeOptions[this.agentSearchApiMethod],
+            method: this.agentSearchApiMethod,
             data: this.agentSearchForm,
             headers: this.agentSearchApiHeader
           })
-          if (!this.isDev) {
-            this.agentSearchData = this.agentSearchApiResult.answer.split('\n')
-            this.filteredDataSource = this.dataSource.filter(item => this.agentSearchData.includes(item.name))
-            this.$nextTick(() => {
-              this.$message.success('检索完毕！')
-              // 滚动到表格处
-              const table = this.$refs.table.$el
-              table.scrollIntoView()
-            })
-          } else {
-            this.$message.success('结果已返回！')
-          }
+          this.agentSearchData = this.agentSearchApiResult.answer.split('\n')
+          this.filteredDataSource = this.dataSource.filter(item => this.agentSearchData.includes(item.name))
+          this.$nextTick(() => {
+            this.$message.success('检索完毕！')
+            // 滚动到表格处
+            const table = this.$refs.table.$el
+            table.scrollIntoView()
+          })
         } catch (error) {
           console.log(error)
           this.$message.error('请求异常，请稍后重试！')
@@ -910,8 +771,8 @@ export default {
       this.agentSearchData = []
       // 使用 Promise.all 并行加载两个异步请求
       const [serviceData, metaData] = await Promise.all([
-        getServiceData('aircraft'),
-        getMetaAppData('aircraft')
+        getServiceData('health'),
+        getMetaAppData('health')
       ])
       this.dataSource = [...serviceData, ...metaData]
       this.filteredDataSource = this.dataSource
@@ -944,7 +805,6 @@ export default {
       if (!file) {
         return false
       }
-      this.ragUploadFiles = [file]
       const url = URL.createObjectURL(file)
       this.ragFiles = [{
         uid: file?.uid,
@@ -957,46 +817,24 @@ export default {
       this.ragFiles = []
       this.ragUploadFiles = []
     },
-    async handleRagUpload() {
+    handleRagUpload() {
       this.ragUploadLoading = true
-      try {
-        const formData = new FormData()
-        this.ragUploadFiles.forEach(file => {
-          formData.append('file', file)
-        })
-        const response = await request({
-          url: this.ragUploadUrl,
-          method: this.methodTypeOptions[this.ragUploadMethod],
-          data: formData,
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
-        this.response = JSON.stringify(response, null, 4)
-      } catch (error) {
-        console.error('请求失败:', error)
-        this.$message.error('请求失败，请检查网络或参数')
-      } finally {
+      console.log(this.agentSearchForm)
+      console.log(this.ragFiles)
+      // 模拟上传文件
+      setTimeout(() => {
         this.ragUploadLoading = false
         this.hasRagData = true
         this.ragFiles = []
         this.ragUploadFiles = []
         this.toggleRAGInput()
         this.$message.success('知识库上传成功！')
-      }
+      }, 1000)
     }
   }
 }
 </script>
 <style lang="less" scoped>
-//.ant-pro-components-tag-select {
-//  :deep(.ant-pro-tag-select .ant-tag) {
-//    margin-right: 24px;
-//    padding: 0 8px;
-//    font-size: 14px;
-//  }
-//}
-
 .list-articles-trigger {
   margin-left: 12px;
 }
