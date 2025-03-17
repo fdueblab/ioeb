@@ -106,7 +106,7 @@ import nodeMenu from '@/components/ef/node_menu_with_input'
 import FlowInfo from '@/components/ef/info'
 import FlowNodeForm from '@/components/ef/node_form_bottom'
 import lodash from 'lodash'
-import { getAircraftFlow, getPj1Flow, getTecTempFlow } from '@/mock/data/flow_data'
+import { getAgricultureFlow, getAircraftFlow, getHealthFlow, getPj1Flow, getTecTempFlow } from '@/mock/data/flow_data'
 
 export default {
   name: 'UseMetaApp',
@@ -261,6 +261,12 @@ export default {
           break
         case '无人机智能投递':
           this.dataReload(getAircraftFlow())
+          break
+        case '农村医疗AI辅助诊断元应用':
+          this.dataReload(getHealthFlow())
+          break
+        case '智慧农业综合管理元应用':
+          this.dataReload(getAgricultureFlow())
           break
         default:
           this.dataReload(getPj1Flow())

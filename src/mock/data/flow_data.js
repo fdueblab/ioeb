@@ -363,6 +363,117 @@ const healthFlow = {
   ]
 }
 
+const agricultureFlow = {
+  name: '农业数智AI服务工作流',
+  preName: '农业数智AI元应用',
+  preInputName: '农业数据输入',
+  preOutputName: '农业智能分析报告',
+  inputType: 2,
+  outputType: 1,
+  nodeList: [
+    {
+      id: '30000',
+      name: 'metaAppAgent',
+      type: 'start',
+      url: 'http://agri-ai.api/app',
+      left: '200px',
+      top: '0',
+      ico: 'el-icon-cpu',
+      input: 'json/image',
+      output: 'json',
+      version: '1.0',
+      state: 'running'
+    },
+    {
+      id: '30001',
+      name: 'dataPreprocessor',
+      type: 'process',
+      url: 'agri-ai.api/preprocess',
+      left: '0',
+      top: '130px',
+      ico: 'el-icon-c-scale-to-original',
+      input: 'image/sensor',
+      output: 'vector',
+      version: '1.0',
+      state: 'success'
+    },
+    {
+      id: '30002',
+      name: 'imageAnalyzer',
+      type: 'process',
+      url: '/api/agriculture/analyze',
+      left: '75px',
+      top: '380px',
+      ico: 'el-icon-picture',
+      state: 'success',
+      input: 'image',
+      output: 'vector',
+      version: '1.0'
+    },
+    {
+      id: '30003',
+      name: 'cropPredictor',
+      type: 'process',
+      url: '/api/agriculture/predict',
+      left: '245px',
+      top: '185px',
+      ico: 'el-icon-s-data',
+      state: 'success',
+      input: 'vector',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '30004',
+      name: 'recommendationEngine',
+      type: 'process',
+      url: '/api/agriculture/recommend',
+      left: '462px',
+      top: '60px',
+      ico: 'el-icon-s-promotion',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '30005',
+      name: 'reportGenerator',
+      type: 'end',
+      url: '/api/agriculture/report',
+      left: '435px',
+      top: '315px',
+      ico: 'el-icon-document',
+      state: 'success',
+      input: 'json',
+      output: 'pdf',
+      version: '1.0'
+    }
+  ],
+  lineList: [
+    {
+      from: '30000',
+      to: '30001'
+    },
+    {
+      from: '30001',
+      to: '30002'
+    },
+    {
+      from: '30002',
+      to: '30003'
+    },
+    {
+      from: '30003',
+      to: '30004'
+    },
+    {
+      from: '30004',
+      to: '30005'
+    }
+  ]
+}
+
 export function getPj1Flow() {
   return pj1Flow
 }
@@ -385,4 +496,8 @@ export function getAircraftFlow() {
 
 export function getHealthFlow() {
   return healthFlow
+}
+
+export function getAgricultureFlow() {
+  return agricultureFlow
 }
