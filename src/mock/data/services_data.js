@@ -92,7 +92,7 @@ const amlServices = [
       {
         name: 'train',
         isFake: true,
-        url: 'http://myApiServer.com/technical-assessment/train',
+        url: 'https://myApiServer.com/technical-assessment/train',
         method: 'POST',
         parameterType: 2,
         responseType: 1,
@@ -110,7 +110,7 @@ const amlServices = [
       {
         name: 'predict',
         isFake: true,
-        url: 'http://myApiServer.com/technical-assessment/predict',
+        url: 'https://myApiServer.com/technical-assessment/predict',
         method: 'POST',
         parameterType: 2,
         responseType: 1,
@@ -165,7 +165,7 @@ const amlServices = [
       {
         name: 'getReportData',
         isFake: true,
-        url: 'http://myApiServer.com/report/get',
+        url: 'https://myApiServer.com/report/get',
         method: 'GET',
         parameterType: 1,
         parameters: [{
@@ -184,7 +184,7 @@ const amlServices = [
       {
         name: 'sendReport',
         isFake: true,
-        url: 'http://myApiServer.com/report/send',
+        url: 'https://myApiServer.com/report/send',
         method: 'GET',
         parameterType: 1,
         parameters: [{
@@ -203,7 +203,7 @@ const amlServices = [
       {
         name: 'generateReport',
         isFake: true,
-        url: 'http://myApiServer.com/report-generation/generate',
+        url: 'https://myApiServer.com/report-generation/generate',
         method: 'POST',
         des: '报告生成接口样例',
         parameterType: 3,
@@ -264,7 +264,7 @@ const amlServices = [
       {
         name: 'train',
         isFake: true,
-        url: 'http://myApiServer.com/credit-assessment/train',
+        url: 'https://myApiServer.com/credit-assessment/train',
         method: 'POST',
         parameterType: 2,
         responseType: 1,
@@ -282,7 +282,7 @@ const amlServices = [
       {
         name: 'predict',
         isFake: true,
-        url: 'http://myApiServer.com/credit-assessment/predict',
+        url: 'https://myApiServer.com/credit-assessment/predict',
         method: 'POST',
         parameterType: 2,
         responseType: 1,
@@ -337,7 +337,7 @@ const amlServices = [
       {
         name: 'preprocess',
         isFake: true,
-        url: 'http://myApiServer.com/anomaly-detection/preprocess',
+        url: 'https://myApiServer.com/anomaly-detection/preprocess',
         method: 'POST',
         parameterType: 2,
         responseType: 1,
@@ -355,7 +355,7 @@ const amlServices = [
       {
         name: 'train',
         isFake: true,
-        url: 'http://myApiServer.com/anomaly-detection/train',
+        url: 'https://myApiServer.com/anomaly-detection/train',
         method: 'POST',
         parameterType: 2,
         responseType: 1,
@@ -373,7 +373,7 @@ const amlServices = [
       {
         name: 'predict',
         isFake: true,
-        url: 'http://myApiServer.com/anomaly-detection/predict',
+        url: 'https://myApiServer.com/anomaly-detection/predict',
         method: 'POST',
         parameterType: 2,
         responseType: 1,
@@ -388,7 +388,7 @@ const amlServices = [
       {
         name: 'evaluate',
         isFake: true,
-        url: 'http://myApiServer.com/anomaly-detection/evaluate',
+        url: 'https://myApiServer.com/anomaly-detection/evaluate',
         method: 'POST',
         parameterType: 2,
         responseType: 1,
@@ -403,7 +403,7 @@ const amlServices = [
       {
         name: 'visualize',
         isFake: true,
-        url: 'http://myApiServer.com/anomaly-detection/visualize',
+        url: 'https://myApiServer.com/anomaly-detection/visualize',
         method: 'POST',
         parameterType: 2,
         responseType: 1,
@@ -781,7 +781,7 @@ const healthServices = [
       {
         name: 'diagnose',
         isFake: true,
-        url: 'http://myApiServer.com/health/diagnose',
+        url: 'https://myApiServer.com/health/diagnose',
         method: 'POST',
         des: '模型推理接口，基于医学影像数据进行辅助诊断',
         parameterType: 2,
@@ -810,7 +810,7 @@ const healthServices = [
       {
         name: 'healthCheck',
         isFake: true,
-        url: 'http://myApiServer.com/health/health',
+        url: 'https://myApiServer.com/health/health',
         method: 'GET',
         des: '判断微服务状态是否正常可用',
         parameterType: 0,
@@ -863,7 +863,7 @@ const healthServices = [
       {
         name: 'analyze',
         isFake: true,
-        url: 'http://myApiServer.com/health/monitor/analyze',
+        url: 'https://myApiServer.com/health/monitor/analyze',
         method: 'POST',
         des: '分析健康数据并提供管理建议',
         parameterType: 2,
@@ -891,7 +891,7 @@ const healthServices = [
       {
         name: 'alert',
         isFake: true,
-        url: 'http://myApiServer.com/health/monitor/alert',
+        url: 'https://myApiServer.com/health/monitor/alert',
         method: 'POST',
         des: '设置健康预警阈值和通知',
         parameterType: 2,
@@ -950,7 +950,7 @@ const healthServices = [
       {
         name: 'transcribe',
         isFake: true,
-        url: 'http://myApiServer.com/health/voice/transcribe',
+        url: 'https://myApiServer.com/health/voice/transcribe',
         method: 'POST',
         des: '将方言语音转写为标准文字',
         parameterType: 2,
@@ -1014,7 +1014,7 @@ const healthServices = [
       {
         name: 'allocate',
         isFake: true,
-        url: 'http://myApiServer.com/health/resource/allocate',
+        url: 'https://myApiServer.com/health/resource/allocate',
         method: 'POST',
         des: '根据急诊情况优化医疗资源调度',
         parameterType: 2,
@@ -1084,7 +1084,7 @@ const healthServices = [
       {
         name: 'predict',
         isFake: true,
-        url: 'http://myApiServer.com/health/epidemic/predict',
+        url: 'https://myApiServer.com/health/epidemic/predict',
         method: 'POST',
         des: '分析历史数据预测流行病发展趋势',
         parameterType: 2,
@@ -1168,7 +1168,7 @@ const amlMetaApps = [
         outputName: '技术评测报告',
         outputVisualization: true,
         submitButtonText: '开始评测',
-        url: 'http://myApiServer.com/metaApp',
+        url: 'https://myApiServer.com/metaApp',
         method: 'POST',
         parameterType: 3,
         responseType: 1,
@@ -1235,7 +1235,7 @@ const airCraftMetaApps = [
         inputName: '目标参数',
         outputName: '任务结果',
         submitButtonText: '开始任务',
-        url: 'http://myApiServer.com/air/target',
+        url: 'https://myApiServer.com/air/target',
         method: 'POST',
         parameterType: 3,
         responseType: 1,
@@ -1298,7 +1298,7 @@ const healthMetaApps = [
         outputName: '诊断结果报告',
         outputVisualization: true,
         submitButtonText: '开始诊断',
-        url: 'http://myApiServer.com/health/metaApp',
+        url: 'https://myApiServer.com/health/metaApp',
         method: 'POST',
         parameterType: 3,
         responseType: 1,
@@ -1379,7 +1379,7 @@ const healthMetaApps = [
         outputName: '监测与预警报告',
         outputVisualization: true,
         submitButtonText: '开始分析',
-        url: 'http://myApiServer.com/health/publicHealth/monitor',
+        url: 'https://myApiServer.com/health/publicHealth/monitor',
         method: 'POST',
         parameterType: 3,
         responseType: 1,
@@ -1420,6 +1420,507 @@ const healthMetaApps = [
       }
     ],
     number: '768'
+  }
+]
+
+// 添加农业数智AI服务数据
+const agricultureServices = [
+  {
+    key: 1,
+    name: '农作物图像分析服务',
+    attribute: 1,
+    type: 0,
+    domain: 0,
+    industry: 4,
+    scenario: 0,
+    technology: '计算机视觉（智慧种植/精准播种）',
+    netWork: 'bridge',
+    port: '0.0.0.0:8010/TCP → 0.0.0.0:8010',
+    volume: '/var/opt/gitlab/mnt/user → /appdata/agriculture/data',
+    status: 4,
+    number: '512',
+    description: '基于深度学习的农作物图像分析服务，可识别作物生长状态、病虫害等问题，提供精准的农业管理建议。',
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 4
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '智慧农业研究院',
+      companyAddress: '上海市闵行区东川路800号',
+      companyContact: '021-54740000',
+      companyIntroduce: '专注于农业人工智能技术研发与应用',
+      msIntroduce: '基于计算机视觉的农作物生长状态智能分析服务',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'analyzeImage',
+        isFake: true,
+        url: 'https://myApiServer.com/agriculture/image/analyze',
+        method: 'POST',
+        des: '分析农作物图像，识别生长状态',
+        parameterType: 2,
+        parameters: [
+          {
+            name: 'image',
+            type: 'file',
+            required: true,
+            des: '农作物图像文件'
+          },
+          {
+            name: 'cropType',
+            type: 'string',
+            required: false,
+            des: '作物类型，如不提供则自动识别'
+          }
+        ],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '分析成功',
+          data: {
+            status: 'healthy',
+            growthStage: 'flowering',
+            confidence: 0.95,
+            estimatedHarvestDate: '2023-09-15',
+            recommendations: ['适量浇水', '增加光照', '防治白粉病'],
+            nutritionStatus: {
+              nitrogen: '适宜',
+              phosphorus: '偏低',
+              potassium: '适宜'
+            }
+          }
+        }
+      },
+      {
+        name: 'healthCheck',
+        isFake: true,
+        url: 'https://myApiServer.com/agriculture/health',
+        method: 'GET',
+        des: '健康检查接口',
+        parameterType: 0,
+        parameters: [],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '服务正常',
+          data: {
+            status: 'running',
+            uptime: '65d 12h 37m',
+            version: '2.3.5',
+            memoryUsage: '45%',
+            cpuUsage: '12%'
+          }
+        }
+      }
+    ]
+  },
+  {
+    key: 2,
+    name: '病虫害识别与防治服务',
+    attribute: 1,
+    type: 0,
+    domain: 0,
+    industry: 4,
+    scenario: 1,
+    technology: '计算机视觉（智慧种植/病虫害防治）',
+    netWork: 'bridge',
+    port: '0.0.0.0:8011/TCP → 0.0.0.0:8011',
+    volume: '/var/opt/gitlab/mnt/user → /appdata/agriculture/data',
+    status: 4,
+    number: '512',
+    description: '识别农作物病虫害类型，提供针对性防治建议，减少农药使用，提高防治效果。',
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '智慧农业研究院',
+      companyAddress: '上海市闵行区东川路800号',
+      companyContact: '021-54740000',
+      companyIntroduce: '专注于农业人工智能技术研发与应用',
+      msIntroduce: '基于深度学习的病虫害智能识别与防治系统',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'identifyDisease',
+        isFake: true,
+        url: 'https://myApiServer.com/agriculture/disease/identify',
+        method: 'POST',
+        des: '识别农作物病虫害',
+        parameterType: 2,
+        parameters: [
+          {
+            name: 'image',
+            type: 'file',
+            required: true,
+            des: '病害部位图像'
+          },
+          {
+            name: 'cropType',
+            type: 'string',
+            required: true,
+            des: '作物类型'
+          }
+        ],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '识别成功',
+          data: {
+            disease: '稻瘟病',
+            confidence: 0.92,
+            severity: '中度',
+            affectedArea: '30%',
+            treatment: ['喷洒杀菌剂', '增加通风'],
+            preventionMeasures: ['加强田间管理', '选择抗病品种'],
+            spreadRisk: '高',
+            economicImpact: '产量可能降低15-20%'
+          }
+        }
+      },
+      {
+        name: 'healthCheck',
+        isFake: true,
+        url: 'https://myApiServer.com/agriculture/disease/health',
+        method: 'GET',
+        des: '健康检查接口',
+        parameterType: 0,
+        parameters: [],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '服务正常',
+          data: {
+            status: 'running',
+            uptime: '42d 5h 18m',
+            version: '1.8.2',
+            memoryUsage: '38%',
+            cpuUsage: '5%'
+          }
+        }
+      }
+    ]
+  },
+  {
+    key: 3,
+    name: '智能灌溉决策服务',
+    attribute: 1,
+    type: 0,
+    domain: 0,
+    industry: 4,
+    scenario: 2,
+    technology: '时序分析与预测（智慧种植/智能灌溉）',
+    netWork: 'bridge',
+    port: '0.0.0.0:8012/TCP → 0.0.0.0:8012',
+    volume: '/var/opt/gitlab/mnt/user → /appdata/agriculture/data',
+    status: 4,
+    number: '512',
+    description: '基于土壤湿度、天气预报和作物需水规律，提供精准灌溉决策，节约水资源。',
+    norm: [
+      {
+        key: 0,
+        score: 4
+      },
+      {
+        key: 2,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '智慧农业研究院',
+      companyAddress: '上海市闵行区东川路800号',
+      companyContact: '021-54740000',
+      companyIntroduce: '专注于农业人工智能技术研发与应用',
+      msIntroduce: '基于时序分析的农田智能灌溉决策系统',
+      companyScore: 5,
+      msScore: 4
+    },
+    apiList: [
+      {
+        name: 'getIrrigationPlan',
+        isFake: true,
+        url: 'https://myApiServer.com/agriculture/irrigation/plan',
+        method: 'POST',
+        des: '获取智能灌溉计划',
+        parameterType: 1,
+        parameters: [
+          {
+            name: 'soilMoisture',
+            type: 'number',
+            required: true,
+            des: '土壤湿度百分比'
+          },
+          {
+            name: 'cropType',
+            type: 'string',
+            required: true,
+            des: '作物类型'
+          },
+          {
+            name: 'growthStage',
+            type: 'string',
+            required: true,
+            des: '生长阶段'
+          },
+          {
+            name: 'fieldSize',
+            type: 'number',
+            required: true,
+            des: '田地面积(亩)'
+          }
+        ],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '灌溉计划生成成功',
+          data: {
+            shouldIrrigate: true,
+            recommendedAmount: 30,
+            unit: '立方米/亩',
+            timing: '今日傍晚',
+            reason: '土壤湿度低于作物需求',
+            waterSavings: '约25%（与传统灌溉相比）',
+            nextAssessment: '3天后',
+            weatherForecast: '未来3天无有效降水',
+            irrigationZones: [
+              { zone: 'A', priority: '高', amount: 35 },
+              { zone: 'B', priority: '中', amount: 30 },
+              { zone: 'C', priority: '低', amount: 25 }
+            ]
+          }
+        }
+      },
+      {
+        name: 'healthCheck',
+        isFake: true,
+        url: 'https://myApiServer.com/agriculture/irrigation/health',
+        method: 'GET',
+        des: '健康检查接口',
+        parameterType: 0,
+        parameters: [],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '服务正常',
+          data: {
+            status: 'running',
+            uptime: '28d 9h 42m',
+            version: '3.1.0',
+            memoryUsage: '32%',
+            cpuUsage: '8%'
+          }
+        }
+      }
+    ]
+  },
+  {
+    key: 4,
+    name: '农作物产量预测服务',
+    attribute: 1,
+    type: 0,
+    domain: 0,
+    industry: 4,
+    scenario: 3,
+    technology: '时序分析与预测（智慧种植/产量预测）',
+    netWork: 'bridge',
+    port: '0.0.0.0:8013/TCP → 0.0.0.0:8013',
+    volume: '/var/opt/gitlab/mnt/user → /appdata/agriculture/data',
+    status: 4,
+    number: '512',
+    description: '基于历史数据、生长状况和环境因素，预测农作物产量，辅助农业生产决策。',
+    norm: [
+      {
+        key: 0,
+        score: 4
+      },
+      {
+        key: 2,
+        score: 4
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '智慧农业研究院',
+      companyAddress: '上海市闵行区东川路800号',
+      companyContact: '021-54740000',
+      companyIntroduce: '专注于农业人工智能技术研发与应用',
+      msIntroduce: '基于机器学习的农作物产量预测服务',
+      companyScore: 5,
+      msScore: 4
+    },
+    apiList: [
+      {
+        name: 'predictYield',
+        isFake: true,
+        url: 'https://myApiServer.com/agriculture/yield/predict',
+        method: 'POST',
+        des: '预测农作物产量',
+        parameterType: 2,
+        parameters: [
+          {
+            name: 'cropType',
+            type: 'string',
+            required: true,
+            des: '作物类型'
+          },
+          {
+            name: 'plantingDate',
+            type: 'string',
+            required: true,
+            des: '播种日期(YYYY-MM-DD)'
+          },
+          {
+            name: 'fieldSize',
+            type: 'number',
+            required: true,
+            des: '田地面积(亩)'
+          },
+          {
+            name: 'historicalData',
+            type: 'file',
+            required: false,
+            des: '历史产量数据(CSV)'
+          }
+        ],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '产量预测完成',
+          data: {
+            predictedYield: 550,
+            unit: '公斤/亩',
+            confidenceInterval: [520, 580],
+            harvestDate: '2023-10-05至2023-10-15',
+            comparisonWithLastYear: '+5.2%',
+            factors: [
+              { name: '气候条件', impact: '正面', description: '今年降水量适宜' },
+              { name: '土壤状况', impact: '中性', description: '土壤肥力适中' },
+              { name: '病虫害风险', impact: '负面', description: '稻飞虱风险增加' }
+            ],
+            recommendations: [
+              '优化施肥方案可能进一步提高产量',
+              '注意防治稻飞虱',
+              '适当延长灌溉周期'
+            ]
+          }
+        }
+      },
+      {
+        name: 'healthCheck',
+        isFake: true,
+        url: 'https://myApiServer.com/agriculture/yield/health',
+        method: 'GET',
+        des: '健康检查接口',
+        parameterType: 0,
+        parameters: [],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '服务正常',
+          data: {
+            status: 'running',
+            uptime: '15d 22h 55m',
+            version: '2.0.4',
+            memoryUsage: '41%',
+            cpuUsage: '7%'
+          }
+        }
+      }
+    ]
+  }
+]
+
+// 添加农业数智AI元应用数据
+const agricultureMetaApps = [
+  {
+    key: 5,
+    name: '智慧农业综合管理元应用',
+    attribute: 2,
+    type: 1,
+    domain: 0,
+    industry: 4,
+    scenario: 4,
+    technology: '计算机视觉、时序分析与预测、多模态融合（智慧种植/精准播种、病虫害防治、智能灌溉、产量预测）',
+    netWork: 'host',
+    port: '0.0.0.0:9010/TCP → 0.0.0.0:9010',
+    volume: '/var/opt/gitlab/mnt/user → /appdata/agriculture/meta',
+    status: 4,
+    number: '512',
+    description: '集成多种农业AI服务的综合管理平台，提供从播种到收获的全程智能决策支持。',
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '智慧农业研究院',
+      companyAddress: '上海市闵行区东川路800号',
+      companyContact: '021-54740000',
+      companyIntroduce: '专注于农业人工智能技术研发与应用',
+      msIntroduce: '基于多代理系统的智慧农业综合管理平台',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: '智慧农业综合管理元应用',
+        isFake: true,
+        inputName: '农业数据输入',
+        outputName: '农业智能分析报告',
+        outputVisualization: true,
+        submitButtonText: '开始诊断',
+        url: 'https://myApiServer.com/agriculture/metaApp',
+        method: 'POST',
+        parameterType: 3,
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '分析完成',
+          data: {
+            predictedYield: 550,
+            unit: '公斤/亩',
+            confidenceInterval: [520, 580],
+            harvestDate: '2023-10-05至2023-10-15',
+            comparisonWithLastYear: '+5.2%',
+            factors: [
+              { name: '气候条件', impact: '正面', description: '今年降水量适宜' },
+              { name: '土壤状况', impact: '中性', description: '土壤肥力适中' },
+              { name: '病虫害风险', impact: '负面', description: '稻飞虱风险增加' }
+            ],
+            recommendations: [
+              '优化施肥方案可能进一步提高产量',
+              '注意防治稻飞虱',
+              '适当延长灌溉周期'
+            ]
+          }
+        }
+      }
+    ]
   }
 ]
 
@@ -1489,6 +1990,22 @@ function getRunningHealthMetaApps() {
   return healthMetaApps.filter(item => item.status === 1 || item.status === 4)
 }
 
+function getAgricultureServices() {
+  return agricultureServices
+}
+
+function getRunningAgricultureServices() {
+  return agricultureServices.filter(item => item.status === 4)
+}
+
+function getAgricultureMetaApps() {
+  return agricultureMetaApps
+}
+
+function getRunningAgricultureMetaApps() {
+  return agricultureMetaApps.filter(item => item.status === 1 || item.status === 4)
+}
+
 export function getServiceData(serviceType, onlyRunning = false) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -1502,6 +2019,9 @@ export function getServiceData(serviceType, onlyRunning = false) {
         case 'health':
           resolve(onlyRunning ? getRunningHealthServices() : getHealthServices())
           break
+        case 'agriculture':
+          resolve(onlyRunning ? getRunningAgricultureServices() : getAgricultureServices())
+          break
         default:
           resolve(onlyRunning ? getRunningAmlServices() : getAmlServices())
       }
@@ -1510,13 +2030,24 @@ export function getServiceData(serviceType, onlyRunning = false) {
 }
 
 export function getMetaAppData(serviceType, onlyRunning = false) {
-  if (serviceType === 'aml') {
-    return onlyRunning ? getRunningAmlMetaApps() : getAmlMetaApps()
-  } else if (serviceType === 'aircraft') {
-    return onlyRunning ? getRunningAirCraftMetaApps() : getAirCraftMetaApps()
-  } else if (serviceType === 'health') {
-    return onlyRunning ? getRunningHealthMetaApps() : getHealthMetaApps()
-  } else {
-    return onlyRunning ? getRunningAirCraftMetaApps() : getAirCraftMetaApps()
-  }
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      switch (serviceType) {
+        case 'aml':
+          resolve(onlyRunning ? getRunningAmlMetaApps() : getAmlMetaApps())
+          break
+        case 'aircraft':
+          resolve(onlyRunning ? getRunningAirCraftMetaApps() : getAirCraftMetaApps())
+          break
+        case 'health':
+          resolve(onlyRunning ? getRunningHealthMetaApps() : getHealthMetaApps())
+          break
+        case 'agriculture':
+          resolve(onlyRunning ? getRunningAgricultureMetaApps() : getAgricultureMetaApps())
+          break
+        default:
+          resolve(onlyRunning ? getRunningAmlMetaApps() : getAmlMetaApps())
+      }
+    }, 500)
+  })
 }

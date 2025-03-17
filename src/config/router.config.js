@@ -42,6 +42,12 @@ export const asyncRouterMap = [
             name: 'vertical-user-health',
             meta: { title: '农村医疗AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/health')
+          },
+          {
+            path: '/vertical-user/agriculture',
+            name: 'vertical-user-agriculture',
+            meta: { title: '农业数字AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: () => import('@/views/vertical/user/agriculture')
           }
         ]
       },
@@ -70,6 +76,12 @@ export const asyncRouterMap = [
             name: 'vertical-ms-health',
             meta: { title: '农村医疗AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/ms/health')
+          },
+          {
+            path: '/vertical-ms/agriculture',
+            name: 'vertical-ms-agriculture',
+            meta: { title: '农业数字AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: () => import('@/views/vertical/ms/agriculture')
           }
         ]
       },
@@ -98,6 +110,12 @@ export const asyncRouterMap = [
             name: 'vertical-atom-app-health',
             component: () => import('@/views/schedule/HealthSchedule'),
             meta: { title: '农医元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+          },
+          {
+            path: '/vertical-atom-app/agriculture',
+            name: 'vertical-atom-app-agriculture',
+            component: () => import('@/views/schedule/AgricultureSchedule'),
+            meta: { title: '农业元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
           }
         ]
       },
@@ -168,6 +186,26 @@ export const asyncRouterMap = [
                 component: () => import('@/views/evaluation/health/emulation')
               }
             ]
+          },
+          {
+            path: '/evaluation/agriculture',
+            name: 'evaluation-agriculture',
+            meta: { title: '农业数字AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: RouteView,
+            children: [
+              {
+                path: '/evaluation/agriculture/technology',
+                name: 'evaluation-agriculture-technology',
+                component: () => import('@/views/evaluation/agriculture/technology'),
+                meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
+              },
+              {
+                path: '/evaluation/agriculture/emulation',
+                name: 'atom-app-evaluation-agriculture',
+                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
+                component: () => import('@/views/evaluation/agriculture/emulation')
+              }
+            ]
           }
         ]
       },
@@ -216,6 +254,46 @@ export const asyncRouterMap = [
                 name: 'operation-aircraft-container-manage',
                 meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
                 component: () => import('@/views/operation/aircraft/container-manage')
+              }
+            ]
+          },
+          {
+            path: '/operation/health',
+            name: 'operation-health',
+            meta: { title: '农村医疗AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: RouteView,
+            children: [
+              {
+                path: '/operation/health/container-status',
+                name: 'operation-health-container-status',
+                component: () => import('@/views/operation/health/container-status'),
+                meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
+              },
+              {
+                path: '/operation/health/container-manage',
+                name: 'operation-health-container-manage',
+                meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
+                component: () => import('@/views/operation/health/container-manage')
+              }
+            ]
+          },
+          {
+            path: '/operation/agriculture',
+            name: 'operation-agriculture',
+            meta: { title: '农业数字AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: RouteView,
+            children: [
+              {
+                path: '/operation/agriculture/container-status',
+                name: 'operation-agriculture-container-status',
+                component: () => import('@/views/operation/agriculture/container-status'),
+                meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
+              },
+              {
+                path: '/operation/agriculture/container-manage',
+                name: 'operation-agriculture-container-manage',
+                meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
+                component: () => import('@/views/operation/agriculture/container-manage')
               }
             ]
           }

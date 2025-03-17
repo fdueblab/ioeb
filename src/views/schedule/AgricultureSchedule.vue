@@ -5,7 +5,7 @@
       @update-services="updateServices"
       @update-flow="updateFlow"
       @clear-flow="clearFlow"
-      :service-type="'health'"
+      :service-type="'agriculture'"
     />
     <flow-panel
       ref="flowPanel"
@@ -14,7 +14,7 @@
       :initial-services="initServices"
       :loading-services="loadingServices"
       :loading-flow="loadingFlow"
-      :service-type="'health'"
+      :service-type="'agriculture'"
     />
   </div>
 </template>
@@ -24,7 +24,7 @@ import FlowPanel from '@/components/ef/panel_with_input'
 import FakeChat from '@/components/ef/fake_chat'
 
 export default {
-  name: 'HealthSchedule',
+  name: 'AgricultureSchedule',
   components: {
     FlowPanel,
     FakeChat
@@ -36,7 +36,7 @@ export default {
         {
           id: '9',
           type: 'group',
-          name: '农村医疗AI智能服务',
+          name: '农业数字AI智能服务',
           open: true,
           children: []
         }

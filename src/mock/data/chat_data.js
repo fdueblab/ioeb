@@ -1,4 +1,4 @@
-import { getAircraftFlow, getPj1Flow, getPj4Flow, getPj1Pj4Pj3Flow, getHealthFlow } from '@/mock/data/flow_data'
+import { getAircraftFlow, getPj1Flow, getPj4Flow, getPj1Pj4Pj3Flow, getHealthFlow, getAgricultureFlow } from '@/mock/data/flow_data'
 
 const aircraftPj = {
   chosenServices: ['目标识别微服务', '远程控制微服务'],
@@ -219,7 +219,7 @@ const pj4 = {
   flowData: getPj4Flow()
 }
 
-const healthAI = {
+const healthPj = {
   chosenServices: ['基层医疗影像辅助诊断微服务', '方言语音识别转写微服务', '慢性病管理监测微服务'],
   serviceNodes: [
     {
@@ -293,23 +293,85 @@ const healthAI = {
   flowData: getHealthFlow()
 }
 
+const agriculturePj = {
+  chosenServices: ['图像分析微服务', '作物预测微服务'],
+  serviceNodes: [
+    {
+      id: '5',
+      type: 'group',
+      name: '农业数智AI服务',
+      open: true,
+      children: [
+        {
+          id: '500',
+          type: 'group',
+          name: '图像分析微服务',
+          open: true,
+          children: [{
+            id: '5001',
+            type: 'analyzeImage',
+            name: 'analyzeImage',
+            ico: 'el-icon-picture',
+            style: {}
+          }, {
+            id: '5002',
+            type: 'identifyDisease',
+            name: 'identifyDisease',
+            ico: 'el-icon-warning',
+            style: {}
+          }]
+        },
+        {
+          id: '501',
+          type: 'group',
+          name: '作物预测微服务',
+          open: true,
+          children: [{
+            id: '5101',
+            type: 'predictYield',
+            name: 'predictYield',
+            ico: 'el-icon-data-line',
+            style: {}
+          }, {
+            id: '5102',
+            type: 'recommendActions',
+            name: 'recommendActions',
+            ico: 'el-icon-s-check',
+            style: {}
+          }]
+        }
+      ]
+    }
+  ],
+  flowData: getAgricultureFlow()
+}
+
 export function getChatData(serviceType, userInput) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      if (serviceType === 'aircraft') {
-        resolve(aircraftPj)
-      }
-      if (serviceType === 'health') {
-        resolve(healthAI)
-      }
-      if (userInput.includes('课题三')) {
-        resolve(pj1pj4pj3)
-      } else if (userInput.includes('课题四')) {
-        resolve(pj4)
-      } else if (userInput.includes('课题一')) {
-        resolve(pj1)
-      } else {
-        reject(new Error())
+      switch (serviceType) {
+        case 'aircraft':
+          resolve(aircraftPj)
+          break
+        case 'health':
+          resolve(healthPj)
+          break
+        case 'agriculture':
+          resolve(agriculturePj)
+          break
+        case 'aml':
+          if (userInput.includes('课题三')) {
+            resolve(pj1pj4pj3)
+          } else if (userInput.includes('课题四')) {
+            resolve(pj4)
+          } else if (userInput.includes('课题一')) {
+            resolve(pj1)
+          } else {
+            reject(new Error())
+          }
+          break
+        default:
+          reject(new Error())
       }
     }, 1600)
   })

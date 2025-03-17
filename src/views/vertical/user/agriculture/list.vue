@@ -582,10 +582,10 @@ export default {
       selectedRows: [],
       attributeArr: getAttributeMap(),
       typeArr: getServiceTypeMap(),
-      domainArr: ['农村医疗AI智能服务'],
-      industryArr: getIndustryMap('health'),
-      scenarioArr: getScenarioMap('health'),
-      technologyArr: getTechnologyMap('health'),
+      domainArr: ['农业数字AI智能服务'],
+      industryArr: getIndustryMap('agriculture'),
+      scenarioArr: getScenarioMap('agriculture'),
+      technologyArr: getTechnologyMap('agriculture'),
       containerStyle: {
         top: '0',
         left: '0'
@@ -840,8 +840,8 @@ export default {
       this.agentSearchData = []
       // 使用 Promise.all 并行加载两个异步请求
       const [serviceData, metaData] = await Promise.all([
-        getServiceData('health'),
-        getMetaAppData('health')
+        getServiceData('agriculture'),
+        getMetaAppData('agriculture')
       ])
       this.dataSource = [...serviceData, ...metaData]
       this.filteredDataSource = this.dataSource
