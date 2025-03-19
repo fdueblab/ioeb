@@ -633,7 +633,7 @@ export default {
       selectedRows: [],
       attributeArr: getAttributeMap(),
       typeArr: getServiceTypeMap(),
-      domainArr: ['低空飞行AI监控服务'],
+      domainArr: ['无人飞机AI监控服务'],
       industryArr: getIndustryMap('aircraft'),
       scenarioArr: getScenarioMap('aircraft'),
       technologyArr: getTechnologyMap('aircraft'),

@@ -97,7 +97,7 @@
               <a-form-item label="领域">
                 <a-select v-decorator="['domain', { rules: [{ required: true, message: '请选择元应用领域!' }], initialValue: 0 }]" placeholder="请选择元应用领域">
                   <a-select-option :key="0" :value="0">
-                    {{ serviceType === 'aml' ? '跨境支付AI监测服务' : '低空飞行AI监控服务' }}
+                    {{ serviceType === 'aml' ? '跨境支付AI监测服务' : '无人飞机AI监控服务' }}
                   </a-select-option>
                 </a-select>
               </a-form-item>

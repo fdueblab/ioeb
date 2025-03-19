@@ -6,7 +6,7 @@ const aircraftPj = {
     {
       id: '3',
       type: 'group',
-      name: '低空飞行AI监控服务',
+      name: '无人飞机AI监控服务',
       open: true,
       children: [
         {
@@ -225,7 +225,7 @@ const healthPj = {
     {
       id: '8',
       type: 'group',
-      name: '农村医疗AI服务',
+      name: '乡村医疗AI服务',
       open: true,
       children: [
         {

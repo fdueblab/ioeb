@@ -34,19 +34,19 @@ export const asyncRouterMap = [
           {
             path: '/vertical-user/aircraft',
             name: 'vertical-user-aircraft',
-            meta: { title: '低空飞行AI监控', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '无人飞机AI监控', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/aircraft')
           },
           {
             path: '/vertical-user/health',
             name: 'vertical-user-health',
-            meta: { title: '农村医疗AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '乡村医疗AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/health')
           },
           {
             path: '/vertical-user/agriculture',
             name: 'vertical-user-agriculture',
-            meta: { title: '农业数字AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '数字农业AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/agriculture')
           }
         ]
@@ -68,19 +68,19 @@ export const asyncRouterMap = [
           {
             path: '/vertical-ms/aircraft',
             name: 'vertical-ms-aircraft',
-            meta: { title: '低空飞行AI监控服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '无人飞机AI监控服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/ms/aircraft')
           },
           {
             path: '/vertical-ms/health',
             name: 'vertical-ms-health',
-            meta: { title: '农村医疗AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '乡村医疗AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/ms/health')
           },
           {
             path: '/vertical-ms/agriculture',
             name: 'vertical-ms-agriculture',
-            meta: { title: '农业数字AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '数字农业AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/ms/agriculture')
           }
         ]
@@ -150,7 +150,7 @@ export const asyncRouterMap = [
           {
             path: '/evaluation/aircraft',
             name: 'evaluation-aircraft',
-            meta: { title: '低空飞行AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '无人飞机AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
             component: RouteView,
             children: [
               {
@@ -170,7 +170,7 @@ export const asyncRouterMap = [
           {
             path: '/evaluation/health',
             name: 'evaluation-health',
-            meta: { title: '农村医疗AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '乡村医疗AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
             component: RouteView,
             children: [
               {
@@ -190,7 +190,7 @@ export const asyncRouterMap = [
           {
             path: '/evaluation/agriculture',
             name: 'evaluation-agriculture',
-            meta: { title: '农业数字AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '数字农业AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
             component: RouteView,
             children: [
               {
@@ -240,7 +240,7 @@ export const asyncRouterMap = [
           {
             path: '/operation/aircraft',
             name: 'operation-aircraft',
-            meta: { title: '低空飞行AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '无人飞机AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
             component: RouteView,
             children: [
               {
@@ -260,7 +260,7 @@ export const asyncRouterMap = [
           {
             path: '/operation/health',
             name: 'operation-health',
-            meta: { title: '农村医疗AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '乡村医疗AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
             component: RouteView,
             children: [
               {
@@ -280,7 +280,7 @@ export const asyncRouterMap = [
           {
             path: '/operation/agriculture',
             name: 'operation-agriculture',
-            meta: { title: '农业数字AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '数字农业AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
             component: RouteView,
             children: [
               {

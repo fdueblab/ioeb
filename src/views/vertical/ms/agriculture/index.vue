@@ -7,7 +7,7 @@
             <a-col :span="6">
               <a-form-item label="领域">
                 <a-select placeholder="请选择" default-value="0">
-                  <a-select-option value="0">农业数字AI智能服务</a-select-option>
+                  <a-select-option value="0">数字农业AI智能服务</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
