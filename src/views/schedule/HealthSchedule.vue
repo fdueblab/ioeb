@@ -66,7 +66,7 @@ export default {
         {
           id: '9',
           type: 'group',
-          name: '跨境支付AI监测服务',
+          name: '乡村医疗AI智能服务',
           open: true,
           children: []
         }

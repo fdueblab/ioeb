@@ -1979,7 +1979,7 @@ function getHealthServices() {
 }
 
 function getRunningHealthServices() {
-  return healthServices.filter(item => item.status === 4)
+  return healthServices.filter(item => item.status === 1 || item.status === 4)
 }
 
 function getHealthMetaApps() {
@@ -1995,7 +1995,7 @@ function getAgricultureServices() {
 }
 
 function getRunningAgricultureServices() {
-  return agricultureServices.filter(item => item.status === 4)
+  return agricultureServices.filter(item => item.status === 1 || item.status === 4)
 }
 
 function getAgricultureMetaApps() {
