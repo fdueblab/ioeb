@@ -350,14 +350,13 @@ class {{apiName}}({{input}}):
     onUpload () {
       this.uploadProgramLoading = true
       setTimeout(() => {
-        // const file = this.programFiles
         this.$message.success('解析成功，发现以下可用API及调用关系')
         this.programJson = {
           nodes: [
-            { id: '1000', x: 200, y: 50, label: 'getTargetFeature', size: 50, color: '#F6BD16', input: 'imageData', output: 'targetFeature', environment: '', process: '', apiType: 2, methodType: 0, inputType: 2, outputType: 1 },
-            { id: '1001', x: 50, y: 200, label: 'getTargetLocation', size: 50, color: '#5B8FF9', input: 'gpsCoordinates', output: 'targetLocation', environment: '', process: '', apiType: 2, methodType: 0, inputType: 2, outputType: 1 },
-            { id: '1002', x: 200, y: 150, label: 'getTargetInfo', size: 50, color: '#5AD8A6', input: 'targetFeature, targetLocation', output: 'targetInfo', environment: '', process: '', apiType: 0, methodType: 0, inputType: 2, outputType: 1 },
-            { id: '1003', x: 350, y: 200, label: 'getTargetType', size: 50, color: '#5D7092', input: 'targetInfo', output: 'targetType', environment: '', process: '', apiType: 0, methodType: 0, inputType: 2, outputType: 1 }
+            { id: '1000', x: 200, y: 50, label: 'objectDetection', size: 50, color: '#F6BD16', input: 'imageData', output: 'detectedObjects', environment: '室内光照环境', process: '基于YOLOv8的目标检测', apiType: 0, methodType: 1, inputType: 3, outputType: 1 },
+            { id: '1001', x: 50, y: 200, label: 'emotionRecognition', size: 50, color: '#5B8FF9', input: 'audioData', output: 'emotionState', environment: '用户语音完整', process: '基于多模态情感识别', apiType: 2, methodType: 1, inputType: 2, outputType: 1 },
+            { id: '1002', x: 200, y: 150, label: 'taskPlanner', size: 50, color: '#5AD8A6', input: 'detectedObjects, emotionState', output: 'taskPlan', environment: '上下文数据可用', process: '基于强化学习的任务规划', apiType: 0, methodType: 1, inputType: 2, outputType: 1 },
+            { id: '1003', x: 350, y: 200, label: 'healthMonitor', size: 50, color: '#5D7092', input: 'vitalSigns', output: 'healthStatus', environment: '传感器数据稳定', process: '基于时序分析的健康监测', apiType: 0, methodType: 1, inputType: 2, outputType: 1 }
           ],
           edges: [
             { sourceID: '1000', targetID: '1002' },

@@ -142,6 +142,24 @@ const evtolScenarioMap = ['飞行路径规划', '乘客服务与交互', '航空
 // 添加低空飞行AI应用的技术映射
 const evtolTechnologyMap = ['强化学习', '计算机视觉', '多模态融合', '时序预测', '图搜索算法', '深度学习']
 
+// 添加跨境电商AI应用的行业映射
+const ecommerceIndustryMap = ['跨境营销与广告', '客户服务与沟通', '选品与产品开发', '合规与风险管理']
+
+// 添加跨境电商AI应用的场景映射
+const ecommerceScenarioMap = ['多语言翻译与本地化', '智能客服与互动', '内容生成与优化', '数据分析与决策支持']
+
+// 添加跨境电商AI应用的技术映射
+const ecommerceTechnologyMap = ['自然语言处理', '计算机视觉', '推荐系统', '供应链优化', '多模态大模型', '深度学习']
+
+// 添加家庭机器人AI应用的行业映射
+const homeAIIndustryMap = ['智能家居', '健康管理', '安防与应急', '情感陪伴', '家务处理']
+
+// 添加家庭机器人AI应用的场景映射
+const homeAIScenarioMap = ['家务处理场景', '疾病诊断场景', '应急联络场景', '来客接待场景', '情感陪伴场景']
+
+// 添加家庭机器人AI应用的技术映射
+const homeAITechnologyMap = ['计算机视觉', '自然语言处理', '强化学习', '多传感器融合', '具身智能', '多模态技术']
+
 // 添加低空飞行AI应用的特殊考量
 const evtolSpecialConsiderationsMap = [
   '实时性要求（低延迟控制）',
@@ -149,6 +167,24 @@ const evtolSpecialConsiderationsMap = [
   '极端天气适应性（应对不同气候条件）',
   '低空空域协同（与其他飞行器避让）',
   '城市环境适应（建筑物密集区域导航）'
+]
+
+// 添加跨境电商AI应用的特殊考量
+const ecommerceSpecialConsiderationsMap = [
+  '多语言多地区适配（支持全球市场）',
+  '实时交互响应（提升用户体验）',
+  '跨平台数据整合（多渠道销售支持）',
+  '合规风险控制（应对各国法规差异）',
+  '个性化定制（满足不同市场文化需求）'
+]
+
+// 添加家庭机器人AI应用的特殊考量
+const homeAISpecialConsiderationsMap = [
+  '隐私保护（个人健康数据安全）',
+  '实时响应（低延迟决策）',
+  '低功耗设计（长时间运行）',
+  '适应性环境感知（复杂家庭环境）',
+  '高安全性要求（物理交互安全）'
 ]
 
 // 添加低空飞行AI应用的领域分类
@@ -160,6 +196,22 @@ const evtolDomainMap = [
   '乘客体验与安全'
 ]
 
+// 添加跨境电商AI应用的领域分类
+const ecommerceDomainMap = [
+  '自然语言处理',
+  '计算机视觉',
+  '推荐系统',
+  '供应链与物流优化'
+]
+
+// 添加家庭机器人AI应用的领域分类
+const homeAIDomainMap = [
+  '计算机视觉',
+  '自然语言处理',
+  '强化学习与决策优化',
+  '多模态与具身智能'
+]
+
 // 添加低空飞行AI应用的作用分类
 const evtolRoleMap = [
   '感知与识别',
@@ -167,6 +219,22 @@ const evtolRoleMap = [
   '优化与控制',
   '预测与预警',
   '人机交互'
+]
+
+// 添加跨境电商AI应用的作用分类
+const ecommerceRoleMap = [
+  '分类与识别',
+  '预测与优化',
+  '生成与增强',
+  '智能决策支持'
+]
+
+// 添加家庭机器人AI应用的作用分类
+const homeAIRoleMap = [
+  '感知层算法',
+  '决策层算法',
+  '执行层算法',
+  '多模态交互'
 ]
 
 export function getServiceStatusMap() {
@@ -192,6 +260,10 @@ export function getIndustryMap(type) {
     return agricultureIndustryMap
   } else if (type === 'evtol') {
     return evtolIndustryMap
+  } else if (type === 'ecommerce') {
+    return ecommerceIndustryMap
+  } else if (type === 'homeAI') {
+    return homeAIIndustryMap
   } else {
     return aircraftIndustryMap
   }
@@ -208,6 +280,10 @@ export function getScenarioMap(type) {
     return agricultureScenarioMap
   } else if (type === 'evtol') {
     return evtolScenarioMap
+  } else if (type === 'ecommerce') {
+    return ecommerceScenarioMap
+  } else if (type === 'homeAI') {
+    return homeAIScenarioMap
   } else {
     return aircraftScenarioMap
   }
@@ -224,6 +300,10 @@ export function getTechnologyMap(type) {
     return agricultureTechnologyMap
   } else if (type === 'evtol') {
     return evtolTechnologyMap
+  } else if (type === 'ecommerce') {
+    return ecommerceTechnologyMap
+  } else if (type === 'homeAI') {
+    return homeAITechnologyMap
   } else {
     return aircraftTechnologyMap
   }
@@ -285,4 +365,30 @@ export function getEvtolRoleMap() {
 
 export function getEvtolSpecialConsiderationsMap() {
   return evtolSpecialConsiderationsMap
+}
+
+// 添加跨境电商AI应用相关的获取函数
+export function getEcommerceDomainMap() {
+  return ecommerceDomainMap
+}
+
+export function getEcommerceRoleMap() {
+  return ecommerceRoleMap
+}
+
+export function getEcommerceSpecialConsiderationsMap() {
+  return ecommerceSpecialConsiderationsMap
+}
+
+// 添加家庭机器人AI应用相关的获取函数
+export function getHomeaiDomainMap() {
+  return homeAIDomainMap
+}
+
+export function getHomeaiRoleMap() {
+  return homeAIRoleMap
+}
+
+export function getHomeaiSpecialConsiderationsMap() {
+  return homeAISpecialConsiderationsMap
 }

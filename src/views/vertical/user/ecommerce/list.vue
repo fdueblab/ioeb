@@ -627,25 +627,6 @@ export default {
     window.removeEventListener('resize', this.updateContainerPosition)
   },
   methods: {
-    // handleTagChange(field, e) {
-    //   const selectedTagVal = e.value
-    //   const index = this.queryParam[field].indexOf(selectedTagVal)
-    //   if (index > -1) {
-    //     this.queryParam[field].splice(index, 1)
-    //   } else {
-    //     this.queryParam[field].push(selectedTagVal)
-    //   }
-    //   this.filterDataSource()
-    // },
-    // filterDataSource() {
-    //   this.filteredDataSource = this.dataSource.filter(item => {
-    //     return (this.queryParam.type.length > 0 ? this.queryParam.type.includes(item.type) : true) &&
-    //       (this.queryParam.domain.length > 0 ? this.queryParam.domain.includes(item.domain) : true) &&
-    //       (this.queryParam.industry.length > 0 ? this.queryParam.industry.includes(item.industry) : true) &&
-    //       (this.queryParam.scenario.length > 0 ? this.queryParam.scenario.includes(item.scenario) : true) &&
-    //       (this.queryParam.technology.length > 0 ? this.queryParam.technology.includes(item.technology) : true)
-    //   })
-    // },
     handleTagChange(field, value) {
       if (Array.isArray(value)) {
         // 对于下拉框a-select来说，mode="multiple"时选择结果就是数组

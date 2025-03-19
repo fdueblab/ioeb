@@ -1,4 +1,4 @@
-import { getAircraftFlow, getPj1Flow, getPj4Flow, getPj1Pj4Pj3Flow, getHealthFlow, getAgricultureFlow } from '@/mock/data/flow_data'
+import { getAircraftFlow, getPj1Flow, getPj4Flow, getPj1Pj4Pj3Flow, getHealthFlow, getAgricultureFlow, getEvtolFlow, getEcommerceFlow, getHomeAIFlow } from '@/mock/data/flow_data'
 
 const aircraftPj = {
   chosenServices: ['目标识别微服务', '远程控制微服务'],
@@ -346,6 +346,249 @@ const agriculturePj = {
   flowData: getAgricultureFlow()
 }
 
+const evtolPj = {
+  chosenServices: ['飞行控制微服务', '环境感知微服务', '能源管理微服务'],
+  serviceNodes: [
+    {
+      id: '4',
+      type: 'group',
+      name: '低空飞行AI应用服务',
+      open: true,
+      children: [
+        {
+          id: '40',
+          type: 'group',
+          name: '飞行控制微服务',
+          open: true,
+          children: [
+            {
+              id: '4001',
+              type: 'pathPlanner',
+              name: 'pathPlanner',
+              ico: 'el-icon-map-location',
+              style: {}
+            },
+            {
+              id: '4002',
+              type: 'flightController',
+              name: 'flightController',
+              ico: 'el-icon-rank',
+              style: {}
+            }
+          ]
+        },
+        {
+          id: '41',
+          type: 'group',
+          name: '环境感知微服务',
+          open: true,
+          children: [
+            {
+              id: '4101',
+              type: 'environmentPerception',
+              name: 'environmentPerception',
+              ico: 'el-icon-view',
+              style: {}
+            },
+            {
+              id: '4102',
+              type: 'obstacleDetection',
+              name: 'obstacleDetection',
+              ico: 'el-icon-warning',
+              style: {}
+            }
+          ]
+        },
+        {
+          id: '42',
+          type: 'group',
+          name: '能源管理微服务',
+          open: true,
+          children: [
+            {
+              id: '4201',
+              type: 'batteryManager',
+              name: 'batteryManager',
+              ico: 'el-icon-lightning',
+              style: {}
+            },
+            {
+              id: '4202',
+              type: 'energyOptimizer',
+              name: 'energyOptimizer',
+              ico: 'el-icon-data-line',
+              style: {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  flowData: getEvtolFlow()
+}
+
+const ecommercePj = {
+  chosenServices: ['多语言内容生成微服务', '市场分析微服务', '商品推荐微服务'],
+  serviceNodes: [
+    {
+      id: '5',
+      type: 'group',
+      name: '跨境电商AI服务',
+      open: true,
+      children: [
+        {
+          id: '50',
+          type: 'group',
+          name: '多语言内容生成微服务',
+          open: true,
+          children: [
+            {
+              id: '5001',
+              type: 'translateContent',
+              name: 'translateContent',
+              ico: 'el-icon-document',
+              style: {}
+            },
+            {
+              id: '5002',
+              type: 'generateDescription',
+              name: 'generateDescription',
+              ico: 'el-icon-edit-outline',
+              style: {}
+            }
+          ]
+        },
+        {
+          id: '51',
+          type: 'group',
+          name: '市场分析微服务',
+          open: true,
+          children: [
+            {
+              id: '5101',
+              type: 'analyzeTrend',
+              name: 'analyzeTrend',
+              ico: 'el-icon-data-analysis',
+              style: {}
+            },
+            {
+              id: '5102',
+              type: 'predictSales',
+              name: 'predictSales',
+              ico: 'el-icon-data-line',
+              style: {}
+            }
+          ]
+        },
+        {
+          id: '52',
+          type: 'group',
+          name: '商品推荐微服务',
+          open: true,
+          children: [
+            {
+              id: '5201',
+              type: 'recommendProduct',
+              name: 'recommendProduct',
+              ico: 'el-icon-shopping-cart-1',
+              style: {}
+            },
+            {
+              id: '5202',
+              type: 'generateAd',
+              name: 'generateAd',
+              ico: 'el-icon-picture',
+              style: {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  flowData: getEcommerceFlow()
+}
+
+const homeAIPj = {
+  chosenServices: ['环境感知微服务', '智能对话微服务', '健康监测微服务'],
+  serviceNodes: [
+    {
+      id: '6',
+      type: 'group',
+      name: '家庭机器人AI服务',
+      open: true,
+      children: [
+        {
+          id: '60',
+          type: 'group',
+          name: '环境感知微服务',
+          open: true,
+          children: [
+            {
+              id: '6001',
+              type: 'objectDetection',
+              name: 'objectDetection',
+              ico: 'el-icon-view',
+              style: {}
+            },
+            {
+              id: '6002',
+              type: 'spatialMapping',
+              name: 'spatialMapping',
+              ico: 'el-icon-map-location',
+              style: {}
+            }
+          ]
+        },
+        {
+          id: '61',
+          type: 'group',
+          name: '智能对话微服务',
+          open: true,
+          children: [
+            {
+              id: '6101',
+              type: 'naturalLanguageUnderstanding',
+              name: 'naturalLanguageUnderstanding',
+              ico: 'el-icon-chat-line-round',
+              style: {}
+            },
+            {
+              id: '6102',
+              type: 'emotionRecognition',
+              name: 'emotionRecognition',
+              ico: 'el-icon-user',
+              style: {}
+            }
+          ]
+        },
+        {
+          id: '62',
+          type: 'group',
+          name: '健康监测微服务',
+          open: true,
+          children: [
+            {
+              id: '6201',
+              type: 'vitalSignsMonitor',
+              name: 'vitalSignsMonitor',
+              ico: 'el-icon-first-aid-kit',
+              style: {}
+            },
+            {
+              id: '6202',
+              type: 'abnormalBehaviorDetection',
+              name: 'abnormalBehaviorDetection',
+              ico: 'el-icon-warning',
+              style: {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  flowData: getHomeAIFlow()
+}
+
 export function getChatData(serviceType, userInput) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -358,6 +601,15 @@ export function getChatData(serviceType, userInput) {
           break
         case 'agriculture':
           resolve(agriculturePj)
+          break
+        case 'evtol':
+          resolve(evtolPj)
+          break
+        case 'ecommerce':
+          resolve(ecommercePj)
+          break
+        case 'homeAI':
+          resolve(homeAIPj)
           break
         case 'aml':
           if (userInput.includes('课题三')) {
