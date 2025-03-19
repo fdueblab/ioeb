@@ -48,6 +48,24 @@ export const asyncRouterMap = [
             name: 'vertical-user-agriculture',
             meta: { title: '数字农业AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/agriculture')
+          },
+          {
+            path: '/vertical-user/evtol',
+            name: 'vertical-user-evtol',
+            meta: { title: '低空飞行AI应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: () => import('@/views/vertical/user/evtol')
+          },
+          {
+            path: '/vertical-user/ecommerce',
+            name: 'vertical-user-ecommerce',
+            meta: { title: '跨境电商AI应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: () => import('@/views/vertical/user/ecommerce')
+          },
+          {
+            path: '/vertical-user/homeAI',
+            name: 'vertical-user-homeAI',
+            meta: { title: '家庭陪伴AI应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: () => import('@/views/vertical/user/homeAI')
           }
         ]
       },
@@ -82,6 +100,24 @@ export const asyncRouterMap = [
             name: 'vertical-ms-agriculture',
             meta: { title: '数字农业AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/ms/agriculture')
+          },
+          {
+            path: '/vertical-ms/evtol',
+            name: 'vertical-ms-evtol',
+            meta: { title: '低空飞行AI应用服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: () => import('@/views/vertical/ms/evtol')
+          },
+          {
+            path: '/vertical-ms/ecommerce',
+            name: 'vertical-ms-ecommerce',
+            meta: { title: '跨境电商AI应用服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: () => import('@/views/vertical/ms/ecommerce')
+          },
+          {
+            path: '/vertical-ms/homeAI',
+            name: 'vertical-ms-homeAI',
+            meta: { title: '家庭陪伴AI应用服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: () => import('@/views/vertical/ms/homeAI')
           }
         ]
       },
@@ -103,7 +139,7 @@ export const asyncRouterMap = [
             path: '/vertical-atom-app/aircraft',
             name: 'vertical-atom-app-aircraft',
             component: () => import('@/views/schedule/AirCraftSchedule'),
-            meta: { title: '低空元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+            meta: { title: '飞机元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
           },
           {
             path: '/vertical-atom-app/health',
@@ -116,6 +152,24 @@ export const asyncRouterMap = [
             name: 'vertical-atom-app-agriculture',
             component: () => import('@/views/schedule/AgricultureSchedule'),
             meta: { title: '农业元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+          },
+          {
+            path: '/vertical-atom-app/evtol',
+            name: 'vertical-atom-app-evtol',
+            component: () => import('@/views/schedule/EvtolSchedule'),
+            meta: { title: '低空元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+          },
+          {
+            path: '/vertical-atom-app/ecommerce',
+            name: 'vertical-atom-app-ecommerce',
+            component: () => import('@/views/schedule/EcommerceSchedule'),
+            meta: { title: '电商元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+          },
+          {
+            path: '/vertical-atom-app/homeAI',
+            name: 'vertical-atom-app-homeAI',
+            component: () => import('@/views/schedule/HomeAISchedule'),
+            meta: { title: '家庭元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
           }
         ]
       },
@@ -206,6 +260,66 @@ export const asyncRouterMap = [
                 component: () => import('@/views/evaluation/agriculture/emulation')
               }
             ]
+          },
+          {
+            path: '/evaluation/evtol',
+            name: 'evaluation-evtol',
+            meta: { title: '低空飞行AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: RouteView,
+            children: [
+              {
+                path: '/evaluation/evtol/technology',
+                name: 'evaluation-evtol-technology',
+                component: () => import('@/views/evaluation/evtol/technology'),
+                meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
+              },
+              {
+                path: '/evaluation/evtol/emulation',
+                name: 'atom-app-evaluation-evtol',
+                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
+                component: () => import('@/views/evaluation/evtol/emulation')
+              }
+            ]
+          },
+          {
+            path: '/evaluation/ecommerce',
+            name: 'evaluation-ecommerce',
+            meta: { title: '跨境电商AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: RouteView,
+            children: [
+              {
+                path: '/evaluation/ecommerce/technology',
+                name: 'evaluation-ecommerce-technology',
+                component: () => import('@/views/evaluation/ecommerce/technology'),
+                meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
+              },
+              {
+                path: '/evaluation/ecommerce/emulation',
+                name: 'atom-app-evaluation-ecommerce',
+                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
+                component: () => import('@/views/evaluation/ecommerce/emulation')
+              }
+            ]
+          },
+          {
+            path: '/evaluation/homeAI',
+            name: 'evaluation-homeAI',
+            meta: { title: '家庭陪伴AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: RouteView,
+            children: [
+              {
+                path: '/evaluation/homeAI/technology',
+                name: 'evaluation-homeAI-technology',
+                component: () => import('@/views/evaluation/homeAI/technology'),
+                meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
+              },
+              {
+                path: '/evaluation/homeAI/emulation',
+                name: 'atom-app-evaluation-homeAI',
+                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
+                component: () => import('@/views/evaluation/homeAI/emulation')
+              }
+            ]
           }
         ]
       },
@@ -294,6 +408,66 @@ export const asyncRouterMap = [
                 name: 'operation-agriculture-container-manage',
                 meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
                 component: () => import('@/views/operation/agriculture/container-manage')
+              }
+            ]
+          },
+          {
+            path: '/operation/evtol',
+            name: 'operation-evtol',
+            meta: { title: '低空飞行AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: RouteView,
+            children: [
+              {
+                path: '/operation/evtol/container-status',
+                name: 'operation-evtol-container-status',
+                component: () => import('@/views/operation/evtol/container-status'),
+                meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
+              },
+              {
+                path: '/operation/evtol/container-manage',
+                name: 'operation-evtol-container-manage',
+                meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
+                component: () => import('@/views/operation/evtol/container-manage')
+              }
+            ]
+          },
+          {
+            path: '/operation/ecommerce',
+            name: 'operation-ecommerce',
+            meta: { title: '跨境电商AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: RouteView,
+            children: [
+              {
+                path: '/operation/ecommerce/container-status',
+                name: 'operation-ecommerce-container-status',
+                component: () => import('@/views/operation/ecommerce/container-status'),
+                meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
+              },
+              {
+                path: '/operation/ecommerce/container-manage',
+                name: 'operation-ecommerce-container-manage',
+                meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
+                component: () => import('@/views/operation/ecommerce/container-manage')
+              }
+            ]
+          },
+          {
+            path: '/operation/homeAI',
+            name: 'operation-homeAI',
+            meta: { title: '家庭陪伴AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: RouteView,
+            children: [
+              {
+                path: '/operation/homeAI/container-status',
+                name: 'operation-homeAI-container-status',
+                component: () => import('@/views/operation/homeAI/container-status'),
+                meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
+              },
+              {
+                path: '/operation/homeAI/container-manage',
+                name: 'operation-homeAI-container-manage',
+                meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
+                component: () => import('@/views/operation/homeAI/container-manage')
               }
             ]
           }

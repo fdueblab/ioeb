@@ -133,6 +133,42 @@ const agricultureRoleMap = [
   '成本降低'
 ]
 
+// 添加低空飞行AI应用的行业映射
+const evtolIndustryMap = ['城市空中交通', '物流配送', '紧急救援与医疗', '文旅与低空旅游']
+
+// 添加低空飞行AI应用的场景映射
+const evtolScenarioMap = ['飞行路径规划', '乘客服务与交互', '航空器控制', '安全监控与维护', '能源与电池管理']
+
+// 添加低空飞行AI应用的技术映射
+const evtolTechnologyMap = ['强化学习', '计算机视觉', '多模态融合', '时序预测', '图搜索算法', '深度学习']
+
+// 添加低空飞行AI应用的特殊考量
+const evtolSpecialConsiderationsMap = [
+  '实时性要求（低延迟控制）',
+  '安全冗余设计（降低系统故障风险）',
+  '极端天气适应性（应对不同气候条件）',
+  '低空空域协同（与其他飞行器避让）',
+  '城市环境适应（建筑物密集区域导航）'
+]
+
+// 添加低空飞行AI应用的领域分类
+const evtolDomainMap = [
+  '航空器控制与飞行管理',
+  '导航与感知系统',
+  '能源与电池管理',
+  '运营与调度优化',
+  '乘客体验与安全'
+]
+
+// 添加低空飞行AI应用的作用分类
+const evtolRoleMap = [
+  '感知与识别',
+  '决策与规划',
+  '优化与控制',
+  '预测与预警',
+  '人机交互'
+]
+
 export function getServiceStatusMap() {
   return statusMap
 }
@@ -154,6 +190,8 @@ export function getIndustryMap(type) {
     return healthIndustryMap
   } else if (type === 'agriculture') {
     return agricultureIndustryMap
+  } else if (type === 'evtol') {
+    return evtolIndustryMap
   } else {
     return aircraftIndustryMap
   }
@@ -168,6 +206,8 @@ export function getScenarioMap(type) {
     return healthScenarioMap
   } else if (type === 'agriculture') {
     return agricultureScenarioMap
+  } else if (type === 'evtol') {
+    return evtolScenarioMap
   } else {
     return aircraftScenarioMap
   }
@@ -182,6 +222,8 @@ export function getTechnologyMap(type) {
     return healthTechnologyMap
   } else if (type === 'agriculture') {
     return agricultureTechnologyMap
+  } else if (type === 'evtol') {
+    return evtolTechnologyMap
   } else {
     return aircraftTechnologyMap
   }
@@ -230,4 +272,17 @@ export function getAgricultureRoleMap() {
 
 export function getAgricultureSpecialConsiderationsMap() {
   return agricultureSpecialConsiderationsMap
+}
+
+// 添加低空飞行AI应用相关的获取函数
+export function getEvtolDomainMap() {
+  return evtolDomainMap
+}
+
+export function getEvtolRoleMap() {
+  return evtolRoleMap
+}
+
+export function getEvtolSpecialConsiderationsMap() {
+  return evtolSpecialConsiderationsMap
 }
