@@ -36,7 +36,7 @@ export default {
         {
           id: '9',
           type: 'group',
-          name: '低空飞行AI智能服务',
+          name: '低空飞行AI应用服务',
           open: true,
           children: []
         }
@@ -66,7 +66,7 @@ export default {
         {
           id: '9',
           type: 'group',
-          name: '低空飞行AI智能服务',
+          name: '低空飞行AI应用服务',
           open: true,
           children: []
         }

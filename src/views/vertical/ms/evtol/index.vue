@@ -359,14 +359,13 @@ class {{apiName}}({{input}}):
     onUpload () {
       this.uploadProgramLoading = true
       setTimeout(() => {
-        // const file = this.programFiles
         this.$message.success('解析成功，发现以下可用API及调用关系')
         this.programJson = {
           nodes: [
-            { id: '1000', x: 200, y: 50, label: 'getTargetFeature', size: 50, color: '#F6BD16', input: 'imageData', output: 'targetFeature', environment: '', process: '', apiType: 2, methodType: 0, inputType: 2, outputType: 1 },
-            { id: '1001', x: 50, y: 200, label: 'getTargetLocation', size: 50, color: '#5B8FF9', input: 'gpsCoordinates', output: 'targetLocation', environment: '', process: '', apiType: 2, methodType: 0, inputType: 2, outputType: 1 },
-            { id: '1002', x: 200, y: 150, label: 'getTargetInfo', size: 50, color: '#5AD8A6', input: 'targetFeature, targetLocation', output: 'targetInfo', environment: '', process: '', apiType: 0, methodType: 0, inputType: 2, outputType: 1 },
-            { id: '1003', x: 350, y: 200, label: 'getTargetType', size: 50, color: '#5D7092', input: 'targetInfo', output: 'targetType', environment: '', process: '', apiType: 0, methodType: 0, inputType: 2, outputType: 1 }
+            { id: '1000', x: 200, y: 50, label: 'pathPlanner', size: 50, color: '#F6BD16', input: 'flightData', output: 'pathPlan', environment: '天气条件良好', process: '基于强化学习的路径规划', apiType: 0, methodType: 1, inputType: 3, outputType: 1 },
+            { id: '1001', x: 50, y: 200, label: 'obstacleDetection', size: 50, color: '#5B8FF9', input: 'sensorData', output: 'obstacleInfo', environment: '传感器数据完整', process: '多传感器融合检测', apiType: 2, methodType: 1, inputType: 2, outputType: 1 },
+            { id: '1002', x: 200, y: 150, label: 'pathOptimizer', size: 50, color: '#5AD8A6', input: 'pathPlan, obstacleInfo', output: 'optimizedPath', environment: '路径规划完成', process: '考虑障碍物的路径优化', apiType: 0, methodType: 1, inputType: 2, outputType: 1 },
+            { id: '1003', x: 350, y: 200, label: 'energyEstimator', size: 50, color: '#5D7092', input: 'optimizedPath', output: 'energyEstimate', environment: '路径优化完成', process: '基于路径的能耗估算', apiType: 0, methodType: 1, inputType: 2, outputType: 1 }
           ],
           edges: [
             { sourceID: '1000', targetID: '1002' },

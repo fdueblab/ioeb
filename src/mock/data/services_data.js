@@ -80,7 +80,7 @@ const amlServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '复旦大学',
+      companyName: '复旦大学课题组',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
       companyIntroduce: '课题五',
@@ -587,11 +587,11 @@ const airCraftServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '复旦大学',
+      companyName: '复旦大学课题组',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      companyIntroduce: '复旦大学校名取自《尚书大传》之"日月光华，旦复旦兮"，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部"长江学者"特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，"中国大学智库论坛"秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
-      msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
+      companyIntroduce: '课题五',
+      msIntroduce: '基于智能体的无人机虚拟仿真微服务',
       companyScore: 5,
       msScore: 5
     },
@@ -621,11 +621,11 @@ const airCraftServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '复旦大学',
+      companyName: '复旦大学课题组',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      companyIntroduce: '复旦大学校名取自《尚书大传》之"日月光华，旦复旦兮"，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部"长江学者"特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，"中国大学智库论坛"秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
-      msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
+      companyIntroduce: '无人机AI应用课题',
+      msIntroduce: '基于智能体的无人机低空测绘微服务',
       companyScore: 5,
       msScore: 5
     },
@@ -655,11 +655,11 @@ const airCraftServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '复旦大学',
+      companyName: '复旦大学课题组',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      companyIntroduce: '复旦大学校名取自《尚书大传》之"日月光华，旦复旦兮"，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部"长江学者"特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，"中国大学智库论坛"秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
-      msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
+      companyIntroduce: '无人机AI应用课题',
+      msIntroduce: '基于智能体的无人机目标识别微服务',
       companyScore: 5,
       msScore: 5
     },
@@ -693,11 +693,11 @@ const airCraftServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '复旦大学',
+      companyName: '复旦大学课题组',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      companyIntroduce: '复旦大学校名取自《尚书大传》之"日月光华，旦复旦兮"，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部"长江学者"特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，"中国大学智库论坛"秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
-      msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
+      companyIntroduce: '无人机AI应用课题',
+      msIntroduce: '基于智能体的无人机远程控制微服务',
       companyScore: 5,
       msScore: 5
     },
@@ -731,11 +731,11 @@ const airCraftServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '复旦大学',
+      companyName: '复旦大学课题组',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      companyIntroduce: '复旦大学校名取自《尚书大传》之"日月光华，旦复旦兮"，始创于1905年，原名复旦公学，1917年定名为复旦大学，是中国人自主创办的第一所高等院校。上海医科大学前身是1927年创办的国立第四中山大学医学院。2000年，复旦大学与上海医科大学合并。目前，学校拥有哲学、经济学、法学、教育学、文学、历史学、理学、工学、医学、管理学、艺术学等11个学科门类，是一所世界知名、国内顶尖的综合性研究型大学。目前，复旦大学有直属院（系）32个，附属医院17家（其中4家筹建）。学校设有本科专业74个，拥有一级学科博士学位授权点37个，一级学科硕士学位授权点43个，博士专业学位授权点2个，硕士专业学位授权点27个，博士后科研流动站35个。在校普通本、专科生13361人，研究生19903人，留学生3486人。在校教学科研人员2948人。两院院士（含双聘）46人，文科杰出教授1人，文科资深教授13人，教育部"长江学者"特聘教授（本校申报入选）99人，国家杰出青年基金获得者（本校申报入选）136人。复旦大学学术影响力进入ESI世界前1%的学科领域数17个，位列国内高校第3名，其中，化学、材料科学、临床医学、药理学与毒理学进入全球1‰。U.S.News世界学科排名中，有4个学科跻身世界前20，数量在国内并列第二。在QS世界学科排名中，复旦有20个学科位列世界前100，总量在国内排名第三。学校有国家重点实验室5个，教育部工程研究中心5个，教育部重点实验室13个，卫生部重点实验室9个，军委后勤保障部卫生局重点实验室1个，上海市重点实验室15个，上海市工程研究中心7个；有教育部人文社会科学重点研究基地9个，中国研究院入选首批国家高端智库建设试点单位，马克思主义学院入选首批全国重点马克思主义学院，"中国大学智库论坛"秘书处落户复旦。在QS 世界大学排名中列全球第40位，在U.S.News全球大学排行榜中，位居第121位，均列国内高校第3位。',
-      msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
+      companyIntroduce: '无人机AI应用课题',
+      msIntroduce: '基于智能体的无人机视频分析微服务',
       companyScore: 5,
       msScore: 5
     },
@@ -769,10 +769,10 @@ const healthServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '乡村医疗科技有限公司',
+      companyName: '复旦大学课题组',
       companyAddress: '上海市杨浦区邯郸路220号',
-      companyContact: '021-65642111',
-      companyIntroduce: '农村AI医疗解决方案提供商',
+      companyContact: '021-65642222',
+      companyIntroduce: '乡村医疗AI应用课题',
       msIntroduce: '基于轻量化模型的医疗影像辅助诊断服务',
       companyScore: 5,
       msScore: 4
@@ -851,10 +851,10 @@ const healthServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '健康云科技有限公司',
-      companyAddress: '上海市浦东新区张江高科技园区',
-      companyContact: '021-58885555',
-      companyIntroduce: '专注于慢性病管理和健康监测',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '乡村医疗AI应用课题',
       msIntroduce: '基于物联网和AI的慢性病监测服务',
       companyScore: 4,
       msScore: 5
@@ -938,10 +938,10 @@ const healthServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '智语科技有限公司',
-      companyAddress: '北京市海淀区中关村科技园',
-      companyContact: '010-62345678',
-      companyIntroduce: '专注于多方言语音识别技术',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '乡村医疗AI应用课题',
       msIntroduce: '农村方言语音识别转写服务',
       companyScore: 4,
       msScore: 5
@@ -1002,10 +1002,10 @@ const healthServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '医卫智能科技有限公司',
-      companyAddress: '武汉市光谷科技园',
-      companyContact: '027-87654321',
-      companyIntroduce: '专注于医疗资源智能调度',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '乡村医疗AI应用课题',
       msIntroduce: '基于强化学习的医疗资源优化调度服务',
       companyScore: 5,
       msScore: 4
@@ -1072,10 +1072,10 @@ const healthServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '公共卫生数据科技公司',
-      companyAddress: '广州市天河区科技园',
-      companyContact: '020-38889999',
-      companyIntroduce: '专注于流行病学数据分析',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '乡村医疗AI应用课题',
       msIntroduce: '基于时序数据分析的流行病预测服务',
       companyScore: 5,
       msScore: 5
@@ -1152,10 +1152,10 @@ const amlMetaApps = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '复旦大学',
+      companyName: '复旦大学课题组',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      companyIntroduce: '复旦大学课题组',
+      companyIntroduce: '课题五',
       msIntroduce: '用于跨境支付的风险评估和报告生成的元应用样例',
       companyScore: 5,
       msScore: 5
@@ -1221,7 +1221,7 @@ const airCraftMetaApps = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '复旦大学',
+      companyName: '复旦大学课题组',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
       msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
@@ -1282,10 +1282,10 @@ const healthMetaApps = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '乡村医疗科技有限公司',
+      companyName: '复旦大学课题组',
       companyAddress: '上海市杨浦区邯郸路220号',
-      companyContact: '021-65642111',
-      companyIntroduce: '农村AI医疗解决方案提供商',
+      companyContact: '021-65642222',
+      companyIntroduce: '乡村医疗AI应用课题',
       msIntroduce: '针对基层医疗机构的AI辅助诊断元应用，整合了医学影像处理和方言语音识别功能',
       companyScore: 5,
       msScore: 4
@@ -1363,10 +1363,10 @@ const healthMetaApps = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '公共卫生数据科技公司',
-      companyAddress: '广州市天河区科技园',
-      companyContact: '020-38889999',
-      companyIntroduce: '专注于流行病学数据分析',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '乡村医疗AI应用课题',
       msIntroduce: '农村地区公共卫生监测元应用，整合流行病预测和医疗资源调度功能',
       companyScore: 5,
       msScore: 5
@@ -1452,10 +1452,10 @@ const agricultureServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '智慧农业研究院',
-      companyAddress: '上海市闵行区东川路800号',
-      companyContact: '021-54740000',
-      companyIntroduce: '专注于农业人工智能技术研发与应用',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '数字农业AI应用课题',
       msIntroduce: '基于计算机视觉的农作物生长状态智能分析服务',
       companyScore: 5,
       msScore: 5
@@ -1550,10 +1550,10 @@ const agricultureServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '智慧农业研究院',
-      companyAddress: '上海市闵行区东川路800号',
-      companyContact: '021-54740000',
-      companyIntroduce: '专注于农业人工智能技术研发与应用',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '数字农业AI应用课题',
       msIntroduce: '基于深度学习的病虫害智能识别与防治系统',
       companyScore: 5,
       msScore: 5
@@ -1646,10 +1646,10 @@ const agricultureServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '智慧农业研究院',
-      companyAddress: '上海市闵行区东川路800号',
-      companyContact: '021-54740000',
-      companyIntroduce: '专注于农业人工智能技术研发与应用',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '数字农业AI应用课题',
       msIntroduce: '基于时序分析的农田智能灌溉决策系统',
       companyScore: 5,
       msScore: 4
@@ -1759,10 +1759,10 @@ const agricultureServices = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '智慧农业研究院',
-      companyAddress: '上海市闵行区东川路800号',
-      companyContact: '021-54740000',
-      companyIntroduce: '专注于农业人工智能技术研发与应用',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '数字农业AI应用课题',
       msIntroduce: '基于机器学习的农作物产量预测服务',
       companyScore: 5,
       msScore: 4
@@ -1878,10 +1878,10 @@ const agricultureMetaApps = [
     ],
     source: {
       popoverTitle: '可信云技术服务溯源',
-      companyName: '智慧农业研究院',
-      companyAddress: '上海市闵行区东川路800号',
-      companyContact: '021-54740000',
-      companyIntroduce: '专注于农业人工智能技术研发与应用',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '数字农业AI应用课题',
       msIntroduce: '基于多代理系统的智慧农业综合管理平台',
       companyScore: 5,
       msScore: 5
@@ -1918,6 +1918,1504 @@ const agricultureMetaApps = [
               '适当延长灌溉周期'
             ]
           }
+        }
+      }
+    ]
+  }
+]
+
+const evtolServices = [
+  {
+    name: '飞行路径规划微服务',
+    attribute: 1,
+    type: 0,
+    domain: 0,
+    industry: 0,
+    scenario: 0,
+    technology: 0,
+    netWork: 'bridge',
+    port: '0.0.0.0:8200/TCP → 0.0.0.0:82000',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/evtol/data',
+    status: 4,
+    number: '256',
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '低空飞行（eVTOL）AI应用课题',
+      msIntroduce: '基于强化学习的飞行路径规划服务',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'pathPlanner',
+        isFake: true,
+        url: 'https://myApiServer.com/evtol/path/plan',
+        method: 'POST',
+        des: '规划飞行路径，避开障碍物',
+        parameterType: 3,
+        parameters: [{
+          name: 'data',
+          type: 'json',
+          des: '包含起点终点和环境数据的JSON'
+        }],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '路径规划成功！',
+          data: {
+            pathPoints: [
+              { lat: 31.2304, lng: 121.4737, altitude: 120 },
+              { lat: 31.2324, lng: 121.4757, altitude: 150 },
+              { lat: 31.2354, lng: 121.4787, altitude: 150 },
+              { lat: 31.2384, lng: 121.4817, altitude: 120 }
+            ],
+            estimatedTime: '15分钟',
+            distance: '12.5公里',
+            energyConsumption: '30%',
+            weatherRisk: '低',
+            noFlyZonesAvoided: 3
+          }
+        }
+      }
+    ]
+  },
+  {
+    name: '环境感知微服务',
+    attribute: 1,
+    type: 0,
+    domain: 1,
+    industry: 0,
+    scenario: 3,
+    technology: 1,
+    netWork: 'bridge',
+    port: '0.0.0.0:8201/TCP → 0.0.0.0:82001',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/evtol/data',
+    status: 4,
+    number: '512',
+    norm: [
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 4
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '低空飞行（eVTOL）AI应用课题',
+      msIntroduce: '基于计算机视觉和多传感器融合的环境感知服务',
+      companyScore: 5,
+      msScore: 4
+    },
+    apiList: [
+      {
+        name: 'environmentPerception',
+        isFake: true,
+        url: 'https://myApiServer.com/evtol/perception',
+        method: 'POST',
+        des: '感知周围环境，识别障碍物和导航信息',
+        parameterType: 2,
+        parameters: [{
+          name: 'sensorData',
+          type: 'multimodal',
+          des: '来自多种传感器的数据'
+        }],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '环境感知完成！',
+          data: {
+            detectedObjects: [
+              { type: '建筑物', distance: 120, direction: '东北', height: 80 },
+              { type: '电线', distance: 50, direction: '正前方', height: 30 },
+              { type: '其他飞行器', distance: 500, direction: '西', height: 150, velocity: { speed: 40, heading: 90 } }
+            ],
+            weatherConditions: {
+              visibility: '良好',
+              windSpeed: '5米/秒',
+              windDirection: '西北',
+              precipitation: '无'
+            },
+            terrainFeatures: {
+              slope: '平坦',
+              elevation: '海拔35米',
+              surfaceType: '城市建筑区'
+            },
+            confidenceScore: 0.92
+          }
+        }
+      },
+      {
+        name: 'obstacleDetection',
+        isFake: true,
+        url: 'https://myApiServer.com/evtol/obstacle',
+        method: 'POST',
+        des: '检测障碍物并提供避险建议',
+        parameterType: 2,
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '障碍物检测完成！',
+          data: {
+            obstaclesDetected: true,
+            obstacleCount: 3,
+            criticalObstacles: 1,
+            emergencyAction: '向右偏航15度',
+            timeToImpact: '8.5秒'
+          }
+        }
+      }
+    ]
+  },
+  {
+    name: '飞行控制微服务',
+    attribute: 0,
+    type: 0,
+    domain: 0,
+    industry: 0,
+    scenario: 2,
+    technology: 0,
+    netWork: 'bridge',
+    port: '0.0.0.0:8202/TCP → 0.0.0.0:82002',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/evtol/data',
+    status: 4,
+    number: '256',
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '低空飞行（eVTOL）AI应用课题',
+      msIntroduce: '基于PID控制算法的飞行姿态控制服务',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'flightController',
+        isFake: true,
+        url: 'https://myApiServer.com/evtol/control',
+        method: 'POST',
+        des: '控制飞行姿态和动作',
+        parameterType: 3,
+        parameters: [{
+          name: 'controlCommand',
+          type: 'json',
+          des: '飞行控制命令'
+        }],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '控制命令已执行！',
+          data: {
+            commandStatus: 'executed',
+            currentAttitude: {
+              pitch: 5,
+              roll: 0,
+              yaw: 270
+            },
+            currentAltitude: 150,
+            currentSpeed: 70,
+            flightMode: 'cruise',
+            stability: '优秀',
+            responseTime: '0.05秒'
+          }
+        }
+      }
+    ]
+  },
+  {
+    name: '能源管理微服务',
+    attribute: 2,
+    type: 0,
+    domain: 2,
+    industry: 0,
+    scenario: 4,
+    technology: 3,
+    netWork: 'bridge',
+    port: '0.0.0.0:8203/TCP → 0.0.0.0:82003',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/evtol/data',
+    status: 4,
+    number: '128',
+    norm: [
+      {
+        key: 0,
+        score: 4
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '低空飞行（eVTOL）AI应用课题',
+      msIntroduce: '基于时序预测的电池能源管理服务',
+      companyScore: 4,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'batteryManager',
+        isFake: true,
+        url: 'https://myApiServer.com/evtol/battery',
+        method: 'POST',
+        des: '管理电池能源使用',
+        parameterType: 3,
+        parameters: [{
+          name: 'flightData',
+          type: 'json',
+          des: '飞行数据和电池状态'
+        }],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '能源分析完成！',
+          data: {
+            currentCharge: '72%',
+            estimatedRemaining: '38分钟',
+            rangeRemaining: '45公里',
+            dischargeCurve: [
+              { time: 0, charge: 72 },
+              { time: 10, charge: 65 },
+              { time: 20, charge: 58 },
+              { time: 30, charge: 50 }
+            ],
+            recommendations: [
+              '降低飞行高度可延长续航时间',
+              '减少急加速以优化能源使用'
+            ],
+            criticalLevel: false,
+            optimalSpeed: 65
+          }
+        }
+      },
+      {
+        name: 'energyOptimizer',
+        isFake: true,
+        url: 'https://myApiServer.com/evtol/energy/optimize',
+        method: 'POST',
+        des: '优化能源使用策略',
+        parameterType: 3,
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '能源优化完成！',
+          data: {
+            optimizedProfile: {
+              climbRate: '3米/秒',
+              cruiseSpeed: '65公里/小时',
+              descentRate: '2米/秒'
+            },
+            energySavings: '12%',
+            extendedRange: '8公里',
+            batteryHealthImpact: '积极',
+            implementationDifficulty: '低'
+          }
+        }
+      }
+    ]
+  },
+  {
+    name: '安全监控微服务',
+    attribute: 1,
+    type: 0,
+    domain: 4,
+    industry: 2,
+    scenario: 3,
+    technology: 4,
+    netWork: 'bridge',
+    port: '0.0.0.0:8204/TCP → 0.0.0.0:82004',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/evtol/data',
+    status: 4,
+    number: '384',
+    norm: [
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 4
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '低空飞行（eVTOL）AI应用课题',
+      msIntroduce: '基于异常检测算法的飞行安全监控服务',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'safetyMonitor',
+        isFake: true,
+        url: 'https://myApiServer.com/evtol/safety',
+        method: 'POST',
+        des: '监控飞行安全状态',
+        parameterType: 3,
+        parameters: [{
+          name: 'systemStatus',
+          type: 'json',
+          des: '系统状态数据'
+        }],
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '安全状态评估完成！',
+          data: {
+            overallStatus: '正常',
+            safetyScore: 95,
+            anomalies: [
+              { component: '左侧螺旋桨', severity: '低', action: '继续监控' }
+            ],
+            systemChecks: {
+              propulsion: 'Pass',
+              navigation: 'Pass',
+              communication: 'Pass',
+              powertrain: 'Pass'
+            },
+            redundancyStatus: {
+              primary: '正常',
+              secondary: '准备就绪'
+            },
+            recommendedActions: []
+          }
+        }
+      }
+    ]
+  }
+]
+
+// 添加EVTOL元应用数据
+const evtolMetaApps = [
+  {
+    name: 'eVTOL智能飞行控制元应用',
+    attribute: 3,
+    type: 1,
+    domain: 0,
+    industry: 0,
+    scenario: 0,
+    technology: 0,
+    netWork: 'bridge',
+    port: '0.0.0.0:8220/TCP → 0.0.0.0:82200',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/evtol/metaApp',
+    status: 4,
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '低空飞行（eVTOL）AI应用课题',
+      msIntroduce: '集成了路径规划、环境感知和飞行控制的综合元应用',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'eVTOL智能飞行控制元应用',
+        isFake: true,
+        inputName: '飞行任务参数',
+        outputName: '飞行控制结果',
+        outputVisualization: true,
+        submitButtonText: '开始任务',
+        url: 'https://myApiServer.com/evtol/metaApp',
+        method: 'POST',
+        parameterType: 3,
+        responseType: 1,
+        response: {
+          code: 200,
+          message: '任务执行完成！',
+          data: {
+            missionStatus: '完成',
+            flightPath: [
+              { lat: 31.2304, lng: 121.4737, alt: 120, time: '14:30:00' },
+              { lat: 31.2324, lng: 121.4757, alt: 150, time: '14:35:00' },
+              { lat: 31.2354, lng: 121.4787, alt: 150, time: '14:40:00' },
+              { lat: 31.2384, lng: 121.4817, alt: 120, time: '14:45:00' }
+            ],
+            batteryUsed: '28%',
+            obstaclesAvoided: 5,
+            weatherConditions: '良好',
+            totalFlightTime: '15分钟',
+            safetyIncidents: 0,
+            recommendations: [
+              '定期检查左侧螺旋桨',
+              '更新城区高层建筑数据'
+            ]
+          }
+        }
+      }
+    ],
+    number: '1024'
+  }
+]
+
+// 添加跨境电商AI微服务
+const ecommerceServices = [
+  {
+    name: '多语言内容生成微服务',
+    attribute: 1,
+    type: 0,
+    domain: 0,
+    industry: 0,
+    scenario: 0,
+    technology: 0,
+    netWork: 4,
+    port: 4,
+    volume: 3,
+    status: 4,
+    number: 5,
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '跨境电商AI应用课题',
+      msIntroduce: '垂域多语言生成大模型',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'translateContent',
+        methodType: 1,
+        apiType: 0,
+        description: '将产品描述翻译成多种语言',
+        parameters: [
+          {
+            name: 'productData',
+            description: '产品详细信息',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          },
+          {
+            name: 'targetLanguages',
+            description: '目标语言列表',
+            isRequired: 1,
+            type: 'array',
+            defaultValue: '["en", "es", "fr", "de", "ja"]'
+          }
+        ],
+        response: {
+          name: 'translatedContent',
+          description: '多语言翻译后的内容',
+          type: 'object'
+        }
+      },
+      {
+        name: 'generateDescription',
+        methodType: 1,
+        apiType: 0,
+        description: '根据产品特性生成营销文案',
+        parameters: [
+          {
+            name: 'productFeatures',
+            description: '产品特性列表',
+            isRequired: 1,
+            type: 'array',
+            defaultValue: null
+          },
+          {
+            name: 'targetMarket',
+            description: '目标市场',
+            isRequired: 1,
+            type: 'string',
+            defaultValue: null
+          },
+          {
+            name: 'tone',
+            description: '文案风格',
+            isRequired: 0,
+            type: 'string',
+            defaultValue: 'professional'
+          }
+        ],
+        response: {
+          name: 'marketingText',
+          description: '生成的营销文案',
+          type: 'object'
+        }
+      }
+    ]
+  },
+  {
+    name: '市场分析微服务',
+    attribute: 1,
+    type: 0,
+    domain: 3,
+    industry: 0,
+    scenario: 3,
+    technology: 3,
+    netWork: 3,
+    port: 3,
+    volume: 4,
+    status: 4,
+    number: 3,
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '跨境电商AI应用课题',
+      msIntroduce: '基于智能体的市场分析算法',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'analyzeTrend',
+        methodType: 1,
+        apiType: 0,
+        description: '分析市场趋势及竞品情况',
+        parameters: [
+          {
+            name: 'productCategory',
+            description: '产品类别',
+            isRequired: 1,
+            type: 'string',
+            defaultValue: null
+          },
+          {
+            name: 'targetMarkets',
+            description: '目标市场列表',
+            isRequired: 1,
+            type: 'array',
+            defaultValue: null
+          },
+          {
+            name: 'timeRange',
+            description: '分析时间范围',
+            isRequired: 0,
+            type: 'object',
+            defaultValue: '{"start": "2023-01-01", "end": "2023-12-31"}'
+          }
+        ],
+        response: {
+          name: 'marketAnalysis',
+          description: '市场分析报告',
+          type: 'object'
+        }
+      },
+      {
+        name: 'predictSales',
+        methodType: 1,
+        apiType: 0,
+        description: '预测产品销量及趋势',
+        parameters: [
+          {
+            name: 'productId',
+            description: '产品ID',
+            isRequired: 1,
+            type: 'string',
+            defaultValue: null
+          },
+          {
+            name: 'historicalData',
+            description: '历史销售数据',
+            isRequired: 1,
+            type: 'array',
+            defaultValue: null
+          },
+          {
+            name: 'predictionPeriod',
+            description: '预测周期（天）',
+            isRequired: 0,
+            type: 'number',
+            defaultValue: '90'
+          }
+        ],
+        response: {
+          name: 'salesPrediction',
+          description: '销量预测结果',
+          type: 'object'
+        }
+      }
+    ]
+  },
+  {
+    name: '商品推荐微服务',
+    attribute: 2,
+    type: 0,
+    domain: 2,
+    industry: 0,
+    scenario: 3,
+    technology: 2,
+    netWork: 4,
+    port: 3,
+    volume: 5,
+    status: 4,
+    number: 4,
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '跨境电商AI应用课题',
+      msIntroduce: '基于智能体的推荐算法',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'recommendProduct',
+        methodType: 1,
+        apiType: 0,
+        description: '基于用户行为推荐相关商品',
+        parameters: [
+          {
+            name: 'userId',
+            description: '用户ID',
+            isRequired: 1,
+            type: 'string',
+            defaultValue: null
+          },
+          {
+            name: 'browsedProducts',
+            description: '已浏览商品列表',
+            isRequired: 1,
+            type: 'array',
+            defaultValue: null
+          },
+          {
+            name: 'limit',
+            description: '推荐商品数量',
+            isRequired: 0,
+            type: 'number',
+            defaultValue: '5'
+          }
+        ],
+        response: {
+          name: 'recommendations',
+          description: '推荐商品列表',
+          type: 'array'
+        }
+      },
+      {
+        name: 'generateAd',
+        methodType: 1,
+        apiType: 0,
+        description: '生成个性化广告素材',
+        parameters: [
+          {
+            name: 'productId',
+            description: '产品ID',
+            isRequired: 1,
+            type: 'string',
+            defaultValue: null
+          },
+          {
+            name: 'userProfile',
+            description: '用户画像数据',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          },
+          {
+            name: 'adFormat',
+            description: '广告格式',
+            isRequired: 0,
+            type: 'string',
+            defaultValue: 'banner'
+          }
+        ],
+        response: {
+          name: 'adCreative',
+          description: '广告创意素材',
+          type: 'object'
+        }
+      }
+    ]
+  },
+  {
+    name: '跨境合规检查微服务',
+    attribute: 2,
+    type: 0,
+    domain: 0,
+    industry: 3,
+    scenario: 3,
+    technology: 0,
+    netWork: 3,
+    port: 2,
+    volume: 4,
+    status: 4,
+    number: 3,
+    norm: [
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '跨境电商AI应用课题',
+      msIntroduce: '基于智能体的风险识别算法',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'checkCompliance',
+        methodType: 1,
+        apiType: 0,
+        description: '检查产品在目标市场的合规性',
+        parameters: [
+          {
+            name: 'productDetails',
+            description: '产品详细信息',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          },
+          {
+            name: 'targetCountry',
+            description: '目标国家',
+            isRequired: 1,
+            type: 'string',
+            defaultValue: null
+          }
+        ],
+        response: {
+          name: 'complianceReport',
+          description: '合规性检查报告',
+          type: 'object'
+        }
+      },
+      {
+        name: 'verifyIntellectualProperty',
+        methodType: 1,
+        apiType: 0,
+        description: '验证产品知识产权状态',
+        parameters: [
+          {
+            name: 'productName',
+            description: '产品名称',
+            isRequired: 1,
+            type: 'string',
+            defaultValue: null
+          },
+          {
+            name: 'productImage',
+            description: '产品图片',
+            isRequired: 1,
+            type: 'string',
+            defaultValue: null
+          },
+          {
+            name: 'description',
+            description: '产品描述',
+            isRequired: 1,
+            type: 'string',
+            defaultValue: null
+          }
+        ],
+        response: {
+          name: 'ipVerificationResult',
+          description: '知识产权验证结果',
+          type: 'object'
+        }
+      }
+    ]
+  }
+]
+
+// 添加跨境电商AI元应用
+const ecommerceMetaApps = [
+  {
+    name: '跨境电商智能营销元应用',
+    attribute: 3,
+    type: 1,
+    domain: 0,
+    industry: 0,
+    scenario: 0,
+    technology: 0,
+    netWork: 5,
+    port: 5,
+    volume: 5,
+    status: 4,
+    number: 3,
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '跨境电商AI应用课题',
+      msIntroduce: '基于智能体的风险识别算法',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: '跨境电商智能营销元应用',
+        isFake: true,
+        inputName: '营销活动详情',
+        outputName: '营销执行方案',
+        outputVisualization: true,
+        submitButtonText: '开始任务',
+        url: 'https://myApiServer.com/ecommerce/metaApp',
+        method: 'POST',
+        parameterType: 3,
+        responseType: 1,
+        description: '执行跨境电商全渠道营销活动',
+        parameters: [
+          {
+            name: 'campaignDetails',
+            description: '营销活动详情',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          },
+          {
+            name: 'productData',
+            description: '产品数据',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          },
+          {
+            name: 'targetMarkets',
+            description: '目标市场列表',
+            isRequired: 1,
+            type: 'array',
+            defaultValue: null
+          },
+          {
+            name: 'budget',
+            description: '预算配置',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          }
+        ],
+        response: {
+          name: 'marketingPlan',
+          description: '完整营销执行方案',
+          type: 'object'
+        }
+      }
+    ]
+  }
+]
+
+// 添加家庭机器人AI微服务
+const homeAIServices = [
+  {
+    name: '环境感知微服务',
+    attribute: 1,
+    type: 0,
+    domain: 0,
+    industry: 0,
+    scenario: 0,
+    technology: 0,
+    netWork: 5,
+    port: 4,
+    volume: 4,
+    status: 4,
+    number: 5,
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '家庭智能助手AI应用课题',
+      msIntroduce: '基于智能体的环境感知算法',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'objectDetection',
+        methodType: 1,
+        apiType: 0,
+        description: '检测和识别环境中的物体',
+        parameters: [
+          {
+            name: 'imageData',
+            description: '图像数据',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          },
+          {
+            name: 'detectionThreshold',
+            description: '检测阈值',
+            isRequired: 0,
+            type: 'number',
+            defaultValue: '0.7'
+          }
+        ],
+        response: {
+          name: 'detectedObjects',
+          description: '检测到的物体列表',
+          type: 'array'
+        }
+      },
+      {
+        name: 'spatialMapping',
+        methodType: 1,
+        apiType: 0,
+        description: '创建环境的3D空间地图',
+        parameters: [
+          {
+            name: 'depthData',
+            description: '深度传感器数据',
+            isRequired: 1,
+            type: 'array',
+            defaultValue: null
+          },
+          {
+            name: 'resolution',
+            description: '地图分辨率',
+            isRequired: 0,
+            type: 'number',
+            defaultValue: '0.05'
+          }
+        ],
+        response: {
+          name: 'spatialMap',
+          description: '3D空间地图',
+          type: 'object'
+        }
+      }
+    ]
+  },
+  {
+    name: '智能对话微服务',
+    attribute: 2,
+    type: 0,
+    domain: 1,
+    industry: 3,
+    scenario: 4,
+    technology: 1,
+    netWork: 4,
+    port: 3,
+    volume: 5,
+    status: 4,
+    number: 6,
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '家庭智能助手AI应用课题',
+      msIntroduce: '基于多模态情感识别算法',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'naturalLanguageUnderstanding',
+        methodType: 1,
+        apiType: 0,
+        description: '理解和处理自然语言指令',
+        parameters: [
+          {
+            name: 'text',
+            description: '文本输入',
+            isRequired: 1,
+            type: 'string',
+            defaultValue: null
+          },
+          {
+            name: 'context',
+            description: '对话上下文',
+            isRequired: 0,
+            type: 'object',
+            defaultValue: '{}'
+          }
+        ],
+        response: {
+          name: 'understanding',
+          description: '理解结果',
+          type: 'object'
+        }
+      },
+      {
+        name: 'emotionRecognition',
+        methodType: 1,
+        apiType: 0,
+        description: '识别用户的情绪状态',
+        parameters: [
+          {
+            name: 'audioData',
+            description: '音频数据',
+            isRequired: 1,
+            type: 'binary',
+            defaultValue: null
+          },
+          {
+            name: 'facialImage',
+            description: '面部表情图像',
+            isRequired: 0,
+            type: 'binary',
+            defaultValue: null
+          }
+        ],
+        response: {
+          name: 'emotionState',
+          description: '情绪状态分析',
+          type: 'object'
+        }
+      }
+    ]
+  },
+  {
+    name: '健康监测微服务',
+    attribute: 1,
+    type: 0,
+    domain: 1,
+    industry: 1,
+    scenario: 1,
+    technology: 3,
+    netWork: 3,
+    port: 3,
+    volume: 4,
+    status: 4,
+    number: 4,
+    norm: [
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '家庭智能助手AI应用课题',
+      msIntroduce: '基于多模态情感识别算法',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'vitalSignsMonitor',
+        methodType: 1,
+        apiType: 0,
+        description: '监测生命体征指标',
+        parameters: [
+          {
+            name: 'sensorData',
+            description: '传感器数据',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          },
+          {
+            name: 'userProfile',
+            description: '用户健康档案',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          }
+        ],
+        response: {
+          name: 'vitalSigns',
+          description: '生命体征分析结果',
+          type: 'object'
+        }
+      },
+      {
+        name: 'abnormalBehaviorDetection',
+        methodType: 1,
+        apiType: 0,
+        description: '检测异常行为模式',
+        parameters: [
+          {
+            name: 'behaviorData',
+            description: '行为数据序列',
+            isRequired: 1,
+            type: 'array',
+            defaultValue: null
+          },
+          {
+            name: 'baseline',
+            description: '基准行为模式',
+            isRequired: 0,
+            type: 'object',
+            defaultValue: null
+          }
+        ],
+        response: {
+          name: 'anomalyReport',
+          description: '异常行为报告',
+          type: 'object'
+        }
+      }
+    ]
+  },
+  {
+    name: '家务辅助微服务',
+    attribute: 0,
+    type: 0,
+    domain: 0,
+    industry: 4,
+    scenario: 0,
+    technology: 2,
+    netWork: 4,
+    port: 3,
+    volume: 3,
+    status: 4,
+    number: 3,
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      },
+      {
+        key: 3,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '家庭智能助手AI应用课题',
+      msIntroduce: '基于强化学习的任务规划算法',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'taskPlanner',
+        methodType: 1,
+        apiType: 0,
+        description: '规划和安排家务任务',
+        parameters: [
+          {
+            name: 'taskList',
+            description: '待执行任务列表',
+            isRequired: 1,
+            type: 'array',
+            defaultValue: null
+          },
+          {
+            name: 'environmentState',
+            description: '环境状态信息',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          },
+          {
+            name: 'preferences',
+            description: '用户偏好设置',
+            isRequired: 0,
+            type: 'object',
+            defaultValue: '{}'
+          }
+        ],
+        response: {
+          name: 'taskPlan',
+          description: '任务执行计划',
+          type: 'object'
+        }
+      },
+      {
+        name: 'pathPlanning',
+        methodType: 1,
+        apiType: 0,
+        description: '室内导航路径规划',
+        parameters: [
+          {
+            name: 'spatialMap',
+            description: '空间地图',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          },
+          {
+            name: 'startPosition',
+            description: '起始位置',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          },
+          {
+            name: 'targetPosition',
+            description: '目标位置',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          }
+        ],
+        response: {
+          name: 'path',
+          description: '规划路径',
+          type: 'array'
+        }
+      }
+    ]
+  }
+]
+
+// 添加家庭机器人AI元应用
+const homeAIMetaApps = [
+  {
+    name: '家庭智能助手元应用',
+    attribute: 3,
+    type: 1,
+    domain: 0,
+    industry: 0,
+    scenario: 4,
+    technology: 5,
+    netWork: 5,
+    port: 5,
+    volume: 5,
+    status: 4,
+    number: 1,
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 1,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '家庭智能助手AI应用课题',
+      msIntroduce: '家庭智能助手',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: '家庭智能助手元应用',
+        isFake: true,
+        inputName: '用户指令',
+        outputName: '助手执行结果',
+        outputVisualization: true,
+        submitButtonText: '开始任务',
+        url: 'https://myApiServer.com/evtol/metaApp',
+        method: 'POST',
+        parameterType: 3,
+        responseType: 1,
+        parameters: [
+          {
+            name: 'command',
+            description: '用户指令',
+            isRequired: 1,
+            type: 'string',
+            defaultValue: null
+          },
+          {
+            name: 'environmentData',
+            description: '环境数据',
+            isRequired: 1,
+            type: 'object',
+            defaultValue: null
+          },
+          {
+            name: 'userContext',
+            description: '用户上下文信息',
+            isRequired: 0,
+            type: 'object',
+            defaultValue: '{}'
+          },
+          {
+            name: 'executionMode',
+            description: '执行模式',
+            isRequired: 0,
+            type: 'string',
+            defaultValue: 'normal'
+          }
+        ],
+        response: {
+          name: 'assistantResponse',
+          description: '助手执行结果',
+          type: 'object'
         }
       }
     ]
@@ -2006,6 +3504,54 @@ function getRunningAgricultureMetaApps() {
   return agricultureMetaApps.filter(item => item.status === 1 || item.status === 4)
 }
 
+function getEvtolServices() {
+  return evtolServices
+}
+
+function getRunningEvtolServices() {
+  return evtolServices.filter(item => item.status === 1 || item.status === 4)
+}
+
+function getEvtolMetaApps() {
+  return evtolMetaApps
+}
+
+function getRunningEvtolMetaApps() {
+  return evtolMetaApps.filter(item => item.status === 1 || item.status === 4)
+}
+
+function getEcommerceServices() {
+  return ecommerceServices
+}
+
+function getRunningEcommerceServices() {
+  return ecommerceServices.filter(item => item.status === 1 || item.status === 4)
+}
+
+function getEcommerceMetaApps() {
+  return ecommerceMetaApps
+}
+
+function getRunningEcommerceMetaApps() {
+  return ecommerceMetaApps.filter(item => item.status === 1 || item.status === 4)
+}
+
+function getHomeaiServices() {
+  return homeAIServices
+}
+
+function getRunningHomeaiServices() {
+  return homeAIServices.filter(item => item.status === 1 || item.status === 4)
+}
+
+function getHomeaiMetaApps() {
+  return homeAIMetaApps
+}
+
+function getRunningHomeaiMetaApps() {
+  return homeAIMetaApps.filter(item => item.status === 1 || item.status === 4)
+}
+
 export function getServiceData(serviceType, onlyRunning = false) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -2021,6 +3567,15 @@ export function getServiceData(serviceType, onlyRunning = false) {
           break
         case 'agriculture':
           resolve(onlyRunning ? getRunningAgricultureServices() : getAgricultureServices())
+          break
+        case 'evtol':
+          resolve(onlyRunning ? getRunningEvtolServices() : getEvtolServices())
+          break
+        case 'ecommerce':
+          resolve(onlyRunning ? getRunningEcommerceServices() : getEcommerceServices())
+          break
+        case 'homeAI':
+          resolve(onlyRunning ? getRunningHomeaiServices() : getHomeaiServices())
           break
         default:
           resolve(onlyRunning ? getRunningAmlServices() : getAmlServices())
@@ -2044,6 +3599,15 @@ export function getMetaAppData(serviceType, onlyRunning = false) {
           break
         case 'agriculture':
           resolve(onlyRunning ? getRunningAgricultureMetaApps() : getAgricultureMetaApps())
+          break
+        case 'evtol':
+          resolve(onlyRunning ? getRunningEvtolMetaApps() : getEvtolMetaApps())
+          break
+        case 'ecommerce':
+          resolve(onlyRunning ? getRunningEcommerceMetaApps() : getEcommerceMetaApps())
+          break
+        case 'homeAI':
+          resolve(onlyRunning ? getRunningHomeaiMetaApps() : getHomeaiMetaApps())
           break
         default:
           resolve(onlyRunning ? getRunningAmlMetaApps() : getAmlMetaApps())
