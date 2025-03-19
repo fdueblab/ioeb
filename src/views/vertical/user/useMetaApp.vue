@@ -262,7 +262,7 @@ export default {
         case '无人机智能投递':
           this.dataReload(getAircraftFlow())
           break
-        case '农村医疗AI辅助诊断元应用':
+        case '乡村医疗AI辅助诊断元应用':
           this.dataReload(getHealthFlow())
           break
         case '智慧农业综合管理元应用':

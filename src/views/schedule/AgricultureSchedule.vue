@@ -36,7 +36,7 @@ export default {
         {
           id: '9',
           type: 'group',
-          name: '农业数字AI智能服务',
+          name: '数字农业AI智能服务',
           open: true,
           children: []
         }

@@ -79,7 +79,7 @@ const performanceMetricMap = ['查全率', '查准率', '计算效率']
 
 const attributeMap = ['非智能体服务', '开源模型', '付费模型', '定制模型']
 
-// 农村医疗AI服务特殊考量
+// 乡村医疗AI服务特殊考量
 const healthSpecialConsiderationsMap = [
   '轻量化模型（适应低算力环境）',
   '离线推理能力（应对网络不稳定）',
@@ -88,7 +88,7 @@ const healthSpecialConsiderationsMap = [
   '数据隐私保护（符合农村数据安全需求）'
 ]
 
-// 农村医疗AI服务领域分类
+// 乡村医疗AI服务领域分类
 const healthDomainMap = [
   '医学影像处理',
   '病理数据分析',
@@ -97,7 +97,7 @@ const healthDomainMap = [
   '药物研发支持'
 ]
 
-// 农村医疗AI服务作用分类
+// 乡村医疗AI服务作用分类
 const healthRoleMap = [
   '诊断辅助',
   '治疗建议',

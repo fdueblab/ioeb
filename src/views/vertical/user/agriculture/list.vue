@@ -582,7 +582,7 @@ export default {
       selectedRows: [],
       attributeArr: getAttributeMap(),
       typeArr: getServiceTypeMap(),
-      domainArr: ['农业数字AI智能服务'],
+      domainArr: ['数字农业AI智能服务'],
       industryArr: getIndustryMap('agriculture'),
       scenarioArr: getScenarioMap('agriculture'),
       technologyArr: getTechnologyMap('agriculture'),

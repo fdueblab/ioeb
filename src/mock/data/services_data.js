@@ -978,7 +978,7 @@ const healthServices = [
     ]
   },
   {
-    name: '农村医疗资源调度微服务',
+    name: '乡村医疗资源调度微服务',
     attribute: 0,
     type: 0,
     domain: 2,
@@ -1251,7 +1251,7 @@ const airCraftMetaApps = [
 
 const healthMetaApps = [
   {
-    name: '农村医疗AI辅助诊断元应用',
+    name: '乡村医疗AI辅助诊断元应用',
     attribute: 3,
     type: 1,
     domain: 0,
@@ -1292,7 +1292,7 @@ const healthMetaApps = [
     },
     apiList: [
       {
-        name: '农村医疗AI辅助诊断元应用',
+        name: '乡村医疗AI辅助诊断元应用',
         isFake: true,
         inputName: '诊断数据',
         outputName: '诊断结果报告',
