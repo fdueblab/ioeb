@@ -250,62 +250,65 @@ export function getServiceTypeMap() {
 }
 
 export function getIndustryMap(type) {
-  if (type === 'aml') {
-    return amlIndustryMap
-  } else if (type === 'aircraft') {
-    return aircraftIndustryMap
-  } else if (type === 'health') {
-    return healthIndustryMap
-  } else if (type === 'agriculture') {
-    return agricultureIndustryMap
-  } else if (type === 'evtol') {
-    return evtolIndustryMap
-  } else if (type === 'ecommerce') {
-    return ecommerceIndustryMap
-  } else if (type === 'homeAI') {
-    return homeAIIndustryMap
-  } else {
-    return aircraftIndustryMap
+  switch (type) {
+    case 'aml':
+      return amlIndustryMap
+    case 'aircraft':
+      return aircraftIndustryMap
+    case 'health':
+      return healthIndustryMap
+    case 'agriculture':
+      return agricultureIndustryMap
+    case 'evtol':
+      return evtolIndustryMap
+    case 'ecommerce':
+      return ecommerceIndustryMap
+    case 'homeAI':
+      return homeAIIndustryMap
+    default:
+      return aircraftIndustryMap
   }
 }
 
 export function getScenarioMap(type) {
-  if (type === 'aml') {
-    return amlScenarioMap
-  } else if (type === 'aircraft') {
-    return aircraftScenarioMap
-  } else if (type === 'health') {
-    return healthScenarioMap
-  } else if (type === 'agriculture') {
-    return agricultureScenarioMap
-  } else if (type === 'evtol') {
-    return evtolScenarioMap
-  } else if (type === 'ecommerce') {
-    return ecommerceScenarioMap
-  } else if (type === 'homeAI') {
-    return homeAIScenarioMap
-  } else {
-    return aircraftScenarioMap
+  switch (type) {
+    case 'aml':
+      return amlScenarioMap
+    case 'aircraft':
+      return aircraftScenarioMap
+    case 'health':
+      return healthScenarioMap
+    case 'agriculture':
+      return agricultureScenarioMap
+    case 'evtol':
+      return evtolScenarioMap
+    case 'ecommerce':
+      return ecommerceScenarioMap
+    case 'homeAI':
+      return homeAIScenarioMap
+    default:
+      return aircraftScenarioMap
   }
 }
 
 export function getTechnologyMap(type) {
-  if (type === 'aml') {
-    return amlTechnologyMap
-  } else if (type === 'aircraft') {
-    return aircraftTechnologyMap
-  } else if (type === 'health') {
-    return healthTechnologyMap
-  } else if (type === 'agriculture') {
-    return agricultureTechnologyMap
-  } else if (type === 'evtol') {
-    return evtolTechnologyMap
-  } else if (type === 'ecommerce') {
-    return ecommerceTechnologyMap
-  } else if (type === 'homeAI') {
-    return homeAITechnologyMap
-  } else {
-    return aircraftTechnologyMap
+  switch (type) {
+    case 'aml':
+      return amlTechnologyMap
+    case 'aircraft':
+      return aircraftTechnologyMap
+    case 'health':
+      return healthTechnologyMap
+    case 'agriculture':
+      return agricultureTechnologyMap
+    case 'evtol':
+      return evtolTechnologyMap
+    case 'ecommerce':
+      return ecommerceTechnologyMap
+    case 'homeAI':
+      return homeAITechnologyMap
+    default:
+      return aircraftTechnologyMap
   }
 }
 

@@ -667,7 +667,22 @@ export const asyncRouterMap = [
         path: '/guide',
         name: 'guide',
         meta: { title: '使用指南', keepAlive: true, icon: 'book', permission: ['admin', 'publisher', 'user'] },
-        component: () => import('@/views/dashboard/Guide')
+        redirect: '/guide/intro',
+        component: RouteView,
+        children: [
+          {
+            path: '/guide/intro',
+            name: 'guide_intro',
+            component: () => import('@/views/guide/intro'),
+            meta: { title: '算法智能体平台简介', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+          },
+          {
+            path: '/guide/operateGuide',
+            name: 'operateGuide',
+            component: () => import('@/views/guide/operateGuide'),
+            meta: { title: '操作指南', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+          }
+        ]
       },
       // 用户管理
       // {
