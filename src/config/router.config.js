@@ -681,6 +681,55 @@ export const asyncRouterMap = [
             name: 'operateGuide',
             component: () => import('@/views/guide/operateGuide'),
             meta: { title: '操作指南', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+          },
+          {
+            path: '/guide/aml',
+            name: 'guide_aml',
+            meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
+            component: () => import('@/views/guide/verticalFieldIntro'),
+            props: { verticalField: 'aml' }
+          },
+          {
+            path: '/guide/aircraft',
+            name: 'guide_aircraft',
+            meta: { title: '无人飞机AI监控', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
+            component: () => import('@/views/guide/verticalFieldIntro'),
+            props: { verticalField: 'aircraft' }
+          },
+          {
+            path: '/guide/health',
+            name: 'guide_health',
+            meta: { title: '乡村医疗AI服务', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
+            component: () => import('@/views/guide/verticalFieldIntro'),
+            props: { verticalField: 'health' }
+          },
+          {
+            path: '/guide/agriculture',
+            name: 'guide_agriculture',
+            meta: { title: '数字农业AI服务', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
+            component: () => import('@/views/guide/verticalFieldIntro'),
+            props: { verticalField: 'agriculture' }
+          },
+          {
+            path: '/guide/evtol',
+            name: 'guide_evtol',
+            meta: { title: '低空飞行AI应用', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
+            component: () => import('@/views/guide/verticalFieldIntro'),
+            props: { verticalField: 'evtol' }
+          },
+          {
+            path: '/guide/ecommerce',
+            name: 'guide_ecommerce',
+            meta: { title: '跨境电商AI应用', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
+            component: () => import('@/views/guide/verticalFieldIntro'),
+            props: { verticalField: 'ecommerce' }
+          },
+          {
+            path: '/guide/homeAI',
+            name: 'guide_homeAI',
+            meta: { title: '家庭陪伴AI应用', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
+            component: () => import('@/views/guide/verticalFieldIntro'),
+            props: { verticalField: 'homeAI' }
           }
         ]
       },
