@@ -10,7 +10,7 @@ const pj1Flow = {
       id: '10000',
       name: 'metaAppAgent',
       type: 'start',
-      url: 'http://43.130.11.13:5000/api/pj1_report_app',
+      url: 'https://43.130.11.13:5000/api/pj1_report_app',
       left: '200px',
       top: '0',
       ico: 'el-icon-cpu',
@@ -62,7 +62,7 @@ const pj1Flow = {
       id: '9102',
       name: 'getReportData',
       type: 'process',
-      url: 'http://myApiServer.com/report/get',
+      url: 'https://myApiServer.com/report/get',
       left: '450px',
       top: '80px',
       ico: 'el-icon-zoom-in',
@@ -278,6 +278,493 @@ const pj4Flow = {
   ]
 }
 
+const healthFlow = {
+  name: '元应用工作流',
+  preName: '乡村医疗AI辅助诊断元应用',
+  preInputName: '患者医疗数据',
+  preOutputName: '诊断与健康管理方案',
+  inputType: 2,
+  outputType: 1,
+  nodeList: [
+    {
+      id: '10000',
+      name: 'metaAppAgent',
+      type: 'start',
+      url: 'https://myApiServer.com/health/metaApp',
+      left: '200px',
+      top: '0',
+      ico: 'el-icon-cpu',
+      input: 'multipart',
+      output: 'json',
+      version: '1.0',
+      state: 'running'
+    },
+    {
+      id: '8001',
+      name: 'transcribe',
+      type: 'process',
+      url: 'https://myApiServer.com/health/voice/transcribe',
+      left: '0',
+      top: '155px',
+      ico: 'el-icon-microphone',
+      input: 'audio file',
+      output: 'json',
+      version: '1.2',
+      state: 'success'
+    },
+    {
+      id: '8101',
+      name: 'diagnose',
+      type: 'process',
+      url: 'https://myApiServer.com/health/diagnose',
+      left: '125px',
+      top: '340px',
+      ico: 'el-icon-picture',
+      state: 'success',
+      input: 'image file',
+      output: 'json',
+      version: '1.1'
+    },
+    {
+      id: '8201',
+      name: 'analyze',
+      type: 'process',
+      url: 'https://myApiServer.com/health/monitor/analyze',
+      left: '350px',
+      top: '340px',
+      ico: 'el-icon-data-analysis',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '8202',
+      name: 'alert',
+      type: 'process',
+      url: 'https://myApiServer.com/health/monitor/alert',
+      left: '460px',
+      top: '75px',
+      ico: 'el-icon-bell',
+      state: 'warning',
+      input: 'json',
+      output: 'json',
+      version: '0.9'
+    }
+  ],
+  lineList: [
+    { from: '10000', to: '8001' },
+    { from: '8001', to: '10000' },
+    { from: '10000', to: '8101' },
+    { from: '8101', to: '10000' },
+    { from: '10000', to: '8201' },
+    { from: '8201', to: '8202' },
+    { from: '8202', to: '10000' }
+  ]
+}
+
+const agricultureFlow = {
+  name: '农业数智AI服务工作流',
+  preName: '农业数智AI元应用',
+  preInputName: '农业数据输入',
+  preOutputName: '农业智能分析报告',
+  inputType: 2,
+  outputType: 1,
+  nodeList: [
+    {
+      id: '30000',
+      name: 'metaAppAgent',
+      type: 'start',
+      url: 'https://myApiServer.com/app',
+      left: '200px',
+      top: '0',
+      ico: 'el-icon-cpu',
+      input: 'json/image',
+      output: 'json',
+      version: '1.0',
+      state: 'running'
+    },
+    {
+      id: '30001',
+      name: 'dataPreprocessor',
+      type: 'process',
+      url: 'https://myApiServer.com/preprocess',
+      left: '0',
+      top: '130px',
+      ico: 'el-icon-c-scale-to-original',
+      input: 'image/sensor',
+      output: 'vector',
+      version: '1.0',
+      state: 'success'
+    },
+    {
+      id: '30002',
+      name: 'imageAnalyzer',
+      type: 'process',
+      url: 'https://myApiServer.com/api/agriculture/analyze',
+      left: '75px',
+      top: '380px',
+      ico: 'el-icon-picture',
+      state: 'success',
+      input: 'image',
+      output: 'vector',
+      version: '1.0'
+    },
+    {
+      id: '30003',
+      name: 'cropPredictor',
+      type: 'process',
+      url: 'https://myApiServer.com/api/agriculture/predict',
+      left: '245px',
+      top: '185px',
+      ico: 'el-icon-s-data',
+      state: 'success',
+      input: 'vector',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '30004',
+      name: 'recommendationEngine',
+      type: 'process',
+      url: 'https://myApiServer.com/api/agriculture/recommend',
+      left: '462px',
+      top: '60px',
+      ico: 'el-icon-s-promotion',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '30005',
+      name: 'reportGenerator',
+      type: 'end',
+      url: 'https://myApiServer.com/api/agriculture/report',
+      left: '435px',
+      top: '315px',
+      ico: 'el-icon-document',
+      state: 'success',
+      input: 'json',
+      output: 'pdf',
+      version: '1.0'
+    }
+  ],
+  lineList: [
+    {
+      from: '30000',
+      to: '30001'
+    },
+    {
+      from: '30001',
+      to: '30002'
+    },
+    {
+      from: '30002',
+      to: '30003'
+    },
+    {
+      from: '30003',
+      to: '30004'
+    },
+    {
+      from: '30004',
+      to: '30005'
+    }
+  ]
+}
+
+const evtolFlow = {
+  name: '元应用工作流',
+  preName: 'eVTOL智能飞行控制元应用',
+  preInputName: '飞行任务参数',
+  preOutputName: '飞行控制结果',
+  inputType: 2,
+  outputType: 1,
+  nodeList: [
+    {
+      id: '40000',
+      name: 'metaAppAgent',
+      type: 'start',
+      url: 'https://myApiServer.com/evtol/metaApp',
+      left: '200px',
+      top: '0',
+      ico: 'el-icon-cpu',
+      input: 'json',
+      output: 'json',
+      version: '1.0',
+      state: 'running'
+    },
+    {
+      id: '40001',
+      name: 'pathPlanner',
+      type: 'process',
+      url: 'https://myApiServer.com/evtol/path/plan',
+      left: '0',
+      top: '130px',
+      ico: 'el-icon-map-location',
+      input: 'json',
+      output: 'json',
+      version: '1.0',
+      state: 'success'
+    },
+    {
+      id: '40002',
+      name: 'environmentPerception',
+      type: 'process',
+      url: 'https://myApiServer.com/evtol/perception',
+      left: '200px',
+      top: '260px',
+      ico: 'el-icon-view',
+      state: 'success',
+      input: 'multimodal',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '40003',
+      name: 'flightController',
+      type: 'process',
+      url: 'https://myApiServer.com/evtol/control',
+      left: '400px',
+      top: '130px',
+      ico: 'el-icon-rank',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '40004',
+      name: 'batteryManager',
+      type: 'process',
+      url: 'https://myApiServer.com/evtol/battery',
+      left: '200px',
+      top: '390px',
+      ico: 'el-icon-lightning',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '40005',
+      name: 'safetyMonitor',
+      type: 'end',
+      url: 'https://myApiServer.com/evtol/safety',
+      left: '400px',
+      top: '260px',
+      ico: 'el-icon-warning',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    }
+  ],
+  lineList: [
+    { from: '40000', to: '40001' },
+    { from: '40001', to: '40002' },
+    { from: '40002', to: '40003' },
+    { from: '40003', to: '40004' },
+    { from: '40004', to: '40005' },
+    { from: '40005', to: '40000' }
+  ]
+}
+
+const ecommerceFlow = {
+  name: '元应用工作流',
+  preName: '跨境电商智能营销元应用',
+  preInputName: '产品信息与市场需求',
+  preOutputName: '多语言营销方案',
+  inputType: 2,
+  outputType: 1,
+  nodeList: [
+    {
+      id: '50000',
+      name: 'metaAppAgent',
+      type: 'start',
+      url: 'https://myApiServer.com/ecommerce/metaApp',
+      left: '200px',
+      top: '0',
+      ico: 'el-icon-cpu',
+      input: 'json',
+      output: 'json',
+      version: '1.0',
+      state: 'running'
+    },
+    {
+      id: '50001',
+      name: 'marketAnalyzer',
+      type: 'process',
+      url: 'https://myApiServer.com/ecommerce/market/analyze',
+      left: '0',
+      top: '130px',
+      ico: 'el-icon-data-analysis',
+      input: 'json',
+      output: 'json',
+      version: '1.0',
+      state: 'success'
+    },
+    {
+      id: '50002',
+      name: 'contentGenerator',
+      type: 'process',
+      url: 'https://myApiServer.com/ecommerce/content/generate',
+      left: '200px',
+      top: '260px',
+      ico: 'el-icon-edit-outline',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '50003',
+      name: 'multilinguaTranslator',
+      type: 'process',
+      url: 'https://myApiServer.com/ecommerce/translate',
+      left: '400px',
+      top: '130px',
+      ico: 'el-icon-document',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '50004',
+      name: 'mediaGenerator',
+      type: 'process',
+      url: 'https://myApiServer.com/ecommerce/media/generate',
+      left: '200px',
+      top: '390px',
+      ico: 'el-icon-picture',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '50005',
+      name: 'complianceChecker',
+      type: 'end',
+      url: 'https://myApiServer.com/ecommerce/compliance/check',
+      left: '400px',
+      top: '260px',
+      ico: 'el-icon-check',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    }
+  ],
+  lineList: [
+    { from: '50000', to: '50001' },
+    { from: '50001', to: '50002' },
+    { from: '50002', to: '50003' },
+    { from: '50003', to: '50004' },
+    { from: '50004', to: '50005' },
+    { from: '50005', to: '50000' }
+  ]
+}
+
+const homeAIFlow = {
+  name: '元应用工作流',
+  preName: '家庭智能助手元应用',
+  preInputName: '家庭环境数据与指令',
+  preOutputName: '智能家庭管理方案',
+  inputType: 2,
+  outputType: 1,
+  nodeList: [
+    {
+      id: '60000',
+      name: 'metaAppAgent',
+      type: 'start',
+      url: 'https://myApiServer.com/homeAI/metaApp',
+      left: '200px',
+      top: '0',
+      ico: 'el-icon-cpu',
+      input: 'json',
+      output: 'json',
+      version: '1.0',
+      state: 'running'
+    },
+    {
+      id: '60001',
+      name: 'environmentSensor',
+      type: 'process',
+      url: 'https://myApiServer.com/homeAI/environment/sense',
+      left: '0',
+      top: '130px',
+      ico: 'el-icon-view',
+      input: 'multimodal',
+      output: 'json',
+      version: '1.0',
+      state: 'success'
+    },
+    {
+      id: '60002',
+      name: 'dialogProcessor',
+      type: 'process',
+      url: 'https://myApiServer.com/homeAI/dialog/process',
+      left: '200px',
+      top: '260px',
+      ico: 'el-icon-chat-line-round',
+      state: 'success',
+      input: 'audio',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '60003',
+      name: 'taskPlanner',
+      type: 'process',
+      url: 'https://myApiServer.com/homeAI/task/plan',
+      left: '400px',
+      top: '130px',
+      ico: 'el-icon-date',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '60004',
+      name: 'healthMonitor',
+      type: 'process',
+      url: 'https://myApiServer.com/homeAI/health/monitor',
+      left: '200px',
+      top: '390px',
+      ico: 'el-icon-first-aid-kit',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    },
+    {
+      id: '60005',
+      name: 'securityGuard',
+      type: 'end',
+      url: 'https://myApiServer.com/homeAI/security/guard',
+      left: '400px',
+      top: '260px',
+      ico: 'el-icon-lock',
+      state: 'success',
+      input: 'json',
+      output: 'json',
+      version: '1.0'
+    }
+  ],
+  lineList: [
+    { from: '60000', to: '60001' },
+    { from: '60001', to: '60002' },
+    { from: '60002', to: '60003' },
+    { from: '60003', to: '60004' },
+    { from: '60004', to: '60005' },
+    { from: '60005', to: '60000' }
+  ]
+}
+
 export function getPj1Flow() {
   return pj1Flow
 }
@@ -296,4 +783,24 @@ export function getTecTempFlow() {
 
 export function getAircraftFlow() {
   return aircraftFlow
+}
+
+export function getHealthFlow() {
+  return healthFlow
+}
+
+export function getAgricultureFlow() {
+  return agricultureFlow
+}
+
+export function getEvtolFlow() {
+  return evtolFlow
+}
+
+export function getEcommerceFlow() {
+  return ecommerceFlow
+}
+
+export function getHomeAIFlow() {
+  return homeAIFlow
 }
