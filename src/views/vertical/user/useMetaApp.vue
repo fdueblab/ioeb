@@ -106,7 +106,7 @@ import nodeMenu from '@/components/ef/node_menu_with_input'
 import FlowInfo from '@/components/ef/info'
 import FlowNodeForm from '@/components/ef/node_form_bottom'
 import lodash from 'lodash'
-import { getAircraftFlow, getPj1Flow, getTecTempFlow } from '@/mock/data/flow_data'
+import { getAgricultureFlow, getAircraftFlow, getHealthFlow, getPj1Flow, getTecTempFlow, getEvtolFlow, getEcommerceFlow, getHomeAIFlow } from '@/mock/data/flow_data'
 
 export default {
   name: 'UseMetaApp',
@@ -254,6 +254,7 @@ export default {
     this.$nextTick(() => {
       this.jsPlumbInit()
     })
+    // todo: 暂时根据元应用名称加载工作流，后续要修改数据结构
     setTimeout(() => {
       switch (this.apiList[0].name) {
         case '技术评测元应用':
@@ -261,6 +262,21 @@ export default {
           break
         case '无人机智能投递':
           this.dataReload(getAircraftFlow())
+          break
+        case '乡村医疗AI辅助诊断元应用':
+          this.dataReload(getHealthFlow())
+          break
+        case '智慧农业综合管理元应用':
+          this.dataReload(getAgricultureFlow())
+          break
+        case 'eVTOL智能飞行控制元应用':
+          this.dataReload(getEvtolFlow())
+          break
+        case '跨境电商智能营销元应用':
+          this.dataReload(getEcommerceFlow())
+          break
+        case '家庭智能助手元应用':
+          this.dataReload(getHomeAIFlow())
           break
         default:
           this.dataReload(getPj1Flow())

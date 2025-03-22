@@ -67,7 +67,9 @@ const user = {
                }
               return per
             })
-            role.permissionList = role.permissions.map(permission => { return permission.permissionId })
+            // role.permissionList = role.permissions.map(permission => { return permission.permissionId })
+            // 适配新的userInfo格式
+            role.permissionList = role.permissions.map(permission => { return permission.roleId })
             // 覆盖响应体的 role, 供下游使用
             result.role = role
 

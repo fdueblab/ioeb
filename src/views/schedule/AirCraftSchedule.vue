@@ -61,7 +61,7 @@ export default {
         {
           id: '3',
           type: 'group',
-          name: '低空飞行AI监控服务',
+          name: '无人飞机AI监控服务',
           open: true,
           children: []
         }
@@ -91,7 +91,7 @@ export default {
         {
           id: '3',
           type: 'group',
-          name: '低空飞行AI监控服务',
+          name: '无人飞机AI监控服务',
           open: true,
           children: []
         }

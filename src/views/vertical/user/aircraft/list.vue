@@ -633,7 +633,7 @@ export default {
       selectedRows: [],
       attributeArr: getAttributeMap(),
       typeArr: getServiceTypeMap(),
-      domainArr: ['低空飞行AI监控服务'],
+      domainArr: ['无人飞机AI监控服务'],
       industryArr: getIndustryMap('aircraft'),
       scenarioArr: getScenarioMap('aircraft'),
       technologyArr: getTechnologyMap('aircraft'),
@@ -910,8 +910,8 @@ export default {
       this.agentSearchData = []
       // 使用 Promise.all 并行加载两个异步请求
       const [serviceData, metaData] = await Promise.all([
-        getServiceData('aml'),
-        getMetaAppData('aml')
+        getServiceData('aircraft'),
+        getMetaAppData('aircraft')
       ])
       this.dataSource = [...serviceData, ...metaData]
       this.filteredDataSource = this.dataSource
