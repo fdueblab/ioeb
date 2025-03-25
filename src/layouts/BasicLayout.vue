@@ -88,8 +88,8 @@ export default {
       // 媒体查询
       query: {},
       // 用户类型
-      title: '监控技术协同',
-      subTitle: '验证与应用服务',
+      title: '面向垂域应用',
+      subTitle: '的算法智能体平台',
       // 是否手机模式
       isMobile: false
     }

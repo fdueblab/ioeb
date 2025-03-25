@@ -113,7 +113,7 @@ export default {
     color: #000;
     margin-top: 4px;
     margin-bottom: 0;
-    font-size: 30px;
+    font-size: 20px;
     line-height: 38px;
     height: 38px;
   }

@@ -10,7 +10,7 @@
           <div class="header">
             <a href="/">
               <img src="../assets/fdu_logo_small.png" class="logo" alt="logo">
-              <span class="title">AI资源开放平台</span>
+              <span class="title">算法智能体服务平台</span>
             </a>
           </div>
           <div class="desc">
