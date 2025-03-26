@@ -1,15 +1,19 @@
 <template>
   <div class="user-guide">
-    <h1>基于柔性接口与评测体系的算法智能体平台</h1>
-    <p style="font-size: 12px; font-weight: bolder">
-      算法供应、应用、运维可信协同机制
-    </p>
-    <p style="font-size: 12px; font-weight: bolder">
-      便利流通与柔性集成的四层接口体系
-    </p>
-    <p style="font-size: 12px; font-weight: bolder">
-      算法先进性与有效性的四级验证框架
-    </p>
+    <h1>面向垂领应用的算法智能体平台</h1>
+    <div>
+      <ul>
+        <li>
+          算法供应、应用、运维可信协同机制
+        </li>
+        <li>
+          便利流通与柔性集成的四层接口体系
+        </li>
+        <li>
+          算法先进性与有效性的四级验证框架
+        </li>
+      </ul>
+    </div>
 
     <div>
       <h2>名词解释</h2>
@@ -193,7 +197,7 @@ export default {
 <style scoped>
 .user-guide {
   max-width: 1200px;
-  margin: 0 auto;
+  margin: auto;
   padding: 20px;
   font-family: 'Helvetica Neue', Arial, sans-serif;
   background-color: #f9f9f9;
@@ -239,18 +243,13 @@ p {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.flowchart {
-  width: 100%;
-  height: 400px;
-  margin-bottom: 20px;
-}
-
-ol {
-  list-style-type: decimal;
+ul {
+  list-style-type: square;
   margin-left: 20px;
 }
 
-ol li {
+ul li {
+  font-style: italic;
   margin-bottom: 10px;
 }
 </style>
