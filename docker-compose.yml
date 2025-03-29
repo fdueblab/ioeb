@@ -1,59 +1,92 @@
 version: '3'
 
+# networks:
+#   ioeb-backend_app-network:
+#     external: true  # 使用外部网络
 networks:
-  ioeb-backend_app-network:
-    external: true  # 使用外部网络
+  app-network:
+    driver: bridge
 
 services:
   # 前端服务
   frontend:
     image: polarsnowleopard/ioeb-frontend:latest
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - /var/fdueblab.cn_nginx:/etc/nginx/ssl
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
     networks:
-      - ioeb-backend_app-network
+      # - ioeb-backend_app-network
+      - app-network
     depends_on:
+      - backend
+      - docs
       - project-1
       - project-3
       - project-4
     restart: unless-stopped
 
-  # 后端服务1
+  # 后端服务
+  backend:
+    image: polarsnowleopard/ioeb-backend:latest
+    ports:
+      - '5000:5000'
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - ../ioeb-backend/.env
+    volumes:
+      - ../ioeb-backend/app_data:/app/uploads
+      - ../ioeb-backend/app_db:/app/instance
+    networks:
+      - app-network # 加入现有网络
+
+  # Flask应用服务
+  docs:
+    image: polarsnowleopard/ioeb-docs:latest
+    ports:
+      - '8000:8000'
+    networks:
+      # - ioeb-backend_app-network  # 加入现有网络
+      - app-network
+
+  # 课题一和课题二服务
   project-1:
     image: polarsnowleopard/ioeb-project1:latest
     ports:
-      - "25001:5000"
+      - '25001:5000'
     volumes:
       - ./api/Project_1/checkpoint:/app/checkpoint
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=production
     networks:
-      - ioeb-backend_app-network
+      # - ioeb-backend_app-network
+      - app-network
     restart: unless-stopped
 
-  # 后端服务2
+  # 课题3服务
   project-3:
     image: polarsnowleopard/ioeb-project3:latest
     ports:
-      - "25003:5000"
+      - '25003:5000'
     volumes:
       - ./api/Project-3/data:/app/data
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=production
     networks:
-      - ioeb-backend_app-network
+      # - ioeb-backend_app-network
+      - app-network
     restart: unless-stopped
 
-  # 后端服务3
+  # 课题4服务
   project-4:
     image: polarsnowleopard/ioeb-project4:latest
     ports:
-      - "25004:5000"
+      - '25004:5000'
     volumes:
       - ./api/Project-4/eval_config:/app/eval_config
       - ./api/Project-4/eval_result:/app/eval_result
@@ -62,6 +95,25 @@ services:
       - FLASK_APP=app.py
       - FLASK_ENV=production
     networks:
-      - ioeb-backend_app-network
+      # - ioeb-backend_app-network
+      - app-network
     restart: unless-stopped
 
+  # 利奈唑胺服务
+  linezolid:
+    image: polarsnowleopard/ioeb-linezolid:latest
+    ports:
+      - '25011:5000' # API服务端口
+      - '25012:7860' # Gradio UI端口
+      - '25013:8000' # MCP服务端口
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', './healthcheck.sh']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    environment:
+      - PYTHONUNBUFFERED=1 # 确保Python输出不被缓冲，方便查看日志
+    networks:
+      - app-network
