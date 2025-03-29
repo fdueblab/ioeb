@@ -4,7 +4,7 @@ on:
   push:
     branches:
       # - master
-      -zfy
+      - zfy
 
 jobs:
   # 前端构建和推送镜像
