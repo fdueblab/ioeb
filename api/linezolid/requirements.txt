@@ -1,0 +1,12 @@
+fastapi==0.115.12
+uvicorn==0.34.0
+gradio==5.23.1
+numpy==2.2.4
+pandas==2.2.3
+scipy==1.15.2
+matplotlib==3.10.1
+pydantic==2.11.1
+python-multipart==0.0.20
+scikit-learn==1.6.1 
+fastapi-mcp
+mcp

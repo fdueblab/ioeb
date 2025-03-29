@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  linezolid-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: linezolid-app
+    ports:
+      - "25011:5000"  # API服务端口
+      - "25012:7860"  # Gradio UI端口
+      - "25013:8000"  # MCP服务端口
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "./healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - ./logs:/app/logs  # 挂载日志目录
+    environment:
+      - PYTHONUNBUFFERED=1  # 确保Python输出不被缓冲，方便查看日志 
