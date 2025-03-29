@@ -153,6 +153,8 @@ jobs:
             mkdir -p ~/ioeb/api/Project-4/eval_config
             mkdir -p ~/ioeb/api/Project-4/eval_result
             mkdir -p ~/ioeb/api/Project-4/graph_dataset
+
+            cd ~/ioeb
             
             # 拉取最新镜像
             sudo docker-compose pull
