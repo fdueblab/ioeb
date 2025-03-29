@@ -3,17 +3,17 @@ name: Deploy to Server
 on:
   push:
     branches:
-      - master
+      # - master
+      -zfy
 
 jobs:
-  build-and-deploy:
+  # 前端构建和推送镜像
+  build-frontend:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 前端构建
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -28,45 +28,105 @@ jobs:
       - name: Build frontend
         run: yarn build
 
-      # 登录Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      # 构建并推送前端镜像
       - name: Build and push frontend Docker image
         run: |
           docker build -t polarsnowleopard/ioeb-frontend:latest .
           docker push polarsnowleopard/ioeb-frontend:latest
 
-      # # 构建并推送后端服务镜像
-      # - name: Build and push Project_1 Docker image
-      #   run: |
-      #     docker build -t polarsnowleopard/ioeb-project1:latest ./api/Project_1
-      #     docker push polarsnowleopard/ioeb-project1:latest
+  # Project_1 构建和推送镜像
+  build-project1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      # - name: Build and push Project-3 Docker image
-      #   run: |
-      #     docker build -t polarsnowleopard/ioeb-project3:latest ./api/Project-3
-      #     docker push polarsnowleopard/ioeb-project3:latest
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      # - name: Build and push Project-4 Docker image
-      #   run: |
-      #     docker build -t polarsnowleopard/ioeb-project4:latest ./api/Project-4
-      #     docker push polarsnowleopard/ioeb-project4:latest
-
-      # 修改docker-compose.yml文件使用推送的镜像而不是本地构建
-      - name: Update docker-compose.yml to use pushed images
+      - name: Build and push Project_1 Docker image
         run: |
-          sed -i 's|build:|image: polarsnowleopard/ioeb-frontend:latest|g; s|dockerfile: Dockerfile||g; s|context: .||g' docker-compose.yml
-          sed -i 's|build:|image: polarsnowleopard/ioeb-project1:latest|g; s|dockerfile: Dockerfile||g; s|context: ./api/Project_1||g' docker-compose.yml
-          sed -i 's|build:|image: polarsnowleopard/ioeb-project3:latest|g; s|dockerfile: Dockerfile||g; s|context: ./api/Project-3||g' docker-compose.yml
-          sed -i 's|build:|image: polarsnowleopard/ioeb-project4:latest|g; s|dockerfile: Dockerfile||g; s|context: ./api/Project-4||g' docker-compose.yml
-        continue-on-error: true
+          docker build -t polarsnowleopard/ioeb-project1:latest ./api/Project_1
+          docker push polarsnowleopard/ioeb-project1:latest
 
-      # 部署到服务器
+  # Project-3 构建和推送镜像
+  build-project3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push Project-3 Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-project3:latest ./api/Project-3
+          docker push polarsnowleopard/ioeb-project3:latest
+
+  # Project-4 构建和推送镜像
+  build-project4:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push Project-4 Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-project4:latest ./api/Project-4
+          docker push polarsnowleopard/ioeb-project4:latest
+
+  # linezolid 构建和推送镜像
+  build-linezolid:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push linezolid Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-linezolid:latest ./api/linezolid
+          docker push polarsnowleopard/ioeb-linezolid:latest
+
+  # 部署到服务器 (依赖所有构建任务完成)
+  deploy:
+    needs: [build-frontend, build-project1, build-project3, build-project4, build-linezolid] 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # - name: Update docker-compose.yml to use pushed images
+      #   run: |
+      #     sed -i 's|build:|image: polarsnowleopard/ioeb-frontend:latest|g; s|dockerfile: Dockerfile||g; s|context: .||g' docker-compose.yml
+      #     sed -i 's|build:|image: polarsnowleopard/ioeb-project1:latest|g; s|dockerfile: Dockerfile||g; s|context: ./api/Project_1||g' docker-compose.yml
+      #     sed -i 's|build:|image: polarsnowleopard/ioeb-project3:latest|g; s|dockerfile: Dockerfile||g; s|context: ./api/Project-3||g' docker-compose.yml
+      #     sed -i 's|build:|image: polarsnowleopard/ioeb-project4:latest|g; s|dockerfile: Dockerfile||g; s|context: ./api/Project-4||g' docker-compose.yml
+      #   continue-on-error: true
+
       - name: Deploy to server
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -86,7 +146,6 @@ jobs:
           scp nginx.conf ubuntu@$SERVER_IP:~/ioeb/
           scp -r api ubuntu@$SERVER_IP:~/ioeb/
           
-          
           # 确保数据目录存在
           ssh ubuntu@$SERVER_IP << EOF
             mkdir -p ~/ioeb/api/Project_1/checkpoint
@@ -97,17 +156,20 @@ jobs:
             
             # 拉取最新镜像
             docker pull polarsnowleopard/ioeb-frontend:latest
+            docker pull polarsnowleopard/ioeb-docs:latest
+            docker pull polarsnowleopard/ioeb-backend:latest
             # docker pull polarsnowleopard/ioeb-project1:latest
             # docker pull polarsnowleopard/ioeb-project3:latest
             # docker pull polarsnowleopard/ioeb-project4:latest
+            docker pull polarsnowleopard/ioeb-linezolid:latest
 
             # 修改docker-compose.yml中的路径为绝对路径
-            cd ~/ioeb
-            sed -i 's|\\./api/Project_1/checkpoint|/home/ubuntu/ioeb/api/Project_1/checkpoint|g' docker-compose.yml
-            sed -i 's|\\./api/Project-3/data|/home/ubuntu/ioeb/api/Project-3/data|g' docker-compose.yml
-            sed -i 's|\\./api/Project-4/eval_config|/home/ubuntu/ioeb/api/Project-4/eval_config|g' docker-compose.yml
-            sed -i 's|\\./api/Project-4/eval_result|/home/ubuntu/ioeb/api/Project-4/eval_result|g' docker-compose.yml
-            sed -i 's|\\./api/Project-4/graph_dataset|/home/ubuntu/ioeb/api/Project-4/graph_dataset|g' docker-compose.yml
+            # cd ~/ioeb
+            # sed -i 's|\\./api/Project_1/checkpoint|/home/ubuntu/ioeb/api/Project_1/checkpoint|g' docker-compose.yml
+            # sed -i 's|\\./api/Project-3/data|/home/ubuntu/ioeb/api/Project-3/data|g' docker-compose.yml
+            # sed -i 's|\\./api/Project-4/eval_config|/home/ubuntu/ioeb/api/Project-4/eval_config|g' docker-compose.yml
+            # sed -i 's|\\./api/Project-4/eval_result|/home/ubuntu/ioeb/api/Project-4/eval_result|g' docker-compose.yml
+            # sed -i 's|\\./api/Project-4/graph_dataset|/home/ubuntu/ioeb/api/Project-4/graph_dataset|g' docker-compose.yml
 
             # 停止并移除现有容器
             docker-compose down || true
