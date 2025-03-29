@@ -3,8 +3,8 @@ name: Deploy to Server
 on:
   push:
     branches:
-      # - master
-      - zfy
+      - master
+      # - zfy
 
 jobs:
   # 前端构建和推送镜像
