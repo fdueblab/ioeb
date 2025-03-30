@@ -1,12 +1,6 @@
 # 基础镜像
 FROM python:3.10-slim
 
-# 安装系统依赖
-RUN apt-get update && apt-get install -y \
-    sudo \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
 # 设置工作目录
 WORKDIR /app
 
