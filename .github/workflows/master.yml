@@ -57,6 +57,24 @@ jobs:
           docker build -t polarsnowleopard/ioeb-project1:latest ./api/Project_1
           docker push polarsnowleopard/ioeb-project1:latest
 
+  # Project_2 构建和推送镜像
+  build-project2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push Project_1 Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-project2:latest ./api/Project_2
+          docker push polarsnowleopard/ioeb-project2:latest
+
   # Project-3 构建和推送镜像
   build-project3:
     runs-on: ubuntu-latest
@@ -113,19 +131,11 @@ jobs:
 
   # 部署到服务器 (依赖所有构建任务完成)
   deploy:
-    needs: [build-frontend, build-project1, build-project3, build-project4, build-linezolid]
+    needs: [build-frontend, build-project1, build-project2, build-project3, build-project4, build-linezolid]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      # - name: Update docker-compose.yml to use pushed images
-      #   run: |
-      #     sed -i 's|build:|image: polarsnowleopard/ioeb-frontend:latest|g; s|dockerfile: Dockerfile||g; s|context: .||g' docker-compose.yml
-      #     sed -i 's|build:|image: polarsnowleopard/ioeb-project1:latest|g; s|dockerfile: Dockerfile||g; s|context: ./api/Project_1||g' docker-compose.yml
-      #     sed -i 's|build:|image: polarsnowleopard/ioeb-project3:latest|g; s|dockerfile: Dockerfile||g; s|context: ./api/Project-3||g' docker-compose.yml
-      #     sed -i 's|build:|image: polarsnowleopard/ioeb-project4:latest|g; s|dockerfile: Dockerfile||g; s|context: ./api/Project-4||g' docker-compose.yml
-      #   continue-on-error: true
 
       - name: Deploy to server
         env:
@@ -149,6 +159,7 @@ jobs:
           # 确保数据目录存在
           ssh ubuntu@$SERVER_IP << EOF
             mkdir -p ~/ioeb/api/Project_1/checkpoint
+            mkdir -p ~/ioeb/api/Project_2/checkpoint
             mkdir -p ~/ioeb/api/Project-3/data
             mkdir -p ~/ioeb/api/Project-4/eval_config
             mkdir -p ~/ioeb/api/Project-4/eval_result
