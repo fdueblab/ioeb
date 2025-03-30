@@ -52,13 +52,28 @@ services:
       # - ioeb-backend_app-network  # 加入现有网络
       - app-network
 
-  # 课题一和课题二服务
+  # 课题一服务
   project-1:
     image: polarsnowleopard/ioeb-project1:latest
     ports:
       - '25001:5000'
     volumes:
       - ./api/Project_1/checkpoint:/app/checkpoint
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+    networks:
+      # - ioeb-backend_app-network
+      - app-network
+    restart: unless-stopped
+
+  # 课题二服务
+  project-2:
+    image: polarsnowleopard/ioeb-project2:latest
+    ports:
+      - '25002:5000'
+    volumes:
+      - ./api/Project_2/checkpoint:/app/checkpoint
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=production
