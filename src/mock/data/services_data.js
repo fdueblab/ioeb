@@ -39,16 +39,76 @@ const amlServices = [
         method: 'POST',
         des: '模型推理接口，基于数据集和参数配置得到风险识别结果',
         parameterType: 2,
-        parameters: [{
-          name: 'file',
-          type: 'zip file',
-          des: '数据集和参数配置文件的zip压缩包'
-        }],
+        parameters: [
+          {
+            name: 'file',
+            type: 'zip file',
+            des: '数据集和参数配置文件的zip压缩包'
+          }
+        ],
         responseType: 1
       },
       {
         name: 'healthCheck',
         url: '/api/project1/health',
+        method: 'GET',
+        des: '判断微服务状态是否正常可用',
+        parameterType: 0
+      }
+    ]
+  },
+  {
+    name: '课题二多方安全计算模型推理微服务',
+    attribute: 1,
+    type: 0,
+    domain: 0,
+    industry: 0,
+    scenario: 1,
+    technology: 1,
+    netWork: 'bridge',
+    port: '0.0.0.0:8000/TCP → 0.0.0.0:80000',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
+    status: 4,
+    number: '512',
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '课题二',
+      msIntroduce: '基于多方安全计算的风险识别算法',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'predict',
+        url: '/api/project2/predict',
+        method: 'POST',
+        des: '模型推理接口，基于数据集和参数配置得到风险识别结果',
+        parameterType: 2,
+        parameters: [
+          {
+            name: 'file',
+            type: 'zip file',
+            des: '数据集和参数配置文件的zip压缩包'
+          }
+        ],
+        responseType: 1
+      },
+      {
+        name: 'healthCheck',
+        url: '/api/project2/health',
         method: 'GET',
         des: '判断微服务状态是否正常可用',
         parameterType: 0
@@ -168,16 +228,19 @@ const amlServices = [
         url: 'https://myApiServer.com/report/get',
         method: 'GET',
         parameterType: 1,
-        parameters: [{
-          name: 'reportId',
-          type: 'int'
-        }],
+        parameters: [
+          {
+            name: 'reportId',
+            type: 'int'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
           message: '获取成功!',
           data: {
-            result: '基于图神经网络的跨境贸易支付监测模型的推理结果已经产生。模型在数据集上的表现如下：\n\n在100个节点中，有93个节点被判定为类别0，7个节点被判定为类别2。具体结果如下：\n\n- 类别0：节点1，节点2，节点3，节点4，节点9，节点10，节点11，节点12，节点13，节点14，节点15，节点16，节点17，节点\n18，节点19，节点20，节点21，节点22，节点23，节点24，节点25，节点26，节点27，节点28，节点29，节点30，节点31，节点\n32，节点33，节点34，节点35，节点36，节点37，节点38，节点39，节点40，节点41，节点42，节点43，节点44，节点45，节点\n46，节点47，节点48，节点49，节点50，节点51，节点52，节点53，节点54，节点55，节点56，节点57，节点58，节点59，节点\n60，节点61，节点62，节点63，节点65，节点66，节点67，节点68，节点69，节点70，节点71，节点72，节点73，节点74，节点\n75，节点76，节点77，节点78，节点79，节点80，节点81，节点82，节点83，节点84，节点85，节点86，节点87，节点88，节点\n89，节点90，节点91，节点92，节点93，节点94，节点95，节点96。\n\n- 类别2：节点0，节点5，节点6，节点7，节点8，节点64，节点97，节点98，节点99。\n\n总结，大多数节点（93%）被分类为类别0，而较小的部分（7%）被分类为类别2。这可能反映了在训练集中类别0的样本数量更多\n，模型在识别类别0的能力上表现得更好。同时，模型对于类别2的识别也有一定的能力。'
+            result:
+              '基于图神经网络的跨境贸易支付监测模型的推理结果已经产生。模型在数据集上的表现如下：\n\n在100个节点中，有93个节点被判定为类别0，7个节点被判定为类别2。具体结果如下：\n\n- 类别0：节点1，节点2，节点3，节点4，节点9，节点10，节点11，节点12，节点13，节点14，节点15，节点16，节点17，节点\n18，节点19，节点20，节点21，节点22，节点23，节点24，节点25，节点26，节点27，节点28，节点29，节点30，节点31，节点\n32，节点33，节点34，节点35，节点36，节点37，节点38，节点39，节点40，节点41，节点42，节点43，节点44，节点45，节点\n46，节点47，节点48，节点49，节点50，节点51，节点52，节点53，节点54，节点55，节点56，节点57，节点58，节点59，节点\n60，节点61，节点62，节点63，节点65，节点66，节点67，节点68，节点69，节点70，节点71，节点72，节点73，节点74，节点\n75，节点76，节点77，节点78，节点79，节点80，节点81，节点82，节点83，节点84，节点85，节点86，节点87，节点88，节点\n89，节点90，节点91，节点92，节点93，节点94，节点95，节点96。\n\n- 类别2：节点0，节点5，节点6，节点7，节点8，节点64，节点97，节点98，节点99。\n\n总结，大多数节点（93%）被分类为类别0，而较小的部分（7%）被分类为类别2。这可能反映了在训练集中类别0的样本数量更多\n，模型在识别类别0的能力上表现得更好。同时，模型对于类别2的识别也有一定的能力。'
           }
         }
       },
@@ -187,10 +250,12 @@ const amlServices = [
         url: 'https://myApiServer.com/report/send',
         method: 'GET',
         parameterType: 1,
-        parameters: [{
-          name: 'reportId',
-          type: 'int'
-        }],
+        parameters: [
+          {
+            name: 'reportId',
+            type: 'int'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
@@ -207,11 +272,13 @@ const amlServices = [
         method: 'POST',
         des: '报告生成接口样例',
         parameterType: 3,
-        parameters: [{
-          name: 'reportData',
-          type: 'string',
-          des: '用于生成报告的数据'
-        }],
+        parameters: [
+          {
+            name: 'reportData',
+            type: 'string',
+            des: '用于生成报告的数据'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
@@ -461,11 +528,13 @@ const amlServices = [
         method: 'GET',
         des: '根据自然语言需求生成风险评估报告',
         parameterType: 1,
-        parameters: [{
-          name: 'query',
-          type: 'string',
-          des: '用自然语言描述想要生成的报告'
-        }],
+        parameters: [
+          {
+            name: 'query',
+            type: 'string',
+            des: '用自然语言描述想要生成的报告'
+          }
+        ],
         responseType: 2,
         responseFileName: 'financial_report.pdf'
       },
@@ -475,11 +544,13 @@ const amlServices = [
         method: 'GET',
         des: '根据自然语言需求生成gql语句并得到查询结果',
         parameterType: 1,
-        parameters: [{
-          name: 'query',
-          type: 'string',
-          des: '用自然语言描述查询需求'
-        }],
+        parameters: [
+          {
+            name: 'query',
+            type: 'string',
+            des: '用自然语言描述查询需求'
+          }
+        ],
         responseType: 1
       },
       {
@@ -745,6 +816,94 @@ const airCraftServices = [
 
 const healthServices = [
   {
+    name: '肝移植患者利奈唑胺给药方案优化微服务',
+    attribute: 1,
+    type: 0,
+    domain: 0,
+    industry: 0,
+    scenario: 1,
+    technology: 1,
+    netWork: 'bridge',
+    port: '0.0.0.0:8000/TCP → 0.0.0.0:80000',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
+    status: 4,
+    number: '512',
+    norm: [
+      {
+        key: 0,
+        score: 5
+      },
+      {
+        key: 2,
+        score: 5
+      }
+    ],
+    source: {
+      popoverTitle: '可信云技术服务溯源',
+      companyName: '复旦大学课题组',
+      companyAddress: '上海市杨浦区邯郸路220号',
+      companyContact: '021-65642222',
+      companyIntroduce: '药学院临床药学系',
+      msIntroduce: '基于群体药动学模型的肝移植患者利奈唑胺给药方案优化',
+      companyScore: 5,
+      msScore: 5
+    },
+    apiList: [
+      {
+        name: 'calculate',
+        url: '/api/linezolid/calculate',
+        method: 'POST',
+        des: '根据患者的基本信息计算推荐的利奈唑胺给药剂量',
+        parameterType: 3,
+        parameters: [
+          {
+            name: 'sex',
+            type: 'int',
+            des: '性别，0表示女性，1表示男性'
+          },
+          {
+            name: 'age',
+            type: 'int',
+            des: '年龄，必须为整数'
+          },
+          {
+            name: 'height',
+            type: 'int',
+            des: '身高，单位cm，必须为整数'
+          },
+          {
+            name: 'weight',
+            type: 'int',
+            des: '体重，单位kg，必须为整数'
+          },
+          {
+            name: 'scr',
+            type: 'float',
+            des: '血清肌酐，单位umol/L，必须为浮点数'
+          },
+          {
+            name: 'tb',
+            type: 'float',
+            des: '总胆红素，单位umol/L，必须为浮点数'
+          },
+          {
+            name: 'auc_range',
+            type: 'array',
+            des: '目标24小时药时曲线AUC范围，单位umol/L，必须为数组，数组长度为2，第一个元素为下限，第二个元素为上限'
+          }
+        ],
+        responseType: 1
+      },
+      {
+        name: 'healthCheck',
+        url: '/api/linezolid/health',
+        method: 'GET',
+        des: '判断微服务状态是否正常可用',
+        parameterType: 0
+      }
+    ]
+  },
+  {
     name: '基层医疗影像辅助诊断微服务',
     attribute: 1,
     type: 0,
@@ -785,11 +944,13 @@ const healthServices = [
         method: 'POST',
         des: '模型推理接口，基于医学影像数据进行辅助诊断',
         parameterType: 2,
-        parameters: [{
-          name: 'file',
-          type: 'image file',
-          des: '医学影像文件（支持CT、X光、超声等图像）'
-        }],
+        parameters: [
+          {
+            name: 'file',
+            type: 'image file',
+            des: '医学影像文件（支持CT、X光、超声等图像）'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
@@ -867,11 +1028,13 @@ const healthServices = [
         method: 'POST',
         des: '分析健康数据并提供管理建议',
         parameterType: 2,
-        parameters: [{
-          name: 'data',
-          type: 'json',
-          des: '来自可穿戴设备和家用医疗设备的健康数据'
-        }],
+        parameters: [
+          {
+            name: 'data',
+            type: 'json',
+            des: '来自可穿戴设备和家用医疗设备的健康数据'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
@@ -879,11 +1042,7 @@ const healthServices = [
           data: {
             patientStatus: '血糖水平波动较大',
             riskLevel: '中等',
-            recommendations: [
-              '增加餐后30分钟测量频率',
-              '调整胰岛素用量',
-              '每日30分钟低强度运动'
-            ],
+            recommendations: ['增加餐后30分钟测量频率', '调整胰岛素用量', '每日30分钟低强度运动'],
             nextCheckupDate: '2023-06-15'
           }
         }
@@ -954,11 +1113,13 @@ const healthServices = [
         method: 'POST',
         des: '将方言语音转写为标准文字',
         parameterType: 2,
-        parameters: [{
-          name: 'audio',
-          type: 'audio file',
-          des: '语音文件（支持方言）'
-        }],
+        parameters: [
+          {
+            name: 'audio',
+            type: 'audio file',
+            des: '语音文件（支持方言）'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
@@ -1018,11 +1179,13 @@ const healthServices = [
         method: 'POST',
         des: '根据急诊情况优化医疗资源调度',
         parameterType: 2,
-        parameters: [{
-          name: 'data',
-          type: 'json',
-          des: '急诊信息和可用资源数据'
-        }],
+        parameters: [
+          {
+            name: 'data',
+            type: 'json',
+            des: '急诊信息和可用资源数据'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
@@ -1039,9 +1202,7 @@ const healthServices = [
               availableBeds: 3,
               specialtyAvailable: ['内科', '外科', '急诊']
             },
-            alternativeFacilities: [
-              { name: '镇卫生院', distance: '3公里', capabilities: '基础处理' }
-            ]
+            alternativeFacilities: [{ name: '镇卫生院', distance: '3公里', capabilities: '基础处理' }]
           }
         }
       }
@@ -1088,11 +1249,13 @@ const healthServices = [
         method: 'POST',
         des: '分析历史数据预测流行病发展趋势',
         parameterType: 2,
-        parameters: [{
-          name: 'data',
-          type: 'json',
-          des: '历史疫情数据和环境因素'
-        }],
+        parameters: [
+          {
+            name: 'data',
+            type: 'json',
+            des: '历史疫情数据和环境因素'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
@@ -1106,11 +1269,7 @@ const healthServices = [
               { name: '河西镇', riskLevel: '高', population: 5000 },
               { name: '东林县', riskLevel: '中', population: 32000 }
             ],
-            preventionRecommendations: [
-              '提前两周开始疫苗接种',
-              '加强学校和公共场所消毒',
-              '准备充足医疗物资'
-            ],
+            preventionRecommendations: ['提前两周开始疫苗接种', '加强学校和公共场所消毒', '准备充足医疗物资'],
             predictionAccuracy: '85%'
           }
         }
@@ -1224,7 +1383,8 @@ const airCraftMetaApps = [
       companyName: '复旦大学课题组',
       companyAddress: '上海市杨浦区邯郸路220号',
       companyContact: '021-65642222',
-      msIntroduce: '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
+      msIntroduce:
+        '针对跨境贸易支付监管的误检率高、效率低问题，本课题旨在研究新的监管方法和机制，支持新时代的监管体系构建。基于高性能分布式图数据库和FIDO客户认证，通过高性能图分析算法优化规则驱动的跨境支付监管，确保数据真实性并实现高并发事中监管。',
       companyScore: 5,
       msScore: 5
     },
@@ -1318,11 +1478,7 @@ const healthMetaApps = [
               alternativeDiagnosis: ['慢性支气管炎', '肺气肿'],
               riskLevel: '中高风险'
             },
-            recommendations: [
-              '建议进行抗生素治疗',
-              '密切监测血氧水平',
-              '一周后复查'
-            ],
+            recommendations: ['建议进行抗生素治疗', '密切监测血氧水平', '一周后复查'],
             referralNeeded: true,
             referToSpecialist: '呼吸科专家'
           }
@@ -1410,11 +1566,7 @@ const healthMetaApps = [
                 { resource: '防护口罩', allocateTo: ['所有学校', '养老院'], quantity: 10000 }
               ]
             },
-            preventionActions: [
-              '加强学校晨检',
-              '提前启动疫苗接种计划',
-              '农村医生培训'
-            ]
+            preventionActions: ['加强学校晨检', '提前启动疫苗接种计划', '农村医生培训']
           }
         }
       }
@@ -1816,11 +1968,7 @@ const agricultureServices = [
               { name: '土壤状况', impact: '中性', description: '土壤肥力适中' },
               { name: '病虫害风险', impact: '负面', description: '稻飞虱风险增加' }
             ],
-            recommendations: [
-              '优化施肥方案可能进一步提高产量',
-              '注意防治稻飞虱',
-              '适当延长灌溉周期'
-            ]
+            recommendations: ['优化施肥方案可能进一步提高产量', '注意防治稻飞虱', '适当延长灌溉周期']
           }
         }
       },
@@ -1912,11 +2060,7 @@ const agricultureMetaApps = [
               { name: '土壤状况', impact: '中性', description: '土壤肥力适中' },
               { name: '病虫害风险', impact: '负面', description: '稻飞虱风险增加' }
             ],
-            recommendations: [
-              '优化施肥方案可能进一步提高产量',
-              '注意防治稻飞虱',
-              '适当延长灌溉周期'
-            ]
+            recommendations: ['优化施肥方案可能进一步提高产量', '注意防治稻飞虱', '适当延长灌溉周期']
           }
         }
       }
@@ -1966,11 +2110,13 @@ const evtolServices = [
         method: 'POST',
         des: '规划飞行路径，避开障碍物',
         parameterType: 3,
-        parameters: [{
-          name: 'data',
-          type: 'json',
-          des: '包含起点终点和环境数据的JSON'
-        }],
+        parameters: [
+          {
+            name: 'data',
+            type: 'json',
+            des: '包含起点终点和环境数据的JSON'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
@@ -2033,11 +2179,13 @@ const evtolServices = [
         method: 'POST',
         des: '感知周围环境，识别障碍物和导航信息',
         parameterType: 2,
-        parameters: [{
-          name: 'sensorData',
-          type: 'multimodal',
-          des: '来自多种传感器的数据'
-        }],
+        parameters: [
+          {
+            name: 'sensorData',
+            type: 'multimodal',
+            des: '来自多种传感器的数据'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
@@ -2130,11 +2278,13 @@ const evtolServices = [
         method: 'POST',
         des: '控制飞行姿态和动作',
         parameterType: 3,
-        parameters: [{
-          name: 'controlCommand',
-          type: 'json',
-          des: '飞行控制命令'
-        }],
+        parameters: [
+          {
+            name: 'controlCommand',
+            type: 'json',
+            des: '飞行控制命令'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
@@ -2197,11 +2347,13 @@ const evtolServices = [
         method: 'POST',
         des: '管理电池能源使用',
         parameterType: 3,
-        parameters: [{
-          name: 'flightData',
-          type: 'json',
-          des: '飞行数据和电池状态'
-        }],
+        parameters: [
+          {
+            name: 'flightData',
+            type: 'json',
+            des: '飞行数据和电池状态'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
@@ -2216,10 +2368,7 @@ const evtolServices = [
               { time: 20, charge: 58 },
               { time: 30, charge: 50 }
             ],
-            recommendations: [
-              '降低飞行高度可延长续航时间',
-              '减少急加速以优化能源使用'
-            ],
+            recommendations: ['降低飞行高度可延长续航时间', '减少急加速以优化能源使用'],
             criticalLevel: false,
             optimalSpeed: 65
           }
@@ -2296,11 +2445,13 @@ const evtolServices = [
         method: 'POST',
         des: '监控飞行安全状态',
         parameterType: 3,
-        parameters: [{
-          name: 'systemStatus',
-          type: 'json',
-          des: '系统状态数据'
-        }],
+        parameters: [
+          {
+            name: 'systemStatus',
+            type: 'json',
+            des: '系统状态数据'
+          }
+        ],
         responseType: 1,
         response: {
           code: 200,
@@ -2308,9 +2459,7 @@ const evtolServices = [
           data: {
             overallStatus: '正常',
             safetyScore: 95,
-            anomalies: [
-              { component: '左侧螺旋桨', severity: '低', action: '继续监控' }
-            ],
+            anomalies: [{ component: '左侧螺旋桨', severity: '低', action: '继续监控' }],
             systemChecks: {
               propulsion: 'Pass',
               navigation: 'Pass',
@@ -2399,10 +2548,7 @@ const evtolMetaApps = [
             weatherConditions: '良好',
             totalFlightTime: '15分钟',
             safetyIncidents: 0,
-            recommendations: [
-              '定期检查左侧螺旋桨',
-              '更新城区高层建筑数据'
-            ]
+            recommendations: ['定期检查左侧螺旋桨', '更新城区高层建筑数据']
           }
         }
       }
@@ -3424,15 +3570,17 @@ const homeAIMetaApps = [
 
 function getAmlServices() {
   if (sessionStorage.getItem('upload_exception_service')) {
-    amlServices.find(item => item.name === '异常识别微服务').status = Number(sessionStorage.getItem('upload_exception_service'))
+    amlServices.find((item) => item.name === '异常识别微服务').status = Number(
+      sessionStorage.getItem('upload_exception_service')
+    )
     return amlServices
   } else {
-    return amlServices.filter(item => item.name !== '异常识别微服务')
+    return amlServices.filter((item) => item.name !== '异常识别微服务')
   }
 }
 
 function getRunningAmlServices() {
-  return getAmlServices().filter(item => item.status === 1 || item.status === 4)
+  return getAmlServices().filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getAirCraftServices() {
@@ -3440,7 +3588,7 @@ function getAirCraftServices() {
 }
 
 function getRunningAirCraftServices() {
-  return airCraftServices.filter(item => item.status === 1 || item.status === 4)
+  return airCraftServices.filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getAmlMetaApps() {
@@ -3453,7 +3601,7 @@ function getAmlMetaApps() {
 }
 
 function getRunningAmlMetaApps() {
-  return getAmlMetaApps().filter(item => item.status === 1 || item.status === 4)
+  return getAmlMetaApps().filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getAirCraftMetaApps() {
@@ -3461,12 +3609,12 @@ function getAirCraftMetaApps() {
 }
 
 function getRunningAirCraftMetaApps() {
-  return airCraftMetaApps.filter(item => item.status === 1 || item.status === 4)
+  return airCraftMetaApps.filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getHealthServices() {
   if (sessionStorage.getItem('upload_health_service')) {
-    const uploadedService = healthServices.find(item => item.name === '基层医疗影像辅助诊断微服务')
+    const uploadedService = healthServices.find((item) => item.name === '基层医疗影像辅助诊断微服务')
     if (uploadedService) {
       uploadedService.status = Number(sessionStorage.getItem('upload_health_service'))
     }
@@ -3477,7 +3625,7 @@ function getHealthServices() {
 }
 
 function getRunningHealthServices() {
-  return healthServices.filter(item => item.status === 1 || item.status === 4)
+  return healthServices.filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getHealthMetaApps() {
@@ -3485,7 +3633,7 @@ function getHealthMetaApps() {
 }
 
 function getRunningHealthMetaApps() {
-  return healthMetaApps.filter(item => item.status === 1 || item.status === 4)
+  return healthMetaApps.filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getAgricultureServices() {
@@ -3493,7 +3641,7 @@ function getAgricultureServices() {
 }
 
 function getRunningAgricultureServices() {
-  return agricultureServices.filter(item => item.status === 1 || item.status === 4)
+  return agricultureServices.filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getAgricultureMetaApps() {
@@ -3501,7 +3649,7 @@ function getAgricultureMetaApps() {
 }
 
 function getRunningAgricultureMetaApps() {
-  return agricultureMetaApps.filter(item => item.status === 1 || item.status === 4)
+  return agricultureMetaApps.filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getEvtolServices() {
@@ -3509,7 +3657,7 @@ function getEvtolServices() {
 }
 
 function getRunningEvtolServices() {
-  return evtolServices.filter(item => item.status === 1 || item.status === 4)
+  return evtolServices.filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getEvtolMetaApps() {
@@ -3517,7 +3665,7 @@ function getEvtolMetaApps() {
 }
 
 function getRunningEvtolMetaApps() {
-  return evtolMetaApps.filter(item => item.status === 1 || item.status === 4)
+  return evtolMetaApps.filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getEcommerceServices() {
@@ -3525,7 +3673,7 @@ function getEcommerceServices() {
 }
 
 function getRunningEcommerceServices() {
-  return ecommerceServices.filter(item => item.status === 1 || item.status === 4)
+  return ecommerceServices.filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getEcommerceMetaApps() {
@@ -3533,7 +3681,7 @@ function getEcommerceMetaApps() {
 }
 
 function getRunningEcommerceMetaApps() {
-  return ecommerceMetaApps.filter(item => item.status === 1 || item.status === 4)
+  return ecommerceMetaApps.filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getHomeaiServices() {
@@ -3541,7 +3689,7 @@ function getHomeaiServices() {
 }
 
 function getRunningHomeaiServices() {
-  return homeAIServices.filter(item => item.status === 1 || item.status === 4)
+  return homeAIServices.filter((item) => item.status === 1 || item.status === 4)
 }
 
 function getHomeaiMetaApps() {
@@ -3549,7 +3697,7 @@ function getHomeaiMetaApps() {
 }
 
 function getRunningHomeaiMetaApps() {
-  return homeAIMetaApps.filter(item => item.status === 1 || item.status === 4)
+  return homeAIMetaApps.filter((item) => item.status === 1 || item.status === 4)
 }
 
 export function getServiceData(serviceType, onlyRunning = false) {
