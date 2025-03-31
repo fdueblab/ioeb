@@ -38,7 +38,7 @@
             >
               <template slot="parameterName" slot-scope="text, record" >
                 <span>
-                  {{ record.name }} 
+                  {{ record.name }}
                   <a-tag v-if="record.type && !record.type.includes('file')" color="blue" size="small">
                     {{ record.type }}
                   </a-tag>
@@ -59,10 +59,10 @@
                   :multiple="false">
                   <a-button> <a-icon type="upload" /> 选择文件 </a-button>
                 </a-upload>
-                <a-input 
-                  v-else 
-                  v-model="record.value" 
-                  :placeholder="getPlaceholder(record.type, record.name)" 
+                <a-input
+                  v-else
+                  v-model="record.value"
+                  :placeholder="getPlaceholder(record.type, record.name)"
                 />
               </template>
             </a-table>
@@ -373,7 +373,7 @@ export default {
     },
     getPlaceholder(type, name) {
       if (!type) return `请输入${name}`
-      
+
       switch (type.toLowerCase()) {
         case 'int':
         case 'integer':
