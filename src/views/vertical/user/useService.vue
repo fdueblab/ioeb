@@ -38,7 +38,10 @@
             >
               <template slot="parameterName" slot-scope="text, record" >
                 <span>
-                  {{ record.name }}
+                  {{ record.name }} 
+                  <a-tag v-if="record.type && !record.type.includes('file')" color="blue" size="small">
+                    {{ record.type }}
+                  </a-tag>
                   <a-tooltip v-if="record.des">
                     <template #title>
                       {{ record.des }}
@@ -56,7 +59,11 @@
                   :multiple="false">
                   <a-button> <a-icon type="upload" /> 选择文件 </a-button>
                 </a-upload>
-                <a-input v-else v-model="record.value" :placeholder="`请输入${record.name}`" />
+                <a-input 
+                  v-else 
+                  v-model="record.value" 
+                  :placeholder="getPlaceholder(record.type, record.name)" 
+                />
               </template>
             </a-table>
           </div>
@@ -273,7 +280,37 @@ export default {
           case 3: // JSON 格式
             requestData = this.parameterData.reduce((acc, param) => {
               if (param.value) {
-                acc[param.name] = param.value
+                // 根据参数类型进行转换
+                if (param.type === 'int' || param.type === 'integer') {
+                  // 转换为整数
+                  acc[param.name] = parseInt(param.value, 10)
+                } else if (param.type === 'float' || param.type === 'double' || param.type === 'number') {
+                  // 转换为浮点数
+                  acc[param.name] = parseFloat(param.value)
+                } else if (param.type === 'boolean' || param.type === 'bool') {
+                  // 转换为布尔值
+                  acc[param.name] = param.value.toLowerCase() === 'true'
+                } else if (param.type === 'array' || param.type === 'list' || param.type.includes('[]')) {
+                  // 尝试解析为数组
+                  try {
+                    acc[param.name] = JSON.parse(param.value)
+                  } catch (e) {
+                    // 如果解析失败，提示用户
+                    this.$message.warning(`参数 ${param.name} 无法解析为数组，请确保格式正确（如：[1,2,3]）`)
+                    acc[param.name] = param.value
+                  }
+                } else if (param.type === 'object' || param.type === 'json') {
+                  // 尝试解析为对象
+                  try {
+                    acc[param.name] = JSON.parse(param.value)
+                  } catch (e) {
+                    this.$message.warning(`参数 ${param.name} 无法解析为对象，请确保格式正确（如：{"key":"value"}）`)
+                    acc[param.name] = param.value
+                  }
+                } else {
+                  // 默认作为字符串处理
+                  acc[param.name] = param.value
+                }
               }
               return acc
             }, {})
@@ -333,6 +370,34 @@ export default {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+    },
+    getPlaceholder(type, name) {
+      if (!type) return `请输入${name}`
+      
+      switch (type.toLowerCase()) {
+        case 'int':
+        case 'integer':
+          return `请输入整数，例如：42`
+        case 'float':
+        case 'double':
+        case 'number':
+          return `请输入数字，例如：3.14`
+        case 'boolean':
+        case 'bool':
+          return `请输入true或false`
+        case 'array':
+        case 'list':
+          return `请输入数组，例如：[1, 2, 3]`
+        case 'object':
+        case 'json':
+          return `请输入JSON对象，例如：{"key": "value"}`
+        default:
+          // 处理类型后缀为[]的情况
+          if (type.includes('[]')) {
+            return `请输入${type.replace('[]', '')}数组，例如：[1, 2, 3]`
+          }
+          return `请输入${name}`
+      }
     }
   }
 }
