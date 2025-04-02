@@ -1,4 +1,4 @@
-import { getAircraftFlow, getPj1Flow, getPj4Flow, getPj1Pj4Pj3Flow, getHealthFlow, getAgricultureFlow, getEvtolFlow, getEcommerceFlow, getHomeAIFlow } from '@/mock/data/flow_data'
+import { getAircraftFlow, getPj1Flow, getPj4Flow, getPj2Flow, getPj1Pj4Pj3Flow, getHealthFlow, getAgricultureFlow, getEvtolFlow, getEcommerceFlow, getHomeAIFlow } from '@/mock/data/flow_data'
 
 const aircraftPj = {
   chosenServices: ['目标识别微服务', '远程控制微服务'],
@@ -117,6 +117,72 @@ const pj1 = {
     }
   ],
   flowData: getPj1Flow()
+}
+
+const pj2 = {
+  chosenServices: ['课题二多方安全计算模型推理微服务', '样例报告生成微服务'],
+  serviceNodes: [
+    {
+      id: '9',
+      type: 'group',
+      name: '跨境支付AI监测服务',
+      open: true,
+      children: [
+        {
+          id: '90',
+          type: 'group',
+          name: '课题二多方安全计算模型推理微服务',
+          open: true,
+          children: [
+            {
+              id: '9002',
+              type: 'preprocess',
+              name: 'preprocess',
+              ico: 'el-icon-c-scale-to-original',
+              style: {}
+            },
+            {
+              id: '9005',
+              type: 'predict',
+              name: 'predict',
+              ico: 'el-icon-data-line',
+              style: {}
+            },
+            {
+              id: '9006',
+              type: 'visualize',
+              name: 'visualize',
+              ico: 'el-icon-pie-chart',
+              style: {}
+            }
+          ]
+        },
+        {
+          id: '91',
+          type: 'group',
+          name: '样例报告生成微服务',
+          open: true,
+          children: [
+            {
+              id: '9101',
+              name: 'generateReport',
+              type: 'process',
+              ico: 'el-icon-document-add',
+              style: {}
+            },
+            {
+              id: '9102',
+              name: 'getReportData',
+              type: 'process',
+              ico: 'el-icon-zoom-in',
+              style: {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  flowData: getPj2Flow()
 }
 
 const pj1pj4pj3 = {
@@ -618,6 +684,8 @@ export function getChatData(serviceType, userInput) {
             resolve(pj4)
           } else if (userInput.includes('课题一')) {
             resolve(pj1)
+          } else if (userInput.includes('课题二')) {
+            resolve(pj2)
           } else {
             reject(new Error())
           }
