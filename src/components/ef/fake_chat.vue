@@ -8,17 +8,33 @@
     </div>
     <a-button v-if="isGenerated && !isInputLoading" class="retry-button" icon="sync" @click="refresh">重新生成</a-button>
     <div class="chat-input">
-      <a-input-search
-        style="width: 100%"
-        v-model="userInput"
-        @search="handleUserInput"
-        :placeholder="placeholder"
-        :disabled="!isInputEnabled"
-      >
-        <template #enterButton>
-          <a-button type="primary" icon="deployment-unit" :loading="isInputLoading" :disabled="!userInput" />
-        </template>
-      </a-input-search>
+      <div class="input-wrapper" style="width: 100%; position: relative;" ref="inputWrapper">
+        <a-input
+          style="width: 100%"
+          v-model="userInput"
+          :placeholder="placeholder"
+          :disabled="!isInputEnabled"
+          @input="onInputChange"
+          @focus="activateSuggestions"
+          @blur="hideSuggestionsDelayed"
+          @keydown.enter="handleUserInput"
+          ref="inputElement"
+        />
+        <a-button type="primary" icon="deployment-unit" @click="handleUserInput" :loading="isInputLoading" :disabled="!userInput" class="submit-button" />
+        <div
+          class="suggestion-dropdown"
+          v-if="showSuggestions && filteredSuggestions.length > 0 && isInputEnabled"
+        >
+          <div
+            class="suggestion-item"
+            v-for="(item, index) in filteredSuggestions"
+            :key="index"
+            @mousedown="selectSuggestion(item.value)"
+          >
+            {{ item.value }}
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -36,6 +52,12 @@ export default {
   },
   mounted() {
     this.init()
+    // 添加键盘事件监听
+    document.addEventListener('keydown', this.handleKeyDown)
+  },
+  beforeDestroy() {
+    // 移除键盘事件监听
+    document.removeEventListener('keydown', this.handleKeyDown)
   },
   data() {
     return {
@@ -45,15 +67,63 @@ export default {
       currentIndex: 0,
       isInputEnabled: true,
       isInputLoading: false,
-      isGenerated: false
+      isGenerated: false,
+      showSuggestions: false,
+      suggestions: [
+        { value: '我想基于课题一的算法生成一个跨境支付报告生成应用' },
+        { value: '我想基于课题二的算法生成一个跨境支付报告生成应用' },
+        { value: '我想基于课题三的算法构建一个智能分析系统' },
+        { value: '我想基于课题四的算法开发一个数据处理应用' },
+        { value: '我需要使用课题一和课题三的技术开发一个金融风控系统' },
+        { value: '请帮我用课题四的模型创建一个预测分析工具' }
+      ],
+      defaultSuggestions: [
+        { value: '我想基于课题一的算法生成一个跨境支付报告生成应用' },
+        { value: '我想基于课题二的算法生成一个跨境支付报告生成应用' },
+        { value: '我想基于课题三的算法构建一个智能分析系统' },
+        { value: '我想基于课题四的算法开发一个数据处理应用' },
+        { value: '我需要使用课题一和课题三的技术开发一个金融风控系统' },
+        { value: '请帮我用课题四的模型创建一个预测分析工具' }
+      ],
+      filteredSuggestions: []
     }
   },
   methods: {
+    handleKeyDown(e) {
+      if (e.key === 'Enter' && this.userInput && !this.isInputLoading && this.isInputEnabled) {
+        this.handleUserInput()
+      }
+    },
+    onInputChange() {
+      if (!this.userInput) {
+        this.filteredSuggestions = [...this.defaultSuggestions]
+      } else {
+        this.filteredSuggestions = this.defaultSuggestions.filter(item =>
+          item.value.toLowerCase().includes(this.userInput.toLowerCase())
+        )
+      }
+      this.showSuggestions = true
+    },
+    activateSuggestions() {
+      this.showSuggestions = true
+    },
+    selectSuggestion(value) {
+      this.userInput = value
+      this.showSuggestions = false
+      this.handleUserInput()
+    },
+    hideSuggestionsDelayed() {
+      setTimeout(() => {
+        this.showSuggestions = false
+      }, 200)
+    },
     handleUserInput() {
+      if (!this.userInput.trim()) return
       this.isInputLoading = true
       this.isInputEnabled = false
       this.messages.push({ text: this.userInput, isUser: true })
       this.messages.push({ text: 'agentLoading', isUser: false })
+      this.scrollToBottom()
       const input = this.userInput
       this.userInput = ''
       getChatData(this.serviceType, input).then((res) => {
@@ -65,7 +135,7 @@ export default {
         this.placeholder = '已智能生成工作流'
         this.isGenerated = true
       }).catch(() => {
-        const outputMessage = '抱歉，未理解您的需求，请提供进一步的描述。'
+        const outputMessage = '非常抱歉，未能理解您的需求。本系统目前仅支持基于课题一、课题二、课题三、课题四的相关算法构建简单的元应用。'
         this.typeWriter(outputMessage)
         this.isInputEnabled = true
       })
@@ -79,7 +149,15 @@ export default {
         this.userInput = ''
         this.isInputLoading = false
         this.currentIndex = 0
+        this.scrollToBottom()
       }
+    },
+    scrollToBottom() {
+      this.$nextTick(() => {
+        if (this.$refs.chatOutput) {
+          this.$refs.chatOutput.scrollTop = this.$refs.chatOutput.scrollHeight
+        }
+      })
     },
     init() {
       this.userInput = ''
@@ -88,6 +166,9 @@ export default {
       this.isInputEnabled = true
       this.isInputLoading = false
       this.isGenerated = false
+      this.showSuggestions = false
+      this.suggestions = [...this.defaultSuggestions]
+      this.filteredSuggestions = [...this.defaultSuggestions]
       this.messages.push({ text: '请告诉我您对应用的需求，我将根据您的需求生成元应用工作流', isUser: false })
     },
     refresh() {
@@ -106,7 +187,7 @@ export default {
   width: 30vw;
   border: 1px solid #ccc;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -115,9 +196,11 @@ export default {
   padding: 16px;
   background-color: #f9f9f9;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  max-height: calc(100vh - 150px); /* 设置最大高度 */
 }
 
 .chat-message {
@@ -146,6 +229,49 @@ export default {
   padding: 16px;
   background-color: #fff;
   border-top: 1px solid #ccc;
+  position: relative;
+  z-index: 100;
+}
+
+.input-wrapper {
+  position: relative;
+  width: 100%;
+  z-index: 101;
+}
+
+.suggestion-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 2px;
+  transform: translateZ(0);
+}
+
+.suggestion-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: normal;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.suggestion-item:hover {
+  background-color: #f5f5f5;
+}
+
+.submit-button {
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 2;
 }
 
 .retry-button {
