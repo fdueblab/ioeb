@@ -18,10 +18,10 @@ COPY requirements.txt .
 RUN sed -i '/^dgl/d' requirements.txt
 
 # 安装其他 Python 依赖
-RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install  -r requirements.txt
 
 # 单独安装 DGL
-RUN pip install --no-cache-dir dgl -f https://data.dgl.ai/wheels/torch-2.3/repo.html -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install dgl -f https://data.dgl.ai/wheels/torch-2.3/repo.html
 
 # 复制应用代码
 COPY . .
