@@ -254,6 +254,7 @@ import {
   getTechnologyMap
 } from '@/mock/data/map_data'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
+import { streamAgent } from '@/utils/request'
 
 export default {
   name: 'TableList',
@@ -553,125 +554,70 @@ class {{apiName}}({{input}}):
       const formData = new FormData()
       formData.append('file', file.originFileObj || file)
 
-      // 调用API
-      fetch('http://localhost:8010/api/agent/code_analysis', {
-        method: 'POST',
-        body: formData
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP错误! 状态码: ${response.status}`)
-          }
-
-          // 处理流式响应
-          const reader = response.body.getReader()
-          const decoder = new TextDecoder('utf-8')
-          let buffer = ''
-
-          const processStream = () => {
-            return reader.read().then(({ done, value }) => {
-              if (done) {
-                this.uploadProgramLoading = false
-                this.agentIsRunning = false
-                return
-              }
-
-              // 解码数据并添加到缓冲区
-              buffer += decoder.decode(value, { stream: true })
-
-              // 处理缓冲区中的每一行数据
-              const lines = buffer.split('\n\n')
-              buffer = lines.pop() // 保留可能不完整的最后一行
-
-              for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                  try {
-                    const data = JSON.parse(line.substring(6))
-
-                    // 处理错误
-                    if (data.error) {
-                      this.agentError = data.error
-                      this.uploadProgramLoading = false
-                      this.agentIsRunning = false
-                      return
-                    }
-
-                    // 处理警告
-                    if (data.warning) {
-                      this.agentWarning = data.warning
-                      this.uploadProgramLoading = false
-                      this.agentIsRunning = false
-                      return
-                    }
-
-                    // 处理最终结果
-                    if (data.is_final_result && data.final_results) {
-                      this.agentFinalResults = data.final_results
-
-                      // 从最终结果中提取函数依赖图数据
-                      if (data.final_results.function) {
-                        try {
-                          // 检查返回的数据格式
-                          const funcData = data.final_results.function
-
-                          // 如果数据已经包含nodes和edges，直接使用
-                          if (funcData.nodes && funcData.edges) {
-                            this.programJson = funcData
-                            this.setChart()
-                            this.$message.success('解析成功，发现以下可用API及调用关系')
-                          } else {
-                            // 否则使用转换方法
-                            this.programJson = this.convertToGraphFormat(funcData)
-
-                            if (this.programJson) {
-                              this.setChart()
-                              this.$message.success('解析成功，发现以下可用API及调用关系')
-                            }
-                          }
-                        } catch (e) {
-                          console.error('处理函数依赖数据出错:', e)
-                          this.$message.warning('函数依赖图数据处理失败')
-                        }
-                      } else {
-                        this.$message.warning('未能获取函数依赖关系数据')
-                      }
-
-                      this.uploadProgramLoading = false
-                      this.agentIsRunning = false
-                      return
-                    }
-
-                    // 处理步骤
-                    if (data.step) {
-                      this.agentSteps.push(data)
-                    }
-
-                    // 最后一步（但没有最终结果）
-                    if (data.is_last && !data.is_final_result && !data.warning) {
-                      this.uploadProgramLoading = false
-                      this.agentIsRunning = false
-                    }
-                  } catch (e) {
-                    console.error('解析数据失败:', e, line)
-                    this.agentError = '解析数据失败: ' + e.message
-                    this.uploadProgramLoading = false
-                    this.agentIsRunning = false
-                  }
-                }
-              }
-
-              return processStream()
-            })
-          }
-
-          return processStream()
-        })
-        .catch((error) => {
-          console.error('请求错误:', error)
-          this.agentError = '请求错误: ' + error.message
+      // 使用封装的streamAgent方法
+      streamAgent('/api/agent/code_analysis', formData, {
+        onStart: () => {
+          this.uploadProgramLoading = true
+          this.agentIsRunning = true
+        },
+        onStep: (data) => {
+          this.agentSteps.push(data)
+        },
+        onError: (error) => {
+          this.agentError = error
           this.uploadProgramLoading = false
           this.agentIsRunning = false
-        })
+        },
+        onWarning: (warning) => {
+          this.agentWarning = warning
+          this.uploadProgramLoading = false
+          this.agentIsRunning = false
+        },
+        onFinalResult: (results) => {
+          this.agentFinalResults = results
+
+          // 从最终结果中提取函数依赖图数据
+          if (results.function) {
+            try {
+              // 检查返回的数据格式
+              const funcData = results.function
+
+              // 如果数据已经包含nodes和edges，直接使用
+              if (funcData.nodes && funcData.edges) {
+                this.programJson = funcData
+                this.setChart()
+                this.$message.success('解析成功，发现以下可用API及调用关系')
+              } else {
+                // 否则使用转换方法
+                this.programJson = this.convertToGraphFormat(funcData)
+
+                if (this.programJson) {
+                  this.setChart()
+                  this.$message.success('解析成功，发现以下可用API及调用关系')
+                }
+              }
+            } catch (e) {
+              console.error('处理函数依赖数据出错:', e)
+              this.$message.warning('函数依赖图数据处理失败')
+            }
+          } else {
+            this.$message.warning('未能获取函数依赖关系数据')
+          }
+
+          this.uploadProgramLoading = false
+          this.agentIsRunning = false
+        },
+        onComplete: () => {
+          this.uploadProgramLoading = false
+          this.agentIsRunning = false
+        },
+        onDataProcessError: (e, line) => {
+          console.error('解析数据失败:', e, line)
+          this.agentError = '解析数据失败: ' + e.message
+          this.uploadProgramLoading = false
+          this.agentIsRunning = false
+        }
+      })
     },
     closeAgentPanel() {
       this.showAgentPanel = false
