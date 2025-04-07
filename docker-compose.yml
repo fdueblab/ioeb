@@ -21,12 +21,25 @@ services:
       # - ioeb-backend_app-network
       - app-network
     depends_on:
+      - agent
       - backend
       - docs
       - project-1
       - project-3
       - project-4
     restart: unless-stopped
+
+  # 智能体服务
+  agent:
+    image: polarsnowleopard/micro-agent:latest
+    ports:
+      - '8010:8010'
+      - '8020:8000'
+    stdin_open: true # 保持标准输入开启
+    tty: true # 分配伪终端
+    restart: unless-stopped
+    networks:
+      - app-network # 加入现有网络
 
   # 后端服务
   backend:
@@ -43,7 +56,7 @@ services:
     networks:
       - app-network # 加入现有网络
 
-  # Flask应用服务
+  # 文档服务
   docs:
     image: polarsnowleopard/ioeb-docs:latest
     ports:
