@@ -194,21 +194,21 @@ export default {
           .thought {
             margin-bottom: 10px;
             padding: 8px;
-            background-color: #e9ecef;
+            background-color: #f0f7ff;
             border-radius: 6px;
           }
 
           .action {
             margin-bottom: 10px;
             padding: 8px;
-            background-color: #d1ecf1;
+            background-color: #fff5e6;
             border-radius: 6px;
           }
 
           .action-result {
             margin-bottom: 10px;
             padding: 8px;
-            background-color: #f8d7da;
+            background-color: #f0fff0;
             border-radius: 6px;
           }
         }
