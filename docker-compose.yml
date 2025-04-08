@@ -38,6 +38,12 @@ services:
     stdin_open: true # 保持标准输入开启
     tty: true # 分配伪终端
     restart: unless-stopped
+    volumes:
+      - ./env/micro-agent.env:/app/.env
+      - ./env/deepseek.env:/app/app/mcp/deepseek_server/.env
+      - ./env/mysql.env:/app/app/mcp/mysql_server/.env
+      - ./env/aml.env:/app/app/mcp/aml_server/.env
+      - ./env/config.toml:/app/config/config.toml
     networks:
       - app-network # 加入现有网络
 
