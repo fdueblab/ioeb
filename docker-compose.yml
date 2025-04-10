@@ -16,6 +16,8 @@ services:
       - '443:443'
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    env_file:
+      - ./deploy/fdueblab/env/frontend.env
     networks:
       # - ioeb-backend_app-network
       - app-network
