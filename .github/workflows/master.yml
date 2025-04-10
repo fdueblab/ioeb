@@ -54,7 +54,7 @@ jobs:
       - name: Build and push Project_1 Docker image
         run: |
           docker build -t polarsnowleopard/ioeb-project1:ums ./api/Project_1
-          docker push polarsnowleopard/ioeb-project1:deploy_ums
+          docker push polarsnowleopard/ioeb-project1:ums
 
   # Project_2 构建和推送镜像
   build-project2:
@@ -72,7 +72,7 @@ jobs:
       - name: Build and push Project_1 Docker image
         run: |
           docker build -t polarsnowleopard/ioeb-project2:ums ./api/Project_2
-          docker push polarsnowleopard/ioeb-project2:deploy_ums
+          docker push polarsnowleopard/ioeb-project2:ums
 
   # Project-3 构建和推送镜像
   build-project3:
@@ -90,7 +90,7 @@ jobs:
       - name: Build and push Project-3 Docker image
         run: |
           docker build -t polarsnowleopard/ioeb-project3:ums ./api/Project-3
-          docker push polarsnowleopard/ioeb-project3:deploy_ums
+          docker push polarsnowleopard/ioeb-project3:ums
 
   # Project-4 构建和推送镜像
   build-project4:
@@ -108,4 +108,4 @@ jobs:
       - name: Build and push Project-4 Docker image
         run: |
           docker build -t polarsnowleopard/ioeb-project4:ums ./api/Project-4
-          docker push polarsnowleopard/ioeb-project4:deploy_ums
+          docker push polarsnowleopard/ioeb-project4:ums
