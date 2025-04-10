@@ -38,6 +38,24 @@ jobs:
           docker build -t polarsnowleopard/ioeb-frontend:deploy_ums .
           docker push polarsnowleopard/ioeb-frontend:deploy_ums
 
+  # AML 构建和推送镜像
+  build-aml:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push AML Docker image
+        run: |
+          docker build -t polarsnowleopard/aml:latest ./aml
+          docker push polarsnowleopard/aml:latest
+
   # Project_1 构建和推送镜像
   build-project1:
     runs-on: ubuntu-latest

@@ -4,7 +4,7 @@ import { bxAnaalyse } from '@/core/icons'
 
 const RouteView = {
   name: 'RouteView',
-  render: h => h('router-view')
+  render: (h) => h('router-view')
 }
 
 export const asyncRouterMap = [
@@ -55,7 +55,12 @@ export const asyncRouterMap = [
         name: 'vertical-ms',
         redirect: '/vertical-atom-app/aml',
         component: RouteView,
-        meta: { title: '垂域元应用仿真构建', keepAlive: true, icon: 'form', permission: ['admin', 'publisher', 'user'] },
+        meta: {
+          title: '垂域元应用仿真构建',
+          keepAlive: true,
+          icon: 'form',
+          permission: ['admin', 'publisher', 'user']
+        },
         children: [
           {
             path: '/vertical-atom-app/aml',
@@ -307,10 +312,10 @@ export const asyncRouterMap = [
         path: '/user-manage',
         name: 'user-manage',
         meta: {
-            title: '用户管理',
-            keepAlive: true,
-            icon: 'team',
-            permission: ['admin', 'publisher', 'user']
+          title: '用户管理',
+          keepAlive: true,
+          icon: 'team',
+          permission: ['admin', 'publisher', 'user']
         },
         component: () => import('@/views/user-manage')
       },
@@ -487,7 +492,11 @@ export const asyncRouterMap = [
                 path: '/account/settings/basic',
                 name: 'BasicSettings',
                 component: () => import('@/views/account/settings/BasicSetting'),
-                meta: { title: 'account.settings.menuMap.basic', hidden: true, permission: ['admin', 'publisher', 'user'] }
+                meta: {
+                  title: 'account.settings.menuMap.basic',
+                  hidden: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
               },
               {
                 path: '/account/settings/security',
@@ -504,13 +513,23 @@ export const asyncRouterMap = [
                 path: '/account/settings/custom',
                 name: 'CustomSettings',
                 component: () => import('@/views/account/settings/Custom'),
-                meta: { title: 'account.settings.menuMap.custom', hidden: true, keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+                meta: {
+                  title: 'account.settings.menuMap.custom',
+                  hidden: true,
+                  keepAlive: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
               },
               {
                 path: '/account/settings/binding',
                 name: 'BindingSettings',
                 component: () => import('@/views/account/settings/Binding'),
-                meta: { title: 'account.settings.menuMap.binding', hidden: true, keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+                meta: {
+                  title: 'account.settings.menuMap.binding',
+                  hidden: true,
+                  keepAlive: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
               },
               {
                 path: '/account/settings/notification',
@@ -529,41 +548,41 @@ export const asyncRouterMap = [
             path: '/account/center',
             name: 'account-center',
             meta: {
-                title: '个人空间',
-                keepAlive: true,
-                permission: ['admin', 'publisher', 'user']
+              title: '个人空间',
+              keepAlive: true,
+              permission: ['admin', 'publisher', 'user']
             },
             component: () => import('@/views/account/space')
-          },
-          {
-            path: 'http://172.26.185.117:1025',
-            // admin
-            // BEgPDsMumFlc
-            name: 'report',
-            meta: {
-              title: '报告生成',
-              keepAlive: true,
-              icon: 'bar-chart',
-              permission: ['admin', 'publisher', 'user'],
-              target: '_blank'
-            }
-            // component: () => import('@/views/dashboard/Analysis')
-          },
-          {
-            path: 'http://131.252.94.100:7002',
-            // root
-            // nebula
-            name: 'graph',
-            meta: {
-              title: '图数据库',
-              keepAlive: true,
-              icon: 'bar-chart',
-              permission: ['admin', 'publisher', 'user'],
-              target: '_blank'
-            }
-            // component: () => import('@/views/dashboard/Analysis')
           }
         ]
+      },
+      {
+        path: 'http://172.26.185.117:1025',
+        // admin
+        // BEgPDsMumFlc
+        name: 'report',
+        meta: {
+          title: '报告生成',
+          keepAlive: true,
+          icon: 'bar-chart',
+          permission: ['admin', 'publisher', 'user'],
+          target: '_blank'
+        }
+        // component: () => import('@/views/dashboard/Analysis')
+      },
+      {
+        path: 'http://131.252.94.100:7002',
+        // root
+        // nebula
+        name: 'graph',
+        meta: {
+          title: '图数据库',
+          keepAlive: true,
+          icon: 'bar-chart',
+          permission: ['admin', 'publisher', 'user'],
+          target: '_blank'
+        }
+        // component: () => import('@/views/dashboard/Analysis')
       }
     ]
   },

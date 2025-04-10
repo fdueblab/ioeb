@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跨境支付事中监管系统</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .header {
+            background-color: #1e3799;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        .user-info span {
+            margin-right: 10px;
+        }
+        .user-info img {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: #fff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .panel-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e3799;
+            margin: 0;
+        }
+        .controls-panel {
+            grid-column: span 2;
+            display: flex;
+            flex-direction: column;
+        }
+        .data-selector {
+            margin-bottom: 20px;
+        }
+        .data-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+        }
+        .action-button {
+            padding: 12px 20px;
+            background-color: #1e3799;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            align-self: center;
+            margin-top: 10px;
+        }
+        .action-button:hover {
+            background-color: #15296b;
+        }
+        .textarea-container {
+            height: 300px;
+            width: 100%;
+            position: relative;
+        }
+        .textarea-container textarea {
+            width: 100%;
+            height: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: none;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .panel-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+        .panel-button {
+            padding: 8px 15px;
+            background-color: #1e3799;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .panel-button:hover {
+            background-color: #15296b;
+        }
+        .panel-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #666;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-active {
+            background-color: #4cd137;
+        }
+        .status-inactive {
+            background-color: #e84118;
+        }
+        .monitoring-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: #777;
+            font-size: 12px;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #999;
+            text-align: right;
+            margin-top: 5px;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #1e3799;
+            width: 20px;
+            height: 20px;
+            animation: spin 2s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        
+        .center-loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            border: 5px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 5px solid #1e3799;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .hidden {
+            display: none;
+        }
+        
+        /* 新增样式 */
+        .report-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .report-selectors {
+            display: flex;
+            gap: 10px;
+        }
+        .report-selector {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom-color: #1e3799;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>跨境支付事中监管系统</h1>
+        <div class="user-info">
+            <span>金融机构：银联电子</span>
+            <span>用户：管理员</span>
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxZTM3OTkiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjAgMjF2LTJhNCA0IDAgMCAwLTQtNEg4YTQgNCAwIDAgMC00IDR2MiI+PC9wYXRoPjxjaXJjbGUgY3g9IjEyIiBjeT0iNyIgcj0iNCIgZmlsbD0iI2Y1ZjVmNSI+PC9jaXJjbGU+PC9zdmc+" alt="用户头像">
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="dashboard">
+            <div class="panel controls-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">监管控制面板</h2>
+                    <div class="status-indicator">
+                        <div class="status-dot status-inactive" id="status-dot"></div>
+                        <span id="status-text">未启动监测</span>
+                    </div>
+                </div>
+                
+                <div class="data-selector">
+                    <label for="data-source">数据接入选择：</label>
+                    <select id="data-source">
+                        <option value="default_data">默认数据</option>
+                        <option value="business_data_1">跨境支付业务数据源1</option>
+                        <option value="business_data_2">跨境支付业务数据源2</option>
+                        <option value="agent_1">业务数据智能体1</option>
+                        <option value="agent_2">业务数据智能体2</option>
+                        <option value="all">全部数据源</option>
+                    </select>
+                </div>
+                
+                <button class="action-button" id="monitoring-toggle">开始监测</button>
+                
+                <div class="monitoring-info" id="monitoring-info" style="display: none;">
+                    已监测交易数: <span id="transaction-count">0</span> 笔 | 
+                    监测时长: <span id="monitoring-duration">00:00:00</span> | 
+                    异常交易: <span id="anomaly-count">0</span> 笔
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">事中实时监测</h2>
+                    <small>与AML报告智能体交互</small>
+                </div>
+                
+                <!-- 添加标签卡导航 -->
+                <div class="tabs">
+                    <div class="tab active" data-tab="realtime-alerts">实时预警</div>
+                    <div class="tab" data-tab="final-report">监测报告</div>
+                </div>
+                
+                <!-- 实时预警标签内容 -->
+                <div class="tab-content active" id="realtime-alerts">
+                    <div class="textarea-container">
+                        <textarea id="monitoring-alerts" readonly placeholder="监控中，等待异常交易预警..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- 监测报告标签内容 -->
+                <div class="tab-content" id="final-report">
+                    <div class="textarea-container">
+                        <textarea id="monitoring-report" readonly placeholder="点击"监测报告生成"按钮，生成监测期间的异常交易分析报告..."></textarea>
+                        <div id="center-report-loader" class="center-loader hidden"></div>
+                    </div>
+                </div>
+                
+                <div class="panel-footer">
+                    <div class="report-controls">
+                        <div class="report-selectors">
+                            <select id="time-range" class="report-selector">
+                                <option value="day">本日</option>
+                                <option value="month">本月</option>
+                                <option value="year">本年</option>
+                            </select>
+                            <select id="business-scope" class="report-selector">
+                                <option value="current">当前业务</option>
+                                <option value="all">所有业务</option>
+                            </select>
+                        </div>
+                        <button class="panel-button" id="generate-report-btn">监测报告生成</button>
+                        <button class="panel-button" id="model-update-btn">监测模型检索与更新</button>
+                    </div>
+                </div>
+                <div class="timestamp" id="report-timestamp"></div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">信息统计</h2>
+                    <small>与信息统计智能体交互</small>
+                </div>
+                
+                <!-- 添加标签卡导航 -->
+                <div class="tabs">
+                    <div class="tab active" data-tab="stats-analysis">统计分析</div>
+                    <div class="tab" data-tab="stats-visualization">统计可视化</div>
+                </div>
+                
+                <!-- 统计分析标签内容 -->
+                <div class="tab-content active" id="stats-analysis">
+                    <div class="textarea-container">
+                        <textarea id="statistics-report" readonly placeholder="点击"统计分析"按钮，生成监测期间的交易数据统计分析..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- 统计可视化标签内容 -->
+                <div class="tab-content" id="stats-visualization">
+                    <div class="textarea-container">
+                        <div id="visualization-placeholder" style="display: flex; justify-content: center; align-items: center; height: 100%; background-color: #f9f9f9;">
+                            <p style="text-align: center; color: #666;">点击"统计信息可视化"按钮生成数据可视化图表<br>(功能将在后续版本中实现)</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel-footer">
+                    <div class="report-controls">
+                        <div class="report-selectors">
+                            <!-- 可以在这里添加统计相关的选择器 -->
+                        </div>
+                        <div>
+                            <button class="panel-button" id="generate-stats-btn">统计分析</button>
+                            <button class="panel-button" id="visualize-stats-btn">统计信息可视化</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="timestamp" id="stats-timestamp"></div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>跨境支付事中监管系统 &copy; 2023 版权所有</p>
+    </footer>
+
+    <script>
+        // 监测按钮交互逻辑
+        const monitoringToggle = document.getElementById('monitoring-toggle');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const monitoringReport = document.getElementById('monitoring-report');
+        const statisticsReport = document.getElementById('statistics-report');
+        const generateReportBtn = document.getElementById('generate-report-btn');
+        const generateStatsBtn = document.getElementById('generate-stats-btn');
+        const monitoringInfo = document.getElementById('monitoring-info');
+        const transactionCount = document.getElementById('transaction-count');
+        const monitoringDuration = document.getElementById('monitoring-duration');
+        const anomalyCount = document.getElementById('anomaly-count');
+        const reportTimestamp = document.getElementById('report-timestamp');
+        const statsTimestamp = document.getElementById('stats-timestamp');
+        const reportLoader = document.getElementById('center-report-loader');
+        const dataSource = document.getElementById('data-source');
+        const modelUpdateBtn = document.getElementById('model-update-btn');
+        const visualizeStatsBtn = document.getElementById('visualize-stats-btn');
+        const timeRange = document.getElementById('time-range');
+        const businessScope = document.getElementById('business-scope');
+        const monitoringAlerts = document.getElementById('monitoring-alerts');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        let isMonitoring = false;
+        let transactionCounter = 0;
+        let anomalyCounter = 0;
+        let monitoringTimer = null;
+        let startTime = null;
+        
+        // 格式化时间
+        function formatTime(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+        
+        // 更新监测时间
+        function updateMonitoringTime() {
+            if (startTime) {
+                const currentTime = new Date();
+                const elapsed = Math.floor((currentTime - startTime) / 1000);
+                monitoringDuration.textContent = formatTime(elapsed);
+            }
+        }
+        
+        // 修改标签切换功能，限制只在当前面板内切换
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // 获取当前标签所在的面板
+                const panel = this.closest('.panel');
+                
+                // 只在当前面板内移除所有标签的active类
+                panel.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                // 给当前点击的标签添加active类
+                this.classList.add('active');
+                
+                // 获取要显示的标签内容ID
+                const tabId = this.getAttribute('data-tab');
+                
+                // 只在当前面板内隐藏所有标签内容
+                panel.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                // 显示对应的标签内容
+                panel.querySelector(`#${tabId}`).classList.add('active');
+            });
+        });
+        
+        // 修改模拟交易数据函数，将预警信息添加到实时预警标签
+        function simulateTransactions() {
+            const newTransactions = Math.floor(Math.random() * 5) * 10 + Math.floor(Math.random() * 10);
+            transactionCounter += newTransactions;
+            
+            // 约10%的交易可能是异常的
+            if (Math.random() < 0.2) {
+                anomalyCounter++;
+                anomalyCount.textContent = anomalyCounter;
+                
+                // 添加实时预警信息到预警文本框
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+                const transactionId = 'TX' + Math.floor(10000000 + Math.random() * 90000000);
+                const amount = Math.floor(5000 + Math.random() * 45000);
+                const riskLevel = Math.random() > 0.5 ? '高' : '中';
+                const reasons = [
+                    '短时间内多笔大额交易',
+                    '收款方为高风险地区企业',
+                    '交易路径异常',
+                    '资金流向与历史交易模式不符',
+                    '交易对手为可疑名单成员',
+                    '交易频率异常',
+                    '重复交易金额'
+                ];
+                const reason = reasons[Math.floor(Math.random() * reasons.length)];
+                
+                // 构建预警消息
+                const alertMessage = `[${timeString}] 预警 #${anomalyCounter}：检测到异常交易\n` +
+                    `交易号: ${transactionId}\n` +
+                    `金额: $${amount} USD\n` +
+                    `异常原因: ${reason}\n` +
+                    `风险等级: ${riskLevel}\n` +
+                    `------------------------------\n\n`;
+                
+                // 添加到预警文本框，保持最新预警在顶部
+                monitoringAlerts.value = alertMessage + monitoringAlerts.value;
+            }
+            
+            transactionCount.textContent = transactionCounter;
+        }
+        
+        // 修改监测切换功能，在开始监测时清空预警和报告
+        monitoringToggle.addEventListener('click', function() {
+            isMonitoring = !isMonitoring;
+            
+            if (isMonitoring) {
+                // 开始监测
+                monitoringToggle.textContent = '停止监测';
+                statusDot.classList.remove('status-inactive');
+                statusDot.classList.add('status-active');
+                statusText.textContent = '监测中...';
+                monitoringInfo.style.display = 'block';
+                
+                // 重置计数器和监测报告
+                startTime = new Date();
+                transactionCounter = 0;
+                anomalyCounter = 0;
+                transactionCount.textContent = '0';
+                anomalyCount.textContent = '0';
+                monitoringAlerts.value = "事中实时监测已启动...\n监控中，等待异常交易预警...\n\n";
+                monitoringReport.value = ""; // 清空报告内容
+                
+                // 自动切换到实时预警标签
+                tabs[0].click();
+                
+                // 每秒更新时间和模拟交易
+                monitoringTimer = setInterval(function() {
+                    updateMonitoringTime();
+                    simulateTransactions();
+                }, 1000);
+            } else {
+                // 停止监测
+                monitoringToggle.textContent = '开始监测';
+                statusDot.classList.remove('status-active');
+                statusDot.classList.add('status-inactive');
+                statusText.textContent = '监测已停止';
+                
+                // 停止计时器
+                if (monitoringTimer) {
+                    clearInterval(monitoringTimer);
+                    monitoringTimer = null;
+                }
+                
+                // 添加监测结束消息
+                const endMessage = "\n--- 监测已停止 ---\n";
+                monitoringAlerts.value += endMessage;
+            }
+        });
+        
+        // 修改生成报告按钮的功能，将报告显示在报告标签中
+        generateReportBtn.addEventListener('click', async function() {
+            // 获取选择的时间范围和业务范围
+            const selectedTimeRange = timeRange.value;
+            const selectedBusinessScope = businessScope.value;
+            
+            console.log(`生成报告 - 时间范围: ${selectedTimeRange}, 业务范围: ${selectedBusinessScope}`);
+            
+            // 自动切换到报告标签
+            tabs[1].click();
+            
+            // 检查是否选择了默认数据源
+            if (dataSource.value === 'default_data') {
+                // 显示加载指示器
+                reportLoader.classList.remove('hidden');
+                generateReportBtn.disabled = true;
+                monitoringReport.value = "正在生成反洗钱分析报告，请稍候...";
+                
+                try {
+                    // 调用AML报告智能体API
+                    const formData = new FormData();
+                    // 不需要上传文件，后端会使用默认数据集
+                    const response = await fetch('/api/agent/aml_report', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误! 状态码: ${response.status}`);
+                    }
+                    
+                    // 处理SSE流
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder("utf-8");
+                    let buffer = "";
+                    let reportContent = "";
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        // 解码数据并添加到缓冲区
+                        buffer += decoder.decode(value, { stream: true });
+                        
+                        // 处理缓冲区中的每一行数据
+                        const lines = buffer.split("\n\n");
+                        buffer = lines.pop(); // 保留可能不完整的最后一行
+                        
+                        for (const line of lines) {
+                            if (line.startsWith("data: ")) {
+                                try {
+                                    const data = JSON.parse(line.substring(6));
+                                    
+                                    // 检查是否有错误
+                                    if (data.error) {
+                                        monitoringReport.value = `错误: ${data.error}`;
+                                        console.error("API返回错误:", data.error);
+                                        continue;
+                                    }
+                                    
+                                    // 检查是否是最终结果消息
+                                    if (data.is_final_result && data.final_results && data.final_results.report) {
+                                        reportContent = data.final_results.report;
+                                    }
+                                    
+                                    // 不在文本框中显示处理步骤
+                                    // 只在控制台输出步骤信息
+                                    if (data.step) {
+                                        console.log(`步骤 ${data.step}`, data);
+                                    }
+                                } catch (e) {
+                                    console.error("解析数据失败:", e, line);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 显示报告内容
+                    if (reportContent) {
+                        monitoringReport.value = reportContent;
+                    } else {
+                        monitoringReport.value = "未能获取到报告内容，请重试。可能AML智能体没有返回最终结果。";
+                    }
+                    
+                } catch (error) {
+                    console.error("生成报告时出错:", error);
+                    monitoringReport.value = `生成报告时出错: ${error.message}`;
+                } finally {
+                    // 隐藏加载指示器
+                    reportLoader.classList.add('hidden');
+                    generateReportBtn.disabled = false;
+                    
+                    // 更新报告时间戳
+                    reportTimestamp.textContent = '报告生成时间: ' + new Date().toLocaleString();
+                }
+            } else {
+                // 模拟报告生成（非默认数据源）
+                monitoringReport.value = '监测报告：\n\n' + 
+                    '时间: ' + new Date().toLocaleString() + '\n' +
+                    '监测时长: ' + monitoringDuration.textContent + '\n' +
+                    '检测到跨境支付交易总量: ' + transactionCounter + '笔\n' +
+                    '异常交易数量: ' + anomalyCounter + '笔\n\n' +
+                    '异常交易详情：\n\n' +
+                    '异常交易1：\n' +
+                    '- 交易号: TX' + Math.floor(10000000 + Math.random() * 90000000) + '\n' +
+                    '- 交易金额: $' + (Math.floor(10000 + Math.random() * 40000)) + ' USD\n' +
+                    '- 异常原因: 短时间内多笔大额交易，收款方为高风险地区企业\n' +
+                    '- 风险等级: 高\n' +
+                    '- 建议措施: 暂停交易，进行人工审核\n\n' +
+                    (anomalyCounter > 1 ? 
+                    '异常交易2：\n' +
+                    '- 交易号: TX' + Math.floor(10000000 + Math.random() * 90000000) + '\n' +
+                    '- 交易金额: $' + (Math.floor(5000 + Math.random() * 20000)) + ' USD\n' +
+                    '- 异常原因: 交易路径异常，资金流向与历史交易模式不符\n' +
+                    '- 风险等级: 中\n' +
+                    '- 建议措施: 临时冻结交易，联系客户确认\n\n' : '') +
+                    '风险提示：\n' +
+                    '- 本次监测期间发现' + anomalyCounter + '笔异常交易，占总交易量的' + 
+                    (transactionCounter > 0 ? (anomalyCounter / transactionCounter * 100).toFixed(2) : '0') + '%\n' +
+                    '- 建议加强对高风险地区跨境交易的审核\n' +
+                    '- 系统智能体判断当前整体风险水平: ' + (anomalyCounter > 3 ? '高' : anomalyCounter > 1 ? '中' : '低');
+                
+                // 更新报告时间戳
+                reportTimestamp.textContent = '报告生成时间: ' + new Date().toLocaleString();
+            }
+        });
+        
+        // 修改统计分析按钮事件
+        generateStatsBtn.addEventListener('click', function() {
+            // 自动切换到统计分析标签
+            document.querySelector('.tab[data-tab="stats-analysis"]').click();
+            
+            // 模拟统计分析生成
+            statisticsReport.value = '信息统计：\n\n' +
+                '当前监测期间交易总览：\n' +
+                '- 监测时长: ' + monitoringDuration.textContent + '\n' +
+                '- 跨境支付总额: $' + (transactionCounter * (10000 + Math.floor(Math.random() * 5000))).toLocaleString() + ' USD\n' +
+                '- 交易总量: ' + transactionCounter + '笔\n' +
+                '- 平均交易金额: $' + Math.floor(10000 + Math.random() * 5000).toLocaleString() + ' USD\n\n' +
+                '异常统计：\n' +
+                '- 高风险交易: ' + Math.floor(anomalyCounter * 0.4) + '笔 (' + (transactionCounter > 0 ? (Math.floor(anomalyCounter * 0.4) / transactionCounter * 100).toFixed(2) : '0') + '%)\n' +
+                '- 中风险交易: ' + Math.floor(anomalyCounter * 0.6) + '笔 (' + (transactionCounter > 0 ? (Math.floor(anomalyCounter * 0.6) / transactionCounter * 100).toFixed(2) : '0') + '%)\n' +
+                '- 低风险交易: ' + Math.floor(transactionCounter * 0.02) + '笔 (' + (transactionCounter > 0 ? (Math.floor(transactionCounter * 0.02) / transactionCounter * 100).toFixed(2) : '0') + '%)\n\n' +
+                '交易区域分布：\n' +
+                '- 亚太地区: ' + (40 + Math.floor(Math.random() * 10)) + '%\n' +
+                '- 欧美地区: ' + (30 + Math.floor(Math.random() * 10)) + '%\n' +
+                '- 中东地区: ' + (10 + Math.floor(Math.random() * 10)) + '%\n' +
+                '- 其他地区: ' + (5 + Math.floor(Math.random() * 5)) + '%\n\n' +
+                '交易类型分析：\n' +
+                '- 贸易支付: ' + (60 + Math.floor(Math.random() * 10)) + '%\n' +
+                '- 服务支付: ' + (20 + Math.floor(Math.random() * 10)) + '%\n' +
+                '- 投资转账: ' + (10 + Math.floor(Math.random() * 5)) + '%\n' +
+                '- 其他类型: ' + (5 + Math.floor(Math.random() * 5)) + '%\n\n' +
+                '分析结论：\n' +
+                '- 当前监测期间交易活动' + (transactionCounter > 100 ? '活跃' : '正常') + '\n' +
+                '- 异常交易比例' + (anomalyCounter / transactionCounter > 0.05 ? '高于' : '处于') + '历史平均水平\n' +
+                '- 建议关注' + (anomalyCounter > 3 ? '高风险地区和大额交易' : '正常交易监测');
+            
+            // 更新统计时间戳
+            statsTimestamp.textContent = '统计生成时间: ' + new Date().toLocaleString();
+        });
+        
+        // 修改统计信息可视化按钮事件
+        visualizeStatsBtn.addEventListener('click', function() {
+            // 自动切换到统计可视化标签
+            document.querySelector('.tab[data-tab="stats-visualization"]').click();
+            alert('统计信息可视化功能将在后续版本中实现。');
+        });
+        
+        // 添加监测模型检索与更新按钮事件
+        modelUpdateBtn.addEventListener('click', function() {
+            alert('监测模型检索与更新功能将在后续版本中实现。');
+        });
+        
+        // 在页面加载时自动获取测试数据集并准备好
+        window.addEventListener('load', async function() {
+            // 这里可以添加预加载数据集的逻辑
+            console.log("页面加载完成");
+        });
+    </script>
+</body>
+</html> 
