@@ -81,7 +81,7 @@ def query_nl2gql(query: str) -> Optional[Dict[str, Any]]:
         ...     print(f"查询结果: {result}")
     """
     # 构建API端点URL
-    base_url = "http://localhost:8889/project_3/nl2gql_main"
+    base_url = "http://131.252.10.118:8889/project_3/nl2gql_main"
     url = f"{base_url}?nl={query}"
 
     try:
@@ -220,7 +220,7 @@ def query_and_generate_report(query: str = "请为我写一段金融风险报告
     """
     try:
         # 构建API端点URL
-        base_url = "http://localhost:8893/project_3/nl2gql_main"
+        base_url = "http://131.252.10.118:8893/project_3/nl2gql_main"
         url = f"{base_url}?query={query}"
 
         # 发送请求获取报告内容
