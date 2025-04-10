@@ -12,9 +12,7 @@ dotenv.load_dotenv()
 
 DATA_PATH = os.getenv("DATA_PATH", "data/test_dataset.zip")
 # 使用外部AML报告API
-AML_REPORT_API_URL = os.getenv("AML_REPORT_API_URL")
-# AML_REPORT_API_URL = 'https://fdueblab.cn/api/agent/aml_report'
-# AML_REPORT_API_URL = 'http://localhost:8010/api/agent/aml_report'
+AML_REPORT_API_URL = os.getenv("AML_REPORT_API_URL", "http://fdueblab.cn/api/agent/aml_report")
 
 # 创建FastAPI应用
 app = FastAPI()
