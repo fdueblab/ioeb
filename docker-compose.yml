@@ -10,7 +10,7 @@ networks:
 services:
   # 前端服务
   frontend:
-    image: polarsnowleopard/ioeb-frontend:latest
+    image: polarsnowleopard/ioeb-frontend:deploy_ums
     ports:
       - '80:80'
       - '443:443'
@@ -23,8 +23,8 @@ services:
     depends_on:
       - agent
       - backend
-      - docs
       - project-1
+      - project-2
       - project-3
       - project-4
     restart: unless-stopped
@@ -62,18 +62,9 @@ services:
     networks:
       - app-network # 加入现有网络
 
-  # 文档服务
-  docs:
-    image: polarsnowleopard/ioeb-docs:latest
-    ports:
-      - '8000:8000'
-    networks:
-      # - ioeb-backend_app-network  # 加入现有网络
-      - app-network
-
   # 课题一服务
   project-1:
-    image: polarsnowleopard/ioeb-project1:latest
+    image: polarsnowleopard/ioeb-project1:ums
     ports:
       - '25001:5000'
     volumes:
@@ -88,7 +79,7 @@ services:
 
   # 课题二服务
   project-2:
-    image: polarsnowleopard/ioeb-project2:latest
+    image: polarsnowleopard/ioeb-project2:ums
     ports:
       - '25002:5000'
     volumes:
@@ -103,7 +94,7 @@ services:
 
   # 课题3服务
   project-3:
-    image: polarsnowleopard/ioeb-project3:latest
+    image: polarsnowleopard/ioeb-project3:ums
     ports:
       - '25003:5000'
     volumes:
@@ -118,7 +109,7 @@ services:
 
   # 课题4服务
   project-4:
-    image: polarsnowleopard/ioeb-project4:latest
+    image: polarsnowleopard/ioeb-project4:ums
     ports:
       - '25004:5000'
     volumes:
@@ -132,22 +123,3 @@ services:
       # - ioeb-backend_app-network
       - app-network
     restart: unless-stopped
-
-  # 利奈唑胺服务
-  linezolid:
-    image: polarsnowleopard/ioeb-linezolid:latest
-    ports:
-      - '25011:5000' # API服务端口
-      - '25012:7860' # Gradio UI端口
-      - '25013:8000' # MCP服务端口
-    restart: unless-stopped
-    healthcheck:
-      test: ['CMD', './healthcheck.sh']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    environment:
-      - PYTHONUNBUFFERED=1 # 确保Python输出不被缓冲，方便查看日志
-    networks:
-      - app-network
