@@ -566,7 +566,7 @@
                     // 调用AML报告智能体API
                     const formData = new FormData();
                     // 不需要上传文件，后端会使用默认数据集
-                    const response = await fetch('/api/agent/aml_report', {
+                    const response = await fetch('/aml/api/agent/aml_report', {
                         method: 'POST',
                         body: formData
                     });
