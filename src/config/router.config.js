@@ -558,8 +558,8 @@ export const asyncRouterMap = [
       },
       {
         path: 'http://172.26.185.117:1025',
-        // admin
-        // BEgPDsMumFlc
+        // 用户名admin
+        // 密码BEgPDsMumFlc
         name: 'report',
         meta: {
           title: '报告生成',
@@ -572,8 +572,8 @@ export const asyncRouterMap = [
       },
       {
         path: 'http://131.252.94.100:7002',
-        // root
-        // nebula
+        // 用户名root
+        // 密码nebula
         name: 'graph',
         meta: {
           title: '图数据库',
