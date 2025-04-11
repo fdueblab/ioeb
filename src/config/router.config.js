@@ -4,10 +4,25 @@ import { bxAnaalyse } from '@/core/icons'
 
 const RouteView = {
   name: 'RouteView',
-  render: h => h('router-view')
+  render: (h) => h('router-view')
 }
 
 export const asyncRouterMap = [
+  // 添加新的顶级路由配置，使用BlankLayout
+  {
+    path: '/aml/monitor',
+    name: 'aml-monitor-fullscreen',
+    component: BlankLayout,
+    meta: { title: '跨境支付事中监测系统', permission: ['admin', 'publisher'] },
+    children: [
+      {
+        path: '',
+        name: 'aml-monitor',
+        component: () => import('@/views/aml/monitor'),
+        meta: { title: '跨境支付事中监测', keepAlive: true, permission: ['admin', 'publisher'] }
+      }
+    ]
+  },
   {
     path: '/',
     name: 'index',
@@ -31,6 +46,7 @@ export const asyncRouterMap = [
             component: () => import('@/views/vertical/user/aml'),
             meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher'] }
           },
+          // 已移除AML监控页面，现在是顶级路由
           {
             path: '/vertical-user/aircraft',
             name: 'vertical-user-aircraft',
@@ -127,7 +143,12 @@ export const asyncRouterMap = [
         name: 'vertical-ms',
         redirect: '/vertical-atom-app/aml',
         component: RouteView,
-        meta: { title: '垂域元应用仿真构建', keepAlive: true, icon: 'form', permission: ['admin', 'publisher', 'user'] },
+        meta: {
+          title: '垂域元应用仿真构建',
+          keepAlive: true,
+          icon: 'form',
+          permission: ['admin', 'publisher', 'user']
+        },
         children: [
           {
             path: '/vertical-atom-app/aml',
@@ -650,15 +671,26 @@ export const asyncRouterMap = [
         },
         component: () => import('@/views/dashboard/Analysis')
       },
+      // 跨境支付事中监测系统（全屏）
+      {
+        path: '#/aml/monitor',
+        name: 'aml-monitor-link',
+        meta: {
+          title: '跨境支付事中监测',
+          icon: 'fund',
+          target: '_blank',
+          permission: ['admin', 'publisher']
+        }
+      },
       // 用户管理
       {
         path: '/user-manage',
         name: 'user-manage',
         meta: {
-            title: '用户管理',
-            keepAlive: true,
-            icon: 'team',
-            permission: ['admin', 'publisher', 'user']
+          title: '用户管理',
+          keepAlive: true,
+          icon: 'team',
+          permission: ['admin', 'publisher', 'user']
         },
         component: () => import('@/views/user-manage')
       },
@@ -877,7 +909,11 @@ export const asyncRouterMap = [
                 path: '/account/settings/basic',
                 name: 'BasicSettings',
                 component: () => import('@/views/account/settings/BasicSetting'),
-                meta: { title: 'account.settings.menuMap.basic', hidden: true, permission: ['admin', 'publisher', 'user'] }
+                meta: {
+                  title: 'account.settings.menuMap.basic',
+                  hidden: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
               },
               {
                 path: '/account/settings/security',
@@ -894,13 +930,23 @@ export const asyncRouterMap = [
                 path: '/account/settings/custom',
                 name: 'CustomSettings',
                 component: () => import('@/views/account/settings/Custom'),
-                meta: { title: 'account.settings.menuMap.custom', hidden: true, keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+                meta: {
+                  title: 'account.settings.menuMap.custom',
+                  hidden: true,
+                  keepAlive: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
               },
               {
                 path: '/account/settings/binding',
                 name: 'BindingSettings',
                 component: () => import('@/views/account/settings/Binding'),
-                meta: { title: 'account.settings.menuMap.binding', hidden: true, keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+                meta: {
+                  title: 'account.settings.menuMap.binding',
+                  hidden: true,
+                  keepAlive: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
               },
               {
                 path: '/account/settings/notification',
@@ -919,9 +965,9 @@ export const asyncRouterMap = [
             path: '/account/center',
             name: 'account-center',
             meta: {
-                title: '个人空间',
-                keepAlive: true,
-                permission: ['admin', 'publisher', 'user']
+              title: '个人空间',
+              keepAlive: true,
+              permission: ['admin', 'publisher', 'user']
             },
             component: () => import('@/views/account/space')
           }
