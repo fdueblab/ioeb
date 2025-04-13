@@ -1,4 +1,3 @@
-// eslint-disable-next-line
 import { UserLayout, BasicLayout, BlankLayout, PageView } from '@/layouts'
 import { bxAnaalyse } from '@/core/icons'
 
@@ -43,7 +42,8 @@ export const asyncRouterMap = [
           {
             path: '/vertical-user/aml',
             name: 'vertical-user-aml',
-            component: () => import('@/views/vertical/user/aml'),
+            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
+            props: { verticalType: 'aml', verticalTitle: '跨境支付AI监测' },
             meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher'] }
           },
           // 已移除AML监控页面，现在是顶级路由
@@ -51,37 +51,43 @@ export const asyncRouterMap = [
             path: '/vertical-user/aircraft',
             name: 'vertical-user-aircraft',
             meta: { title: '无人飞机AI监控', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/user/aircraft')
+            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
+            props: { verticalType: 'aircraft', verticalTitle: '无人飞机AI监控' }
           },
           {
             path: '/vertical-user/health',
             name: 'vertical-user-health',
             meta: { title: '乡村医疗AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/user/health')
+            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
+            props: { verticalType: 'health', verticalTitle: '乡村医疗AI服务' }
           },
           {
             path: '/vertical-user/agriculture',
             name: 'vertical-user-agriculture',
             meta: { title: '数字农业AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/user/agriculture')
+            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
+            props: { verticalType: 'agriculture', verticalTitle: '数字农业AI服务' }
           },
           {
             path: '/vertical-user/evtol',
             name: 'vertical-user-evtol',
             meta: { title: '低空飞行AI应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/user/evtol')
+            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
+            props: { verticalType: 'evtol', verticalTitle: '低空飞行AI应用' }
           },
           {
             path: '/vertical-user/ecommerce',
             name: 'vertical-user-ecommerce',
             meta: { title: '跨境电商AI应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/user/ecommerce')
+            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
+            props: { verticalType: 'ecommerce', verticalTitle: '跨境电商AI应用' }
           },
           {
             path: '/vertical-user/homeAI',
             name: 'vertical-user-homeAI',
             meta: { title: '家庭陪伴AI应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/user/homeAI')
+            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
+            props: { verticalType: 'homeAI', verticalTitle: '家庭陪伴AI应用' }
           }
         ]
       },
