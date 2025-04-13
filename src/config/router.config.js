@@ -8,6 +8,21 @@ const RouteView = {
 }
 
 export const asyncRouterMap = [
+  // 添加新的顶级路由配置，使用BlankLayout
+  {
+    path: '/aml/monitor',
+    name: 'aml-monitor-fullscreen',
+    component: BlankLayout,
+    meta: { title: '跨境支付事中监测系统', permission: ['admin', 'publisher'] },
+    children: [
+      {
+        path: '',
+        name: 'aml-monitor',
+        component: () => import('@/views/aml/monitor'),
+        meta: { title: '跨境支付事中监测', keepAlive: true, permission: ['admin', 'publisher'] }
+      }
+    ]
+  },
   {
     path: '/',
     name: 'index',
@@ -306,6 +321,17 @@ export const asyncRouterMap = [
           permission: ['admin', 'publisher', 'user']
         },
         component: () => import('@/views/dashboard/Analysis')
+      },
+      // 跨境支付事中监测系统（全屏）
+      {
+        path: '#/aml/monitor',
+        name: 'aml-monitor-link',
+        meta: {
+          title: '跨境支付事中监测',
+          icon: 'fund',
+          target: '_blank',
+          permission: ['admin', 'publisher']
+        }
       },
       // 用户管理
       {
