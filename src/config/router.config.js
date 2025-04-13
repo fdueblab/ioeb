@@ -1019,5 +1019,9 @@ export const constantRouterMap = [
         component: undefined
       }
     ]
+  },
+  {
+    path: '/404',
+    component: () => import(/* webpackChunkName: "fail" */ '@/views/exception/404')
   }
 ]
