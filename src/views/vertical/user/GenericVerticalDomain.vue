@@ -6,7 +6,6 @@
       :is="currentComponent"
       :apiList="apiList"
       :verticalType="verticalType"
-      :verticalTitle="verticalTitle"
       :key="verticalType"
     >
     </component>
@@ -30,11 +29,6 @@ export default {
     verticalType: {
       type: String,
       required: true
-    },
-    // 领域标题
-    verticalTitle: {
-      type: String,
-      default: ''
     }
   },
   data() {
