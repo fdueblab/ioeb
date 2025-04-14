@@ -43,7 +43,7 @@ export const asyncRouterMap = [
             path: '/vertical-user/aml',
             name: 'vertical-user-aml',
             component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'aml', verticalTitle: '跨境支付AI监测' },
+            props: { verticalType: 'aml' },
             meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher'] }
           },
           // 已移除AML监控页面，现在是顶级路由
@@ -52,42 +52,42 @@ export const asyncRouterMap = [
             name: 'vertical-user-aircraft',
             meta: { title: '无人飞机AI监控', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'aircraft', verticalTitle: '无人飞机AI监控' }
+            props: { verticalType: 'aircraft' }
           },
           {
             path: '/vertical-user/health',
             name: 'vertical-user-health',
             meta: { title: '乡村医疗AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'health', verticalTitle: '乡村医疗AI服务' }
+            props: { verticalType: 'health' }
           },
           {
             path: '/vertical-user/agriculture',
             name: 'vertical-user-agriculture',
             meta: { title: '数字农业AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'agriculture', verticalTitle: '数字农业AI服务' }
+            props: { verticalType: 'agriculture' }
           },
           {
             path: '/vertical-user/evtol',
             name: 'vertical-user-evtol',
             meta: { title: '低空飞行AI应用', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'evtol', verticalTitle: '低空飞行AI应用' }
+            props: { verticalType: 'evtol' }
           },
           {
             path: '/vertical-user/ecommerce',
             name: 'vertical-user-ecommerce',
             meta: { title: '跨境电商AI应用', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'ecommerce', verticalTitle: '跨境电商AI应用' }
+            props: { verticalType: 'ecommerce' }
           },
           {
             path: '/vertical-user/homeAI',
             name: 'vertical-user-homeAI',
             meta: { title: '家庭陪伴AI应用', keepAlive: true, permission: ['admin', 'publisher'] },
             component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'homeAI', verticalTitle: '家庭陪伴AI应用' }
+            props: { verticalType: 'homeAI' }
           }
         ]
       },
@@ -102,44 +102,51 @@ export const asyncRouterMap = [
           {
             path: '/vertical-ms/aml',
             name: 'vertical-ms-aml',
-            component: () => import('@/views/vertical/ms/aml'),
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'aml' },
             meta: { title: '跨境支付AI监测服务发布', keepAlive: true, permission: ['admin', 'publisher'] }
           },
           {
             path: '/vertical-ms/aircraft',
             name: 'vertical-ms-aircraft',
             meta: { title: '无人飞机AI监控服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/aircraft')
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'aircraft' }
           },
           {
             path: '/vertical-ms/health',
             name: 'vertical-ms-health',
             meta: { title: '乡村医疗AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/health')
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'health' }
           },
           {
             path: '/vertical-ms/agriculture',
             name: 'vertical-ms-agriculture',
             meta: { title: '数字农业AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/agriculture')
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'agriculture' }
           },
           {
             path: '/vertical-ms/evtol',
             name: 'vertical-ms-evtol',
             meta: { title: '低空飞行AI应用服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/evtol')
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'evtol' }
           },
           {
             path: '/vertical-ms/ecommerce',
             name: 'vertical-ms-ecommerce',
             meta: { title: '跨境电商AI应用服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/ecommerce')
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'ecommerce' }
           },
           {
             path: '/vertical-ms/homeAI',
             name: 'vertical-ms-homeAI',
             meta: { title: '家庭陪伴AI应用服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/homeAI')
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'homeAI' }
           }
         ]
       },
@@ -1019,5 +1026,9 @@ export const constantRouterMap = [
         component: undefined
       }
     ]
+  },
+  {
+    path: '/404',
+    component: () => import(/* webpackChunkName: "fail" */ '@/views/exception/404')
   }
 ]
