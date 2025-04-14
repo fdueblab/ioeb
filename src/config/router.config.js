@@ -22,6 +22,36 @@ export const asyncRouterMap = [
       }
     ]
   },
+  // 添加AML列表查询页面
+  {
+    path: '/aml/list',
+    name: 'aml-list-fullscreen',
+    component: BlankLayout,
+    meta: { title: '跨境支付风险商户查询', permission: ['admin', 'publisher'] },
+    children: [
+      {
+        path: '',
+        name: 'aml-list',
+        component: () => import('@/views/aml/list'),
+        meta: { title: '商户风险查询', keepAlive: true, permission: ['admin', 'publisher'] }
+      }
+    ]
+  },
+  // 添加AML详情页面
+  {
+    path: '/aml/detail/:id',
+    name: 'aml-detail-fullscreen',
+    component: BlankLayout,
+    meta: { title: '跨境支付商户风险详情', permission: ['admin', 'publisher'] },
+    children: [
+      {
+        path: '',
+        name: 'aml-detail',
+        component: () => import('@/views/aml/detail'),
+        meta: { title: '商户风险详情', keepAlive: false, permission: ['admin', 'publisher'] }
+      }
+    ]
+  },
   {
     path: '/',
     name: 'index',
