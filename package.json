@@ -16,6 +16,7 @@
   "dependencies": {
     "@ant-design-vue/pro-layout": "^1.0.12",
     "@antv/data-set": "^0.10.2",
+    "@antv/g2plot": "^2.4.33",
     "@antv/g6": "^4.1.11",
     "@easydarwin/easyplayer": "^3.2.7",
     "@syncfusion/ej2-vue-diagrams": "^18.4.31",

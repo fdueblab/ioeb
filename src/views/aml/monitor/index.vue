@@ -11,6 +11,18 @@
 
     <div class="content-container">
       <div class="monitoring-container">
+        <!-- 导航菜单 -->
+        <div class="navigation-menu">
+          <a-menu mode="horizontal" :selectedKeys="['monitor']">
+            <a-menu-item key="monitor">
+              <router-link to="/aml/monitor"> <a-icon type="dashboard" />实时监控 </router-link>
+            </a-menu-item>
+            <a-menu-item key="list">
+              <router-link to="/aml/list"> <a-icon type="table" />商户风险查询 </router-link>
+            </a-menu-item>
+          </a-menu>
+        </div>
+
         <!-- 监控控制面板 -->
         <div class="panel controls-panel">
           <div class="panel-header">
@@ -60,14 +72,41 @@
 
               <a-tabs v-model="monitoringActiveKey">
                 <a-tab-pane key="1" tab="实时预警">
-                  <div class="textarea-container">
-                    <a-textarea
-                      v-model="monitoringAlerts"
-                      :rows="12"
-                      readonly
-                      placeholder="监控中，等待异常交易预警..."
+                  <div class="textarea-container alerts-container">
+                    <a-table
+                      :columns="alertColumns"
+                      :data-source="alertsTableData"
+                      :pagination="{ pageSize: 5 }"
+                      :scroll="{ y: 220 }"
+                      size="small"
+                      :loading="loading"
                     >
-                    </a-textarea>
+                      <template slot="time" slot-scope="text">
+                        <span>{{ text }}</span>
+                      </template>
+                      <template slot="alertNumber" slot-scope="text">
+                        <a-tag color="red">预警 #{{ text }}</a-tag>
+                      </template>
+                      <template slot="transactionId" slot-scope="text">
+                        <a-tooltip placement="topLeft" :title="'交易ID: ' + text">
+                          <a>{{ text }}</a>
+                        </a-tooltip>
+                      </template>
+                      <template slot="amount" slot-scope="text">
+                        <span style="color: #cf1322">$ {{ text.toLocaleString() }}</span>
+                      </template>
+                      <template slot="reason" slot-scope="text">
+                        <a-tooltip placement="topLeft" :title="text">
+                          <span>{{ text.length > 12 ? text.substring(0, 12) + '...' : text }}</span>
+                        </a-tooltip>
+                      </template>
+                      <template slot="riskLevel" slot-scope="text">
+                        <a-tag :color="text === '高' ? 'red' : 'orange'">{{ text }}</a-tag>
+                      </template>
+                    </a-table>
+                    <div v-if="!isMonitoring && alertsTableData.length === 0" class="empty-alerts">
+                      <a-empty description="监控中，等待异常交易预警..." />
+                    </div>
                   </div>
                 </a-tab-pane>
                 <a-tab-pane key="2" tab="监测报告">
@@ -75,7 +114,7 @@
                     <a-textarea
                       v-model="monitoringReport"
                       :rows="12"
-                      readonly
+                      read-only
                       placeholder="点击'监测报告生成'按钮，生成监测期间的异常交易分析报告..."
                     >
                     </a-textarea>
@@ -124,7 +163,7 @@
                     <a-textarea
                       v-model="statisticsReport"
                       :rows="12"
-                      readonly
+                      read-only
                       placeholder="点击'统计分析'按钮，生成监测期间的交易数据统计分析..."
                     >
                     </a-textarea>
@@ -132,8 +171,43 @@
                 </a-tab-pane>
                 <a-tab-pane key="2" tab="统计可视化">
                   <div class="textarea-container">
-                    <div class="visualization-placeholder">
-                      <p>点击"统计信息可视化"按钮生成数据可视化图表<br />(功能将在后续版本中实现)</p>
+                    <div v-if="chartLoading" class="visualization-loading">
+                      <a-spin tip="图表生成中..." />
+                    </div>
+                    <div v-if="!statisticsData.riskDistribution.length" class="visualization-placeholder">
+                      <p>点击"统计信息可视化"按钮生成数据可视化图表</p>
+                    </div>
+                    <div v-show="statisticsData.riskDistribution.length && !chartLoading">
+                      <div class="chart-type-selector">
+                        <a-radio-group v-model="currentChart" @change="renderChart">
+                          <a-radio-button value="pie">风险分布饼图</a-radio-button>
+                          <a-radio-button value="column">区域分布柱状图</a-radio-button>
+                          <a-radio-button value="bar">交易类型条形图</a-radio-button>
+                        </a-radio-group>
+                      </div>
+                      <!-- 预定义所有图表容器 -->
+                      <div
+                        id="statistics-chart-pie"
+                        class="chart-container"
+                        :style="{ display: currentChart === 'pie' ? 'block' : 'none' }"
+                      ></div>
+                      <div
+                        id="statistics-chart-column"
+                        class="chart-container"
+                        :style="{ display: currentChart === 'column' ? 'block' : 'none' }"
+                      ></div>
+                      <div
+                        id="statistics-chart-bar"
+                        class="chart-container"
+                        :style="{ display: currentChart === 'bar' ? 'block' : 'none' }"
+                      ></div>
+                    </div>
+
+                    <!-- 添加隐藏的图表容器，确保它们始终存在于DOM中 -->
+                    <div style="display: none">
+                      <div id="statistics-chart-pie-hidden" class="chart-container"></div>
+                      <div id="statistics-chart-column-hidden" class="chart-container"></div>
+                      <div id="statistics-chart-bar-hidden" class="chart-container"></div>
                     </div>
                   </div>
                 </a-tab-pane>
@@ -167,6 +241,7 @@
 
 <script>
 import { streamAgent } from '@/utils/request'
+import { Pie, Column, Bar } from '@antv/g2plot'
 
 export default {
   name: 'AmlMonitor',
@@ -190,12 +265,103 @@ export default {
       statsTimestamp: '',
       hasMonitoringData: false,
       monitoringActiveKey: '1',
-      statisticsActiveKey: '1'
+      statisticsActiveKey: '1',
+      // 添加实时预警表格数据
+      alertsTableData: [],
+      // 添加统计数据
+      statisticsData: {
+        riskDistribution: [
+          { type: '高风险交易', value: 0 },
+          { type: '中风险交易', value: 0 },
+          { type: '低风险交易', value: 0 }
+        ],
+        regionDistribution: [
+          { region: '亚太地区', value: 40 },
+          { region: '欧美地区', value: 30 },
+          { region: '中东地区', value: 20 },
+          { region: '其他地区', value: 10 }
+        ],
+        transactionTypeDistribution: [
+          { type: '贸易支付', value: 60 },
+          { type: '服务支付', value: 25 },
+          { type: '投资转账', value: 10 },
+          { type: '其他类型', value: 5 }
+        ],
+        highRiskCount: 0,
+        mediumRiskCount: 0,
+        lowRiskCount: 0,
+        totalAmount: 0,
+        avgAmount: 0
+      },
+      // 图表相关
+      chartLoading: false,
+      chartInstances: {},
+      currentChart: 'pie',
+      alertColumns: [
+        {
+          title: '时间',
+          dataIndex: 'time',
+          key: 'time',
+          scopedSlots: { customRender: 'time' }
+        },
+        {
+          title: '预警编号',
+          dataIndex: 'alertNumber',
+          key: 'alertNumber',
+          scopedSlots: { customRender: 'alertNumber' }
+        },
+        {
+          title: '交易ID',
+          dataIndex: 'transactionId',
+          key: 'transactionId',
+          scopedSlots: { customRender: 'transactionId' }
+        },
+        {
+          title: '金额',
+          dataIndex: 'amount',
+          key: 'amount',
+          scopedSlots: { customRender: 'amount' }
+        },
+        {
+          title: '异常原因',
+          dataIndex: 'reason',
+          key: 'reason',
+          scopedSlots: { customRender: 'reason' }
+        },
+        {
+          title: '风险等级',
+          dataIndex: 'riskLevel',
+          key: 'riskLevel',
+          scopedSlots: { customRender: 'riskLevel' }
+        }
+      ]
     }
   },
+  mounted() {
+    // 组件挂载完成后，预先初始化所有图表
+    this.$nextTick(() => {
+      // 确保统计数据已初始化
+      if (!this.statisticsData.riskDistribution.length) {
+        this.updateStatisticsData()
+      }
+
+      // 预先创建所有图表类型的实例
+      setTimeout(() => {
+        this.preInitAllCharts()
+      }, 1000)
+    })
+  },
   beforeDestroy() {
+    // 清理定时器
     if (this.monitoringTimer) {
       clearInterval(this.monitoringTimer)
+    }
+
+    // 清理图表实例
+    if (this.chartInstances) {
+      Object.values(this.chartInstances).forEach((instance) => {
+        instance.destroy()
+      })
     }
   },
   methods: {
@@ -221,6 +387,33 @@ export default {
       this.monitoringAlerts = '事中实时监测已启动...\n监控中，等待异常交易预警...\n\n'
       this.monitoringReport = ''
 
+      // 重置表格和统计数据
+      this.alertsTableData = []
+      this.statisticsData = {
+        riskDistribution: [
+          { type: '高风险交易', value: 0 },
+          { type: '中风险交易', value: 0 },
+          { type: '低风险交易', value: 0 }
+        ],
+        regionDistribution: [
+          { region: '亚太地区', value: 40 },
+          { region: '欧美地区', value: 30 },
+          { region: '中东地区', value: 20 },
+          { region: '其他地区', value: 10 }
+        ],
+        transactionTypeDistribution: [
+          { type: '贸易支付', value: 60 },
+          { type: '服务支付', value: 25 },
+          { type: '投资转账', value: 10 },
+          { type: '其他类型', value: 5 }
+        ],
+        highRiskCount: 0,
+        mediumRiskCount: 0,
+        lowRiskCount: 0,
+        totalAmount: 0,
+        avgAmount: 0
+      }
+
       // 每秒更新时间和模拟交易
       this.monitoringTimer = setInterval(() => {
         this.updateMonitoringTime()
@@ -239,6 +432,9 @@ export default {
       // 添加监测结束消息
       this.monitoringAlerts += '\n--- 监测已停止 ---\n'
       this.hasMonitoringData = true
+
+      // 自动更新统计信息
+      this.generateStats()
     },
 
     // 更新监测时间
@@ -263,11 +459,17 @@ export default {
       const newTransactions = Math.floor(Math.random() * 5) * 10 + Math.floor(Math.random() * 10)
       this.transactionCount += newTransactions
 
+      // 计算总额和平均金额
+      const averageAmount = 10000 + Math.floor(Math.random() * 5000)
+      this.statisticsData.totalAmount += newTransactions * averageAmount
+      this.statisticsData.avgAmount =
+        this.transactionCount > 0 ? Math.floor(this.statisticsData.totalAmount / this.transactionCount) : 0
+
       // 约10%的交易可能是异常的
       if (Math.random() < 0.2) {
         this.anomalyCount++
 
-        // 添加实时预警信息到预警文本框
+        // 添加实时预警信息
         const now = new Date()
         const timeString = now.toLocaleTimeString()
         const transactionId = 'TX' + Math.floor(10000000 + Math.random() * 90000000)
@@ -284,7 +486,28 @@ export default {
         ]
         const reason = reasons[Math.floor(Math.random() * reasons.length)]
 
-        // 构建预警消息
+        // 添加到表格数据中
+        this.alertsTableData.unshift({
+          key: this.anomalyCount,
+          time: timeString,
+          alertNumber: this.anomalyCount,
+          transactionId: transactionId,
+          amount: amount,
+          reason: reason,
+          riskLevel: riskLevel
+        })
+
+        // 同时更新统计数据
+        if (riskLevel === '高') {
+          this.statisticsData.highRiskCount++
+        } else {
+          this.statisticsData.mediumRiskCount++
+        }
+
+        // 更新风险分布统计
+        this.updateStatisticsData()
+
+        // 仍然保留原来的文本形式，以便兼容
         const alertMessage =
           `[${timeString}] 预警 #${this.anomalyCount}：检测到异常交易\n` +
           `交易号: ${transactionId}\n` +
@@ -293,9 +516,37 @@ export default {
           `风险等级: ${riskLevel}\n` +
           `------------------------------\n\n`
 
-        // 添加到预警文本框，保持最新预警在顶部
         this.monitoringAlerts = alertMessage + this.monitoringAlerts
       }
+
+      // 更新低风险交易统计
+      this.statisticsData.lowRiskCount = Math.floor(this.transactionCount * 0.02)
+    },
+
+    // 更新统计数据
+    updateStatisticsData() {
+      // 风险分布数据
+      this.statisticsData.riskDistribution = [
+        { type: '高风险交易', value: this.statisticsData.highRiskCount },
+        { type: '中风险交易', value: this.statisticsData.mediumRiskCount },
+        { type: '低风险交易', value: this.statisticsData.lowRiskCount }
+      ]
+
+      // 区域分布数据
+      this.statisticsData.regionDistribution = [
+        { region: '亚太地区', value: 40 + Math.floor(Math.random() * 10) },
+        { region: '欧美地区', value: 30 + Math.floor(Math.random() * 10) },
+        { region: '中东地区', value: 10 + Math.floor(Math.random() * 10) },
+        { region: '其他地区', value: 5 + Math.floor(Math.random() * 5) }
+      ]
+
+      // 交易类型分布数据
+      this.statisticsData.transactionTypeDistribution = [
+        { type: '贸易支付', value: 60 + Math.floor(Math.random() * 10) },
+        { type: '服务支付', value: 20 + Math.floor(Math.random() * 10) },
+        { type: '投资转账', value: 10 + Math.floor(Math.random() * 5) },
+        { type: '其他类型', value: 5 + Math.floor(Math.random() * 5) }
+      ]
     },
 
     // 生成监测报告
@@ -505,8 +756,27 @@ export default {
     generateStats() {
       // 切换到统计分析标签
       this.statisticsActiveKey = '1'
+      this.statsTimestamp = new Date().toLocaleString()
 
-      // 模拟统计分析生成
+      // 确保统计数据已经更新
+      if (!this.statisticsData.riskDistribution.length) {
+        this.updateStatisticsData()
+      }
+
+      // 使用实时的统计数据生成报告
+      const highRiskPercent =
+        this.transactionCount > 0 ? ((this.statisticsData.highRiskCount / this.transactionCount) * 100).toFixed(2) : '0'
+      const mediumRiskPercent =
+        this.transactionCount > 0
+          ? ((this.statisticsData.mediumRiskCount / this.transactionCount) * 100).toFixed(2)
+          : '0'
+      const lowRiskPercent =
+        this.transactionCount > 0 ? ((this.statisticsData.lowRiskCount / this.transactionCount) * 100).toFixed(2) : '0'
+
+      // 获取区域分布和交易类型的数据
+      const regionData = this.statisticsData.regionDistribution
+      const typeData = this.statisticsData.transactionTypeDistribution
+
       this.statisticsReport =
         '信息统计：\n\n' +
         '当前监测期间交易总览：\n' +
@@ -514,62 +784,36 @@ export default {
         this.monitoringDuration +
         '\n' +
         '- 跨境支付总额: $' +
-        (this.transactionCount * (10000 + Math.floor(Math.random() * 5000))).toLocaleString() +
+        this.statisticsData.totalAmount.toLocaleString() +
         ' USD\n' +
         '- 交易总量: ' +
         this.transactionCount +
         '笔\n' +
         '- 平均交易金额: $' +
-        Math.floor(10000 + Math.random() * 5000).toLocaleString() +
+        this.statisticsData.avgAmount.toLocaleString() +
         ' USD\n\n' +
         '异常统计：\n' +
         '- 高风险交易: ' +
-        Math.floor(this.anomalyCount * 0.4) +
+        this.statisticsData.highRiskCount +
         '笔 (' +
-        (this.transactionCount > 0
-          ? ((Math.floor(this.anomalyCount * 0.4) / this.transactionCount) * 100).toFixed(2)
-          : '0') +
+        highRiskPercent +
         '%)\n' +
         '- 中风险交易: ' +
-        Math.floor(this.anomalyCount * 0.6) +
+        this.statisticsData.mediumRiskCount +
         '笔 (' +
-        (this.transactionCount > 0
-          ? ((Math.floor(this.anomalyCount * 0.6) / this.transactionCount) * 100).toFixed(2)
-          : '0') +
+        mediumRiskPercent +
         '%)\n' +
         '- 低风险交易: ' +
-        Math.floor(this.transactionCount * 0.02) +
+        this.statisticsData.lowRiskCount +
         '笔 (' +
-        (this.transactionCount > 0
-          ? ((Math.floor(this.transactionCount * 0.02) / this.transactionCount) * 100).toFixed(2)
-          : '0') +
+        lowRiskPercent +
         '%)\n\n' +
         '交易区域分布：\n' +
-        '- 亚太地区: ' +
-        (40 + Math.floor(Math.random() * 10)) +
-        '%\n' +
-        '- 欧美地区: ' +
-        (30 + Math.floor(Math.random() * 10)) +
-        '%\n' +
-        '- 中东地区: ' +
-        (10 + Math.floor(Math.random() * 10)) +
-        '%\n' +
-        '- 其他地区: ' +
-        (5 + Math.floor(Math.random() * 5)) +
-        '%\n\n' +
+        regionData.map((item) => `- ${item.region}: ${item.value}%`).join('\n') +
+        '\n\n' +
         '交易类型分析：\n' +
-        '- 贸易支付: ' +
-        (60 + Math.floor(Math.random() * 10)) +
-        '%\n' +
-        '- 服务支付: ' +
-        (20 + Math.floor(Math.random() * 10)) +
-        '%\n' +
-        '- 投资转账: ' +
-        (10 + Math.floor(Math.random() * 5)) +
-        '%\n' +
-        '- 其他类型: ' +
-        (5 + Math.floor(Math.random() * 5)) +
-        '%\n\n' +
+        typeData.map((item) => `- ${item.type}: ${item.value}%`).join('\n') +
+        '\n\n' +
         '分析结论：\n' +
         '- 当前监测期间交易活动' +
         (this.transactionCount > 100 ? '活跃' : '正常') +
@@ -579,17 +823,146 @@ export default {
         '历史平均水平\n' +
         '- 建议关注' +
         (this.anomalyCount > 3 ? '高风险地区和大额交易' : '正常交易监测')
-
-      // 更新统计时间戳
-      this.statsTimestamp = new Date().toLocaleString()
     },
 
-    // 统计信息可视化
+    // 预先初始化所有图表
+    preInitAllCharts() {
+      try {
+        console.log('开始预初始化所有图表')
+
+        // 创建图表容器的备份
+        const chartTypes = ['pie', 'column', 'bar']
+        this.chartInstances = {}
+
+        // 为每种图表类型创建实例
+        chartTypes.forEach((type) => {
+          // 先尝试使用正常容器，如果不存在则使用隐藏容器
+          let containerId = `statistics-chart-${type}`
+          let container = document.getElementById(containerId)
+
+          if (!container) {
+            containerId = `statistics-chart-${type}-hidden`
+            container = document.getElementById(containerId)
+          }
+
+          if (!container) {
+            console.error(`图表容器 ${containerId} 不存在`)
+            return
+          }
+
+          // 创建图表实例
+          try {
+            let chartInstance = null
+
+            if (type === 'pie') {
+              chartInstance = new Pie(containerId, {
+                appendPadding: 10,
+                data: this.statisticsData.riskDistribution,
+                angleField: 'value',
+                colorField: 'type',
+                radius: 0.8,
+                legend: { position: 'right' },
+                label: { type: 'outer', content: '{name} {percentage}' },
+                interactions: [{ type: 'element-active' }]
+              })
+            } else if (type === 'column') {
+              chartInstance = new Column(containerId, {
+                data: this.statisticsData.regionDistribution,
+                xField: 'region',
+                yField: 'value',
+                label: {
+                  position: 'middle',
+                  style: { fill: '#FFFFFF', opacity: 0.6 }
+                },
+                meta: { value: { alias: '交易百分比' } }
+              })
+            } else if (type === 'bar') {
+              chartInstance = new Bar(containerId, {
+                data: this.statisticsData.transactionTypeDistribution,
+                xField: 'value',
+                yField: 'type',
+                seriesField: 'type',
+                legend: { position: 'top-left' }
+              })
+            }
+
+            if (chartInstance) {
+              chartInstance.render()
+              this.chartInstances[type] = chartInstance
+            }
+          } catch (error) {
+            console.error(`创建${type}图表实例时出错:`, error)
+          }
+        })
+
+        console.log('所有图表预初始化完成')
+      } catch (error) {
+        console.error('预初始化图表时出错:', error)
+      }
+    },
+
+    // 修改visualizeStats方法
     visualizeStats() {
       // 切换到统计可视化标签
       this.statisticsActiveKey = '2'
+      this.chartLoading = true
 
-      this.$message.info('统计信息可视化功能将在后续版本中实现')
+      // 确保有统计数据
+      if (!this.statisticsData.riskDistribution.length) {
+        this.updateStatisticsData()
+      }
+
+      // 使用nextTick确保标签已切换并且DOM已更新
+      this.$nextTick(() => {
+        // 如果图表实例不存在，先初始化
+        if (!this.chartInstances || Object.keys(this.chartInstances).length === 0) {
+          setTimeout(() => {
+            this.preInitAllCharts()
+            this.showSelectedChart()
+            this.chartLoading = false
+          }, 500)
+        } else {
+          // 如果图表实例已存在，直接显示
+          this.showSelectedChart()
+          this.chartLoading = false
+        }
+      })
+    },
+
+    // 显示选定的图表
+    showSelectedChart() {
+      const chartTypes = ['pie', 'column', 'bar']
+
+      chartTypes.forEach((type) => {
+        const container = document.getElementById(`statistics-chart-${type}`)
+        if (container) {
+          if (type === this.currentChart) {
+            container.style.display = 'block'
+
+            // 更新图表数据
+            if (this.chartInstances && this.chartInstances[type]) {
+              try {
+                if (type === 'pie') {
+                  this.chartInstances[type].changeData(this.statisticsData.riskDistribution)
+                } else if (type === 'column') {
+                  this.chartInstances[type].changeData(this.statisticsData.regionDistribution)
+                } else if (type === 'bar') {
+                  this.chartInstances[type].changeData(this.statisticsData.transactionTypeDistribution)
+                }
+              } catch (error) {
+                console.error(`更新${type}图表数据时出错:`, error)
+              }
+            }
+          } else {
+            container.style.display = 'none'
+          }
+        }
+      })
+    },
+
+    // 修改renderChart方法
+    renderChart() {
+      this.showSelectedChart()
     }
   }
 }
@@ -624,6 +997,34 @@ export default {
       span {
         margin-right: 15px;
         color: white;
+      }
+    }
+  }
+
+  .navigation-menu {
+    margin-bottom: 16px;
+
+    /deep/ .ant-menu-horizontal {
+      line-height: 46px;
+      border-bottom: 1px solid #e8e8e8;
+      background-color: white;
+
+      .ant-menu-item {
+        font-size: 14px;
+
+        a {
+          color: #595959;
+        }
+
+        i {
+          margin-right: 5px;
+        }
+      }
+
+      .ant-menu-item-selected {
+        a {
+          color: #1890ff;
+        }
       }
     }
   }
@@ -739,6 +1140,34 @@ export default {
       background-color: #f9f9f9;
       text-align: center;
       color: #666;
+    }
+
+    .alerts-container {
+      position: relative;
+      height: 280px;
+    }
+
+    .empty-alerts {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .chart-type-selector {
+      margin-bottom: 10px;
+    }
+
+    .chart-container {
+      height: 280px;
+    }
+
+    .visualization-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
   }
 }
