@@ -251,9 +251,27 @@ export default {
       cmOptions: {
         mode: 'python',
         theme: 'idea',
+        gutters: ['CodeMirror-lint-markers', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
         lineNumbers: true,
         line: true,
-        readOnly: true
+        lint: true,
+        lineWrapping: true,
+        autofocus: true,
+        autoCloseBrackets: true,
+        foldGutter: true, // 块槽
+        hintOptions: { completeSingle: true },
+        matchTags: { bothTags: true },
+        matchBrackets: true,
+        showCursorWhenSelecting: true,
+        styleSelectedText: true,
+        styleActiveLine: true,
+        autoRefresh: true,
+        highlightSelectionMatches: {
+          minChars: 2,
+          trim: true,
+          style: 'matchhighlight',
+          showToken: false
+        }
       },
       codemirrorStyle: {
         height: '560px'
