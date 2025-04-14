@@ -353,11 +353,6 @@ export default {
     verticalType: {
       type: String,
       required: true
-    },
-    // 垂直领域标题，显示在页面上
-    verticalTitle: {
-      type: String,
-      default: ''
     }
   },
   data() {
@@ -603,11 +598,8 @@ export default {
         'ecommerce': '跨境电商AI应用服务',
         'homeAI': '家庭陪伴AI应用服务'
       }
-
-      // 初始设置领域名称，后续会从API获取更多字典数据
-      this.domainArr = [verticalTitleMap[this.verticalType] || this.verticalTitle]
+      this.domainArr = [verticalTitleMap[this.verticalType]]
     },
-
     // 初始化状态映射
     initStatusMap() {
       // 默认状态映射
@@ -642,9 +634,9 @@ export default {
           this.fetchDictionary('attribute'),
           this.fetchDictionary('service_type'),
           this.fetchDictionary('method_type'),
-          this.fetchDictionary(`industry_${this.verticalType}`),
-          this.fetchDictionary(`scenario_${this.verticalType}`),
-          this.fetchDictionary(`technology_${this.verticalType}`)
+          this.fetchDictionary(`${this.verticalType}_industry`),
+          this.fetchDictionary(`${this.verticalType}_scenario`),
+          this.fetchDictionary(`${this.verticalType}_technology`)
         ]
 
         const [
