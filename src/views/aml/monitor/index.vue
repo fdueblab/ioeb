@@ -60,6 +60,17 @@
             已监测交易数: <span>{{ transactionCount }}</span> 笔 | 监测时长: <span>{{ monitoringDuration }}</span> |
             异常交易: <span>{{ anomalyCount }}</span> 笔
           </div>
+
+          <div class="reset-button">
+            <a-popconfirm
+              title="确定要重置监测状态吗？这将清除所有监测数据。"
+              @confirm="clearMonitoringState"
+              okText="确定"
+              cancelText="取消"
+            >
+              <a-button type="link" size="small">重置监测</a-button>
+            </a-popconfirm>
+          </div>
         </div>
 
         <!-- 实时监测与报告面板 -->
@@ -159,14 +170,102 @@
 
               <a-tabs v-model="statisticsActiveKey">
                 <a-tab-pane key="1" tab="统计分析">
-                  <div class="textarea-container">
-                    <a-textarea
-                      v-model="statisticsReport"
-                      :rows="12"
-                      read-only
-                      placeholder="点击'统计分析'按钮，生成监测期间的交易数据统计分析..."
-                    >
-                    </a-textarea>
+                  <div class="textarea-container statistics-panel">
+                    <div class="statistics-section">
+                      <h3 class="statistics-title">当前监测期间交易总览</h3>
+                      <div class="statistics-item">
+                        <span class="label">监测时长：</span>
+                        <span class="value">{{ monitoringDuration }}</span>
+                      </div>
+                      <div class="statistics-item">
+                        <span class="label">跨境支付总额：</span>
+                        <span class="value">${{ statisticsData.totalAmount.toLocaleString() }} USD</span>
+                      </div>
+                      <div class="statistics-item">
+                        <span class="label">交易总量：</span>
+                        <span class="value">{{ transactionCount }} 笔</span>
+                      </div>
+                      <div class="statistics-item">
+                        <span class="label">平均交易金额：</span>
+                        <span class="value">${{ statisticsData.avgAmount.toLocaleString() }} USD</span>
+                      </div>
+                    </div>
+
+                    <div class="statistics-section">
+                      <h3 class="statistics-title">异常统计</h3>
+                      <div class="statistics-item">
+                        <span class="label">高风险交易：</span>
+                        <span class="value"
+                          >{{ statisticsData.highRiskCount }} 笔 ({{
+                            transactionCount > 0
+                              ? ((statisticsData.highRiskCount / transactionCount) * 100).toFixed(2)
+                              : '0'
+                          }}%)</span
+                        >
+                      </div>
+                      <div class="statistics-item">
+                        <span class="label">中风险交易：</span>
+                        <span class="value"
+                          >{{ statisticsData.mediumRiskCount }} 笔 ({{
+                            transactionCount > 0
+                              ? ((statisticsData.mediumRiskCount / transactionCount) * 100).toFixed(2)
+                              : '0'
+                          }}%)</span
+                        >
+                      </div>
+                      <div class="statistics-item">
+                        <span class="label">低风险交易：</span>
+                        <span class="value"
+                          >{{ statisticsData.lowRiskCount }} 笔 ({{
+                            transactionCount > 0
+                              ? ((statisticsData.lowRiskCount / transactionCount) * 100).toFixed(2)
+                              : '0'
+                          }}%)</span
+                        >
+                      </div>
+                    </div>
+
+                    <div class="statistics-section">
+                      <h3 class="statistics-title">交易区域分布</h3>
+                      <div
+                        class="statistics-item"
+                        v-for="(item, index) in statisticsData.regionDistribution"
+                        :key="'region-' + index"
+                      >
+                        <span class="label">{{ item.region }}：</span>
+                        <span class="value">{{ item.value }}%</span>
+                      </div>
+                    </div>
+
+                    <div class="statistics-section">
+                      <h3 class="statistics-title">交易类型分析</h3>
+                      <div
+                        class="statistics-item"
+                        v-for="(item, index) in statisticsData.transactionTypeDistribution"
+                        :key="'type-' + index"
+                      >
+                        <span class="label">{{ item.type }}：</span>
+                        <span class="value">{{ item.value }}%</span>
+                      </div>
+                    </div>
+
+                    <div class="statistics-section">
+                      <h3 class="statistics-title">分析结论</h3>
+                      <div class="statistics-item">
+                        <span class="label">交易活动：</span>
+                        <span class="value">当前监测期间交易活动{{ transactionCount > 100 ? '活跃' : '正常' }}</span>
+                      </div>
+                      <div class="statistics-item">
+                        <span class="label">异常交易比例：</span>
+                        <span class="value"
+                          >{{ anomalyCount / transactionCount > 0.05 ? '高于' : '处于' }}历史平均水平</span
+                        >
+                      </div>
+                      <div class="statistics-item">
+                        <span class="label">关注建议：</span>
+                        <span class="value">{{ anomalyCount > 3 ? '高风险地区和大额交易' : '正常交易监测' }}</span>
+                      </div>
+                    </div>
                   </div>
                 </a-tab-pane>
                 <a-tab-pane key="2" tab="统计可视化">
@@ -266,6 +365,8 @@ export default {
       hasMonitoringData: false,
       monitoringActiveKey: '1',
       statisticsActiveKey: '1',
+      // 添加离开页面时间记录
+      deactivatedTime: null,
       // 添加实时预警表格数据
       alertsTableData: [],
       // 添加统计数据
@@ -349,6 +450,9 @@ export default {
       setTimeout(() => {
         this.preInitAllCharts()
       }, 1000)
+
+      // 从本地存储恢复监测状态
+      this.restoreMonitoringState()
     })
   },
   beforeDestroy() {
@@ -364,7 +468,186 @@ export default {
       })
     }
   },
+  // 添加activated生命周期钩子，在keep-alive组件激活时调用
+  activated() {
+    console.log('AmlMonitor组件激活')
+
+    // 如果之前在监测中，计算离开期间的时间并模拟交易
+    if (this.isMonitoring) {
+      // 如果有记录离开时间，计算应该补偿的交易
+      if (this.deactivatedTime) {
+        const now = new Date()
+        const timeAwayMs = now - this.deactivatedTime
+        const secondsAway = Math.floor(timeAwayMs / 1000)
+
+        console.log(`页面离开了${secondsAway}秒，开始补偿交易数据`)
+
+        // 每秒模拟的交易次数约为0-59笔，平均约30笔/秒
+        // 只补偿整秒数的交易，避免过于频繁的小数点计算
+        if (secondsAway > 0) {
+          // 模拟离开期间的交易数据
+          for (let i = 0; i < secondsAway; i++) {
+            this.simulateTransactions(false) // 传入false表示不触发保存操作
+          }
+
+          // 最后统一一次保存状态
+          this.saveMonitoringState()
+          console.log(
+            `已补偿${secondsAway}秒的交易数据，当前交易总数：${this.transactionCount}，异常交易：${this.anomalyCount}`
+          )
+        }
+
+        // 重置离开时间
+        this.deactivatedTime = null
+      }
+
+      // 重启定时器
+      if (!this.monitoringTimer) {
+        this.monitoringTimer = setInterval(() => {
+          this.updateMonitoringTime()
+          this.simulateTransactions()
+        }, 1000)
+        console.log('监测定时器已重新启动')
+      }
+    }
+  },
+
+  // 添加deactivated生命周期钩子，在keep-alive组件停用时调用
+  deactivated() {
+    console.log('AmlMonitor组件停用')
+    // 记录离开的时间点
+    this.deactivatedTime = new Date()
+
+    // 如果有定时器，暂停它，但不重置isMonitoring状态
+    if (this.monitoringTimer) {
+      clearInterval(this.monitoringTimer)
+      this.monitoringTimer = null
+      console.log('监测定时器已暂停，记录离开时间:', this.deactivatedTime)
+    }
+  },
   methods: {
+    // 恢复监测状态
+    restoreMonitoringState() {
+      try {
+        // 从localStorage获取存储的监测状态
+        const savedState = localStorage.getItem('amlMonitoringState')
+        if (savedState) {
+          const state = JSON.parse(savedState)
+          console.log('发现保存的状态:', state)
+
+          // 恢复监测状态 - 确保数字类型正确转换
+          this.isMonitoring = !!state.isMonitoring
+          this.dataSource = state.dataSource || 'default_data'
+          this.transactionCount = parseInt(state.transactionCount) || 0
+          this.anomalyCount = parseInt(state.anomalyCount) || 0
+          this.hasMonitoringData = !!state.hasMonitoringData
+          this.alertsTableData = state.alertsTableData || []
+
+          // 恢复统计数据
+          if (state.statisticsData) {
+            // 确保对象结构完整
+            this.statisticsData = {
+              riskDistribution: state.statisticsData.riskDistribution || [],
+              regionDistribution: state.statisticsData.regionDistribution || [],
+              transactionTypeDistribution: state.statisticsData.transactionTypeDistribution || [],
+              highRiskCount: parseInt(state.statisticsData.highRiskCount) || 0,
+              mediumRiskCount: parseInt(state.statisticsData.mediumRiskCount) || 0,
+              lowRiskCount: parseInt(state.statisticsData.lowRiskCount) || 0,
+              totalAmount: parseInt(state.statisticsData.totalAmount) || 0,
+              avgAmount: parseInt(state.statisticsData.avgAmount) || 0
+            }
+          }
+
+          // 恢复时间统计
+          if (state.startTimeString) {
+            this.startTime = new Date(state.startTimeString)
+            // 如果保存了监测持续时间，优先使用它
+            if (state.monitoringDuration) {
+              this.monitoringDuration = state.monitoringDuration
+            } else {
+              this.updateMonitoringTime()
+            }
+          }
+
+          // 恢复报告相关数据
+          if (state.monitoringReport) this.monitoringReport = state.monitoringReport
+          if (state.monitoringAlerts) this.monitoringAlerts = state.monitoringAlerts
+          if (state.reportTimestamp) this.reportTimestamp = state.reportTimestamp
+          if (state.statsTimestamp) this.statsTimestamp = state.statsTimestamp
+
+          // 恢复标签页状态
+          if (state.monitoringActiveKey) this.monitoringActiveKey = state.monitoringActiveKey
+          if (state.statisticsActiveKey) this.statisticsActiveKey = state.statisticsActiveKey
+
+          // 恢复图表相关状态
+          if (state.currentChart) this.currentChart = state.currentChart
+
+          // 恢复选择器状态
+          if (state.timeRange) this.timeRange = state.timeRange
+          if (state.businessScope) this.businessScope = state.businessScope
+
+          // 如果之前在监测中，重启定时器
+          if (this.isMonitoring) {
+            this.monitoringTimer = setInterval(() => {
+              this.updateMonitoringTime()
+              this.simulateTransactions()
+            }, 1000)
+          }
+
+          console.log(
+            `状态恢复完成: 交易数=${this.transactionCount}, 异常交易=${this.anomalyCount}, 监测状态=${this.isMonitoring}`
+          )
+        } else {
+          console.log('没有找到保存的状态，使用默认值')
+        }
+      } catch (error) {
+        console.error('恢复监测状态时出错:', error)
+      }
+    },
+
+    // 保存监测状态到localStorage
+    saveMonitoringState() {
+      try {
+        // 确保保存前正确处理所有数字类型
+        const transactionCount = parseInt(this.transactionCount) || 0
+        const anomalyCount = parseInt(this.anomalyCount) || 0
+
+        const stateToSave = {
+          isMonitoring: this.isMonitoring,
+          dataSource: this.dataSource,
+          transactionCount: transactionCount,
+          anomalyCount: anomalyCount,
+          hasMonitoringData: this.hasMonitoringData,
+          alertsTableData: this.alertsTableData,
+          statisticsData: { ...this.statisticsData }, // 创建深拷贝
+          // 存储startTime的字符串表示，因为Date对象不能直接序列化
+          startTimeString: this.startTime ? this.startTime.toString() : null,
+          // 保存当前监测持续时间
+          monitoringDuration: this.monitoringDuration,
+          // 保存报告相关数据
+          monitoringReport: this.monitoringReport,
+          monitoringAlerts: this.monitoringAlerts,
+          reportTimestamp: this.reportTimestamp,
+          statsTimestamp: this.statsTimestamp,
+          // 保存标签页状态
+          monitoringActiveKey: this.monitoringActiveKey,
+          statisticsActiveKey: this.statisticsActiveKey,
+          // 保存图表相关状态
+          currentChart: this.currentChart,
+          // 保存选择器状态
+          timeRange: this.timeRange,
+          businessScope: this.businessScope
+        }
+
+        // 转换为JSON并保存
+        const stateJson = JSON.stringify(stateToSave)
+        localStorage.setItem('amlMonitoringState', stateJson)
+        console.log(`状态已保存: 交易数=${transactionCount}, 异常交易=${anomalyCount}, 监测状态=${this.isMonitoring}`)
+      } catch (error) {
+        console.error('保存监测状态时出错:', error)
+      }
+    },
+
     // 开始/停止监测
     toggleMonitoring() {
       this.isMonitoring = !this.isMonitoring
@@ -376,6 +659,9 @@ export default {
         // 停止监测
         this.stopMonitoring()
       }
+
+      // 保存更新后的状态
+      this.saveMonitoringState()
     },
 
     // 开始监测
@@ -418,6 +704,8 @@ export default {
       this.monitoringTimer = setInterval(() => {
         this.updateMonitoringTime()
         this.simulateTransactions()
+        // 定期保存状态
+        this.saveMonitoringState()
       }, 1000)
     },
 
@@ -435,6 +723,9 @@ export default {
 
       // 自动更新统计信息
       this.generateStats()
+
+      // 保存停止后的状态
+      this.saveMonitoringState()
     },
 
     // 更新监测时间
@@ -455,9 +746,12 @@ export default {
     },
 
     // 模拟交易数据
-    simulateTransactions() {
+    simulateTransactions(shouldSave = true) {
+      // 生成新交易数（1-59之间的随机数）
       const newTransactions = Math.floor(Math.random() * 5) * 10 + Math.floor(Math.random() * 10)
-      this.transactionCount += newTransactions
+
+      // 更新交易计数 - 确保是数字
+      this.transactionCount = (parseInt(this.transactionCount) || 0) + newTransactions
 
       // 计算总额和平均金额
       const averageAmount = 10000 + Math.floor(Math.random() * 5000)
@@ -465,9 +759,10 @@ export default {
       this.statisticsData.avgAmount =
         this.transactionCount > 0 ? Math.floor(this.statisticsData.totalAmount / this.transactionCount) : 0
 
-      // 约10%的交易可能是异常的
+      // 约20%的交易模拟是异常的
       if (Math.random() < 0.2) {
-        this.anomalyCount++
+        // 递增异常交易计数
+        this.anomalyCount = (parseInt(this.anomalyCount) || 0) + 1
 
         // 添加实时预警信息
         const now = new Date()
@@ -517,10 +812,21 @@ export default {
           `------------------------------\n\n`
 
         this.monitoringAlerts = alertMessage + this.monitoringAlerts
+
+        // 生成了新的异常交易，如果需要保存则保存状态
+        if (shouldSave) {
+          this.saveMonitoringState()
+        }
       }
 
       // 更新低风险交易统计
       this.statisticsData.lowRiskCount = Math.floor(this.transactionCount * 0.02)
+
+      // 每5次交易模拟后保存状态（避免过于频繁保存）
+      if (shouldSave && this.transactionCount % 50 === 0) {
+        console.log(`已完成${this.transactionCount}笔交易，保存状态...`)
+        this.saveMonitoringState()
+      }
     },
 
     // 更新统计数据
@@ -655,11 +961,15 @@ export default {
                 this.monitoringReport = defaultMonitoringReport
                 console.error('API返回错误:', error)
                 this.reportLoading = false
+                // 保存状态
+                this.saveMonitoringState()
               },
               onWarning: (warning) => {
                 this.monitoringReport = `警告: ${warning}`
                 console.warn('API返回警告:', warning)
                 this.reportLoading = false
+                // 保存状态
+                this.saveMonitoringState()
               },
               onFinalResult: (results) => {
                 if (results.report) {
@@ -668,16 +978,22 @@ export default {
                   this.monitoringReport = '未能获取到报告内容，请重试。'
                 }
                 this.reportLoading = false
+                // 保存状态
+                this.saveMonitoringState()
               },
               onComplete: () => {
                 if (this.reportLoading) {
                   this.reportLoading = false
+                  // 保存状态
+                  this.saveMonitoringState()
                 }
               },
               onDataProcessError: (error) => {
                 console.error('解析数据失败:', error)
                 this.monitoringReport = `解析数据失败: ${error}`
                 this.reportLoading = false
+                // 保存状态
+                this.saveMonitoringState()
               }
             })
           } catch (error) {
@@ -685,6 +1001,8 @@ export default {
             this.monitoringReport = defaultMonitoringReport
 
             this.reportLoading = false
+            // 保存状态
+            this.saveMonitoringState()
           }
         } else {
           // 模拟报告生成（非默认数据源）
@@ -738,12 +1056,16 @@ export default {
           // 延迟取消加载状态模拟API调用时间
           setTimeout(() => {
             this.reportLoading = false
+            // 保存状态
+            this.saveMonitoringState()
           }, 1000)
         }
       } catch (error) {
         console.error('报告生成过程中出错:', error)
         this.monitoringReport = `报告生成过程中出错: ${error.message}`
         this.reportLoading = false
+        // 保存状态
+        this.saveMonitoringState()
       }
     },
 
@@ -763,66 +1085,11 @@ export default {
         this.updateStatisticsData()
       }
 
-      // 使用实时的统计数据生成报告
-      const highRiskPercent =
-        this.transactionCount > 0 ? ((this.statisticsData.highRiskCount / this.transactionCount) * 100).toFixed(2) : '0'
-      const mediumRiskPercent =
-        this.transactionCount > 0
-          ? ((this.statisticsData.mediumRiskCount / this.transactionCount) * 100).toFixed(2)
-          : '0'
-      const lowRiskPercent =
-        this.transactionCount > 0 ? ((this.statisticsData.lowRiskCount / this.transactionCount) * 100).toFixed(2) : '0'
+      // 不再需要生成statisticsReport文本字符串
+      // 因为我们现在直接在模板中使用数据绑定
 
-      // 获取区域分布和交易类型的数据
-      const regionData = this.statisticsData.regionDistribution
-      const typeData = this.statisticsData.transactionTypeDistribution
-
-      this.statisticsReport =
-        '信息统计：\n\n' +
-        '当前监测期间交易总览：\n' +
-        '- 监测时长: ' +
-        this.monitoringDuration +
-        '\n' +
-        '- 跨境支付总额: $' +
-        this.statisticsData.totalAmount.toLocaleString() +
-        ' USD\n' +
-        '- 交易总量: ' +
-        this.transactionCount +
-        '笔\n' +
-        '- 平均交易金额: $' +
-        this.statisticsData.avgAmount.toLocaleString() +
-        ' USD\n\n' +
-        '异常统计：\n' +
-        '- 高风险交易: ' +
-        this.statisticsData.highRiskCount +
-        '笔 (' +
-        highRiskPercent +
-        '%)\n' +
-        '- 中风险交易: ' +
-        this.statisticsData.mediumRiskCount +
-        '笔 (' +
-        mediumRiskPercent +
-        '%)\n' +
-        '- 低风险交易: ' +
-        this.statisticsData.lowRiskCount +
-        '笔 (' +
-        lowRiskPercent +
-        '%)\n\n' +
-        '交易区域分布：\n' +
-        regionData.map((item) => `- ${item.region}: ${item.value}%`).join('\n') +
-        '\n\n' +
-        '交易类型分析：\n' +
-        typeData.map((item) => `- ${item.type}: ${item.value}%`).join('\n') +
-        '\n\n' +
-        '分析结论：\n' +
-        '- 当前监测期间交易活动' +
-        (this.transactionCount > 100 ? '活跃' : '正常') +
-        '\n' +
-        '- 异常交易比例' +
-        (this.anomalyCount / this.transactionCount > 0.05 ? '高于' : '处于') +
-        '历史平均水平\n' +
-        '- 建议关注' +
-        (this.anomalyCount > 3 ? '高风险地区和大额交易' : '正常交易监测')
+      // 保存状态
+      this.saveMonitoringState()
     },
 
     // 预先初始化所有图表
@@ -920,11 +1187,15 @@ export default {
             this.preInitAllCharts()
             this.showSelectedChart()
             this.chartLoading = false
+            // 保存状态
+            this.saveMonitoringState()
           }, 500)
         } else {
           // 如果图表实例已存在，直接显示
           this.showSelectedChart()
           this.chartLoading = false
+          // 保存状态
+          this.saveMonitoringState()
         }
       })
     },
@@ -963,6 +1234,65 @@ export default {
     // 修改renderChart方法
     renderChart() {
       this.showSelectedChart()
+    },
+
+    // 清除监测状态
+    clearMonitoringState() {
+      // 停止当前监测
+      if (this.isMonitoring) {
+        if (this.monitoringTimer) {
+          clearInterval(this.monitoringTimer)
+          this.monitoringTimer = null
+        }
+        this.isMonitoring = false
+      }
+
+      // 清除localStorage中保存的状态
+      localStorage.removeItem('amlMonitoringState')
+
+      // 重置所有状态回到初始值
+      this.startTime = null
+      this.transactionCount = 0
+      this.anomalyCount = 0
+      this.monitoringDuration = '00:00:00'
+      this.monitoringAlerts = '事中实时监测准备就绪...\n\n'
+      this.monitoringReport = ''
+      this.reportTimestamp = ''
+      this.statsTimestamp = ''
+      this.hasMonitoringData = false
+      this.alertsTableData = []
+
+      // 重置统计数据
+      this.statisticsData = {
+        riskDistribution: [
+          { type: '高风险交易', value: 0 },
+          { type: '中风险交易', value: 0 },
+          { type: '低风险交易', value: 0 }
+        ],
+        regionDistribution: [
+          { region: '亚太地区', value: 40 },
+          { region: '欧美地区', value: 30 },
+          { region: '中东地区', value: 20 },
+          { region: '其他地区', value: 10 }
+        ],
+        transactionTypeDistribution: [
+          { type: '贸易支付', value: 60 },
+          { type: '服务支付', value: 25 },
+          { type: '投资转账', value: 10 },
+          { type: '其他类型', value: 5 }
+        ],
+        highRiskCount: 0,
+        mediumRiskCount: 0,
+        lowRiskCount: 0,
+        totalAmount: 0,
+        avgAmount: 0
+      }
+
+      // 恢复默认Tab
+      this.monitoringActiveKey = '1'
+      this.statisticsActiveKey = '1'
+
+      this.$message.success('监测状态已重置')
     }
   }
 }
@@ -1168,6 +1498,70 @@ export default {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+    }
+
+    // 新增统计分析面板样式
+    .statistics-panel {
+      overflow-y: auto;
+      padding: 10px 15px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+    }
+
+    .statistics-section {
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed #e8e8e8;
+    }
+
+    .statistics-section:last-child {
+      border-bottom: none;
+    }
+
+    .statistics-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1e3799;
+      margin-bottom: 8px;
+      padding-left: 8px;
+      border-left: 3px solid #1e3799;
+    }
+
+    .statistics-item {
+      display: flex;
+      padding: 5px 0;
+      line-height: 1.5;
+    }
+
+    .statistics-item .label {
+      width: 120px;
+      font-weight: 500;
+      color: #666;
+    }
+
+    .statistics-item .value {
+      flex: 1;
+      color: #1f2f3d;
+    }
+
+    .statistics-item .value:has(span.highlight) {
+      color: #cf1322;
+    }
+
+    .highlight {
+      color: #cf1322;
+      font-weight: bold;
+    }
+
+    .reset-button {
+      text-align: center;
+      margin-top: 5px;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+
+      &:hover {
+        opacity: 1;
+      }
     }
   }
 }
