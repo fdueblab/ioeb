@@ -102,44 +102,51 @@ export const asyncRouterMap = [
           {
             path: '/vertical-ms/aml',
             name: 'vertical-ms-aml',
-            component: () => import('@/views/vertical/ms/aml'),
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'aml' },
             meta: { title: '跨境支付AI监测服务发布', keepAlive: true, permission: ['admin', 'publisher'] }
           },
           {
             path: '/vertical-ms/aircraft',
             name: 'vertical-ms-aircraft',
             meta: { title: '无人飞机AI监控服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/aircraft')
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'aircraft' }
           },
           {
             path: '/vertical-ms/health',
             name: 'vertical-ms-health',
             meta: { title: '乡村医疗AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/health')
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'health' }
           },
           {
             path: '/vertical-ms/agriculture',
             name: 'vertical-ms-agriculture',
             meta: { title: '数字农业AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/agriculture')
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'agriculture' }
           },
           {
             path: '/vertical-ms/evtol',
             name: 'vertical-ms-evtol',
             meta: { title: '低空飞行AI应用服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/evtol')
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'evtol' }
           },
           {
             path: '/vertical-ms/ecommerce',
             name: 'vertical-ms-ecommerce',
             meta: { title: '跨境电商AI应用服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/ecommerce')
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'ecommerce' }
           },
           {
             path: '/vertical-ms/homeAI',
             name: 'vertical-ms-homeAI',
             meta: { title: '家庭陪伴AI应用服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/homeAI')
+            component: () => import('@/views/vertical/ms/GenericMicroService'),
+            props: { verticalType: 'homeAI' }
           }
         ]
       },
