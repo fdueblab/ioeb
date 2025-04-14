@@ -10,99 +10,102 @@
     </div>
 
     <div class="content-container">
-      <a-card title="商户风险查询" :bordered="false">
-        <!-- 导航菜单 -->
-        <div class="navigation-menu">
-          <a-menu mode="horizontal" :selectedKeys="['list']">
-            <a-menu-item key="monitor">
-              <router-link to="/aml/monitor"> <a-icon type="dashboard" />实时监控 </router-link>
-            </a-menu-item>
-            <a-menu-item key="list">
-              <router-link to="/aml/list"> <a-icon type="table" />商户风险查询 </router-link>
-            </a-menu-item>
-          </a-menu>
-        </div>
+      <!-- 导航菜单 -->
+      <div class="navigation-menu">
+        <a-menu mode="horizontal" :selectedKeys="['list']">
+          <a-menu-item key="monitor">
+            <router-link to="/aml/monitor"> <a-icon type="dashboard" />实时监控 </router-link>
+          </a-menu-item>
+          <a-menu-item key="list">
+            <router-link to="/aml/list"> <a-icon type="table" />商户风险查询 </router-link>
+          </a-menu-item>
+        </a-menu>
+      </div>
 
-        <!-- 查询表单 -->
-        <a-form layout="inline" :form="form" @submit="handleSearch" class="search-form">
-          <a-row :gutter="16" style="width: 100%">
-            <a-col :md="8" :sm="12">
-              <a-form-item label="统计日期区间" class="date-range-item">
-                <a-range-picker
-                  v-decorator="[
-                    'dateRange',
-                    {
-                      rules: [{ required: true, message: '请选择统计日期区间' }],
-                      initialValue: [moment().subtract(30, 'days'), moment()]
-                    }
-                  ]"
-                  format="YYYY-MM-DD"
-                  style="width: 100%"
-                />
-              </a-form-item>
-            </a-col>
-            <a-col :md="8" :sm="12">
-              <a-form-item label="商户工商注册名">
-                <a-input v-decorator="['merchantName']" placeholder="请输入商户工商注册名" allowClear />
-              </a-form-item>
-            </a-col>
-            <a-col :md="8" :sm="12">
-              <a-form-item label="商户状态">
-                <a-select v-decorator="['merchantStatus']" placeholder="请选择商户状态" style="width: 100%" allowClear>
-                  <a-select-option value="active">正常</a-select-option>
-                  <a-select-option value="suspended">暂停服务</a-select-option>
-                  <a-select-option value="terminated">已终止</a-select-option>
-                  <a-select-option value="review">审核中</a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :md="8" :sm="12">
-              <a-form-item label="高风险案例个数大于">
-                <a-input-number v-decorator="['minHighRiskCases']" :min="0" style="width: 100%" />
-              </a-form-item>
-            </a-col>
+      <!-- 查询表单 -->
+      <a-form layout="inline" :form="form" @submit="handleSearch" class="search-form">
+        <a-row :gutter="16" style="width: 100%">
+          <a-col :md="8" :sm="12">
+            <a-form-item label="统计日期区间" class="date-range-item">
+              <a-range-picker
+                v-decorator="[
+                  'dateRange',
+                  {
+                    rules: [{ required: true, message: '请选择统计日期区间' }],
+                    initialValue: [moment().subtract(30, 'days'), moment()]
+                  }
+                ]"
+                format="YYYY-MM-DD"
+                style="width: 100%"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :md="8" :sm="12">
+            <a-form-item label="商户工商注册名">
+              <a-input v-decorator="['merchantName']" placeholder="请输入商户工商注册名" allowClear />
+            </a-form-item>
+          </a-col>
+          <a-col :md="8" :sm="12">
+            <a-form-item label="商户状态">
+              <a-select
+                v-decorator="['merchantStatus']"
+                placeholder="请选择商户状态"
+                style="width: 100%; min-width: 180px"
+                allowClear
+              >
+                <a-select-option value="active">正常</a-select-option>
+                <a-select-option value="suspended">暂停服务</a-select-option>
+                <a-select-option value="terminated">已终止</a-select-option>
+                <a-select-option value="review">审核中</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :md="8" :sm="12">
+            <a-form-item label="高风险案例个数大于">
+              <a-input-number v-decorator="['minHighRiskCases']" :min="0" style="width: 100%" />
+            </a-form-item>
+          </a-col>
 
-            <a-col :md="8" :sm="12" style="display: flex; align-items: flex-end">
-              <a-form-item>
-                <a-button type="primary" html-type="submit" :loading="loading">查询</a-button>
-                <a-button style="margin-left: 8px" @click="resetForm">清空</a-button>
-                <a-button style="margin-left: 8px" @click="exportData" :disabled="!tableData.length" icon="download">
-                  导出
-                </a-button>
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </a-form>
+          <a-col :md="8" :sm="12" style="display: flex; align-items: flex-end">
+            <a-form-item>
+              <a-button type="primary" html-type="submit" :loading="loading">查询</a-button>
+              <a-button style="margin-left: 8px" @click="resetForm">清空</a-button>
+              <a-button style="margin-left: 8px" @click="exportData" :disabled="!tableData.length" icon="download">
+                导出
+              </a-button>
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
 
-        <!-- 数据表格 -->
-        <a-table
-          :columns="columns"
-          :dataSource="tableData"
-          :rowKey="(record) => record.id"
-          :pagination="pagination"
-          :loading="loading"
-          @change="handleTableChange"
-          class="merchant-table"
-        >
-          <template slot="merchantName" slot-scope="text, record">
-            <a @click="viewDetails(record.id)">{{ text }}</a>
-          </template>
-          <template slot="merchantStatus" slot-scope="text">
-            <a-tag :color="getStatusColor(text)">{{ getStatusText(text) }}</a-tag>
-          </template>
-          <template slot="riskCases" slot-scope="text, record">
-            <a-tag color="green">{{ record.lowRiskCases }}</a-tag>
-            <a-tag color="orange">{{ record.mediumRiskCases }}</a-tag>
-            <a-tag color="red">{{ record.highRiskCases }}</a-tag>
-          </template>
-          <template slot="lastRiskDate" slot-scope="text">
-            {{ text ? text : '-' }}
-          </template>
-          <template slot="action" slot-scope="text, record">
-            <a-button type="link" @click="viewDetails(record.id)">详情</a-button>
-          </template>
-        </a-table>
-      </a-card>
+      <!-- 数据表格 -->
+      <a-table
+        :columns="columns"
+        :dataSource="tableData"
+        :rowKey="(record) => record.id"
+        :pagination="pagination"
+        :loading="loading"
+        @change="handleTableChange"
+        class="merchant-table"
+      >
+        <template slot="merchantName" slot-scope="text, record">
+          <a @click="viewDetails(record.id)">{{ text }}</a>
+        </template>
+        <template slot="merchantStatus" slot-scope="text">
+          <a-tag :color="getStatusColor(text)">{{ getStatusText(text) }}</a-tag>
+        </template>
+        <template slot="riskCases" slot-scope="text, record">
+          <a-tag color="green">{{ record.lowRiskCases }}</a-tag>
+          <a-tag color="orange">{{ record.mediumRiskCases }}</a-tag>
+          <a-tag color="red">{{ record.highRiskCases }}</a-tag>
+        </template>
+        <template slot="lastRiskDate" slot-scope="text">
+          {{ text ? text : '-' }}
+        </template>
+        <template slot="action" slot-scope="text, record">
+          <a-button type="link" @click="viewDetails(record.id)">详情</a-button>
+        </template>
+      </a-table>
     </div>
 
     <div class="footer">
