@@ -115,12 +115,10 @@ import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
-import Template from '@/views/vertical/user/aircraft'
 
 export default {
   name: 'UseService',
   components: {
-    Template,
     codemirror
   },
   props: {
