@@ -42,13 +42,15 @@ export default {
       this.currentComponent = 'GenericVerticalList'
     },
     handleGoUse(record) {
+      console.log('record', record)
+      console.log('record.apiList', record.apiList)
       this.apiList = record.apiList
-      if (record.type === 0) {
-        this.currentComponent = 'UseService'
-      } else if (record.type === 1) {
+      if (!record.apiList || record.apiList.length === 0) {
+        this.$message.error('数据缺失！')
+      } else if (record.type === 'metaApp') {
         this.currentComponent = 'UseMetaApp'
       } else {
-        this.$message.error('数据缺失！')
+        this.currentComponent = 'UseService'
       }
     }
   },
