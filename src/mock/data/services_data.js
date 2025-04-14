@@ -634,7 +634,7 @@ const airCraftServices = [
     name: '无人机虚拟仿真微服务',
     attribute: 1,
     type: 0,
-    domain: 0,
+    domain: 1,
     industry: 0,
     scenario: 0,
     technology: 1,
@@ -672,7 +672,7 @@ const airCraftServices = [
     name: '无人机低空测绘微服务',
     attribute: 1,
     type: 0,
-    domain: 0,
+    domain: 1,
     industry: 1,
     scenario: 3,
     technology: 2,
@@ -706,7 +706,7 @@ const airCraftServices = [
     name: '无人机目标识别微服务',
     attribute: 1,
     type: 0,
-    domain: 0,
+    domain: 1,
     industry: 2,
     scenario: 4,
     technology: 2,
@@ -740,7 +740,7 @@ const airCraftServices = [
     name: '无人机远程控制微服务',
     attribute: 0,
     type: 0,
-    domain: 0,
+    domain: 1,
     industry: 0,
     scenario: 1,
     technology: 3,
@@ -778,7 +778,7 @@ const airCraftServices = [
     name: '无人机视频分析微服务',
     attribute: 2,
     type: 0,
-    domain: 0,
+    domain: 1,
     industry: 1,
     scenario: 2,
     technology: 4,
@@ -819,7 +819,7 @@ const healthServices = [
     name: '肝移植患者利奈唑胺给药方案优化微服务',
     attribute: 1,
     type: 0,
-    domain: 0,
+    domain: 2,
     industry: 0,
     scenario: 1,
     technology: 1,
@@ -907,7 +907,7 @@ const healthServices = [
     name: '基层医疗影像辅助诊断微服务',
     attribute: 1,
     type: 0,
-    domain: 0,
+    domain: 2,
     industry: 0,
     scenario: 1,
     technology: 0,
@@ -1352,7 +1352,7 @@ const airCraftMetaApps = [
     name: '无人机智能投递',
     attribute: 3,
     type: 1,
-    domain: 0,
+    domain: 1,
     industry: 1,
     scenario: 2,
     technology: 4,
@@ -1414,7 +1414,7 @@ const healthMetaApps = [
     name: '乡村医疗AI辅助诊断元应用',
     attribute: 3,
     type: 1,
-    domain: 0,
+    domain: 2,
     industry: 0,
     scenario: 1,
     technology: 0,
@@ -1491,7 +1491,7 @@ const healthMetaApps = [
     name: '农村公共卫生监测元应用',
     attribute: 3,
     type: 1,
-    domain: 3,
+    domain: 2,
     industry: 1,
     scenario: 4,
     technology: 2,
@@ -1582,7 +1582,7 @@ const agricultureServices = [
     name: '农作物图像分析服务',
     attribute: 1,
     type: 0,
-    domain: 0,
+    domain: 3,
     industry: 4,
     scenario: 0,
     technology: '计算机视觉（智慧种植/精准播种）',
@@ -1680,7 +1680,7 @@ const agricultureServices = [
     name: '病虫害识别与防治服务',
     attribute: 1,
     type: 0,
-    domain: 0,
+    domain: 3,
     industry: 4,
     scenario: 1,
     technology: '计算机视觉（智慧种植/病虫害防治）',
@@ -1776,7 +1776,7 @@ const agricultureServices = [
     name: '智能灌溉决策服务',
     attribute: 1,
     type: 0,
-    domain: 0,
+    domain: 3,
     industry: 4,
     scenario: 2,
     technology: '时序分析与预测（智慧种植/智能灌溉）',
@@ -1889,7 +1889,7 @@ const agricultureServices = [
     name: '农作物产量预测服务',
     attribute: 1,
     type: 0,
-    domain: 0,
+    domain: 3,
     industry: 4,
     scenario: 3,
     technology: '时序分析与预测（智慧种植/产量预测）',
@@ -2004,7 +2004,7 @@ const agricultureMetaApps = [
     name: '智慧农业综合管理元应用',
     attribute: 2,
     type: 1,
-    domain: 0,
+    domain: 3,
     industry: 4,
     scenario: 4,
     technology: '计算机视觉、时序分析与预测、多模态融合（智慧种植/精准播种、病虫害防治、智能灌溉、产量预测）',
@@ -2073,7 +2073,7 @@ const evtolServices = [
     name: '飞行路径规划微服务',
     attribute: 1,
     type: 0,
-    domain: 0,
+    domain: 4,
     industry: 0,
     scenario: 0,
     technology: 0,
@@ -2142,7 +2142,7 @@ const evtolServices = [
     name: '环境感知微服务',
     attribute: 1,
     type: 0,
-    domain: 1,
+    domain: 4,
     industry: 0,
     scenario: 3,
     technology: 1,
@@ -2237,7 +2237,7 @@ const evtolServices = [
     name: '飞行控制微服务',
     attribute: 0,
     type: 0,
-    domain: 0,
+    domain: 4,
     industry: 0,
     scenario: 2,
     technology: 0,
@@ -2310,7 +2310,7 @@ const evtolServices = [
     name: '能源管理微服务',
     attribute: 2,
     type: 0,
-    domain: 2,
+    domain: 4,
     industry: 0,
     scenario: 4,
     technology: 3,
@@ -2482,9 +2482,9 @@ const evtolServices = [
 const evtolMetaApps = [
   {
     name: 'eVTOL智能飞行控制元应用',
-    attribute: 3,
+    attribute: 1,
     type: 1,
-    domain: 0,
+    domain: 4,
     industry: 0,
     scenario: 0,
     technology: 0,
@@ -2563,15 +2563,15 @@ const ecommerceServices = [
     name: '多语言内容生成微服务',
     attribute: 1,
     type: 0,
-    domain: 0,
+    domain: 5,
     industry: 0,
     scenario: 0,
     technology: 0,
-    netWork: 4,
-    port: 4,
-    volume: 3,
+    netWork: 'bridge',
+    port: '0.0.0.0:8500/TCP → 0.0.0.0:85000',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/ecommerce/data',
     status: 4,
-    number: 5,
+    number: '256',
     norm: [
       {
         key: 0,
@@ -2603,63 +2603,67 @@ const ecommerceServices = [
     apiList: [
       {
         name: 'translateContent',
-        methodType: 1,
-        apiType: 0,
-        description: '将产品描述翻译成多种语言',
+        isFake: true,
+        url: 'https://myApiServer.com/ecommerce/translate',
+        method: 'POST',
+        des: '将产品描述翻译成多种语言',
+        parameterType: 2,
         parameters: [
           {
             name: 'productData',
-            description: '产品详细信息',
-            isRequired: 1,
             type: 'object',
-            defaultValue: null
+            des: '产品详细信息'
           },
           {
             name: 'targetLanguages',
-            description: '目标语言列表',
-            isRequired: 1,
             type: 'array',
-            defaultValue: '["en", "es", "fr", "de", "ja"]'
+            des: '目标语言列表'
           }
         ],
+        responseType: 1,
         response: {
-          name: 'translatedContent',
-          description: '多语言翻译后的内容',
-          type: 'object'
+          code: 200,
+          message: '翻译成功！',
+          data: {
+            translations: {
+              en: 'Product description in English',
+              es: 'Descripción del producto en español',
+              fr: 'Description du produit en français'
+            }
+          }
         }
       },
       {
         name: 'generateDescription',
-        methodType: 1,
-        apiType: 0,
-        description: '根据产品特性生成营销文案',
+        isFake: true,
+        url: 'https://myApiServer.com/ecommerce/generate',
+        method: 'POST',
+        des: '根据产品特性生成营销文案',
+        parameterType: 2,
         parameters: [
           {
             name: 'productFeatures',
-            description: '产品特性列表',
-            isRequired: 1,
             type: 'array',
-            defaultValue: null
+            des: '产品特性列表'
           },
           {
             name: 'targetMarket',
-            description: '目标市场',
-            isRequired: 1,
             type: 'string',
-            defaultValue: null
+            des: '目标市场'
           },
           {
             name: 'tone',
-            description: '文案风格',
-            isRequired: 0,
             type: 'string',
-            defaultValue: 'professional'
+            des: '文案风格'
           }
         ],
+        responseType: 1,
         response: {
-          name: 'marketingText',
-          description: '生成的营销文案',
-          type: 'object'
+          code: 200,
+          message: '生成成功！',
+          data: {
+            marketingText: 'Generated marketing content based on product features'
+          }
         }
       }
     ]
@@ -2668,15 +2672,15 @@ const ecommerceServices = [
     name: '市场分析微服务',
     attribute: 1,
     type: 0,
-    domain: 3,
+    domain: 5,
     industry: 0,
     scenario: 3,
     technology: 3,
-    netWork: 3,
-    port: 3,
-    volume: 4,
+    netWork: 'bridge',
+    port: '0.0.0.0:8501/TCP → 0.0.0.0:85001',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/ecommerce/data',
     status: 4,
-    number: 3,
+    number: '384',
     norm: [
       {
         key: 0,
@@ -2704,279 +2708,71 @@ const ecommerceServices = [
     apiList: [
       {
         name: 'analyzeTrend',
-        methodType: 1,
-        apiType: 0,
-        description: '分析市场趋势及竞品情况',
+        isFake: true,
+        url: 'https://myApiServer.com/ecommerce/analyze',
+        method: 'POST',
+        des: '分析市场趋势及竞品情况',
+        parameterType: 2,
         parameters: [
           {
             name: 'productCategory',
-            description: '产品类别',
-            isRequired: 1,
             type: 'string',
-            defaultValue: null
+            des: '产品类别'
           },
           {
             name: 'targetMarkets',
-            description: '目标市场列表',
-            isRequired: 1,
             type: 'array',
-            defaultValue: null
+            des: '目标市场列表'
           },
           {
             name: 'timeRange',
-            description: '分析时间范围',
-            isRequired: 0,
             type: 'object',
-            defaultValue: '{"start": "2023-01-01", "end": "2023-12-31"}'
+            des: '分析时间范围'
           }
         ],
+        responseType: 1,
         response: {
-          name: 'marketAnalysis',
-          description: '市场分析报告',
-          type: 'object'
+          code: 200,
+          message: '分析完成！',
+          data: {
+            trends: ['北美区域销量增长15%', '欧洲市场竞争加剧'],
+            recommendations: ['增加广告投放', '调整定价策略']
+          }
         }
       },
       {
         name: 'predictSales',
-        methodType: 1,
-        apiType: 0,
-        description: '预测产品销量及趋势',
+        isFake: true,
+        url: 'https://myApiServer.com/ecommerce/predict',
+        method: 'POST',
+        des: '预测产品销量及趋势',
+        parameterType: 2,
         parameters: [
           {
             name: 'productId',
-            description: '产品ID',
-            isRequired: 1,
             type: 'string',
-            defaultValue: null
+            des: '产品ID'
           },
           {
             name: 'historicalData',
-            description: '历史销售数据',
-            isRequired: 1,
             type: 'array',
-            defaultValue: null
+            des: '历史销售数据'
           },
           {
             name: 'predictionPeriod',
-            description: '预测周期（天）',
-            isRequired: 0,
             type: 'number',
-            defaultValue: '90'
+            des: '预测周期（天）'
           }
         ],
+        responseType: 1,
         response: {
-          name: 'salesPrediction',
-          description: '销量预测结果',
-          type: 'object'
-        }
-      }
-    ]
-  },
-  {
-    name: '商品推荐微服务',
-    attribute: 2,
-    type: 0,
-    domain: 2,
-    industry: 0,
-    scenario: 3,
-    technology: 2,
-    netWork: 4,
-    port: 3,
-    volume: 5,
-    status: 4,
-    number: 4,
-    norm: [
-      {
-        key: 0,
-        score: 5
-      },
-      {
-        key: 1,
-        score: 5
-      },
-      {
-        key: 2,
-        score: 5
-      }
-    ],
-    source: {
-      popoverTitle: '可信云技术服务溯源',
-      companyName: '复旦大学课题组',
-      companyAddress: '上海市杨浦区邯郸路220号',
-      companyContact: '021-65642222',
-      companyIntroduce: '跨境电商AI应用课题',
-      msIntroduce: '基于智能体的推荐算法',
-      companyScore: 5,
-      msScore: 5
-    },
-    apiList: [
-      {
-        name: 'recommendProduct',
-        methodType: 1,
-        apiType: 0,
-        description: '基于用户行为推荐相关商品',
-        parameters: [
-          {
-            name: 'userId',
-            description: '用户ID',
-            isRequired: 1,
-            type: 'string',
-            defaultValue: null
-          },
-          {
-            name: 'browsedProducts',
-            description: '已浏览商品列表',
-            isRequired: 1,
-            type: 'array',
-            defaultValue: null
-          },
-          {
-            name: 'limit',
-            description: '推荐商品数量',
-            isRequired: 0,
-            type: 'number',
-            defaultValue: '5'
+          code: 200,
+          message: '预测完成！',
+          data: {
+            predictedSales: [125, 142, 156, 168, 172],
+            trend: '上升',
+            confidence: 0.85
           }
-        ],
-        response: {
-          name: 'recommendations',
-          description: '推荐商品列表',
-          type: 'array'
-        }
-      },
-      {
-        name: 'generateAd',
-        methodType: 1,
-        apiType: 0,
-        description: '生成个性化广告素材',
-        parameters: [
-          {
-            name: 'productId',
-            description: '产品ID',
-            isRequired: 1,
-            type: 'string',
-            defaultValue: null
-          },
-          {
-            name: 'userProfile',
-            description: '用户画像数据',
-            isRequired: 1,
-            type: 'object',
-            defaultValue: null
-          },
-          {
-            name: 'adFormat',
-            description: '广告格式',
-            isRequired: 0,
-            type: 'string',
-            defaultValue: 'banner'
-          }
-        ],
-        response: {
-          name: 'adCreative',
-          description: '广告创意素材',
-          type: 'object'
-        }
-      }
-    ]
-  },
-  {
-    name: '跨境合规检查微服务',
-    attribute: 2,
-    type: 0,
-    domain: 0,
-    industry: 3,
-    scenario: 3,
-    technology: 0,
-    netWork: 3,
-    port: 2,
-    volume: 4,
-    status: 4,
-    number: 3,
-    norm: [
-      {
-        key: 1,
-        score: 5
-      },
-      {
-        key: 2,
-        score: 5
-      },
-      {
-        key: 3,
-        score: 5
-      }
-    ],
-    source: {
-      popoverTitle: '可信云技术服务溯源',
-      companyName: '复旦大学课题组',
-      companyAddress: '上海市杨浦区邯郸路220号',
-      companyContact: '021-65642222',
-      companyIntroduce: '跨境电商AI应用课题',
-      msIntroduce: '基于智能体的风险识别算法',
-      companyScore: 5,
-      msScore: 5
-    },
-    apiList: [
-      {
-        name: 'checkCompliance',
-        methodType: 1,
-        apiType: 0,
-        description: '检查产品在目标市场的合规性',
-        parameters: [
-          {
-            name: 'productDetails',
-            description: '产品详细信息',
-            isRequired: 1,
-            type: 'object',
-            defaultValue: null
-          },
-          {
-            name: 'targetCountry',
-            description: '目标国家',
-            isRequired: 1,
-            type: 'string',
-            defaultValue: null
-          }
-        ],
-        response: {
-          name: 'complianceReport',
-          description: '合规性检查报告',
-          type: 'object'
-        }
-      },
-      {
-        name: 'verifyIntellectualProperty',
-        methodType: 1,
-        apiType: 0,
-        description: '验证产品知识产权状态',
-        parameters: [
-          {
-            name: 'productName',
-            description: '产品名称',
-            isRequired: 1,
-            type: 'string',
-            defaultValue: null
-          },
-          {
-            name: 'productImage',
-            description: '产品图片',
-            isRequired: 1,
-            type: 'string',
-            defaultValue: null
-          },
-          {
-            name: 'description',
-            description: '产品描述',
-            isRequired: 1,
-            type: 'string',
-            defaultValue: null
-          }
-        ],
-        response: {
-          name: 'ipVerificationResult',
-          description: '知识产权验证结果',
-          type: 'object'
         }
       }
     ]
@@ -2987,17 +2783,17 @@ const ecommerceServices = [
 const ecommerceMetaApps = [
   {
     name: '跨境电商智能营销元应用',
-    attribute: 3,
+    attribute: 1,
     type: 1,
-    domain: 0,
+    domain: 5,
     industry: 0,
     scenario: 0,
     technology: 0,
-    netWork: 5,
-    port: 5,
-    volume: 5,
+    netWork: 'bridge',
+    port: '0.0.0.0:8600/TCP → 0.0.0.0:86000',
+    volume: '/var/opt/gitlab/mnt/user  →  /appdata/ecommerce/meta',
     status: 4,
-    number: 3,
+    number: '512',
     norm: [
       {
         key: 0,
@@ -3026,49 +2822,43 @@ const ecommerceMetaApps = [
       {
         name: '跨境电商智能营销元应用',
         isFake: true,
-        inputName: '营销活动详情',
-        outputName: '营销执行方案',
-        outputVisualization: true,
-        submitButtonText: '开始任务',
         url: 'https://myApiServer.com/ecommerce/metaApp',
         method: 'POST',
+        des: '执行跨境电商全渠道营销活动',
         parameterType: 3,
-        responseType: 1,
-        description: '执行跨境电商全渠道营销活动',
         parameters: [
           {
             name: 'campaignDetails',
-            description: '营销活动详情',
-            isRequired: 1,
             type: 'object',
-            defaultValue: null
+            des: '营销活动详情'
           },
           {
             name: 'productData',
-            description: '产品数据',
-            isRequired: 1,
             type: 'object',
-            defaultValue: null
+            des: '产品数据'
           },
           {
             name: 'targetMarkets',
-            description: '目标市场列表',
-            isRequired: 1,
             type: 'array',
-            defaultValue: null
+            des: '目标市场列表'
           },
           {
             name: 'budget',
-            description: '预算配置',
-            isRequired: 1,
             type: 'object',
-            defaultValue: null
+            des: '预算配置'
           }
         ],
+        responseType: 1,
         response: {
-          name: 'marketingPlan',
-          description: '完整营销执行方案',
-          type: 'object'
+          code: 200,
+          message: '营销计划生成成功！',
+          data: {
+            marketingPlan: {
+              channels: ['social', 'email', 'search'],
+              schedule: { startDate: '2023-07-01', endDate: '2023-07-31' },
+              budget: { total: 5000, allocation: { social: 2500, email: 1000, search: 1500 } }
+            }
+          }
         }
       }
     ]
@@ -3081,7 +2871,7 @@ const homeAIServices = [
     name: '环境感知微服务',
     attribute: 1,
     type: 0,
-    domain: 0,
+    domain: 6,
     industry: 0,
     scenario: 0,
     technology: 0,
@@ -3179,9 +2969,9 @@ const homeAIServices = [
     name: '智能对话微服务',
     attribute: 2,
     type: 0,
-    domain: 1,
-    industry: 3,
-    scenario: 4,
+    domain: 6,
+    industry: 0,
+    scenario: 0,
     technology: 1,
     netWork: 4,
     port: 3,
@@ -3277,7 +3067,7 @@ const homeAIServices = [
     name: '健康监测微服务',
     attribute: 1,
     type: 0,
-    domain: 1,
+    domain: 6,
     industry: 1,
     scenario: 1,
     technology: 3,
@@ -3481,9 +3271,9 @@ const homeAIServices = [
 const homeAIMetaApps = [
   {
     name: '家庭智能助手元应用',
-    attribute: 3,
+    attribute: 1,
     type: 1,
-    domain: 0,
+    domain: 6,
     industry: 0,
     scenario: 4,
     technology: 5,

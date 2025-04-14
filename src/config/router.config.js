@@ -1,4 +1,3 @@
-// eslint-disable-next-line
 import { UserLayout, BasicLayout, BlankLayout, PageView } from '@/layouts'
 import { bxAnaalyse } from '@/core/icons'
 
@@ -43,7 +42,8 @@ export const asyncRouterMap = [
           {
             path: '/vertical-user/aml',
             name: 'vertical-user-aml',
-            component: () => import('@/views/vertical/user/aml'),
+            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
+            props: { verticalType: 'aml', verticalTitle: '跨境支付AI监测' },
             meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher'] }
           }
         ]
