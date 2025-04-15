@@ -57,31 +57,7 @@ export function filterServices(filters) {
  * @returns {Promise} 返回指定垂直领域的服务列表
  */
 export function getServicesByVerticalType(verticalType) {
-  // 垂直领域类型到领域ID的映射
-  const verticalDomainMap = {
-    'aml': 0, // 金融领域
-    'aircraft': 1, // 航空领域
-    'health': 2, // 医疗领域
-    'agriculture': 3, // 农业领域
-    'evtol': 4, // 低空飞行领域
-    'ecommerce': 5, // 电商领域
-    'homeAI': 6 // 家庭陪伴领域
-  }
-
-  // 将垂直领域类型转换为领域ID进行筛选
-  const domainId = verticalDomainMap[verticalType] !== undefined ? verticalDomainMap[verticalType] : -1
-
-  if (domainId === -1) {
-    // 如果没有匹配的领域ID，返回空服务列表
-    return Promise.resolve({
-      status: 'success',
-      message: '未找到匹配的领域',
-      total: 0,
-      services: []
-    })
-  }
-
-  return filterServices({ domain: domainId })
+  return filterServices({ domain: verticalType })
 }
 
 /**
