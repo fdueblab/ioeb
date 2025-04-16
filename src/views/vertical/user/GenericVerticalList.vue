@@ -105,21 +105,6 @@
               </a-select>
             </a-form-item>
           </a-col>
-          <!-- 领域标签筛选（下拉框） -->
-          <a-col :span="4">
-            <a-form-item label="领域">
-              <a-select
-                v-model="queryParam.domain"
-                placeholder="请选择领域"
-                @change="handleTagChange('domain', $event)"
-                allow-clear
-              >
-                <a-select-option v-for="item in domainArr" :key="item.code" :value="item.code">
-                  {{ item.text }}
-                </a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
           <!-- 行业标签筛选（下拉框） -->
           <a-col :span="4">
             <a-form-item label="行业">
@@ -472,7 +457,6 @@ export default {
       // 筛选相关字典数据
       attributeArr: [],
       typeArr: [],
-      domainArr: [],
       industryArr: [],
       scenarioArr: [],
       technologyArr: [],
@@ -561,8 +545,7 @@ export default {
         scenario: undefined,
         technology: undefined
       }
-      // 初始化为空数组，稍后通过API加载
-      this.domainArr = []
+      // 初始化为空数组
       this.statusMap = []
       this.normMap = []
       this.attributeArr = []
@@ -575,8 +558,7 @@ export default {
     // 从API获取字典数据
     async loadDictionaryData() {
       try {
-        // 使用字典缓存服务加载各类字典
-        // 1. 加载基础通用字典
+        // 加载字典缓存
         this.statusMap = await dictionaryCache.loadDict('status') || []
         this.normMap = await dictionaryCache.loadDict('norm') || []
         this.attributeArr = await dictionaryCache.loadDict('attribute') || []
