@@ -429,10 +429,209 @@ export default {
           code: 200,
           message: '测试通过！',
           data: {
-            securityResult: '5.0',
-            robustnessResult: '5.0',
-            privacyResult: '5.0',
-            credibilityResult: '5.0'
+            'privacy': {
+              'Precision (Model 1)': {
+                'value': 0.4952,
+                'description': '模型1的精度'
+              },
+              'Recall (Model 1)': {
+                'value': 0.41,
+                'description': '模型1的召回率'
+              },
+              'Precision (Model 2)': {
+                'value': 0.3475,
+                'description': '模型2的精度'
+              },
+              'Recall (Model 2)': {
+                'value': 0.4872,
+                'description': '模型2的召回率'
+              },
+              'Kappa ': {
+                'value': 0.4527,
+                'description': 'Kappa值'
+              },
+              'Consistency Ratio': {
+                'value': 0.7945,
+                'description': '一致性比例'
+              },
+              'score': {
+                'value': 0.4527,
+                'description': '最终得分'
+              }
+            },
+            'safety-fingerprint': {
+              'Results under cln mode': 0,
+              'sensi_point_ratio_origin_gt50.0(cln)': {
+                'value': 0.0,
+                'description': '指纹点敏感度大于50.0%的占比（cln模式）'
+              },
+              'sensi_point_ratio_origin_gt60.0(cln)': {
+                'value': 0.0,
+                'description': '指纹点敏感度大于50.0%的占比（cln模式）'
+              },
+              'num_positive_model(cln)': {
+                'value': 4,
+                'description': '总篡改模型个数（cln模式）'
+              },
+              'detection_success_rate_origin(cln)': {
+                'value': 25.0,
+                'description': '模型篡改检测成功率（cln模式）'
+              },
+              'fingerprint_score(cln)': {
+                'value': 0.25,
+                'description': '最终指纹得分（cln模式）'
+              },
+              'Results under atk mode': 0,
+              'sensi_point_ratio_origin_gt50.0(atk)': {
+                'value': 0.0,
+                'description': '指纹点敏感度大于50.0%的占比（atk模式）'
+              },
+              'sensi_point_ratio_origin_gt60.0(atk)': {
+                'value': 0.0,
+                'description': '指纹点敏感度大于50.0%的占比（atk模式）'
+              },
+              'num_positive_model(atk)': {
+                'value': 4,
+                'description': '总篡改模型个数（atk模式）'
+              },
+              'detection_success_rate_origin(atk)': {
+                'value': 25.0,
+                'description': '模型篡改检测成功率（atk模式）'
+              },
+              'fingerprint_score(atk)': {
+                'value': 0.25,
+                'description': '最终指纹得分（atk模式）'
+              }
+            },
+            'safety-watermark': {
+              'watermark_score': {
+                'value': 0.6,
+                'description': '最终水印得分'
+              },
+              'verification_ratio': {
+                'value': 0.1667,
+                'description': '生成异常样本的比例'
+              },
+              'acc': {
+                'value': 1.0,
+                'description': '对正常样本的识别准确性'
+              },
+              'positive_val': {
+                'value': [
+                  0.1667,
+                  0.2667
+                ],
+                'description': '阳性模型对含有特殊触发器样本的验证准确性'
+              },
+              'negative_val': {
+                'value': [
+                  0.2,
+                  0.0,
+                  0.5,
+                  0.0333,
+                  0.0333,
+                  0.8333,
+                  0.1,
+                  0.0,
+                  0.2,
+                  0.9667
+                ],
+                'description': '阴性模型对含有特殊触发器样本的验证准确性'
+              }
+            },
+            'fairness': {
+              'attribute': 'total_incoming_amount',
+              'fairness_score': 10.6201,
+              'description': '关于属性“total_incoming_amount”的公平性评估，数值越大代表越公平'
+            },
+            'robustness': {
+              'Surrogate model predict number before attack': {
+                'value': {
+                  'on class 0': 422,
+                  'on class 1': 1,
+                  'on class 2': 31
+                },
+                'description': 'The result is the number of nodes for each class predicted by the surrogate model on the graph before the attack.'
+              },
+              'Surrogate model predict accuracy before attack': {
+                'value': {
+                  'on class 0': 1.0,
+                  'on class 1': 1.0,
+                  'on class 2': 1.0
+                },
+                'description': 'The result is the accuracy before the attack, with the surrogate model’s own predictions used as the ground truth, and thus it is 100%.'
+              },
+              'Surrogate model predict number after attack': {
+                'value': {
+                  'on class 0': 422,
+                  'on class 1': 0,
+                  'on class 2': 12
+                },
+                'description': 'The result is the number of nodes for each class predicted by the surrogate model on the graph after the attack.'
+              },
+              'Surrogate model predict accuracy after attack': {
+                'value': {
+                  'on class 0': 1.0,
+                  'on class 1': 0.0,
+                  'on class 2': 0.3870967741935484
+                },
+                'description': 'The result is the prediction accuracy of the surrogate model after the attack, with its own predictions used as the ground truth (i.e., the accuracy before the attack is 100%).'
+              },
+              'White box robustness score': {
+                'value': 0.375,
+                'description': 'The result is the robustness score under the white-box attack scenario.',
+                'Black box robustness score': {
+                  'value': 0.2,
+                  'description': 'The result is the robustness score under the white-box attack scenario.'
+                }
+              }
+            },
+            'explainability': {
+              'subgraphs2': {
+                'value': './graph_dataset/delete_edges_outside_subgraph',
+                'description': 'Path to subgraph 2'
+              },
+              'subgraphs1': {
+                'value': './graph_dataset/original',
+                'description': 'Path to subgraph 1'
+              },
+              'jaccard_coefficient': {
+                'value': 0.3333,
+                'description': 'Jaccard Coefficient between subgraph 1 and subgraph 4'
+              },
+              'num_nodes_combined': {
+                'value': 4,
+                'description': 'Number of nodes in the combined subgraphs'
+              },
+              'num_edges_subgraph1': {
+                'value': 7,
+                'description': 'Number of edges in subgraph 1'
+              },
+              'num_edges_subgraph2': {
+                'value': 7,
+                'description': 'Number of edges in subgraph 2'
+              },
+              'score': {
+                'value': 0.3333,
+                'description': 'Final score based on Jaccard coefficient'
+              },
+              'subgraphs3': {
+                'value': './graph_dataset/delete_edges_within_subgraph',
+                'description': 'Path to subgraph 3'
+              },
+              'num_edges_subgraph3': {
+                'value': 6,
+                'description': 'Number of edges in subgraph 3'
+              },
+              'subgraphs4': {
+                'value': './graph_dataset/rerun',
+                'description': 'Path to subgraph 4'
+              },
+              'num_edges_subgraph4': {
+                'value': 6,
+                'description': 'Number of edges in subgraph 4'
+              }
+            }
           }
         }
         if (sessionStorage.getItem('upload_exception_service')) {
