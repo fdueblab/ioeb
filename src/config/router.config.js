@@ -1,9 +1,203 @@
 import { UserLayout, BasicLayout, BlankLayout, PageView } from '@/layouts'
 import { bxAnaalyse } from '@/core/icons'
+import { loadDict } from '@/utils/dictionaryCache'
 
 const RouteView = {
   name: 'RouteView',
   render: (h) => h('router-view')
+}
+
+// 获取垂域路由的第一个路径，用于重定向
+export async function getFirstVerticalUserPath() {
+  try {
+    const domains = await loadDict('domain', [])
+    if (domains && domains.length > 0) {
+      return `/vertical-user/${domains[0].code}`
+    }
+  } catch (error) {
+    console.error('获取第一个垂域路径失败:', error)
+  }
+  return '/vertical-user/aml' // 默认返回aml路径
+}
+
+// 动态生成垂域用户路由的辅助函数
+export async function generateVerticalUserRoutes() {
+  try {
+    // 从字典加载"domain"类别的数据
+    const domains = await loadDict('domain', [])
+
+    // 如果字典为空，返回至少一个默认路由（防止路由为空）
+    if (!domains || domains.length === 0) {
+      return [{
+        path: '/vertical-user/aml',
+        name: 'vertical-user-aml',
+        component: () => import('@/views/vertical/user/GenericVerticalDomain'),
+        props: { verticalType: 'aml' },
+        meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher'] }
+      }]
+    }
+
+    // 将字典数据转换为路由配置
+    return domains.map(domain => ({
+      path: `/vertical-user/${domain.code}`,
+      name: `vertical-user-${domain.code}`,
+      component: () => import('@/views/vertical/user/GenericVerticalDomain'),
+      props: { verticalType: domain.code },
+      meta: { title: domain.text, keepAlive: true, permission: ['admin', 'publisher'] }
+    }))
+  } catch (error) {
+    console.error('生成垂域路由失败:', error)
+    // 出错时返回默认路由
+    return [{
+      path: '/vertical-user/aml',
+      name: 'vertical-user-aml',
+      component: () => import('@/views/vertical/user/GenericVerticalDomain'),
+      props: { verticalType: 'aml' },
+      meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher'] }
+    }]
+  }
+}
+
+// 动态生成垂域微服务路由的辅助函数
+export async function generateVerticalMSRoutes() {
+  try {
+    // 从字典加载"domain"类别的数据
+    const domains = await loadDict('domain', [])
+
+    // 如果字典为空，返回至少一个默认路由（防止路由为空）
+    if (!domains || domains.length === 0) {
+      return [{
+        path: '/vertical-ms/aml',
+        name: 'vertical-ms-aml',
+        component: () => import('@/views/vertical/ms/GenericMicroService'),
+        props: { verticalType: 'aml' },
+        meta: { title: '跨境支付AI监测服务发布', keepAlive: true, permission: ['admin', 'publisher'] }
+      }]
+    }
+
+    // 将字典数据转换为路由配置
+    return domains.map(domain => ({
+      path: `/vertical-ms/${domain.code}`,
+      name: `vertical-ms-${domain.code}`,
+      component: () => import('@/views/vertical/ms/GenericMicroService'),
+      props: { verticalType: domain.code },
+      meta: { title: `${domain.text}服务发布`, keepAlive: true, permission: ['admin', 'publisher'] }
+    }))
+  } catch (error) {
+    console.error('生成垂域微服务路由失败:', error)
+    // 出错时返回默认路由
+    return [{
+      path: '/vertical-ms/aml',
+      name: 'vertical-ms-aml',
+      component: () => import('@/views/vertical/ms/GenericMicroService'),
+      props: { verticalType: 'aml' },
+      meta: { title: '跨境支付AI监测服务发布', keepAlive: true, permission: ['admin', 'publisher'] }
+    }]
+  }
+}
+
+// 动态生成垂域元应用路由的辅助函数
+export async function generateVerticalAppRoutes() {
+  try {
+    // 从字典加载"domain"类别的数据
+    const domains = await loadDict('domain', [])
+
+    // 如果字典为空，返回至少一个默认路由（防止路由为空）
+    if (!domains || domains.length === 0) {
+      return [{
+        path: '/vertical-atom-app/aml',
+        name: 'vertical-meta-app-aml',
+        component: () => import('@/views/schedule/GenericSchedule'),
+        props: { verticalType: 'aml' },
+        meta: { title: '跨境元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+      }]
+    }
+
+    // 将字典数据转换为路由配置
+    return domains.map(domain => ({
+      path: `/vertical-atom-app/${domain.code}`,
+      name: `vertical-atom-app-${domain.code}`,
+      component: () => import('@/views/schedule/GenericSchedule'),
+      props: { verticalType: domain.code },
+      meta: {
+        title: domain.text.slice(0, 4) + '元应用智能体构建',
+        keepAlive: true,
+        permission: ['admin', 'publisher', 'user']
+      }
+    }))
+  } catch (error) {
+    console.error('生成垂域元应用路由失败:', error)
+    // 出错时返回默认路由
+    return [{
+      path: '/vertical-atom-app/aml',
+      name: 'vertical-meta-app-aml',
+      component: () => import('@/views/schedule/GenericSchedule'),
+      props: { verticalType: 'aml' },
+      meta: { title: '跨境元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+    }]
+  }
+}
+
+// 动态生成指南路由的辅助函数
+export async function generateGuideRoutes() {
+  try {
+    // 从字典加载"domain"类别的数据
+    const domains = await loadDict('domain', [])
+
+    // 如果字典为空，返回至少一个默认路由（防止路由为空）
+    if (!domains || domains.length === 0) {
+      return [{
+        path: '/guide/aml',
+        name: 'guide_aml',
+        meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
+        component: () => import('@/views/guide/verticalFieldIntro'),
+        props: { verticalField: 'aml' }
+      }]
+    }
+
+    // 将字典数据转换为路由配置
+    return domains.map(domain => ({
+      path: `/guide/${domain.code}`,
+      name: `guide_${domain.code}`,
+      meta: { title: domain.text + '简介', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
+      component: () => import('@/views/guide/verticalFieldIntro'),
+      props: { verticalField: domain.code }
+    }))
+  } catch (error) {
+    console.error('生成指南路由失败:', error)
+    // 出错时返回默认路由
+    return [{
+      path: '/guide/aml',
+      name: 'guide_aml',
+      meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
+      component: () => import('@/views/guide/verticalFieldIntro'),
+      props: { verticalField: 'aml' }
+    }]
+  }
+}
+
+export async function getFirstMSPath() {
+  try {
+    const domains = await loadDict('domain', [])
+    if (domains && domains.length > 0) {
+      return `/vertical-ms/${domains[0].code}`
+    }
+  } catch (error) {
+    console.error('获取第一个微服务路径失败:', error)
+  }
+  return '/vertical-ms/aml' // 默认返回aml路径
+}
+
+export async function getFirstAppPath() {
+  try {
+    const domains = await loadDict('domain', [])
+    if (domains && domains.length > 0) {
+      return `/vertical-atom-app/${domains[0].code}`
+    }
+  } catch (error) {
+    console.error('获取第一个元应用路径失败:', error)
+  }
+  return '/vertical-atom-app/aml' // 默认返回aml路径
 }
 
 export const asyncRouterMap = [
@@ -61,130 +255,29 @@ export const asyncRouterMap = [
       name: 'home'
     },
     children: [
-      // 微服务与元应用检索
+      // 微服务与元应用检索 - 从字典动态获取
       {
         path: '/vertical-user',
         name: 'vertical-user',
-        redirect: '/vertical-user/aml',
+        redirect: '/vertical-user/aml', // 默认重定向，会在路由初始化时被更新
         component: RouteView,
         meta: { title: '微服务与元应用检索', keepAlive: true, icon: 'appstore', permission: ['admin', 'publisher'] },
-        children: [
-          {
-            path: '/vertical-user/aml',
-            name: 'vertical-user-aml',
-            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'aml' },
-            meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher'] }
-          },
-          // 已移除AML监控页面，现在是顶级路由
-          {
-            path: '/vertical-user/aircraft',
-            name: 'vertical-user-aircraft',
-            meta: { title: '无人飞机AI监控', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'aircraft' }
-          },
-          {
-            path: '/vertical-user/health',
-            name: 'vertical-user-health',
-            meta: { title: '乡村医疗AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'health' }
-          },
-          {
-            path: '/vertical-user/agriculture',
-            name: 'vertical-user-agriculture',
-            meta: { title: '数字农业AI服务', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'agriculture' }
-          },
-          {
-            path: '/vertical-user/evtol',
-            name: 'vertical-user-evtol',
-            meta: { title: '低空飞行AI应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'evtol' }
-          },
-          {
-            path: '/vertical-user/ecommerce',
-            name: 'vertical-user-ecommerce',
-            meta: { title: '跨境电商AI应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'ecommerce' }
-          },
-          {
-            path: '/vertical-user/homeAI',
-            name: 'vertical-user-homeAI',
-            meta: { title: '家庭陪伴AI应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/user/GenericVerticalDomain'),
-            props: { verticalType: 'homeAI' }
-          }
-        ]
+        children: [] // 子路由在路由初始化时动态加载
       },
-      // 垂域原子微服务发布
+      // 垂域原子微服务发布 - 从字典动态获取
       {
         path: '/vertical-ms',
         name: 'vertical-ms',
-        redirect: '/vertical-ms/aml',
+        redirect: '/vertical-ms/aml', // 默认重定向，会在路由初始化时被更新
         component: RouteView,
         meta: { title: '垂域原子微服务发布', keepAlive: true, icon: 'upload', permission: ['admin', 'publisher'] },
-        children: [
-          {
-            path: '/vertical-ms/aml',
-            name: 'vertical-ms-aml',
-            component: () => import('@/views/vertical/ms/GenericMicroService'),
-            props: { verticalType: 'aml' },
-            meta: { title: '跨境支付AI监测服务发布', keepAlive: true, permission: ['admin', 'publisher'] }
-          },
-          {
-            path: '/vertical-ms/aircraft',
-            name: 'vertical-ms-aircraft',
-            meta: { title: '无人飞机AI监控服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/GenericMicroService'),
-            props: { verticalType: 'aircraft' }
-          },
-          {
-            path: '/vertical-ms/health',
-            name: 'vertical-ms-health',
-            meta: { title: '乡村医疗AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/GenericMicroService'),
-            props: { verticalType: 'health' }
-          },
-          {
-            path: '/vertical-ms/agriculture',
-            name: 'vertical-ms-agriculture',
-            meta: { title: '数字农业AI智能服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/GenericMicroService'),
-            props: { verticalType: 'agriculture' }
-          },
-          {
-            path: '/vertical-ms/evtol',
-            name: 'vertical-ms-evtol',
-            meta: { title: '低空飞行AI应用服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/GenericMicroService'),
-            props: { verticalType: 'evtol' }
-          },
-          {
-            path: '/vertical-ms/ecommerce',
-            name: 'vertical-ms-ecommerce',
-            meta: { title: '跨境电商AI应用服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/GenericMicroService'),
-            props: { verticalType: 'ecommerce' }
-          },
-          {
-            path: '/vertical-ms/homeAI',
-            name: 'vertical-ms-homeAI',
-            meta: { title: '家庭陪伴AI应用服务发布', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: () => import('@/views/vertical/ms/GenericMicroService'),
-            props: { verticalType: 'homeAI' }
-          }
-        ]
+        children: [] // 子路由在路由初始化时动态加载
       },
-      // 垂域元应用仿真构建
+      // 垂域元应用仿真构建 - 从字典动态获取
       {
         path: '/vertical-meta-app',
         name: 'vertical-ms',
-        redirect: '/vertical-atom-app/aml',
+        redirect: '/vertical-atom-app/aml', // 默认重定向，会在路由初始化时被更新
         component: RouteView,
         meta: {
           title: '垂域元应用仿真构建',
@@ -192,57 +285,7 @@ export const asyncRouterMap = [
           icon: 'form',
           permission: ['admin', 'publisher', 'user']
         },
-        children: [
-          {
-            path: '/vertical-atom-app/aml',
-            name: 'vertical-meta-app-aml',
-            component: () => import('@/views/schedule/GenericSchedule'),
-            props: { verticalType: 'aml' },
-            meta: { title: '跨境元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          },
-          {
-            path: '/vertical-atom-app/aircraft',
-            name: 'vertical-atom-app-aircraft',
-            component: () => import('@/views/schedule/GenericSchedule'),
-            props: { verticalType: 'aircraft' },
-            meta: { title: '飞机元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          },
-          {
-            path: '/vertical-atom-app/health',
-            name: 'vertical-atom-app-health',
-            component: () => import('@/views/schedule/GenericSchedule'),
-            props: { verticalType: 'health' },
-            meta: { title: '农医元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          },
-          {
-            path: '/vertical-atom-app/agriculture',
-            name: 'vertical-atom-app-agriculture',
-            component: () => import('@/views/schedule/GenericSchedule'),
-            props: { verticalType: 'agriculture' },
-            meta: { title: '农业元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          },
-          {
-            path: '/vertical-atom-app/evtol',
-            name: 'vertical-atom-app-evtol',
-            component: () => import('@/views/schedule/GenericSchedule'),
-            props: { verticalType: 'evtol' },
-            meta: { title: '低空元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          },
-          {
-            path: '/vertical-atom-app/ecommerce',
-            name: 'vertical-atom-app-ecommerce',
-            component: () => import('@/views/schedule/GenericSchedule'),
-            props: { verticalType: 'ecommerce' },
-            meta: { title: '电商元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          },
-          {
-            path: '/vertical-atom-app/homeAI',
-            name: 'vertical-atom-app-homeAI',
-            component: () => import('@/views/schedule/GenericSchedule'),
-            props: { verticalType: 'homeAI' },
-            meta: { title: '家庭元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          }
-        ]
+        children: [] // 子路由在路由初始化时动态加载
       },
       // 技术评测与业务验证
       {
@@ -763,114 +806,8 @@ export const asyncRouterMap = [
             name: 'operateGuide',
             component: () => import('@/views/guide/operateGuide'),
             meta: { title: '操作指南', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          },
-          {
-            path: '/guide/aml',
-            name: 'guide_aml',
-            meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
-            component: () => import('@/views/guide/verticalFieldIntro'),
-            props: { verticalField: 'aml' }
-          },
-          {
-            path: '/guide/aircraft',
-            name: 'guide_aircraft',
-            meta: { title: '无人飞机AI监控', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
-            component: () => import('@/views/guide/verticalFieldIntro'),
-            props: { verticalField: 'aircraft' }
-          },
-          {
-            path: '/guide/health',
-            name: 'guide_health',
-            meta: { title: '乡村医疗AI服务', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
-            component: () => import('@/views/guide/verticalFieldIntro'),
-            props: { verticalField: 'health' }
-          },
-          {
-            path: '/guide/agriculture',
-            name: 'guide_agriculture',
-            meta: { title: '数字农业AI服务', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
-            component: () => import('@/views/guide/verticalFieldIntro'),
-            props: { verticalField: 'agriculture' }
-          },
-          {
-            path: '/guide/evtol',
-            name: 'guide_evtol',
-            meta: { title: '低空飞行AI应用', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
-            component: () => import('@/views/guide/verticalFieldIntro'),
-            props: { verticalField: 'evtol' }
-          },
-          {
-            path: '/guide/ecommerce',
-            name: 'guide_ecommerce',
-            meta: { title: '跨境电商AI应用', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
-            component: () => import('@/views/guide/verticalFieldIntro'),
-            props: { verticalField: 'ecommerce' }
-          },
-          {
-            path: '/guide/homeAI',
-            name: 'guide_homeAI',
-            meta: { title: '家庭陪伴AI应用', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
-            component: () => import('@/views/guide/verticalFieldIntro'),
-            props: { verticalField: 'homeAI' }
           }
-        ]
-      },
-      // 用户管理
-      // {
-      //   path: '/management',
-      //   name: 'management',
-      //   redirect: '/management/role',
-      //   component: RouteView,
-      //   hidden: true,
-      //   meta: { title: '用户管理', keepAlive: true, icon: 'setting', permission: ['admin', 'publisher'] },
-      //   children: [
-      //     {
-      //       path: '/management/role',
-      //       name: 'management_role',
-      //       component: () => import('@/views/management/Role'),
-      //       meta: { title: '角色管理', keepAlive: true, permission: ['admin', 'publisher'] }
-      //     },
-      //     {
-      //       path: '/management/user',
-      //       name: 'management_user',
-      //       component: () => import('@/views/management/User'),
-      //       meta: { title: '用户管理', keepAlive: true, permission: ['admin', 'publisher'] }
-      //     },
-      //     {
-      //       path: '/management/permission',
-      //       name: 'management_permission',
-      //       component: () => import('@/views/management/PermissionList'),
-      //       meta: { title: '用户权限', keepAlive: true, permission: ['admin', 'publisher'] }
-      //     },
-      //     {
-      //       path: '/management/tenant',
-      //       name: 'management_tenant',
-      //       component: () => import('@/views/management/TenantList'),
-      //       meta: { title: '租户管理', keepAlive: true, permission: ['admin', 'publisher'] }
-      //     }
-      //   ]
-      // },
-      // dashboard
-      {
-        path: '/dashboard',
-        name: 'dashboard',
-        redirect: '/dashboard/endpoint',
-        component: RouteView,
-        hidden: true,
-        meta: { title: '平台监控', keepAlive: true, icon: bxAnaalyse, permission: ['admin', 'publisher'] },
-        children: [
-          {
-            path: '/dashboard/endpoint',
-            name: 'Endpoint',
-            component: () => import('@/views/dashboard/EndpointInfo'),
-            meta: { title: '实时数据', keepAlive: false, permission: ['admin', 'publisher'] }
-          },
-          {
-            path: '/dashboard/eureka',
-            name: 'eureka',
-            component: () => import('@/views/dashboard/Eureka'),
-            meta: { title: '系统状态', keepAlive: true, permission: ['admin', 'publisher'] }
-          }
+          // 动态子路由将在路由初始化时加载
         ]
       },
       // 应用实例
@@ -1020,6 +957,29 @@ export const asyncRouterMap = [
               permission: ['admin', 'publisher', 'user']
             },
             component: () => import('@/views/account/space')
+          }
+        ]
+      },
+      // dashboard
+      {
+        path: '/dashboard',
+        name: 'dashboard',
+        redirect: '/dashboard/endpoint',
+        component: RouteView,
+        hidden: true,
+        meta: { title: '平台监控', keepAlive: true, icon: bxAnaalyse, permission: ['admin', 'publisher'] },
+        children: [
+          {
+            path: '/dashboard/endpoint',
+            name: 'Endpoint',
+            component: () => import('@/views/dashboard/EndpointInfo'),
+            meta: { title: '实时数据', keepAlive: false, permission: ['admin', 'publisher'] }
+          },
+          {
+            path: '/dashboard/eureka',
+            name: 'eureka',
+            component: () => import('@/views/dashboard/Eureka'),
+            meta: { title: '系统状态', keepAlive: true, permission: ['admin', 'publisher'] }
           }
         ]
       }
