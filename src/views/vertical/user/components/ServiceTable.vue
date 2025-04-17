@@ -12,7 +12,7 @@
         {{ index + 1 }}
       </span>
       <template slot="name" slot-scope="text, record">
-        <a-button type="link" @click="$emit('edit', record)">{{ text }}</a-button>
+        <a-button type="link" size="large" @click="$emit('edit', record)">{{ text }}</a-button>
       </template>
       <span slot="status" slot-scope="text">
         <a-badge :status="statusStyleFilter(text)" :text="statusFilter(text)" />
@@ -160,7 +160,8 @@ export default {
         {
           title: '服务名称',
           dataIndex: 'name',
-          scopedSlots: { customRender: 'name' }
+          scopedSlots: { customRender: 'name' },
+          customHeaderCell: () => ({ style: { paddingLeft: '25px' } })
         },
         {
           title: '服务类型',
@@ -182,7 +183,8 @@ export default {
         {
           title: '服务状态',
           dataIndex: 'status',
-          scopedSlots: { customRender: 'status' }
+          scopedSlots: { customRender: 'status' },
+          align: 'center'
         },
         {
           title: '技术指标',

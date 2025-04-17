@@ -6,16 +6,14 @@
           <a-row :gutter="20">
             <a-col :span="6">
               <a-form-item label="领域">
-                <a-select placeholder="请选择" :default-value="0" disabled>
-                  <a-select-option :value="0">{{ domainTitle }}</a-select-option>
-                </a-select>
+                <span style="margin-left: 5px; font-size: 14px">{{ domainTitle }}</span>
               </a-form-item>
             </a-col>
             <a-col :span="6">
               <a-form-item label="行业">
                 <a-select v-model="programInfo.industry" placeholder="请选择行业" allow-clear>
-                  <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="index">
-                    {{ item }}
+                  <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
+                    {{ item.text }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
@@ -23,8 +21,8 @@
             <a-col :span="6">
               <a-form-item label="场景">
                 <a-select v-model="programInfo.scenario" placeholder="请选择场景" allow-clear>
-                  <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="index">
-                    {{ item }}
+                  <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="item.code">
+                    {{ item.text }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
@@ -32,8 +30,8 @@
             <a-col :span="6">
               <a-form-item label="技术">
                 <a-select v-model="programInfo.technology" placeholder="请选择技术" allow-clear>
-                  <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="index">
-                    {{ item }}
+                  <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="item.code">
+                    {{ item.text }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
@@ -95,8 +93,8 @@
                 <a-col :span="6">
                   <a-form-item label="API类型" required>
                     <a-select v-model="form.apiType" placeholder="请选择">
-                      <a-select-option v-for="(item, index) in apiTypeOptions" :key="index" :value="index">
-                        {{ item }}
+                      <a-select-option v-for="(item, index) in apiTypeOptions" :key="index" :value="item.code">
+                        {{ item.text }}
                       </a-select-option>
                     </a-select>
                   </a-form-item>
@@ -104,8 +102,8 @@
                 <a-col :span="6">
                   <a-form-item label="请求方法" required>
                     <a-select v-model="form.methodType" placeholder="请选择">
-                      <a-select-option v-for="(item, index) in methodTypeOptions" :key="index" :value="index">
-                        {{ item }}
+                      <a-select-option v-for="(item, index) in methodTypeOptions" :key="index" :value="item.code">
+                        {{ item.text }}
                       </a-select-option>
                     </a-select>
                   </a-form-item>
@@ -115,7 +113,9 @@
                 <a-col :span="6">
                   <a-form-item label="输入类型">
                     <a-select v-model="form.inputType" disabled >
-                      <a-select-option v-for="(item, index) in ioTypeOptions" :key="index" :value="index">{{ item }}</a-select-option>
+                      <a-select-option v-for="(item, index) in ioTypeOptions" :key="index" :value="item.code">
+                        {{ item.text }}
+                      </a-select-option>
                     </a-select>
                   </a-form-item>
                 </a-col>
@@ -127,7 +127,9 @@
                 <a-col :span="6">
                   <a-form-item label="输出类型">
                     <a-select v-model="form.outputType" disabled >
-                      <a-select-option v-for="(item, index) in ioTypeOptions" :key="index" :value="index">{{ item }}</a-select-option>
+                      <a-select-option v-for="(item, index) in ioTypeOptions" :key="index" :value="item.code">
+                        {{ item.text }}
+                      </a-select-option>
                     </a-select>
                   </a-form-item>
                 </a-col>
@@ -221,13 +223,13 @@ import 'codemirror/addon/edit/matchbrackets'
 import 'codemirror/addon/edit/closebrackets'
 import 'codemirror/mode/python/python.js'
 import 'codemirror/theme/idea.css'
-import { getDictionaryByCategory } from '@/api/dictionary'
 import { domainMockData, convertToGraphFormat } from './chartData'
 // 必须要引用echarts，否则图表无法显示
 // eslint-disable-next-line no-unused-vars
 import * as echarts from 'echarts'
 import vChart from 'vue-echarts'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
+import dictionaryCache from '@/utils/dictionaryCache'
 
 export default {
   name: 'GenericMicroService',
@@ -311,16 +313,16 @@ class {{apiName}}({{input}}):
       options: null,
       // 表单数据
       form: {
-        apiName: '',
-        apiType: 0,
-        methodType: 0,
-        inputType: 0,
-        input: '',
-        outputType: 0,
-        output: '',
-        environment: '',
-        process: '',
-        serviceName: ''
+        apiName: undefined,
+        apiType: undefined,
+        methodType: undefined,
+        inputType: undefined,
+        input: undefined,
+        outputType: undefined,
+        output: undefined,
+        environment: undefined,
+        process: undefined,
+        serviceName: undefined
       },
       // 程序信息
       programInfo: {
@@ -346,90 +348,33 @@ class {{apiName}}({{input}}):
   },
   created() {
     // 初始化数据
-    this.initDomainTitle()
-    this.loadDictionaryData()
+    this.initData()
   },
   methods: {
-    // 设置领域标题
-    initDomainTitle() {
-      const verticalTitleMap = {
-        'aml': '跨境支付AI监测服务',
-        'aircraft': '无人飞机AI监控服务',
-        'health': '乡村医疗AI智能服务',
-        'agriculture': '数字农业AI智能服务',
-        'evtol': '低空飞行AI应用服务',
-        'ecommerce': '跨境电商AI应用服务',
-        'homeAI': '家庭陪伴AI应用服务'
-      }
-      this.domainTitle = verticalTitleMap[this.verticalType] || '未知领域'
-    },
-    // 加载字典数据
-    async loadDictionaryData() {
+    async initData() {
       try {
-        // 加载不同类别的字典数据
-        const requests = [
-          this.fetchDictionary('api_type'),
-          this.fetchDictionary('method_type'),
-          this.fetchDictionary('io_type'),
-          this.fetchDictionary(`${this.verticalType}_industry`),
-          this.fetchDictionary(`${this.verticalType}_scenario`),
-          this.fetchDictionary(`${this.verticalType}_technology`)
-        ]
-
-        const [
-          apiTypesData,
-          methodTypesData,
-          ioTypesData,
-          industriesData,
-          scenariosData,
-          technologiesData
-        ] = await Promise.all(requests)
-
-        // 处理API类型数据
-        if (apiTypesData.status === 'success') {
-          this.apiTypeOptions = apiTypesData.dictionaries.map(item => item.text)
-        }
-
-        // 处理方法类型数据
-        if (methodTypesData.status === 'success') {
-          this.methodTypeOptions = methodTypesData.dictionaries.map(item => item.text)
-        }
-
-        // 处理IO类型数据
-        if (ioTypesData.status === 'success') {
-          this.ioTypeOptions = ioTypesData.dictionaries.map(item => item.text)
-        }
-
-        // 处理行业数据
-        if (industriesData.status === 'success') {
-          this.industryOptions = industriesData.dictionaries.map(item => item.text)
-        }
-
-        // 处理场景数据
-        if (scenariosData.status === 'success') {
-          this.scenarioOptions = scenariosData.dictionaries.map(item => item.text)
-        }
-
-        // 处理技术数据
-        if (technologiesData.status === 'success') {
-          this.technologyOptions = technologiesData.dictionaries.map(item => item.text)
-        }
+        // 加载字典缓存
+        this.apiTypeOptions = await dictionaryCache.loadDict('api_type') || []
+        this.methodTypeOptions = await dictionaryCache.loadDict('method_type') || []
+        this.ioTypeOptions = await dictionaryCache.loadDict('io_type') || []
+        this.industryOptions = await dictionaryCache.loadDict(`${this.verticalType}_industry`) || []
+        this.scenarioOptions = await dictionaryCache.loadDict(`${this.verticalType}_scenario`) || []
+        this.technologyOptions = await dictionaryCache.loadDict(`${this.verticalType}_technology`) || []
+        // 设置领域标题
+        const domains = await dictionaryCache.loadDict('domain') || []
+        this.domainTitle = domains.find(domain => domain.code === this.verticalType)?.text || '未知领域'
       } catch (error) {
         console.error('加载字典数据失败:', error)
         this.$message.error('加载数据字典失败，请刷新重试')
+        // 确保所有数组初始化，防止undefined错误
+        this.apiTypeOptions = this.apiTypeOptions || []
+        this.methodTypeOptions = this.methodTypeOptions || []
+        this.ioTypeOptions = this.ioTypeOptions || []
+        this.industryOptions = this.industryOptions || []
+        this.scenarioOptions = this.scenarioOptions || []
+        this.technologyOptions = this.technologyOptions || []
       }
     },
-
-    // 获取字典数据
-    async fetchDictionary(category) {
-      try {
-        return await getDictionaryByCategory(category)
-      } catch (error) {
-        console.error(`获取${category}字典数据失败:`, error)
-        return { status: 'error', message: error.message, dictionaries: [] }
-      }
-    },
-
     // 程序文件选择
     async customProgramFilesChose(options) {
       const { file } = options
@@ -499,12 +444,12 @@ class {{apiName}}({{input}}):
     mockCodeAnalysis(file) {
       this.uploadProgramLoading = true
       // 获取当前领域的模拟数据
-      const domainData = domainMockData[this.verticalType] || { checkFile: null, nodes: [], edges: [] }
+      const programData = domainMockData[this.verticalType] || { checkFile: null, nodes: [], edges: [] }
 
       // 延时模拟请求处理
       setTimeout(() => {
         // 检查文件合法性（如果当前领域有文件名检查需求）
-        if (domainData.checkFile && file.name !== domainData.checkFile) {
+        if (programData.checkFile && file.name !== programData.checkFile) {
           this.$message.error('上传的程序不符合规范，上传失败！')
           this.uploadProgramLoading = false
           return
@@ -512,8 +457,8 @@ class {{apiName}}({{input}}):
 
         // 设置分析结果
         this.programJson = {
-          nodes: domainData.nodes,
-          edges: domainData.edges
+          nodes: programData.nodes,
+          edges: programData.edges
         }
         this.setChart()
         this.$message.success('解析成功，发现以下可用API及调用关系')
@@ -814,16 +759,16 @@ class {{apiName}}({{input}}):
     // 重置表单
     resetForm() {
       this.form = {
-        apiName: '',
-        apiType: 0,
-        methodType: 0,
-        inputType: 0,
-        input: '',
-        outputType: 0,
-        output: '',
-        environment: '',
-        process: '',
-        serviceName: ''
+        apiName: undefined,
+        apiType: undefined,
+        methodType: undefined,
+        inputType: undefined,
+        input: undefined,
+        outputType: undefined,
+        output: undefined,
+        environment: undefined,
+        process: undefined,
+        serviceName: undefined
       }
       this.programInfo = {
         industry: undefined,
@@ -843,8 +788,7 @@ class {{apiName}}({{input}}):
     verticalType: {
       handler(newVal) {
         if (newVal) {
-          this.initDomainTitle()
-          this.loadDictionaryData()
+          this.initData()
           this.resetForm()
         }
       },
