@@ -6,14 +6,16 @@
           <a-row :gutter="48">
             <a-col :md="8" :sm="24">
               <a-form-item label="服务名称">
-                <a-input v-model="queryParam.name" placeholder="请输入服务名称"/>
+                <a-input v-model="queryParam.name" placeholder="请输入服务名称" />
               </a-form-item>
             </a-col>
             <a-col :md="8" :sm="24">
               <a-form-item label="状态">
                 <a-select v-model="queryParam.status" placeholder="请选择" default-value="-1">
                   <a-select-option value="-1">全部</a-select-option>
-                  <a-select-option v-for="(item, index) in statusMap" :key="index" :value="index">{{ item.text }}</a-select-option>
+                  <a-select-option v-for="(item, index) in statusMap" :key="index" :value="index">{{
+                    item.text
+                  }}</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -34,12 +36,12 @@
           <a-menu slot="overlay">
             <a-menu-item key="1" @click="handleBatchDelete"><a-icon type="delete" />批量删除</a-menu-item>
             <a-menu-item key="2" @click="handleBatchStop"><a-icon type="pause-circle" />批量停止</a-menu-item>
-            <a-menu-item key="3" @click="handleBatchDeploy"><a-icon type="caret-right"/>批量部署</a-menu-item>
-            <a-menu-item key="3" @click="handleBatchCancelDeploy"><a-icon type="caret-right"/>批量取消部署</a-menu-item>
+            <a-menu-item key="3" @click="handleBatchDeploy"><a-icon type="caret-right" />批量部署</a-menu-item>
+            <a-menu-item key="3" @click="handleBatchCancelDeploy"
+              ><a-icon type="caret-right" />批量取消部署</a-menu-item
+            >
           </a-menu>
-          <a-button style="margin-left: 8px">
-            批量操作 <a-icon type="down" />
-          </a-button>
+          <a-button style="margin-left: 8px"> 批量操作 <a-icon type="down" /> </a-button>
         </a-dropdown>
       </div>
 
@@ -59,7 +61,9 @@
         <span slot="action" slot-scope="text, record">
           <template>
             <a v-if="record.status === 0 || record.status === 2" @click="handleDeploy(record)">部署</a>
-            <a v-if="record.status === 1 || record.status === 3 || record.status === 4" @click="handleStop(record)">停止</a>
+            <a v-if="record.status === 1 || record.status === 3 || record.status === 4" @click="handleStop(record)"
+              >停止</a
+            >
             <a v-if="record.status === 5" @click="handleCancelDeploy(record)">取消</a>
             <a-divider type="vertical" />
             <a @click="handleDelete(record)">删除</a>
@@ -72,7 +76,7 @@
 
 <script>
 import { TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-import { getServiceData, getMetaAppData } from '@/mock/data/services_data'
+import { getServicesByVerticalType, filterServices } from '@/api/service'
 import { getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
@@ -82,7 +86,7 @@ export default {
     StandardFormRow,
     ArticleListContent
   },
-  data () {
+  data() {
     return {
       isRefreshing: false,
       dataLoading: false,
@@ -136,20 +140,20 @@ export default {
     }
   },
   filters: {
-    statusFilter (type) {
+    statusFilter(type) {
       const statusMap = getServiceStatusMap()
       return statusMap[type].text
     },
-    statusTypeFilter (type) {
+    statusTypeFilter(type) {
       const statusMap = getServiceStatusMap()
       return statusMap[type].status
     }
   },
-  mounted () {
+  mounted() {
     this.initData()
   },
   computed: {
-    rowSelection () {
+    rowSelection() {
       return {
         selectedRowKeys: this.selectedRowKeys,
         onChange: this.onSelectChange
@@ -157,12 +161,12 @@ export default {
     }
   },
   methods: {
-    handleAdd () {
+    handleAdd() {
       this.$router.push({ path: '/vertical-ms/aml' })
     },
     // 查询
     handleSearch() {
-      this.filteredDataSource = this.dataSource.filter(item => {
+      this.filteredDataSource = this.dataSource.filter((item) => {
         const nameMatch = item.name.includes(this.queryParam.name)
         const statusMatch = this.queryParam.status === '-1' || item.status === Number(this.queryParam.status)
         return nameMatch && statusMatch
@@ -193,10 +197,13 @@ export default {
     handleAccept(record) {
       const metaAppInfo = sessionStorage.getItem('metaAppInfo')
       if (metaAppInfo && metaAppInfo.name === record.name) {
-        sessionStorage.setItem('metaAppInfo', JSON.stringify({
-          ...JSON.parse(metaAppInfo),
-          status: 4
-        }))
+        sessionStorage.setItem(
+          'metaAppInfo',
+          JSON.stringify({
+            ...JSON.parse(metaAppInfo),
+            status: 4
+          })
+        )
       }
       record.status = 4
       this.$message.success(`${record.name} 已通过`)
@@ -205,17 +212,20 @@ export default {
     handleCancelDeploy(record) {
       const metaAppInfo = sessionStorage.getItem('metaAppInfo')
       if (metaAppInfo && metaAppInfo.name === record.name) {
-        sessionStorage.setItem('metaAppInfo', JSON.stringify({
-          ...JSON.parse(metaAppInfo),
-          status: 2
-        }))
+        sessionStorage.setItem(
+          'metaAppInfo',
+          JSON.stringify({
+            ...JSON.parse(metaAppInfo),
+            status: 2
+          })
+        )
       }
       record.status = 2
       this.$message.success(`取消部署 ${record.name}`)
     },
     // 删除
     handleDelete(record) {
-      this.dataSource = this.dataSource.filter(item => !this.selectedRowKeys.includes(item))
+      this.dataSource = this.dataSource.filter((item) => !this.selectedRowKeys.includes(item))
       this.filteredDataSource = this.dataSource
       this.selectedRowKeys = []
       this.selectedRows = []
@@ -223,28 +233,31 @@ export default {
     },
     // 批量部署
     handleBatchDeploy() {
-      this.selectedRows.forEach(row => {
+      this.selectedRows.forEach((row) => {
         row.status = 5
       })
       this.$message.success('开始批量部署')
     },
     // 批量取消部署
     handleBatchCancelDeploy() {
-      this.selectedRows.forEach(row => {
+      this.selectedRows.forEach((row) => {
+        row.status = 2
+      })
+      this.selectedRows.forEach((row) => {
         row.status = 2
       })
       this.$message.success('批量取消部署成功')
     },
     // 批量停止
     handleBatchStop() {
-      this.selectedRows.forEach(row => {
+      this.selectedRows.forEach((row) => {
         row.status = 2
       })
       this.$message.success('批量停止成功')
     },
     // 批量删除
     handleBatchDelete() {
-      this.dataSource = this.dataSource.filter(item => !this.selectedRowKeys.includes(item))
+      this.dataSource = this.dataSource.filter((item) => !this.selectedRowKeys.includes(item))
       this.filteredDataSource = this.dataSource
       this.selectedRowKeys = []
       this.selectedRows = []
@@ -260,14 +273,57 @@ export default {
     },
     async initData() {
       this.dataLoading = true
-      // 使用 Promise.all 并行加载两个异步请求
-      const [serviceData, metaData] = await Promise.all([
-        getServiceData('aml'),
-        getMetaAppData('aml')
-      ])
-      this.dataSource = [...serviceData, ...metaData]
-      this.filteredDataSource = this.dataSource
-      this.dataLoading = false
+      try {
+        // 并行请求AML领域的基础服务和元应用服务
+        const [basicServices, metaServices] = await Promise.all([
+          getServicesByVerticalType('aml'),
+          filterServices({ type: 'meta', domain: 0 }) // 使用领域ID 0 表示AML
+        ])
+
+        // 合并两类服务数据
+        const serviceData = [...(basicServices.services || []), ...(metaServices.services || [])]
+
+        // 将API返回的状态值转换为前端状态码
+        this.dataSource = serviceData.map((service) => {
+          // 状态映射处理：根据API状态定义映射到前端展示的状态码
+          let status = 0
+          switch (service.status) {
+            case 'error':
+              status = 4 // 容器分配失败/异常
+              break
+            case 'warning':
+              status = 3 // 运行中(未通过测评)
+              break
+            case 'default':
+              status = 0 // 未运行
+              break
+            case 'success':
+              status = 1 // 运行中(已通过测评)
+              break
+            case 'processing':
+              status = 5 // 部署中
+              break
+            default:
+              status = 2 // 已停止
+          }
+
+          return {
+            ...service,
+            status,
+            // 处理端口映射和卷映射显示格式
+            port: service.port || '',
+            volume: service.volume || '',
+            netWork: service.network || ''
+          }
+        })
+
+        this.filteredDataSource = this.dataSource
+      } catch (error) {
+        console.error('获取服务数据失败:', error)
+        this.$message.error('获取服务数据失败，请稍后重试')
+      } finally {
+        this.dataLoading = false
+      }
     },
     // 选择行
     onSelectChange(selectedRowKeys, selectedRows) {
