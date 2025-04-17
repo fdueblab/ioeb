@@ -4,7 +4,7 @@
       <div class="table-page-search-wrapper">
         <a-form layout="inline">
           <a-row :gutter="20">
-            <a-col :span="6">
+            <a-col :span="4">
               <a-form-item label="领域">
                 <span style="margin-left: 5px; font-size: 14px">{{ domainTitle }}</span>
               </a-form-item>
@@ -38,7 +38,7 @@
             </a-col>
           </a-row>
           <a-row :gutter="20">
-            <a-col :span="6">
+            <a-col :span="4">
               <a-form-item label="程序">
                 <a-upload
                   accept=".py,.zip,.jar"
@@ -51,9 +51,16 @@
               </a-form-item>
             </a-col>
             <a-col :span="6">
-              <a-form-item
-                :wrapperCol="{ span: 24 }"
-                style="text-align: center">
+              <a-form-item label="属性">
+                <a-select v-model="programInfo.attribute" placeholder="请选择属性" allow-clear>
+                  <a-select-option v-for="(item, index) in attributeOptions" :key="index" :value="item.code">
+                    {{ item.text }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="上传">
                 <a-button
                   type="primary"
                   @click="onUpload"
@@ -195,11 +202,20 @@
         </a-col>
       </a-row>
     </a-card>
+    <agent-execution-panel
+      v-if="showAgentPanel"
+      :is-running="agentIsRunning"
+      :steps="agentSteps"
+      :error="agentError"
+      :warning="agentWarning"
+      :final-results="agentFinalResults"
+      @close="closeAgentPanel"
+    />
   </page-header-wrapper>
 </template>
 
 <script>
-import request, { streamAgent } from '@/utils/request'
+import { streamAgent } from '@/utils/request'
 import { codemirror } from 'vue-codemirror'
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/addon/lint/lint'
@@ -230,6 +246,7 @@ import * as echarts from 'echarts'
 import vChart from 'vue-echarts'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
 import dictionaryCache from '@/utils/dictionaryCache'
+import { createService } from '@/api/service'
 
 export default {
   name: 'GenericMicroService',
@@ -326,6 +343,7 @@ class {{apiName}}({{input}}):
       },
       // 程序信息
       programInfo: {
+        attribute: undefined,
         industry: undefined,
         scenario: undefined,
         technology: undefined
@@ -333,12 +351,20 @@ class {{apiName}}({{input}}):
       uploadProgramLoading: false,
       uploadServiceLoading: false,
       // 字典选项
+      attributeOptions: [],
       industryOptions: [],
       scenarioOptions: [],
       technologyOptions: [],
       apiTypeOptions: [],
       methodTypeOptions: [],
-      ioTypeOptions: []
+      ioTypeOptions: [],
+      // 真实agent调用
+      showAgentPanel: false,
+      agentIsRunning: false,
+      agentSteps: [],
+      agentError: '',
+      agentWarning: '',
+      agentFinalResults: null
     }
   },
   computed: {
@@ -357,6 +383,7 @@ class {{apiName}}({{input}}):
         this.apiTypeOptions = await dictionaryCache.loadDict('api_type') || []
         this.methodTypeOptions = await dictionaryCache.loadDict('method_type') || []
         this.ioTypeOptions = await dictionaryCache.loadDict('io_type') || []
+        this.attributeOptions = await dictionaryCache.loadDict('attribute') || []
         this.industryOptions = await dictionaryCache.loadDict(`${this.verticalType}_industry`) || []
         this.scenarioOptions = await dictionaryCache.loadDict(`${this.verticalType}_scenario`) || []
         this.technologyOptions = await dictionaryCache.loadDict(`${this.verticalType}_technology`) || []
@@ -700,62 +727,73 @@ class {{apiName}}({{input}}):
 
       this.uploadServiceLoading = true
       try {
-        const formData = new FormData()
-
-        // 添加程序文件
-        this.uploadFiles.forEach(file => {
-          formData.append('program_files', file)
-        })
-
-        // 添加配置文件（如果有）
-        if (this.uploadConfigFiles.length > 0) {
-          formData.append('config_file', this.uploadConfigFiles[0])
+        const data = {
+          name: this.form.serviceName,
+          attribute: this.programInfo.attribute,
+          type: 'atomic',
+          domain: this.verticalType,
+          industry: this.programInfo.industry,
+          scenario: this.programInfo.scenario,
+          technology: this.programInfo.technology,
+          netWork: 'bridge',
+          port: '0.0.0.0:7777/TCP → 0.0.0.0:77777',
+          volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
+          status: 'deploying',
+          number: '777',
+          norm: [],
+          source: {
+            popoverTitle: '可信云技术服务溯源',
+            companyName: '复旦大学课题组',
+            companyAddress: '上海市杨浦区邯郸路220号',
+            companyContact: '021-65642222',
+            companyIntroduce: '课题六',
+            msIntroduce: '预发布微服务',
+            companyScore: 5,
+            msScore: 5
+          },
+          apiList: [
+            {
+              name: this.form.apiName,
+              isFake: true,
+              url: 'https://myApiServer.com/add',
+              method: this.form.methodType,
+              parameterType: 1,
+              parameters: [
+                {
+                  name: this.form.input,
+                  type: 'string'
+                }
+              ],
+              responseType: 1,
+              response: {
+                code: 200,
+                message: '微服务正在部署！',
+                data: {
+                  deployingStatus: 'pending'
+                }
+              }
+            }
+          ]
         }
-
-        // 添加表单数据
-        formData.append('vertical_type', this.verticalType)
-        formData.append('service_name', this.form.serviceName)
-        formData.append('api_name', this.form.apiName)
-        formData.append('api_type', this.form.apiType)
-        formData.append('method_type', this.form.methodType)
-        formData.append('environment', this.form.environment)
-        formData.append('process', this.form.process)
-
-        // 添加分类信息
-        if (this.programInfo.industry !== undefined) {
-          formData.append('industry', this.programInfo.industry)
-        }
-        if (this.programInfo.scenario !== undefined) {
-          formData.append('scenario', this.programInfo.scenario)
-        }
-        if (this.programInfo.technology !== undefined) {
-          formData.append('technology', this.programInfo.technology)
-        }
-
-        const response = await request({
-          url: '/api/service/upload',
-          method: 'POST',
-          data: formData,
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
-
+        const response = await createService(data)
         if (response && response.status === 'success') {
-          this.$message.success('微服务预发布成功！')
-          // 清空表单
+          this.$message.success('预发布成功！可进行技术评测')
+          this.uploadServiceLoading = false
           this.resetForm()
+          window.location.href = `#/evaluation/aml/technology`
         } else {
           this.$message.error(response?.message || '预发布失败')
         }
       } catch (error) {
         console.error('预发布微服务失败:', error)
-        this.$message.error('预发布失败，请稍后重试！')
+        this.$message.error('预发布异常，请稍后重试！')
       } finally {
         this.uploadServiceLoading = false
       }
     },
-
+    closeAgentPanel() {
+      this.showAgentPanel = false
+    },
     // 重置表单
     resetForm() {
       this.form = {
@@ -771,6 +809,7 @@ class {{apiName}}({{input}}):
         serviceName: undefined
       }
       this.programInfo = {
+        attribute: undefined,
         industry: undefined,
         scenario: undefined,
         technology: undefined
