@@ -72,7 +72,7 @@
 
 <script>
 import { TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-import { getServiceData, getMetaAppData } from '@/mock/data/services_data'
+import { getServicesByVerticalType, filterServices } from '@/api/service'
 import { getServiceStatusMap } from '@/mock/data/map_data'
 
 export default {
@@ -260,14 +260,60 @@ export default {
     },
     async initData() {
       this.dataLoading = true
-      // 使用 Promise.all 并行加载两个异步请求
-      const [serviceData, metaData] = await Promise.all([
-        getServiceData('aml'),
-        getMetaAppData('aml')
-      ])
-      this.dataSource = [...serviceData, ...metaData]
-      this.filteredDataSource = this.dataSource
-      this.dataLoading = false
+      try {
+        // 并行请求AML领域的基础服务和元应用服务
+        const [basicServices, metaServices] = await Promise.all([
+          getServicesByVerticalType('aml'),
+          filterServices({ type: 'meta', domain: 0 }) // 使用领域ID 0 表示AML
+        ])
+        
+        // 合并两类服务数据
+        const serviceData = [
+          ...(basicServices.services || []), 
+          ...(metaServices.services || [])
+        ]
+        
+        // 将API返回的状态值转换为前端状态码
+        this.dataSource = serviceData.map(service => {
+          // 状态映射处理：根据API状态定义映射到前端展示的状态码
+          let status = 0
+          switch (service.status) {
+            case 'error': 
+              status = 4  // 容器分配失败/异常
+              break
+            case 'warning': 
+              status = 3  // 运行中(未通过测评)
+              break
+            case 'default': 
+              status = 0  // 未运行
+              break
+            case 'success': 
+              status = 1  // 运行中(已通过测评)
+              break
+            case 'processing': 
+              status = 5  // 部署中
+              break
+            default: 
+              status = 2  // 已停止
+          }
+
+          return {
+            ...service,
+            status,
+            // 处理端口映射和卷映射显示格式
+            port: service.port || '',
+            volume: service.volume || '',
+            netWork: service.network || ''
+          }
+        })
+        
+        this.filteredDataSource = this.dataSource
+      } catch (error) {
+        console.error('获取服务数据失败:', error)
+        this.$message.error('获取服务数据失败，请稍后重试')
+      } finally {
+        this.dataLoading = false
+      }
     },
     // 选择行
     onSelectChange(selectedRowKeys, selectedRows) {
