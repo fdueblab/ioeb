@@ -54,7 +54,7 @@
 </template>
 
 <script>
-import { getServiceData, getMetaAppData } from '@/mock/data/services_data'
+import { getMetaAppData, getServiceData } from '@/mock/data/services_data'
 import { filterServices, getServicesByVerticalType } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
 
@@ -148,7 +148,6 @@ export default {
       if (this.$refs.filterCard) {
         this.$refs.filterCard.reset()
       }
-
       // 初始化为空数组
       this.statusDict = []
       this.statusStyleDict = []
@@ -160,8 +159,6 @@ export default {
       this.scenarioArr = []
       this.technologyArr = []
     },
-
-    // 从API获取字典数据
     async loadDictionaryData() {
       try {
         // 加载字典缓存
@@ -189,12 +186,10 @@ export default {
         this.technologyArr = this.technologyArr || []
       }
     },
-
     // 筛选变化处理 - 从FilterCard组件接收
     handleFilterChange(filterValues) {
       this.filterDataSource(filterValues)
     },
-
     // 处理搜索结果 - 从SearchForm组件接收
     handleSearchCompleted(searchResults) {
       this.agentSearchData = searchResults
@@ -211,33 +206,26 @@ export default {
         }
       })
     },
-
     // 根据筛选条件过滤数据
     async filterDataSource(filterValues) {
       // 收集所有筛选条件
       const filters = {}
-
       // 只添加有值的筛选条件
       if (filterValues.attribute && filterValues.attribute.length > 0) {
         filters.attribute = filterValues.attribute.join(',')
       }
-
       if (typeof filterValues.type !== 'undefined') {
         filters.type = filterValues.type
       }
-
       if (typeof filterValues.industry !== 'undefined') {
         filters.industry = filterValues.industry
       }
-
       if (typeof filterValues.scenario !== 'undefined') {
         filters.scenario = filterValues.scenario
       }
-
       if (typeof filterValues.technology !== 'undefined') {
         filters.technology = filterValues.technology
       }
-
       // 添加领域过滤条件
       filters.domain = this.verticalType
 
@@ -247,7 +235,6 @@ export default {
           this.filteredDataSource = this.dataSource
           return
         }
-
         // 发送筛选请求
         const response = await filterServices(filters)
 
@@ -301,18 +288,15 @@ export default {
         })
       }
     },
-
     // 从API获取服务数据
     async fetchServicesFromAPI() {
       try {
-        const response = await getServicesByVerticalType(this.verticalType)
-        return response
+        return await getServicesByVerticalType(this.verticalType)
       } catch (error) {
         console.error('获取服务数据失败:', error)
         return undefined
       }
     },
-
     // 标准化API返回的数据，确保格式统一
     standardizeServiceData(services) {
       return services.map(service => {
@@ -336,7 +320,6 @@ export default {
         return service
       })
     },
-
     // 初始化数据
     async initData() {
       this.dataLoading = true
@@ -387,22 +370,20 @@ export default {
         this.dataLoading = false
       }
     },
-
     // 处理编辑
     handleEdit(record) {
       this.visible = true // 显示模态框
       this.mdl = { ...record } // 将选中的记录数据复制到模型中
     },
-
     // 处理编辑确认
     handleOk(updatedRecord) {
       this.confirmLoading = true
 
-      // 更新数据
+      // 模拟更新数据
       setTimeout(() => {
-        const index = this.dataSource.findIndex(item => item.id === updatedRecord.id)
+        const index = this.filteredDataSource.findIndex(item => item.id === updatedRecord.id)
         if (index > -1) {
-          this.dataSource.splice(index, 1, updatedRecord)
+          this.filteredDataSource.splice(index, 1, updatedRecord)
           this.filteredDataSource = [...this.filteredDataSource] // 触发视图更新
         }
         this.visible = false
@@ -410,7 +391,6 @@ export default {
         this.$message.success('编辑成功')
       }, 500)
     },
-
     // 处理编辑取消
     handleCancel() {
       this.visible = false
@@ -435,7 +415,6 @@ export default {
         }
       }
     },
-
     // 使用服务
     handleUse(record) {
       switch (record.status) {
