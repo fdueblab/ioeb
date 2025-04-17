@@ -1,4 +1,4 @@
-import { getDictionaryByCategory } from '@/api/dictionary'
+import { getDictionaryByCategory, getAllDictionaries } from '@/api/dictionary'
 import storage from 'store'
 
 // 字典缓存的键前缀
@@ -6,22 +6,6 @@ const DICT_CACHE_KEY = 'DICT_'
 // 字典缓存版本号，用于在版本更新时清除缓存
 const DICT_CACHE_VERSION = '1.0'
 const DICT_CACHE_VERSION_KEY = 'DICT_CACHE_VERSION'
-
-// 常用的字典类型
-const COMMON_DICT_TYPES = [
-  'status',
-  'norm',
-  'attribute',
-  'service_type',
-  'method_type'
-]
-
-// 垂直领域相关的字典类型前缀
-const VERTICAL_DICT_PREFIXES = [
-  'industry',
-  'scenario',
-  'technology'
-]
 
 /**
  * 初始化字典缓存版本
@@ -69,7 +53,7 @@ export function setDictCache(dictType, dictData, expires = 24 * 60 * 60 * 1000) 
 }
 
 /**
- * 获取字典并缓存
+ * 从缓存中获取字典数据
  * @param {string} dictType 字典类型
  * @param {Object} defaultValue 默认值，如果无法获取数据时返回
  * @returns {Promise<Object>} 字典映射对象
@@ -99,37 +83,41 @@ export async function loadDict(dictType, defaultValue = []) {
 }
 
 /**
- * 预加载常用字典
+ * 加载并缓存所有字典
+ * @returns {Promise<boolean>} 处理结果
  */
-export async function preloadCommonDicts() {
+export async function preloadAllDict() {
   initDictCacheVersion()
 
-  const requests = COMMON_DICT_TYPES.map(type => loadDict(type))
-  await Promise.all(requests)
+  try {
+    // 从API获取所有字典
+    const response = await getAllDictionaries()
 
-  console.log('常用字典预加载完成')
-}
+    if (response && response.status === 'success' && response.dictionaries) {
+      const allDictionaries = response.dictionaries
 
-/**
- * 预加载特定垂直领域的字典
- * @param {string} verticalType 垂直领域类型
- */
-export async function preloadVerticalDicts(verticalType) {
-  if (!verticalType) return
-
-  const requests = VERTICAL_DICT_PREFIXES.map(prefix =>
-    loadDict(`${verticalType}_${prefix}`)
-  )
-
-  await Promise.all(requests)
-  console.log(`${verticalType} 领域字典预加载完成`)
+      // 遍历所有字典类型并分别缓存
+      for (const [dictType, dictItems] of Object.entries(allDictionaries)) {
+        if (Array.isArray(dictItems) && dictItems.length > 0) {
+          // 缓存结果
+          setDictCache(dictType, dictItems)
+        }
+      }
+      console.log('所有字典预加载完成')
+      return true
+    }
+    console.warn('获取字典数据失败: 响应数据格式不正确')
+    return false
+  } catch (error) {
+    console.error('加载所有字典数据失败', error)
+    return false
+  }
 }
 
 // 默认导出
 export default {
   loadDict,
-  preloadCommonDicts,
-  preloadVerticalDicts,
+  preloadAllDict,
   getDictCache,
   setDictCache,
   clearAllDictCache

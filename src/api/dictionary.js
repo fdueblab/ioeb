@@ -68,3 +68,14 @@ export function deleteDictionary(category, code) {
     method: 'delete'
   })
 }
+
+/**
+ * 获取所有字典数据
+ * @returns {Promise} 返回所有字典数据
+ */
+export function getAllDictionaries() {
+  return request({
+    url: `${API_BASE_URL}/dictionaries/all`,
+    method: 'get'
+  })
+}
