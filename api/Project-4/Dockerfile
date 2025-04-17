@@ -1,5 +1,5 @@
 # 基础镜像
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
@@ -26,8 +26,11 @@ RUN pip install --no-cache-dir dgl -f https://data.dgl.ai/wheels/torch-2.3/repo.
 # 复制应用代码
 COPY . .
 
+# 添加执行权限到脚本
+RUN chmod +x startup.sh
+
 # 设置 DGL 后端
 ENV DGLBACKEND=pytorch
 
 # 运行应用
-CMD ["python", "app.py"]
+CMD ["./startup.sh"]

@@ -121,6 +121,7 @@ services:
     image: polarsnowleopard/ioeb-project4:latest
     ports:
       - '25004:5000'
+      - '26004:3000'
     volumes:
       - ./api/Project-4/eval_config:/app/eval_config
       - ./api/Project-4/eval_result:/app/eval_result
