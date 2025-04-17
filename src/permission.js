@@ -7,7 +7,7 @@ import notification from 'ant-design-vue/es/notification'
 import { setDocumentTitle, domTitle } from '@/utils/domUtil'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { i18nRender } from '@/locales'
-import { preloadCommonDicts } from '@/utils/dictionaryCache' // 引入字典预加载功能
+import { preloadAllDict } from '@/utils/dictionaryCache' // 引入字典预加载功能
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
@@ -31,8 +31,8 @@ router.beforeEach((to, from, next) => {
         store
           .dispatch('GetInfo')
           .then(res => {
-            // 预加载通用字典数据
-            preloadCommonDicts().catch(err => {
+            // 预加载字典数据
+            preloadAllDict().catch(err => {
               console.error('预加载字典数据失败:', err)
             })
 
