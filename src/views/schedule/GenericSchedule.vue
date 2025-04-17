@@ -1,11 +1,12 @@
 <template>
   <div class="schedule-with-input">
     <fake-chat
+      ref="fakeChat"
       style="height: calc(100vh - 100px)"
       @update-services="updateServices"
       @update-flow="updateFlow"
       @clear-flow="clearFlow"
-      :service-type="'agriculture'"
+      :service-type="verticalType"
     />
     <flow-panel
       ref="flowPanel"
@@ -14,7 +15,7 @@
       :initial-services="initServices"
       :loading-services="loadingServices"
       :loading-flow="loadingFlow"
-      :service-type="'agriculture'"
+      :service-type="verticalType"
     />
   </div>
 </template>
@@ -22,30 +23,65 @@
 <script>
 import FlowPanel from '@/components/ef/panel_with_input'
 import FakeChat from '@/components/ef/fake_chat'
+import dictionaryCache from '@/utils/dictionaryCache'
 
 export default {
-  name: 'AgricultureSchedule',
+  name: 'GenericSchedule',
   components: {
     FlowPanel,
     FakeChat
   },
+  props: {
+    // 垂直领域类型，从路由解析
+    verticalType: {
+      type: String,
+      required: true
+    }
+  },
   data() {
     return {
+      serviceName: '通用智能服务',
       initFlow: {},
-      initServices: [
-        {
-          id: '9',
-          type: 'group',
-          name: '数字农业AI智能服务',
-          open: true,
-          children: []
+      initServices: [],
+      loadingServices: false,
+      loadingFlow: false
+    }
+  },
+  mounted() {
+    this.init()
+  },
+  watch: {
+    // 监听垂直领域类型变化，重新加载数据
+    verticalType: {
+      handler(newVal, oldVal) {
+        if (newVal !== oldVal) {
+          console.log('垂直领域类型变化:', oldVal, '->', newVal)
+          this.init()
         }
-      ],
-      loadingServices: false, // 新增 loadingServices 状态
-      loadingFlow: false // 新增 loadingFlow 状态
+      },
+      immediate: false
     }
   },
   methods: {
+    // 从字典获取服务名称
+    async loadServiceNameFromDict() {
+      try {
+        if (!this.verticalType) return
+        // 从字典缓存中获取服务名称
+        const domains = await dictionaryCache.loadDict(`domain`)
+        this.serviceName = domains.find(item => item.code === this.verticalType)?.text + '服务' || '通用智能服务'
+      } catch (error) {
+        console.error('加载服务名称失败:', error)
+      }
+    },
+
+    init() {
+      this.$refs.fakeChat.init()
+      this.loadServiceNameFromDict().then(() => {
+        this.clearFlow()
+      })
+    },
+
     updateServices(newServices) {
       this.loadingServices = true
       setTimeout(() => {
@@ -53,6 +89,7 @@ export default {
         this.loadingServices = false
       }, 800)
     },
+
     updateFlow(newFlow) {
       this.loadingFlow = true
       setTimeout(() => {
@@ -60,13 +97,14 @@ export default {
         this.loadingFlow = false
       }, 1600)
     },
+
     clearFlow() {
       this.$refs.flowPanel.dataReloadClear()
       this.$refs.flowPanel.setServices([
         {
           id: '9',
           type: 'group',
-          name: '数字农业AI智能服务',
+          name: this.serviceName,
           open: true,
           children: []
         }
