@@ -82,7 +82,7 @@ export function createService(serviceData) {
 export function updateService(serviceId, serviceData) {
   return request({
     url: `${API_BASE_URL}/services/${serviceId}`,
-    method: 'put',
+    method: 'post',
     data: serviceData
   })
 }
