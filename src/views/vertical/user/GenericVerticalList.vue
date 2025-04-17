@@ -82,8 +82,8 @@
           <a-col :span="24">
             <a-form-item label="">
               <a-checkbox-group v-model="queryParam.attribute" @change="handleTagChange('attribute', $event)">
-                <a-checkbox v-for="(item, index) in attributeArr" :key="index" :value="index">
-                  {{ item }}
+                <a-checkbox v-for="item in attributeArr" :key="item.code" :value="item.code">
+                  {{ item.text }}
                 </a-checkbox>
               </a-checkbox-group>
             </a-form-item>
@@ -99,23 +99,8 @@
                 @change="handleTagChange('type', $event)"
                 allow-clear
               >
-                <a-select-option v-for="(item, index) in typeArr" :key="index" :value="index">
-                  {{ item }}
-                </a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <!-- 领域标签筛选（下拉框） -->
-          <a-col :span="4">
-            <a-form-item label="领域">
-              <a-select
-                v-model="queryParam.domain"
-                placeholder="请选择领域"
-                @change="handleTagChange('domain', $event)"
-                allow-clear
-              >
-                <a-select-option v-for="(item, index) in domainArr" :key="index" :value="index">
-                  {{ item }}
+                <a-select-option v-for="item in typeArr" :key="item.code" :value="item.code">
+                  {{ item.text }}
                 </a-select-option>
               </a-select>
             </a-form-item>
@@ -129,8 +114,8 @@
                 @change="handleTagChange('industry', $event)"
                 allow-clear
               >
-                <a-select-option v-for="(item, index) in industryArr" :key="index" :value="index">
-                  {{ item }}
+                <a-select-option v-for="item in industryArr" :key="item.code" :value="item.code">
+                  {{ item.text }}
                 </a-select-option>
               </a-select>
             </a-form-item>
@@ -144,8 +129,8 @@
                 @change="handleTagChange('scenario', $event)"
                 allow-clear
               >
-                <a-select-option v-for="(item, index) in scenarioArr" :key="index" :value="index">
-                  {{ item }}
+                <a-select-option v-for="item in scenarioArr" :key="item.code" :value="item.code">
+                  {{ item.text }}
                 </a-select-option>
               </a-select>
             </a-form-item>
@@ -159,8 +144,8 @@
                 @change="handleTagChange('technology', $event)"
                 allow-clear
               >
-                <a-select-option v-for="(item, index) in technologyArr" :key="index" :value="index">
-                  {{ item }}
+                <a-select-option v-for="item in technologyArr" :key="item.code" :value="item.code">
+                  {{ item.text }}
                 </a-select-option>
               </a-select>
             </a-form-item>
@@ -173,6 +158,7 @@
     <a-card :bordered="false" :title="agentSearchData.length > 0 ? 'AI智能检索为您推荐以下微服务' : false">
       <a-table
         ref="table"
+        size="small"
         :columns="columns"
         :dataSource="filteredDataSource"
         :loading="dataLoading"
@@ -181,17 +167,17 @@
           {{ index + 1 }}
         </span>
         <span slot="status" slot-scope="text">
-          <a-badge :status="text | statusTypeFilter" :text="text | statusFilter" />
+          <a-badge :status="statusTypeFilter(text)" :text="statusFilter(text)" />
         </span>
         <span slot="norm" slot-scope="text">
           <template v-if="text && text.length">
             <a-popover v-for="(item, index) in text" :key="index" title="可信云技术服务溯源">
               <template slot="content">
-                <p>{{ item.key | normFilter }}</p>
+                <p>{{ normFilter(item.key) }}</p>
                 <el-rate :value="item.score" disabled show-score text-color="#ff9900" />
               </template>
-              <a-tag color="#87d068">
-                <a-icon type="check" /> {{ item.key | normFilter }}
+              <a-tag color="green" style="margin-bottom: 5px;">
+                <a-icon type="check-circle" /> {{ normFilter(item.key) }}
               </a-tag>
             </a-popover>
           </template>
@@ -216,7 +202,7 @@
                   <el-rate :value="text.msScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.msScore || 0).toString()"></el-rate>
                 </p>
               </template>
-              <a-tag color="blue" @change="handleSource(text)">知识产权</a-tag>
+              <a-tag color="blue" style="margin-bottom: 5px;" @change="handleSource(text)">知识产权</a-tag>
             </a-popover>
             <a-popover :title="text.popoverTitle || '服务溯源'">
               <template slot="content">
@@ -233,7 +219,7 @@
                   <el-rate :value="text.msScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.msScore || 0).toString()"></el-rate>
                 </p>
               </template>
-              <a-tag color="cyan" @change="handleSource(text)">应用案例</a-tag>
+              <a-tag color="cyan" style="margin-bottom: 5px;" @change="handleSource(text)">应用案例</a-tag>
             </a-popover>
             <a-popover :title="text.popoverTitle || '服务溯源'">
               <template slot="content">
@@ -250,7 +236,7 @@
                   <el-rate :value="text.msScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.msScore || 0).toString()"></el-rate>
                 </p>
               </template>
-              <a-tag color="orange" @change="handleSource(text)">舆情信息</a-tag>
+              <a-tag color="orange" style="margin-bottom: 5px;" @change="handleSource(text)">舆情信息</a-tag>
             </a-popover>
             <a-popover :title="text.popoverTitle || '服务溯源'">
               <template slot="content">
@@ -267,7 +253,7 @@
                   <el-rate :value="text.msScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.msScore || 0).toString()"></el-rate>
                 </p>
               </template>
-              <a-tag color="green" @change="handleSource(text)">链上存证</a-tag>
+              <a-tag color="pink" style="margin-bottom: 5px;" @change="handleSource(text)">链上存证</a-tag>
             </a-popover>
           </template>
           <template v-else>
@@ -335,10 +321,11 @@
 import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
 import request from '@/utils/request'
 import { getServiceData, getMetaAppData } from '@/mock/data/services_data'
+import { filterServices, getServicesByVerticalType } from '@/api/service'
+import dictionaryCache from '@/utils/dictionaryCache'
 import {
   getDictionaryByCategory
 } from '@/api/dictionary'
-import { getServicesByVerticalType, filterServices } from '@/api/service'
 
 export default {
   name: 'GenericVerticalList',
@@ -389,41 +376,48 @@ export default {
       agentSearchApiMethod: 1,
       agentSearchApiHeader: { 'Content-Type': 'application/json;charset=UTF-8' },
       // 开发测试模式下的数据
-      agentSearchApiHeaderText: JSON.stringify({ 'Content-Type': 'application/json;charset=UTF-8' }, null, 4),
+      agentSearchApiHeaderText: JSON.stringify({ 'Content-Type': 'application/json;charset=UTF-8' }, undefined, 4),
       agentSearchApiResult: { answer: '' },
       agentSearchData: [],
-      statusMap: {},
-      normMap: {},
+      statusMap: [],
+      normMap: [],
       // 查询参数
       queryParam: {
         attribute: [],
-        type: [],
-        domain: [],
-        industry: [],
-        scenario: [],
-        technology: []
+        type: undefined,
+        domain: undefined,
+        industry: undefined,
+        scenario: undefined,
+        technology: undefined
       },
       // 表格列配置
       columns: [
         {
           title: '#',
+          width: '80px',
           scopedSlots: { customRender: 'serial' }
         },
         {
           title: '服务名称',
-          dataIndex: 'name'
+          dataIndex: 'name',
+          align: 'center'
         },
         {
           title: '服务类型',
           dataIndex: 'type',
-          width: '100px',
-          customRender: (text) => this.typeArr[text] || '未知类型'
+          width: '120px',
+          customRender: (text) => {
+            const typeItem = this.typeArr.find(item => item.code === text)
+            return typeItem ? typeItem.text : '未知类型'
+          }
         },
         {
           title: '技术类型',
           dataIndex: 'technology',
-          width: '100px',
-          customRender: (text) => this.technologyArr[text] || '未知技术'
+          customRender: (text) => {
+            const techItem = this.technologyArr.find(item => item.code === text)
+            return techItem ? techItem.text : '未知技术'
+          }
         },
         {
           title: '服务状态',
@@ -433,6 +427,7 @@ export default {
         {
           title: '技术指标',
           dataIndex: 'norm',
+          width: '90px',
           scopedSlots: { customRender: 'norm' }
         },
         {
@@ -443,6 +438,7 @@ export default {
         {
           title: '服务溯源',
           dataIndex: 'source',
+          width: '90px',
           scopedSlots: { customRender: 'source' }
         },
         {
@@ -461,7 +457,6 @@ export default {
       // 筛选相关字典数据
       attributeArr: [],
       typeArr: [],
-      domainArr: [],
       industryArr: [],
       scenarioArr: [],
       technologyArr: [],
@@ -472,76 +467,20 @@ export default {
     }
   },
   filters: {
-    statusFilter(type) {
-      if (type === undefined || type === null) {
-        return '未知状态'
-      }
-      // 默认状态映射
-      const defaultStatusMap = {
-        0: { text: '容器分配失败', status: 'error' },
-        1: { text: '运行中(未通过测评)', status: 'warning' },
-        2: { text: '未运行', status: 'default' },
-        3: { text: '异常', status: 'error' },
-        4: { text: '运行中(已通过测评)', status: 'success' },
-        5: { text: '部署中', status: 'processing' }
-      }
-      // 使用默认映射
-      return defaultStatusMap[type]?.text || '未知状态'
-    },
-    statusTypeFilter(type) {
-      if (type === undefined || type === null) {
-        return 'default'
-      }
-      // 默认状态映射
-      const defaultStatusMap = {
-        0: { text: '容器分配失败', status: 'error' },
-        1: { text: '运行中(未通过测评)', status: 'warning' },
-        2: { text: '未运行', status: 'default' },
-        3: { text: '异常', status: 'error' },
-        4: { text: '运行中(已通过测评)', status: 'success' },
-        5: { text: '部署中', status: 'processing' }
-      }
-      // 使用默认映射
-      return defaultStatusMap[type]?.status || 'default'
-    },
-    normFilter(type) {
-      if (type === undefined || type === null) {
-        return '未知指标'
-      }
-      // 默认技术指标映射
-      const defaultNormMap = {
-        0: { text: '安全性', status: 'security' },
-        1: { text: '鲁棒性', status: 'robustness' },
-        2: { text: '隐私性', status: 'privacy' },
-        3: { text: '可信性', status: 'trustworthiness' }
-      }
-      // 使用默认映射
-      return defaultNormMap[type]?.text || '未知指标'
-    }
   },
   // 开发测试模式下的计算属性
   computed: {
     agentSearchApiResultText() {
-      return JSON.stringify(this.agentSearchApiResult, null, 4)
+      return JSON.stringify(this.agentSearchApiResult, undefined, 4)
     },
     agentSearchFormText() {
-      return JSON.stringify(this.agentSearchForm, null, 4)
+      return JSON.stringify(this.agentSearchForm, undefined, 4)
     }
   },
   created() {
-    // 确保$root.$data存在并初始化共享映射
-    if (!this.$root.$data) {
-      this.$root.$data = {}
-    }
-
-    // 初始化可以来自静态方法或从API加载
     this.initStaticData()
     this.loadDictionaryData()
     this.initData()
-
-    // 将状态映射和技术指标映射存储在根组件数据中以便过滤器使用
-    this.$root.$data.statusMap = this.statusMap
-    this.$root.$data.normMap = this.normMap
   },
   mounted() {
     // 监听窗口大小变化，动态调整容器位置
@@ -560,181 +499,92 @@ export default {
           this.initStaticData()
           this.loadDictionaryData()
           this.initData()
-
-          // 更新根组件中的映射数据
-          this.$root.$data.statusMap = this.statusMap
-          this.$root.$data.normMap = this.normMap
         }
       },
       immediate: false
     }
   },
   methods: {
-    // 初始化静态字典数据，后期可替换为API调用
+    statusFilter(type) {
+      if (type === undefined) {
+        return '未知状态'
+      }
+      if (!this.statusMap || !Array.isArray(this.statusMap)) {
+        return '未知状态'
+      }
+      const statusItem = this.statusMap.find(item => item && item.code === type)
+      return statusItem ? statusItem.text : '未知状态'
+    },
+    statusTypeFilter(type) {
+      if (type === undefined) {
+        return 'default'
+      }
+      if (!this.statusMap || !Array.isArray(this.statusMap)) {
+        return 'default'
+      }
+      const statusItem = this.statusMap.find(item => item && item.code === type)
+      return statusItem ? statusItem.code : 'default'
+    },
+    normFilter(type) {
+      if (type === undefined) {
+        return '未知指标'
+      }
+      if (!this.normMap || !Array.isArray(this.normMap)) {
+        return '未知指标'
+      }
+      const normItem = this.normMap.find(item => item && item.code === type)
+      return normItem ? normItem.text : '未知指标'
+    },
     initStaticData() {
       // 重置筛选条件
       this.queryParam = {
         attribute: [],
-        type: [],
-        domain: [],
-        industry: [],
-        scenario: [],
-        technology: []
+        type: undefined,
+        domain: undefined,
+        industry: undefined,
+        scenario: undefined,
+        technology: undefined
       }
-
-      // 初始化基础状态映射
-      this.initStatusMap()
-
-      // 初始化技术指标映射
-      this.initNormMap()
-
-      // 设置领域名称
-      const verticalTitleMap = {
-        'aml': '跨境支付AI监测服务',
-        'aircraft': '无人飞机AI监控服务',
-        'health': '乡村医疗AI智能服务',
-        'agriculture': '数字农业AI智能服务',
-        'evtol': '低空飞行AI应用服务',
-        'ecommerce': '跨境电商AI应用服务',
-        'homeAI': '家庭陪伴AI应用服务'
-      }
-      this.domainArr = [verticalTitleMap[this.verticalType]]
+      // 初始化为空数组
+      this.statusMap = []
+      this.normMap = []
+      this.attributeArr = []
+      this.typeArr = []
+      this.methodTypeOptions = []
+      this.industryArr = []
+      this.scenarioArr = []
+      this.technologyArr = []
     },
-    // 初始化状态映射
-    initStatusMap() {
-      // 默认状态映射
-      this.statusMap = {
-        0: { text: '容器分配失败', status: 'error' },
-        1: { text: '运行中(未通过测评)', status: 'warning' },
-        2: { text: '未运行', status: 'default' },
-        3: { text: '异常', status: 'error' },
-        4: { text: '运行中(已通过测评)', status: 'success' },
-        5: { text: '部署中', status: 'processing' }
-      }
-    },
-
-    // 初始化技术指标映射
-    initNormMap() {
-      // 默认技术指标映射
-      this.normMap = {
-        0: { text: '安全性', status: 'security' },
-        1: { text: '鲁棒性', status: 'robustness' },
-        2: { text: '隐私性', status: 'privacy' },
-        3: { text: '可信性', status: 'trustworthiness' }
-      }
-    },
-
     // 从API获取字典数据
     async loadDictionaryData() {
       try {
-        // 加载不同类别的字典数据
-        const requests = [
-          this.fetchDictionary('status'),
-          this.fetchDictionary('norm'),
-          this.fetchDictionary('attribute'),
-          this.fetchDictionary('service_type'),
-          this.fetchDictionary('method_type'),
-          this.fetchDictionary(`${this.verticalType}_industry`),
-          this.fetchDictionary(`${this.verticalType}_scenario`),
-          this.fetchDictionary(`${this.verticalType}_technology`)
-        ]
-
-        const [
-          statusData,
-          normData,
-          attributeData,
-          serviceTypesData,
-          methodTypesData,
-          industriesData,
-          scenariosData,
-          technologiesData
-        ] = await Promise.all(requests)
-
-        // 处理状态字典数据
-        if (statusData.status === 'success' && statusData.dictionaries.length > 0) {
-          this.statusMap = this.convertDictionariesToMap(statusData.dictionaries)
-        } else {
-          console.warn('使用默认状态映射')
-          this.initStatusMap()
-        }
-
-        // 处理规范字典数据
-        if (normData.status === 'success' && normData.dictionaries.length > 0) {
-          this.normMap = this.convertDictionariesToMap(normData.dictionaries)
-        } else {
-          console.warn('使用默认技术指标映射')
-          this.initNormMap()
-        }
-
-        // 更新根组件中的映射数据
-        this.$root.$data.statusMap = this.statusMap
-        this.$root.$data.normMap = this.normMap
-
-        // 处理属性字典数据
-        if (attributeData.status === 'success') {
-          this.attributeArr = attributeData.dictionaries.map(item => item.text)
-        }
-
-        // 处理服务类型字典数据
-        if (serviceTypesData.status === 'success') {
-          this.typeArr = serviceTypesData.dictionaries.map(item => item.text)
-        }
-
-        // 处理方法类型字典数据
-        if (methodTypesData.status === 'success') {
-          this.methodTypeOptions = methodTypesData.dictionaries.map(item => item.text)
-        }
-
-        // 处理行业字典数据
-        if (industriesData.status === 'success') {
-          this.industryArr = industriesData.dictionaries.map(item => item.text)
-        }
-
-        // 处理场景字典数据
-        if (scenariosData.status === 'success') {
-          this.scenarioArr = scenariosData.dictionaries.map(item => item.text)
-        }
-
-        // 处理技术字典数据
-        if (technologiesData.status === 'success') {
-          this.technologyArr = technologiesData.dictionaries.map(item => item.text)
-        }
+        // 加载字典缓存
+        this.statusMap = await dictionaryCache.loadDict('status') || []
+        this.normMap = await dictionaryCache.loadDict('norm') || []
+        this.attributeArr = await dictionaryCache.loadDict('attribute') || []
+        this.typeArr = await dictionaryCache.loadDict('service_type') || []
+        this.methodTypeOptions = await dictionaryCache.loadDict('method_type') || []
+        this.industryArr = await dictionaryCache.loadDict(`${this.verticalType}_industry`) || []
+        this.scenarioArr = await dictionaryCache.loadDict(`${this.verticalType}_scenario`) || []
+        this.technologyArr = await dictionaryCache.loadDict(`${this.verticalType}_technology`) || []
       } catch (error) {
         console.error('加载字典数据失败:', error)
         this.$message.error('加载数据字典失败，请刷新重试')
-      }
-    },
-
-    // 将字典数据转换为映射对象
-    convertDictionariesToMap(dictionaries) {
-      const map = {}
-      dictionaries.forEach((item, index) => {
-        map[index] = {
-          text: item.text,
-          status: item.code
-        }
-      })
-      return map
-    },
-
-    // 获取特定类别的字典数据
-    async fetchDictionary(category) {
-      try {
-        const response = await getDictionaryByCategory(category)
-        return response
-      } catch (error) {
-        console.error(`获取${category}字典数据失败:`, error)
-        return { status: 'error', message: error.message, dictionaries: [] }
+        // 确保所有数组初始化，防止undefined错误
+        this.statusMap = this.statusMap || []
+        this.normMap = this.normMap || []
+        this.attributeArr = this.attributeArr || []
+        this.typeArr = this.typeArr || []
+        this.methodTypeOptions = this.methodTypeOptions || []
+        this.industryArr = this.industryArr || []
+        this.scenarioArr = this.scenarioArr || []
+        this.technologyArr = this.technologyArr || []
       }
     },
 
     // 筛选标签变化处理
     handleTagChange(field, value) {
-      if (Array.isArray(value)) {
-        this.queryParam[field] = value
-      } else {
-        this.queryParam[field] = [value]
-      }
+      this.queryParam[field] = value
       this.filterDataSource()
     },
 
@@ -745,41 +595,26 @@ export default {
 
       // 只添加有值的筛选条件
       if (this.queryParam.attribute.length > 0) {
-        filters.attribute = this.queryParam.attribute[0]
+        filters.attribute = this.queryParam.attribute.join(',')
       }
 
-      if (this.queryParam.type.length > 0) {
-        filters.type = this.queryParam.type[0]
+      if (typeof this.queryParam.type !== 'undefined') {
+        filters.type = this.queryParam.type
       }
 
-      if (this.queryParam.industry.length > 0) {
-        filters.industry = this.queryParam.industry[0]
+      if (typeof this.queryParam.industry !== 'undefined') {
+        filters.industry = this.queryParam.industry
       }
 
-      if (this.queryParam.scenario.length > 0) {
-        filters.scenario = this.queryParam.scenario[0]
+      if (typeof this.queryParam.scenario !== 'undefined') {
+        filters.scenario = this.queryParam.scenario
       }
 
-      if (this.queryParam.technology.length > 0) {
-        filters.technology = this.queryParam.technology[0]
+      if (typeof this.queryParam.technology !== 'undefined') {
+        filters.technology = this.queryParam.technology
       }
-
-      // 根据垂直领域类型，添加对应的领域ID
-      const verticalDomainMap = {
-        'aml': 0,
-        'aircraft': 1,
-        'health': 2,
-        'agriculture': 3,
-        'evtol': 4,
-        'ecommerce': 5,
-        'homeAI': 6
-      }
-
       // 添加领域过滤条件
-      if (verticalDomainMap[this.verticalType] !== undefined) {
-        filters.domain = verticalDomainMap[this.verticalType]
-      }
-
+      filters.domain = this.verticalType
       try {
         // 如果没有筛选条件，则直接使用已有数据
         if (Object.keys(filters).length === 0) {
@@ -799,17 +634,17 @@ export default {
               (this.queryParam.attribute.length > 0
                 ? this.queryParam.attribute.includes(item.attribute)
                 : true) &&
-              (this.queryParam.type.length > 0
-                ? this.queryParam.type.includes(item.type)
+              (this.queryParam.type
+                ? item.type === this.queryParam.type
                 : true) &&
-              (this.queryParam.industry.length > 0
-                ? this.queryParam.industry.includes(item.industry)
+              (this.queryParam.industry
+                ? item.industry === this.queryParam.industry
                 : true) &&
-              (this.queryParam.scenario.length > 0
-                ? this.queryParam.scenario.includes(item.scenario)
+              (this.queryParam.scenario
+                ? item.scenario === this.queryParam.scenario
                 : true) &&
-              (this.queryParam.technology.length > 0
-                ? this.queryParam.technology.includes(item.technology)
+              (this.queryParam.technology
+                ? item.technology === this.queryParam.technology
                 : true)
             )
           })
@@ -824,17 +659,17 @@ export default {
             (this.queryParam.attribute.length > 0
               ? this.queryParam.attribute.includes(item.attribute)
               : true) &&
-            (this.queryParam.type.length > 0
-              ? this.queryParam.type.includes(item.type)
+            (this.queryParam.type
+              ? item.type === this.queryParam.type
               : true) &&
-            (this.queryParam.industry.length > 0
-              ? this.queryParam.industry.includes(item.industry)
+            (this.queryParam.industry
+              ? item.industry === this.queryParam.industry
               : true) &&
-            (this.queryParam.scenario.length > 0
-              ? this.queryParam.scenario.includes(item.scenario)
+            (this.queryParam.scenario
+              ? item.scenario === this.queryParam.scenario
               : true) &&
-            (this.queryParam.technology.length > 0
-              ? this.queryParam.technology.includes(item.technology)
+            (this.queryParam.technology
+              ? item.technology === this.queryParam.technology
               : true)
           )
         })
@@ -919,23 +754,17 @@ export default {
         return response
       } catch (error) {
         console.error('获取服务数据失败:', error)
-        return null
+        return undefined
       }
     },
 
     // 标准化API返回的数据，确保格式统一
     standardizeServiceData(services) {
       return services.map(service => {
-        // 确保status属性存在，默认为正常状态(4)
-        if (service.status === undefined || service.status === null) {
-          service.status = 4 // 默认为"运行中(已通过测评)"
-        }
-
         // 确保norm属性存在且为数组
         if (!service.norm || !Array.isArray(service.norm)) {
           service.norm = []
         }
-
         // 确保source属性存在
         if (!service.source) {
           service.source = {
@@ -949,7 +778,6 @@ export default {
             msScore: 0
           }
         }
-
         return service
       })
     },
@@ -1076,7 +904,8 @@ export default {
         })
 
         if (this.isDev) {
-          this.$message.success('知识库上传成功！')
+          console.log(response)
+          this.$message.success('response message: ', response?.message)
           this.hasRagData = true
           this.showRAGInput = false
         } else if (response && response.code === 200) {
@@ -1112,6 +941,17 @@ export default {
         default:
           this.$emit('onGoUse', record)
           break
+      }
+    },
+
+    // 获取特定类别的字典数据
+    async fetchDictionary(category) {
+      try {
+        const response = await getDictionaryByCategory(category)
+        return response
+      } catch (error) {
+        console.error(`获取${category}字典数据失败:`, error)
+        return { status: 'error', message: error.message, dictionaries: [] }
       }
     }
   }

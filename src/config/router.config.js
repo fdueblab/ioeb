@@ -196,43 +196,50 @@ export const asyncRouterMap = [
           {
             path: '/vertical-atom-app/aml',
             name: 'vertical-meta-app-aml',
-            component: () => import('@/views/schedule/AmlSchedule'),
+            component: () => import('@/views/schedule/GenericSchedule'),
+            props: { verticalType: 'aml' },
             meta: { title: '跨境元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
           },
           {
             path: '/vertical-atom-app/aircraft',
             name: 'vertical-atom-app-aircraft',
-            component: () => import('@/views/schedule/AirCraftSchedule'),
+            component: () => import('@/views/schedule/GenericSchedule'),
+            props: { verticalType: 'aircraft' },
             meta: { title: '飞机元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
           },
           {
             path: '/vertical-atom-app/health',
             name: 'vertical-atom-app-health',
-            component: () => import('@/views/schedule/HealthSchedule'),
+            component: () => import('@/views/schedule/GenericSchedule'),
+            props: { verticalType: 'health' },
             meta: { title: '农医元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
           },
           {
             path: '/vertical-atom-app/agriculture',
             name: 'vertical-atom-app-agriculture',
-            component: () => import('@/views/schedule/AgricultureSchedule'),
+            component: () => import('@/views/schedule/GenericSchedule'),
+            props: { verticalType: 'agriculture' },
             meta: { title: '农业元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
           },
           {
             path: '/vertical-atom-app/evtol',
             name: 'vertical-atom-app-evtol',
-            component: () => import('@/views/schedule/EvtolSchedule'),
+            component: () => import('@/views/schedule/GenericSchedule'),
+            props: { verticalType: 'evtol' },
             meta: { title: '低空元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
           },
           {
             path: '/vertical-atom-app/ecommerce',
             name: 'vertical-atom-app-ecommerce',
-            component: () => import('@/views/schedule/EcommerceSchedule'),
+            component: () => import('@/views/schedule/GenericSchedule'),
+            props: { verticalType: 'ecommerce' },
             meta: { title: '电商元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
           },
           {
             path: '/vertical-atom-app/homeAI',
             name: 'vertical-atom-app-homeAI',
-            component: () => import('@/views/schedule/HomeAISchedule'),
+            component: () => import('@/views/schedule/GenericSchedule'),
+            props: { verticalType: 'homeAI' },
             meta: { title: '家庭元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
           }
         ]
