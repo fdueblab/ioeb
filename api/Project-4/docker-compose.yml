@@ -4,7 +4,8 @@ services:
   api:
     build: .
     ports:
-      - "25004:5000"
+      - '25004:5000'
+      - '26004:3000'
     volumes:
       - ./eval_config:/app/eval_config
       - ./eval_result:/app/eval_result
@@ -12,4 +13,4 @@ services:
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=production
-    restart: unless-stopped 
+    restart: unless-stopped
