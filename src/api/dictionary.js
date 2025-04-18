@@ -51,7 +51,7 @@ export function createDictionary(category, data) {
 export function updateDictionary(category, code, data) {
   return request({
     url: `${API_BASE_URL}/dictionaries/${category}/${code}`,
-    method: 'put',
+    method: 'post',
     data
   })
 }
