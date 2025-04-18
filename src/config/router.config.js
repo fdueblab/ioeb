@@ -200,6 +200,101 @@ export async function getFirstAppPath() {
   return '/vertical-atom-app/aml' // 默认返回aml路径
 }
 
+// 动态生成评测路由的辅助函数
+export async function generateEvaluationRoutes() {
+  try {
+    // 从字典加载"domain"类别的数据
+    const domains = await loadDict('domain', [])
+
+    // 如果字典为空，返回至少一个默认路由（防止路由为空）
+    if (!domains || domains.length === 0) {
+      return [{
+        path: '/evaluation/aml',
+        name: 'evaluation-aml',
+        component: RouteView,
+        meta: { title: '跨境支付AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+        children: [
+          {
+            path: '/evaluation/aml/technology',
+            name: 'evaluation-aml-technology',
+            component: () => import('@/views/evaluation/GenericTechnology'),
+            props: { verticalType: 'aml' },
+            meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
+          },
+          {
+            path: '/evaluation/aml/emulation',
+            name: 'evaluation-aml-emulation',
+            meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: () => import('@/views/evaluation/GenericEmulation'),
+            props: { verticalType: 'aml' }
+          }
+        ]
+      }]
+    }
+
+    // 将字典数据转换为路由配置
+    return domains.map(domain => ({
+      path: `/evaluation/${domain.code}`,
+      name: `evaluation-${domain.code}`,
+      component: RouteView,
+      meta: { title: `${domain.text}`, keepAlive: true, permission: ['admin', 'publisher'] },
+      children: [
+        {
+          path: `/evaluation/${domain.code}/technology`,
+          name: `evaluation-${domain.code}-technology`,
+          component: () => import('@/views/evaluation/GenericTechnology'),
+          props: { verticalType: domain.code },
+          meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
+        },
+        {
+          path: `/evaluation/${domain.code}/emulation`,
+          name: `evaluation-${domain.code}-emulation`,
+          meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
+          component: () => import('@/views/evaluation/GenericEmulation'),
+          props: { verticalType: domain.code }
+        }
+      ]
+    }))
+  } catch (error) {
+    console.error('生成评测路由失败:', error)
+    // 出错时返回默认路由
+    return [{
+      path: '/evaluation/aml',
+      name: 'evaluation-aml',
+      component: RouteView,
+      meta: { title: '跨境支付AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+      children: [
+        {
+          path: '/evaluation/aml/technology',
+          name: 'evaluation-aml-technology',
+          component: () => import('@/views/evaluation/GenericTechnology'),
+          props: { verticalType: 'aml' },
+          meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
+        },
+        {
+          path: '/evaluation/aml/emulation',
+          name: 'evaluation-aml-emulation',
+          meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
+          component: () => import('@/views/evaluation/GenericEmulation'),
+          props: { verticalType: 'aml' }
+        }
+      ]
+    }]
+  }
+}
+
+export async function getFirstEvaluationPath() {
+  try {
+    const domains = await loadDict('domain', [])
+    if (domains && domains.length > 0) {
+      return `/evaluation/${domains[0].code}/technology`
+    }
+  } catch (error) {
+    console.error('获取第一个评测路径失败:', error)
+  }
+  return '/evaluation/aml/technology' // 默认返回aml路径
+}
+
 export const asyncRouterMap = [
   // 添加新的顶级路由配置，使用BlankLayout
   {
@@ -294,148 +389,7 @@ export const asyncRouterMap = [
         redirect: '/evaluation/aml/technology',
         component: RouteView,
         meta: { title: '技术评测与业务验证', keepAlive: true, icon: 'radar-chart', permission: ['admin', 'publisher'] },
-        children: [
-          {
-            path: '/evaluation/aml',
-            name: 'evaluation-aml',
-            component: RouteView,
-            meta: { title: '跨境支付AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            children: [
-              {
-                path: '/evaluation/aml/technology',
-                name: 'evaluation-aml-technology',
-                component: () => import('@/views/evaluation/aml/technology'),
-                meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/evaluation/aml/emulation',
-                name: 'evaluation-aml-emulation',
-                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/evaluation/aml/emulation')
-              }
-            ]
-          },
-          {
-            path: '/evaluation/aircraft',
-            name: 'evaluation-aircraft',
-            meta: { title: '无人飞机AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: RouteView,
-            children: [
-              {
-                path: '/evaluation/aircraft/technology',
-                name: 'evaluation-aircraft-technology',
-                component: () => import('@/views/evaluation/aircraft/technology'),
-                meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/evaluation/aircraft/emulation',
-                name: 'atom-app-evaluation-aircraft',
-                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/evaluation/aircraft/emulation')
-              }
-            ]
-          },
-          {
-            path: '/evaluation/health',
-            name: 'evaluation-health',
-            meta: { title: '乡村医疗AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: RouteView,
-            children: [
-              {
-                path: '/evaluation/health/technology',
-                name: 'evaluation-health-technology',
-                component: () => import('@/views/evaluation/health/technology'),
-                meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/evaluation/health/emulation',
-                name: 'atom-app-evaluation-health',
-                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/evaluation/health/emulation')
-              }
-            ]
-          },
-          {
-            path: '/evaluation/agriculture',
-            name: 'evaluation-agriculture',
-            meta: { title: '数字农业AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: RouteView,
-            children: [
-              {
-                path: '/evaluation/agriculture/technology',
-                name: 'evaluation-agriculture-technology',
-                component: () => import('@/views/evaluation/agriculture/technology'),
-                meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/evaluation/agriculture/emulation',
-                name: 'atom-app-evaluation-agriculture',
-                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/evaluation/agriculture/emulation')
-              }
-            ]
-          },
-          {
-            path: '/evaluation/evtol',
-            name: 'evaluation-evtol',
-            meta: { title: '低空飞行AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: RouteView,
-            children: [
-              {
-                path: '/evaluation/evtol/technology',
-                name: 'evaluation-evtol-technology',
-                component: () => import('@/views/evaluation/evtol/technology'),
-                meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/evaluation/evtol/emulation',
-                name: 'atom-app-evaluation-evtol',
-                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/evaluation/evtol/emulation')
-              }
-            ]
-          },
-          {
-            path: '/evaluation/ecommerce',
-            name: 'evaluation-ecommerce',
-            meta: { title: '跨境电商AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: RouteView,
-            children: [
-              {
-                path: '/evaluation/ecommerce/technology',
-                name: 'evaluation-ecommerce-technology',
-                component: () => import('@/views/evaluation/ecommerce/technology'),
-                meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/evaluation/ecommerce/emulation',
-                name: 'atom-app-evaluation-ecommerce',
-                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/evaluation/ecommerce/emulation')
-              }
-            ]
-          },
-          {
-            path: '/evaluation/homeAI',
-            name: 'evaluation-homeAI',
-            meta: { title: '家庭陪伴AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: RouteView,
-            children: [
-              {
-                path: '/evaluation/homeAI/technology',
-                name: 'evaluation-homeAI-technology',
-                component: () => import('@/views/evaluation/homeAI/technology'),
-                meta: { title: '原子微服务技术评测', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/evaluation/homeAI/emulation',
-                name: 'atom-app-evaluation-homeAI',
-                meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/evaluation/homeAI/emulation')
-              }
-            ]
-          }
-        ]
+        children: [] // 子路由在路由初始化时动态加载
       },
       // 服务及应用运维管理
       {
