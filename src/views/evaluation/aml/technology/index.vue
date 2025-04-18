@@ -253,6 +253,14 @@ export default {
       const formData = new FormData()
       formData.append('model_name', serviceName)
 
+      // 提供metrics参数（必需），根据选择或默认包含所有指标
+      let metricsToSend = 'privacy,safety-fingerprint,safety-watermark,fairness,robustness,explainability'
+      if (this.selectedMetric !== '-1') {
+        // 如果选择了特定指标
+        metricsToSend = this.normOptions[this.selectedMetric].value
+      }
+      formData.append('metrics', metricsToSend) // 注意是metrics不是metric
+
       // 处理不同数据集类型
       if (this.dataSetType === '1') {
         // 使用上传的数据集文件
@@ -266,20 +274,12 @@ export default {
           return
         }
 
-        formData.append('file', fileObj)
+        // 注意参数名称是data_file而不是file
+        formData.append('data_file', fileObj)
       } else {
-        // 使用平台数据集
-        formData.append('dataset_type', 'platform')
-        // 假设我们可以传递平台数据集的ID或名称
-        const platformDatasetSelector = this.$el.querySelector('select[placeholder="请选择"]')
-        const selectedDatasetId = platformDatasetSelector ? platformDatasetSelector.value : '0'
-        formData.append('dataset_id', selectedDatasetId)
-      }
-
-      // 获取选中的指标
-      if (this.selectedMetric !== '-1') {
-        const selectedMetricValue = this.normOptions[this.selectedMetric].value
-        formData.append('metric', selectedMetricValue)
+        // 平台数据集 - 使用固定的URL
+        const datasetUrl = 'https://lhcos-84055-1317429791.cos.ap-shanghai.myqcloud.com/ioeb/test_dataset.zip'
+        formData.append('file_url', datasetUrl)
       }
 
       // 创建Agent执行Panel组件
