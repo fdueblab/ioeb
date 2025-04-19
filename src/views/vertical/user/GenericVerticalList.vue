@@ -54,10 +54,8 @@
 </template>
 
 <script>
-import { getMetaAppData, getServiceData } from '@/mock/data/services_data'
 import { filterServices, getServicesByVerticalType } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
-
 // 导入拆分出的组件
 import SearchForm from './components/SearchForm'
 import FilterCard from './components/FilterCard'
@@ -338,35 +336,14 @@ export default {
           // 标准化数据
           this.dataSource = this.standardizeServiceData(response.services)
         } else {
-          console.log('API获取失败，回退到静态数据')
-          // 如果API调用失败，回退到静态数据
-          const [serviceData, metaData] = await Promise.all([
-            getServiceData(this.verticalType),
-            getMetaAppData(this.verticalType)
-          ])
-          // 标准化数据
-          this.dataSource = this.standardizeServiceData([...serviceData, ...metaData])
+          console.log('API获取失败')
+          this.dataSource = []
         }
-
         this.filteredDataSource = this.dataSource
       } catch (error) {
         console.error('初始化数据失败:', error)
-
-        // 出错时回退到静态数据
-        try {
-          const [serviceData, metaData] = await Promise.all([
-            getServiceData(this.verticalType),
-            getMetaAppData(this.verticalType)
-          ])
-          // 标准化数据
-          this.dataSource = this.standardizeServiceData([...serviceData, ...metaData])
-          this.filteredDataSource = this.dataSource
-        } catch (innerError) {
-          console.error('静态数据加载也失败:', innerError)
-          this.$message.error('加载数据失败，请刷新页面重试')
-          this.dataSource = []
-          this.filteredDataSource = []
-        }
+        this.dataSource = []
+        this.filteredDataSource = []
       } finally {
         this.dataLoading = false
       }
