@@ -39,8 +39,8 @@
             <a-row :gutter="20">
               <a-col :span="8">
                 <a-form-item label="验证指标">
-                  <a-select placeholder="请选择" :default-value="-1">
-                    <a-select-option :value="-1">全部</a-select-option>
+                  <a-select v-model="selectedMetric">
+                    <a-select-option value="all">全部</a-select-option>
                     <a-select-option v-for="(item, index) in metricOptions" :key="index" :value="item.code">
                       {{ item.text }}
                     </a-select-option>
@@ -150,6 +150,7 @@ export default {
       dataSetType: '0',
       dataSetFiles: [],
       metricOptions: [],
+      selectedMetric: 'all',
       statusMap: getServiceStatusMap(),
       columns: [
         {
@@ -210,17 +211,17 @@ export default {
           console.warn('未能从缓存字典加载验证指标，使用备用数据')
           // 如果字典加载失败，可以使用备用数据
           this.metricOptions = [
-            { id: 0, name: '查全率' },
-            { id: 1, name: '查准率' },
-            { id: 2, name: '计算效率' }
+            { code: 'recall', text: '查全率' },
+            { code: 'precision', text: '查准率' },
+            { code: 'computation_efficiency', text: '计算效率' }
           ]
         }
       } catch (error) {
         console.error('加载验证指标字典失败:', error)
         this.metricOptions = [
-          { id: 0, name: '查全率' },
-          { id: 1, name: '查准率' },
-          { id: 2, name: '计算效率' }
+          { code: 'recall', text: '查全率' },
+          { code: 'precision', text: '查准率' },
+          { code: 'computation_efficiency', text: '计算效率' }
         ]
       }
     },
@@ -349,7 +350,7 @@ export default {
       const metaAppName = metaApp.name
 
       // 获取元应用API端点 - 这里假设在metaApp对象中有一个api属性
-      // 实际情况可能需要根据数据结构调整
+      // todo: 元应用API端点
       const metaAppApi = metaApp.api || `https://api.example.com/meta_apps/${metaAppName}`
 
       // 判断是否需要使用Agent进行验证
@@ -361,7 +362,6 @@ export default {
         if (this.selectedRows.length === 1 && hasDatasetFile) {
           this.runAgentValidation(metaAppApi, metaAppName)
         } else {
-          // 否则使用模拟数据
           this.runMockValidation(metaAppName)
         }
       } else {
@@ -379,20 +379,11 @@ export default {
       const formData = new FormData()
       formData.append('meta_app_api', metaAppApi)
 
-      // 获取评测指标
-      const selectedMetricIndex = this.$el.querySelector('.ant-select-selection-selected-value')?.textContent
-      let metricsToEvaluate = []
-
-      // 根据选择的指标值进行处理
-      if (selectedMetricIndex === '全部') {
-        // 选择了全部指标
-        metricsToEvaluate = ['查全率', '查准率', '计算效率']
-      } else if (selectedMetricIndex && this.metricOptions[selectedMetricIndex]) {
-        // 选择了特定指标
-        metricsToEvaluate = [this.metricOptions[selectedMetricIndex]]
-      } else {
-        // 默认使用全部指标
-        metricsToEvaluate = ['查全率', '查准率', '计算效率']
+      // 根据选择的指标值进行处理，默认包含所有指标
+      let metricsToEvaluate = this.metricOptions.map(item => item.code)
+      // 如果选择了特定指标
+      if (this.selectedMetric !== 'all') {
+        metricsToEvaluate = [this.selectedMetric]
       }
 
       // 将指标数组转换为JSON字符串
@@ -484,6 +475,7 @@ export default {
         onComplete: () => {
           this.testLoading = false
           this.agentIsRunning = false
+          // todo: 修改norm
         },
         onDataProcessError: (e) => {
           console.error('解析数据失败:', e)
@@ -498,46 +490,33 @@ export default {
     runMockValidation(metaAppName) {
       // 模拟异步请求
       setTimeout(() => {
-        this.$message.success(`${metaAppName} 验证完成！`)
-
-        let obj
-
-        if (this.verticalType === 'aml') {
-          obj = {
-            code: 200,
-            message: '验证通过！',
-            data: {
-              performance: {
-                accuracy: 95,
-                precision: 93,
-                recall: 92,
-                f1_score: 92.5
-              },
-              security: {
-                vulnerability_count: 0,
-                security_score: 98
-              },
-              compliance: {
-                regulations_passed: ['PCI DSS', 'GDPR', 'AML'],
-                compliance_score: 100
-              }
-            }
-          }
-        } else {
-          obj = {
-            code: 200,
-            message: '验证通过！',
-            domain: this.verticalType,
-            application: metaAppName,
-            timestamp: new Date().toISOString(),
-            performance: {
-              accuracy: 95,
-              recall: 92,
-              responseTime: '200ms'
+        const obj = {
+          code: 200,
+          message: '验证通过！',
+          data: {
+            // 模拟数据
+            'recall': {
+              value: 1.00,
+              description: '查全率'
+            },
+            'precision': {
+              value: 0.97,
+              description: '查准率'
+            },
+            'computation_efficiency': {
+              value: 0.95,
+              description: '计算效率'
             }
           }
         }
+        // 根据选择的指标过滤结果
+        if (this.selectedMetric !== 'all') {
+          const filteredData = {}
+          filteredData[this.selectedMetric] = obj.data[this.selectedMetric]
+          obj.data = filteredData
+        }
 
+        // todo: 修改norm
         // 更新元应用状态 - 与原有逻辑保持一致
         const metaAppInfo = sessionStorage.getItem('metaAppInfo')
         if (metaAppInfo) {
@@ -556,6 +535,7 @@ export default {
 
         this.response = JSON.stringify(obj, null, 4)
         this.testLoading = false
+        this.$message.success(`${metaAppName} 验证完成！`)
       }, 1000)
     }
   }
