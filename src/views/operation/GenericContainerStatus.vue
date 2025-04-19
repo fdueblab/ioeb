@@ -21,7 +21,7 @@
             </a-col>
             <a-col :md="8" :sm="24">
               <div style="display: flex">
-                <a-button type="primary" @click="filterDataSource" icon="search">查询</a-button>
+                <a-button type="primary" @click="handleSearch" icon="search">查询</a-button>
                 <a-button style="margin-left: 20px" @click="handleReset" icon="redo">重置</a-button>
               </div>
             </a-col>
@@ -220,7 +220,7 @@ export default {
         this.dataLoading = false
       }
     },
-    // 根据筛选条件过滤数据
+    // 根据筛选条件过滤数据（后端暂不支持name查询，先用前端搜索，此方法暂时弃用）
     async filterDataSource() {
       const filters = {}
       if (this.queryParam.name) {
