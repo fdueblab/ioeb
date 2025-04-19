@@ -22,15 +22,17 @@
           <a-popover v-for="(item, index) in text" :key="index" title="可信云技术服务溯源">
             <template slot="content">
               <p>{{ normFilter(item.key) }}</p>
-              <el-rate :value="item.score" disabled show-score text-color="#ff9900" />
+              <p><el-rate :value="item.score" disabled show-score text-color="#ff9900" /></p>
+              <p v-if="item.platformChecked === 1"><a-icon theme="twoTone" twoToneColor="#52c41a" type="check-circle" /> 平台已测评</p>
+              <p v-else><a-icon theme="twoTone" twoToneColor="orange" type="info-circle" /> 平台未测评</p>
             </template>
-            <a-tag color="green" style="margin-bottom: 5px;">
+            <a-tag :color="item.platformChecked === 1 ? 'green' : 'orange'" style="margin-bottom: 5px;">
               <a-icon type="check-circle" /> {{ normFilter(item.key) }}
             </a-tag>
           </a-popover>
         </template>
         <template v-else>
-          <a-tag>无技术指标数据</a-tag>
+          <a-tag color="orange"><a-icon type="info-circle" /> 未测评</a-tag>
         </template>
       </span>
       <span slot="source" slot-scope="text">
@@ -84,7 +86,7 @@
                 <el-rate :value="text.msScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.msScore || 0).toString()"></el-rate>
               </p>
             </template>
-            <a-tag color="orange" style="margin-bottom: 5px;">舆情信息</a-tag>
+            <a-tag color="purple" style="margin-bottom: 5px;">舆情信息</a-tag>
           </a-popover>
           <a-popover :title="text.popoverTitle || '服务溯源'">
             <template slot="content">
