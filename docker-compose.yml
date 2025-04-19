@@ -17,6 +17,7 @@ services:
     volumes:
       - /var/fdueblab.cn_nginx:/etc/nginx/ssl
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./logs/nginx:/var/log/nginx
     networks:
       # - ioeb-backend_app-network
       - app-network
@@ -55,10 +56,10 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     env_file:
-      - ../ioeb-backend/.env
+      - ./env/backend.env
     volumes:
-      - ../ioeb-backend/app_data:/app/uploads
-      - ../ioeb-backend/app_db:/app/instance
+      - ./ioeb-backend/app_data:/app/uploads
+      - ./ioeb-backend/app_db:/app/instance
     networks:
       - app-network # 加入现有网络
 
