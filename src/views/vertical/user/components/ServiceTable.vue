@@ -32,7 +32,7 @@
           </a-popover>
         </template>
         <template v-else>
-          <a-tag color="orange"><a-icon type="info-circle" /> 未测评</a-tag>
+          <a-tag color="red"><a-icon type="info-circle" /> 未测评</a-tag>
         </template>
       </span>
       <span slot="source" slot-scope="text">
