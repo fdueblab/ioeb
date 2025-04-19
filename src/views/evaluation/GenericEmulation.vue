@@ -8,11 +8,11 @@
               <a-row :gutter="48">
                 <a-col :span="18">
                   <a-form-item label="元应用名称">
-                    <a-input v-model="queryParam.id" placeholder="请输入元应用名称" />
+                    <a-input v-model="queryParam.id" placeholder="请输入元应用名称"/>
                   </a-form-item>
                 </a-col>
                 <a-col :span="6">
-                  <div style="text-align: center">
+                  <div style="text-align: center;">
                     <a-button type="primary" @click="handleSearch">查询</a-button>
                   </div>
                 </a-col>
@@ -39,10 +39,10 @@
             <a-row :gutter="20">
               <a-col :span="8">
                 <a-form-item label="验证指标">
-                  <a-select placeholder="请选择" :default-value="-1">
-                    <a-select-option :value="-1">全部</a-select-option>
-                    <a-select-option v-for="(item, index) in performanceMetricOptions" :key="index" :value="index">
-                      {{ item }}
+                  <a-select v-model="selectedMetric">
+                    <a-select-option value="all">全部</a-select-option>
+                    <a-select-option v-for="(item, index) in metricOptions" :key="index" :value="item.code">
+                      {{ item.text }}
                     </a-select-option>
                   </a-select>
                 </a-form-item>
@@ -58,8 +58,9 @@
               <a-col v-if="dataSetType === '0'" :span="6">
                 <a-form-item label="选择数据集">
                   <a-select placeholder="请选择" default-value="0">
-                    <a-select-option value="0">跨境电商</a-select-option>
-                    <a-select-option value="1">课题一内部数据集</a-select-option>
+                    <a-select-option v-for="(dataset, index) in domainDatasets" :key="index" :value="index.toString()">
+                      {{ dataset }}
+                    </a-select-option>
                   </a-select>
                 </a-form-item>
               </a-col>
@@ -70,8 +71,7 @@
                     :file-list="dataSetFiles"
                     :remove="removeDataSetFile"
                     :customRequest="customDataSetFileChose"
-                    :multiple="false"
-                  >
+                    :multiple="false">
                     <a-button> <a-icon type="upload" /> 选择数据集 </a-button>
                   </a-upload>
                 </a-form-item>
@@ -82,8 +82,10 @@
             <a-form-item label="验证结果">
               <a-textarea v-model="response" placeholder="" :rows="7" />
             </a-form-item>
-            <a-form-item :wrapperCol="{ span: 24 }" style="text-align: center">
-              <a-button type="primary" @click="onTest">开始验证</a-button>
+            <a-form-item
+              :wrapperCol="{ span: 24 }"
+              style="text-align: center">
+              <a-button type="primary" :loading="testLoading" @click="onTest">开始验证</a-button>
             </a-form-item>
           </a-form>
         </a-card>
@@ -104,19 +106,37 @@
 <script>
 import { ArticleListContent, StandardFormRow, TagSelect } from '@/components'
 import { getMetaAppData } from '@/mock/data/services_data'
-import { getNormMap, getPerformanceMetricMap, getServiceStatusMap } from '@/mock/data/map_data'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
 import { streamAgent } from '@/utils/request'
+import { filterServices } from '@/api/service'
+import dictionaryCache from '@/utils/dictionaryCache'
+
+// 领域数据集配置
+const domainDatasetsMap = {
+  homeAI: ['无人机任务', '课题组'],
+  evtol: ['无人机任务', '课题组'],
+  ecommerce: ['电商平台', '用户行为'],
+  agriculture: ['农业数据', '作物监测'],
+  health: ['患者数据', '医疗记录'],
+  aml: ['跨境电商', '课题一内部数据集'],
+  aircraft: ['飞行数据', '维护记录']
+}
 
 export default {
-  name: 'TableList',
+  name: 'GenericEmulation',
   components: {
     TagSelect,
     StandardFormRow,
     ArticleListContent,
     AgentExecutionPanel
   },
-  data() {
+  props: {
+    verticalType: {
+      type: String,
+      required: true
+    }
+  },
+  data () {
     return {
       visible: false,
       confirmLoading: false,
@@ -128,8 +148,8 @@ export default {
       queryParam: {},
       dataSetType: '0',
       dataSetFiles: [],
-      performanceMetricOptions: getPerformanceMetricMap(),
-      statusMap: getServiceStatusMap(),
+      metricOptions: [],
+      selectedMetric: 'all',
       columns: [
         {
           title: '#',
@@ -146,6 +166,7 @@ export default {
       selectedRowKeys: [],
       selectedRows: [],
       response: '',
+      isRefreshing: false,
       // Agent面板相关字段
       showAgentPanel: false,
       agentIsRunning: false,
@@ -155,25 +176,23 @@ export default {
       agentFinalResults: null
     }
   },
-  filters: {
-    statusFilter(type) {
-      const statusMap = getServiceStatusMap()
-      return statusMap[type].text
-    },
-    statusTypeFilter(type) {
-      const statusMap = getServiceStatusMap()
-      return statusMap[type].status
-    },
-    normFilter(type) {
-      const normMap = getNormMap()
-      return normMap[type].text
+  created () {
+    this.initData()
+    this.loadMetricOptions()
+  },
+  watch: {
+    // 监听domain属性变化，当切换领域时重新加载数据
+    verticalType(newDomain, oldDomain) {
+      if (newDomain !== oldDomain) {
+        this.initData()
+      }
     }
   },
-  created() {
-    this.initData()
-  },
   computed: {
-    rowSelection() {
+    domainDatasets() {
+      return domainDatasetsMap[this.verticalType] || domainDatasetsMap.homeAI
+    },
+    rowSelection () {
       return {
         selectedRowKeys: this.selectedRowKeys,
         onChange: this.onSelectChange
@@ -181,11 +200,103 @@ export default {
     }
   },
   methods: {
+    // 加载验证指标从字典缓存
+    async loadMetricOptions() {
+      try {
+        this.metricOptions = await dictionaryCache.loadDict('performance_metric') || []
+        console.log('metricOptions', this.metricOptions)
+        if (!this.metricOptions.length) {
+          console.warn('未能从缓存字典加载验证指标，使用备用数据')
+          // 如果字典加载失败，可以使用备用数据
+          this.metricOptions = [
+            { code: 'recall', text: '查全率' },
+            { code: 'precision', text: '查准率' },
+            { code: 'computation_efficiency', text: '计算效率' }
+          ]
+        }
+      } catch (error) {
+        console.error('加载验证指标字典失败:', error)
+        this.metricOptions = [
+          { code: 'recall', text: '查全率' },
+          { code: 'precision', text: '查准率' },
+          { code: 'computation_efficiency', text: '计算效率' }
+        ]
+      }
+    },
+    async initData() {
+      this.dataLoading = true
+      this.filteredDataSource = [] // 清空现有数据，避免显示上一个页面的数据
+
+      try {
+        // 尝试从API获取数据
+        console.log(`正在加载${this.verticalType}领域的元应用验证服务数据`)
+        const response = await this.fetchServicesFromAPI()
+
+        if (response && response.status === 'success') {
+          console.log(`成功从API获取到${response.services.length}条元应用数据`)
+          // 标准化数据
+          this.dataSource = this.standardizeServiceData(response.services)
+        } else {
+          console.log('API获取失败，回退到静态数据')
+          // 如果API调用失败，回退到静态数据
+          this.dataSource = await getMetaAppData(this.verticalType)
+        }
+
+        this.filteredDataSource = [...this.dataSource]
+      } catch (error) {
+        console.error('初始化数据失败:', error)
+        // 出错时回退到静态数据
+        try {
+          this.dataSource = await getMetaAppData(this.verticalType)
+          this.filteredDataSource = [...this.dataSource]
+        } catch (innerError) {
+          console.error('静态数据加载也失败:', innerError)
+          this.$message.error('加载数据失败，请刷新页面重试')
+          this.dataSource = []
+          this.filteredDataSource = []
+        }
+      } finally {
+        this.dataLoading = false
+      }
+    },
+    async fetchServicesFromAPI() {
+      try {
+        return await filterServices({ domain: this.verticalType, type: 'meta' })
+      } catch (error) {
+        console.error('获取服务数据失败:', error)
+        return undefined
+      }
+    },
+    // 标准化API返回的数据，确保格式统一
+    standardizeServiceData(services) {
+      return services.map(service => {
+        // 确保norm属性存在且为数组
+        if (!service.norm || !Array.isArray(service.norm)) {
+          service.norm = []
+        }
+        // 确保source属性存在
+        if (!service.source) {
+          service.source = {
+            popoverTitle: '服务溯源',
+            companyName: '',
+            companyAddress: '',
+            companyContact: '',
+            companyIntroduce: '',
+            msIntroduce: '',
+            companyScore: 0,
+            msScore: 0
+          }
+        }
+        return service
+      })
+    },
     handleSearch() {
-      this.filteredDataSource = this.dataSource.filter((item) => {
-        // const statusMatch = this.queryParam.status === '-1' || item.status === Number(this.queryParam.status)
-        // return nameMatch && statusMatch
-        return item.name.includes(this.queryParam.name)
+      if (!this.queryParam.id) {
+        this.filteredDataSource = [...this.dataSource]
+        return
+      }
+      this.filteredDataSource = this.dataSource.filter(item => {
+        return item.name && item.name.includes(this.queryParam.id)
       })
     },
     handleRefresh() {
@@ -197,36 +308,34 @@ export default {
       })
     },
     handleReset() {
-      this.queryParam = { name: '', status: '-1' }
-      this.filteredDataSource = this.dataSource
+      this.queryParam = { id: '' }
+      this.filteredDataSource = [...this.dataSource]
     },
-    handleChange(value) {
+    handleChange (value) {
       console.log(`selected ${value}`)
     },
-    onSelectChange(selectedRowKeys, selectedRows) {
+    onSelectChange (selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
     },
-    async customDataSetFileChose(options) {
+    async customDataSetFileChose (options) {
       const { file } = options
       if (!file) {
         return false
       }
       const url = URL.createObjectURL(file)
-      this.dataSetFiles = [
-        {
-          uid: file?.uid,
-          name: file.name,
-          status: 'done',
-          url, // url 是展示在页面上的绝对链接
-          originFileObj: file // 添加原始文件对象以便后续上传
-        }
-      ]
+      this.dataSetFiles = [{
+        uid: file?.uid,
+        name: file.name,
+        status: 'done',
+        url, // url 是展示在页面上的绝对链接
+        originFileObj: file // 添加原始文件对象以便后续上传
+      }]
     },
-    removeDataSetFile() {
+    removeDataSetFile () {
       this.dataSetFiles = []
     },
-    onTest() {
+    onTest () {
       if (this.selectedRows.length === 0) {
         this.$message.warning('请选择应用！')
         return
@@ -239,17 +348,22 @@ export default {
       const metaAppName = metaApp.name
 
       // 获取元应用API端点 - 这里假设在metaApp对象中有一个api属性
-      // 实际情况可能需要根据数据结构调整
+      // todo: 元应用API端点
       const metaAppApi = metaApp.api || `https://api.example.com/meta_apps/${metaAppName}`
 
-      // 检查是否有上传的数据文件
-      const hasDatasetFile = this.dataSetType === '1' && this.dataSetFiles.length > 0
+      // 判断是否需要使用Agent进行验证
+      if (this.verticalType === 'aml') {
+        // 检查是否有上传的数据文件
+        const hasDatasetFile = this.dataSetType === '1' && this.dataSetFiles.length > 0
 
-      // 如果只选了一个元应用并且有上传的数据文件，使用Agent进行验证
-      if (this.selectedRows.length === 1 && hasDatasetFile) {
-        this.runAgentValidation(metaAppApi, metaAppName)
+        // 如果只选了一个元应用并且有上传的数据文件，使用Agent进行验证
+        if (this.selectedRows.length === 1 && hasDatasetFile) {
+          this.runAgentValidation(metaAppApi, metaAppName)
+        } else {
+          this.runMockValidation(metaAppName)
+        }
       } else {
-        // 否则使用模拟数据
+        // 非aml领域使用通用模拟数据
         this.runMockValidation(metaAppName)
       }
     },
@@ -263,20 +377,11 @@ export default {
       const formData = new FormData()
       formData.append('meta_app_api', metaAppApi)
 
-      // 获取评测指标
-      const selectedMetricIndex = this.$el.querySelector('.ant-select-selection-selected-value')?.textContent
-      let metricsToEvaluate = []
-
-      // 根据选择的指标值进行处理
-      if (selectedMetricIndex === '全部') {
-        // 选择了全部指标
-        metricsToEvaluate = ['查全率', '查准率', '计算效率']
-      } else if (selectedMetricIndex && this.performanceMetricOptions[selectedMetricIndex]) {
-        // 选择了特定指标
-        metricsToEvaluate = [this.performanceMetricOptions[selectedMetricIndex]]
-      } else {
-        // 默认使用全部指标
-        metricsToEvaluate = ['查全率', '查准率', '计算效率']
+      // 根据选择的指标值进行处理，默认包含所有指标
+      let metricsToEvaluate = this.metricOptions.map(item => item.code)
+      // 如果选择了特定指标
+      if (this.selectedMetric !== 'all') {
+        metricsToEvaluate = [this.selectedMetric]
       }
 
       // 将指标数组转换为JSON字符串
@@ -296,7 +401,7 @@ export default {
       }
 
       // 调用Agent API
-      streamAgent('/api/agent/meta_app_validation', formData, {
+      await streamAgent('/api/agent/meta_app_validation', formData, {
         onStart: () => {
           this.agentIsRunning = true
         },
@@ -368,6 +473,7 @@ export default {
         onComplete: () => {
           this.testLoading = false
           this.agentIsRunning = false
+          // todo: 修改norm
         },
         onDataProcessError: (e) => {
           console.error('解析数据失败:', e)
@@ -378,50 +484,57 @@ export default {
       })
     },
 
-    // 添加新方法：使用模拟数据进行验证
+    // 添加模拟验证方法
     runMockValidation(metaAppName) {
-      // 原有的模拟逻辑
+      // 模拟异步请求
       setTimeout(() => {
-        this.$message.success(`${metaAppName} 验证完成！`)
         const obj = {
           code: 200,
-          message: '验证通过！'
+          message: '验证通过！',
+          data: {
+            // 模拟数据
+            'recall': {
+              value: 1.00,
+              description: '查全率'
+            },
+            'precision': {
+              value: 0.97,
+              description: '查准率'
+            },
+            'computation_efficiency': {
+              value: 0.95,
+              description: '计算效率'
+            }
+          }
         }
+        // 根据选择的指标过滤结果
+        if (this.selectedMetric !== 'all') {
+          const filteredData = {}
+          filteredData[this.selectedMetric] = obj.data[this.selectedMetric]
+          obj.data = filteredData
+        }
+
+        // todo: 修改norm
+        // 更新元应用状态 - 与原有逻辑保持一致
         const metaAppInfo = sessionStorage.getItem('metaAppInfo')
         if (metaAppInfo) {
           const serviceData = {
             ...JSON.parse(sessionStorage.getItem('metaAppInfo')),
             status: 4,
             norm: [
-              {
-                key: 0,
-                score: 5
-              },
-              {
-                key: 1,
-                score: 5
-              },
-              {
-                key: 2,
-                score: 5
-              },
-              {
-                key: 3,
-                score: 5
-              }
+              { key: 0, score: 5 },
+              { key: 1, score: 5 },
+              { key: 2, score: 5 },
+              { key: 3, score: 5 }
             ]
           }
           sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
         }
+
         this.response = JSON.stringify(obj, null, 4)
         this.testLoading = false
+        this.$message.success(`${metaAppName} 验证完成！`)
       }, 1000)
-    },
-    async initData() {
-      this.dataLoading = true
-      this.dataSource = await getMetaAppData('aml', true)
-      this.filteredDataSource = this.dataSource
-      this.dataLoading = false
     }
   }
 }

@@ -196,31 +196,31 @@
                       <div class="statistics-item">
                         <span class="label">高风险交易：</span>
                         <span class="value"
-                          >{{ statisticsData.highRiskCount }} 笔 ({{
-                            transactionCount > 0
-                              ? ((statisticsData.highRiskCount / transactionCount) * 100).toFixed(2)
-                              : '0'
-                          }}%)</span
+                        >{{ statisticsData.highRiskCount }} 笔 ({{
+                          transactionCount > 0
+                            ? ((statisticsData.highRiskCount / transactionCount) * 100).toFixed(2)
+                            : '0'
+                        }}%)</span
                         >
                       </div>
                       <div class="statistics-item">
                         <span class="label">中风险交易：</span>
                         <span class="value"
-                          >{{ statisticsData.mediumRiskCount }} 笔 ({{
-                            transactionCount > 0
-                              ? ((statisticsData.mediumRiskCount / transactionCount) * 100).toFixed(2)
-                              : '0'
-                          }}%)</span
+                        >{{ statisticsData.mediumRiskCount }} 笔 ({{
+                          transactionCount > 0
+                            ? ((statisticsData.mediumRiskCount / transactionCount) * 100).toFixed(2)
+                            : '0'
+                        }}%)</span
                         >
                       </div>
                       <div class="statistics-item">
                         <span class="label">低风险交易：</span>
                         <span class="value"
-                          >{{ statisticsData.lowRiskCount }} 笔 ({{
-                            transactionCount > 0
-                              ? ((statisticsData.lowRiskCount / transactionCount) * 100).toFixed(2)
-                              : '0'
-                          }}%)</span
+                        >{{ statisticsData.lowRiskCount }} 笔 ({{
+                          transactionCount > 0
+                            ? ((statisticsData.lowRiskCount / transactionCount) * 100).toFixed(2)
+                            : '0'
+                        }}%)</span
                         >
                       </div>
                     </div>
@@ -258,7 +258,7 @@
                       <div class="statistics-item">
                         <span class="label">异常交易比例：</span>
                         <span class="value"
-                          >{{ anomalyCount / transactionCount > 0.05 ? '高于' : '处于' }}历史平均水平</span
+                        >{{ anomalyCount / transactionCount > 0.05 ? '高于' : '处于' }}历史平均水平</span
                         >
                       </div>
                       <div class="statistics-item">
