@@ -742,7 +742,7 @@ class {{apiName}}({{input}}):
           port: '0.0.0.0:7777/TCP → 0.0.0.0:77777',
           volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
           status: 'deploying',
-          number: '777',
+          number: 0,
           norm: [],
           source: {
             popoverTitle: '可信云技术服务溯源',
@@ -780,10 +780,9 @@ class {{apiName}}({{input}}):
         }
         const response = await createService(data)
         if (response && response.status === 'success') {
-          this.$message.success('预发布成功！可进行技术评测')
+          this.$message.success('预发布成功！部署完成后可进行技术评测')
           this.uploadServiceLoading = false
           this.resetForm()
-          window.location.href = `#/evaluation/aml/technology`
         } else {
           this.$message.error(response?.message || '预发布失败')
         }
