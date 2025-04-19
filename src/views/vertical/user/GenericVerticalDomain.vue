@@ -47,7 +47,7 @@ export default {
       this.apiList = record.apiList
       if (!record.apiList || record.apiList.length === 0) {
         this.$message.error('数据缺失！')
-      } else if (record.type === 'metaApp') {
+      } else if (record.type === 'meta') {
         this.currentComponent = 'UseMetaApp'
       } else {
         this.currentComponent = 'UseService'
