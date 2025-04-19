@@ -418,7 +418,7 @@ export default {
     },
     // 使用服务
     handleUse(record) {
-      const statusType = this.statusStyleDict.find(item => item.code === record.status).text || 'default'
+      const statusType = this.statusStyleDict.find(item => item.code === record.status)?.text || 'default'
       switch (statusType) {
         case 'default':
         case 'error':
