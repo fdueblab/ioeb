@@ -38,7 +38,7 @@
             <a-menu-item key="2" @click="handleBatchStop"><a-icon type="pause-circle" />批量停止</a-menu-item>
             <a-menu-item key="3" @click="handleBatchDeploy"><a-icon type="caret-right" />批量部署</a-menu-item>
             <a-menu-item key="3" @click="handleBatchCancelDeploy"
-              ><a-icon type="caret-right" />批量取消部署</a-menu-item
+            ><a-icon type="caret-right" />批量取消部署</a-menu-item
             >
           </a-menu>
           <a-button style="margin-left: 8px"> 批量操作 <a-icon type="down" /> </a-button>
@@ -62,7 +62,7 @@
           <template>
             <a v-if="record.status === 0 || record.status === 2" @click="handleDeploy(record)">部署</a>
             <a v-if="record.status === 1 || record.status === 3 || record.status === 4" @click="handleStop(record)"
-              >停止</a
+            >停止</a
             >
             <a v-if="record.status === 5" @click="handleCancelDeploy(record)">取消</a>
             <a-divider type="vertical" />
