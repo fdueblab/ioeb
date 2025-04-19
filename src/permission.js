@@ -17,7 +17,7 @@ import {
   getFirstAppPath,
   generateGuideRoutes,
   generateEvaluationRoutes,
-  getFirstEvaluationPath
+  getFirstEvaluationPath, generateOperationRoutes, getFirstOperationPath
 } from '@/config/router.config' // 引入动态生成路由函数
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
@@ -86,7 +86,15 @@ router.beforeEach(async (to, from, next) => {
                 // 动态生成技术评测与业务验证路由
                 verticalEvaluationRoute.children = await generateEvaluationRoutes()
               }
-              // 5. 使用指南
+              // 5. 服务及应用运维管理
+              const verticalOperationRoute = router.children.find(route => route.path === '/operation')
+              if (verticalEvaluationRoute) {
+                // 获取第一个路径作为重定向路径
+                verticalOperationRoute.redirect = await getFirstOperationPath()
+                // 动态生成技术评测与业务验证路由
+                verticalOperationRoute.children = await generateOperationRoutes()
+              }
+              // 6. 使用指南
               const guideRoute = router.children.find(route => route.path === '/guide')
               if (guideRoute) {
                 // 动态生成指南路由，添加到现有的静态路由后面

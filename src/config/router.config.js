@@ -295,6 +295,101 @@ export async function getFirstEvaluationPath() {
   return '/evaluation/aml/technology' // 默认返回aml路径
 }
 
+// 动态生成运维管理路由的辅助函数
+export async function generateOperationRoutes() {
+  try {
+    // 从字典加载"domain"类别的数据
+    const domains = await loadDict('domain', [])
+
+    // 如果字典为空，返回至少一个默认路由（防止路由为空）
+    if (!domains || domains.length === 0) {
+      return [{
+        path: '/operation/aml',
+        name: 'operation-aml',
+        component: RouteView,
+        meta: { title: '跨境支付AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+        children: [
+          {
+            path: '/operation/aml/container-status',
+            name: 'operation-aml-container-status',
+            component: () => import('@/views/operation/GenericContainerStatus'),
+            props: { verticalType: 'aml' },
+            meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
+          },
+          {
+            path: '/operation/aml/container-manage',
+            name: 'operation-aml-container-manage',
+            meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
+            component: () => import('@/views/operation/GenericContainerManage'),
+            props: { verticalType: 'aml' }
+          }
+        ]
+      }]
+    }
+
+    // 将字典数据转换为路由配置
+    return domains.map(domain => ({
+      path: `/operation/${domain.code}`,
+      name: `operation-${domain.code}`,
+      component: RouteView,
+      meta: { title: `${domain.text}`, keepAlive: true, permission: ['admin', 'publisher'] },
+      children: [
+        {
+          path: `/operation/${domain.code}/container-status`,
+          name: `operation-${domain.code}-container-status`,
+          component: () => import('@/views/operation/GenericContainerStatus'),
+          props: { verticalType: domain.code },
+          meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
+        },
+        {
+          path: `/operation/${domain.code}/container-manage`,
+          name: `operation-${domain.code}-container-manage`,
+          meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
+          component: () => import('@/views/operation/GenericContainerManage'),
+          props: { verticalType: domain.code }
+        }
+      ]
+    }))
+  } catch (error) {
+    console.error('生成运维管理路由失败:', error)
+    // 出错时返回默认路由
+    return [{
+      path: '/operation/aml',
+      name: 'operation-aml',
+      component: RouteView,
+      meta: { title: '跨境支付AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+      children: [
+        {
+          path: '/operation/aml/container-status',
+          name: 'operation-aml-container-status',
+          component: () => import('@/views/operation/GenericContainerStatus'),
+          props: { verticalType: 'aml' },
+          meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
+        },
+        {
+          path: '/operation/aml/container-manage',
+          name: 'operation-aml-container-manage',
+          meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
+          component: () => import('@/views/operation/GenericContainerManage'),
+          props: { verticalType: 'aml' }
+        }
+      ]
+    }]
+  }
+}
+
+export async function getFirstOperationPath() {
+  try {
+    const domains = await loadDict('domain', [])
+    if (domains && domains.length > 0) {
+      return `/operation/${domains[0].code}/container-status`
+    }
+  } catch (error) {
+    console.error('获取第一个运维管理路径失败:', error)
+  }
+  return '/operation/aml/container-status' // 默认返回aml路径
+}
+
 export const asyncRouterMap = [
   // 添加新的顶级路由配置，使用BlankLayout
   {
@@ -395,151 +490,10 @@ export const asyncRouterMap = [
       {
         path: '/operation',
         name: 'operation',
-        redirect: '/operation/aml/container-status',
+        redirect: '/operation/aml/container-status', // 默认重定向，会在路由初始化时被更新
         component: RouteView,
         meta: { title: '服务及应用运维管理', keepAlive: true, icon: 'control', permission: ['admin', 'publisher'] },
-        children: [
-          {
-            path: '/operation/aml',
-            name: 'operation-aml',
-            component: RouteView,
-            meta: { title: '跨境支付AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            children: [
-              {
-                path: '/operation/aml/container-status',
-                name: 'operation-aml-container-status',
-                component: () => import('@/views/operation/aml/container-status'),
-                meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/operation/aml/container-manage',
-                name: 'operation-aml-container-manage',
-                meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/operation/aml/container-manage')
-              }
-            ]
-          },
-          {
-            path: '/operation/aircraft',
-            name: 'operation-aircraft',
-            meta: { title: '无人飞机AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: RouteView,
-            children: [
-              {
-                path: '/operation/aircraft/container-status',
-                name: 'operation-aircraft-container-status',
-                component: () => import('@/views/operation/aircraft/container-status'),
-                meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/operation/aircraft/container-manage',
-                name: 'operation-aircraft-container-manage',
-                meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/operation/aircraft/container-manage')
-              }
-            ]
-          },
-          {
-            path: '/operation/health',
-            name: 'operation-health',
-            meta: { title: '乡村医疗AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: RouteView,
-            children: [
-              {
-                path: '/operation/health/container-status',
-                name: 'operation-health-container-status',
-                component: () => import('@/views/operation/health/container-status'),
-                meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/operation/health/container-manage',
-                name: 'operation-health-container-manage',
-                meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/operation/health/container-manage')
-              }
-            ]
-          },
-          {
-            path: '/operation/agriculture',
-            name: 'operation-agriculture',
-            meta: { title: '数字农业AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: RouteView,
-            children: [
-              {
-                path: '/operation/agriculture/container-status',
-                name: 'operation-agriculture-container-status',
-                component: () => import('@/views/operation/agriculture/container-status'),
-                meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/operation/agriculture/container-manage',
-                name: 'operation-agriculture-container-manage',
-                meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/operation/agriculture/container-manage')
-              }
-            ]
-          },
-          {
-            path: '/operation/evtol',
-            name: 'operation-evtol',
-            meta: { title: '低空飞行AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: RouteView,
-            children: [
-              {
-                path: '/operation/evtol/container-status',
-                name: 'operation-evtol-container-status',
-                component: () => import('@/views/operation/evtol/container-status'),
-                meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/operation/evtol/container-manage',
-                name: 'operation-evtol-container-manage',
-                meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/operation/evtol/container-manage')
-              }
-            ]
-          },
-          {
-            path: '/operation/ecommerce',
-            name: 'operation-ecommerce',
-            meta: { title: '跨境电商AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: RouteView,
-            children: [
-              {
-                path: '/operation/ecommerce/container-status',
-                name: 'operation-ecommerce-container-status',
-                component: () => import('@/views/operation/ecommerce/container-status'),
-                meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/operation/ecommerce/container-manage',
-                name: 'operation-ecommerce-container-manage',
-                meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/operation/ecommerce/container-manage')
-              }
-            ]
-          },
-          {
-            path: '/operation/homeAI',
-            name: 'operation-homeAI',
-            meta: { title: '家庭陪伴AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
-            component: RouteView,
-            children: [
-              {
-                path: '/operation/homeAI/container-status',
-                name: 'operation-homeAI-container-status',
-                component: () => import('@/views/operation/homeAI/container-status'),
-                meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
-              },
-              {
-                path: '/operation/homeAI/container-manage',
-                name: 'operation-homeAI-container-manage',
-                meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
-                component: () => import('@/views/operation/homeAI/container-manage')
-              }
-            ]
-          }
-        ]
+        children: [] // 子路由在路由初始化时动态加载
       },
       // 技术资源服务发布
       {
