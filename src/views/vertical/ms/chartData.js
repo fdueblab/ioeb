@@ -137,7 +137,7 @@ export function convertToGraphFormat(functionData) {
         apiType: 'restful',
         methodType: 'post',
         inputType: 'formdata',
-        outputType: 'formdata',
+        outputType: 'json',
         color: '#1890ff'
       }
     })

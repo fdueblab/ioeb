@@ -37,9 +37,6 @@
 
     <!-- 编辑模态框 -->
     <service-edit-modal
-      :visible="visible"
-      :confirm-loading="confirmLoading"
-      :record="mdl"
       :status-dict="statusDict"
       :norm-dict="normDict"
       :type-arr="typeArr"
@@ -48,7 +45,7 @@
       :scenario-arr="scenarioArr"
       :attribute-arr="attributeArr"
       @ok="handleOk"
-      @cancel="handleCancel"
+      ref="serviceEditModal"
     />
   </page-header-wrapper>
 </template>
@@ -81,28 +78,6 @@ export default {
     return {
       // 开发模式标志
       isDev: this.$route.query.isDev === 'true',
-      visible: false,
-      confirmLoading: false,
-      mdl: {
-        name: '',
-        type: undefined,
-        technology: undefined,
-        status: undefined,
-        industry: undefined,
-        scenario: undefined,
-        attribute: [],
-        number: 0,
-        norm: [],
-        source: {
-          companyName: '',
-          companyAddress: '',
-          companyContact: '',
-          companyIntroduce: '',
-          msIntroduce: '',
-          companyScore: 0,
-          msScore: 0
-        }
-      },
       agentSearchData: [],
       statusDict: [],
       statusStyleDict: [],
@@ -350,13 +325,12 @@ export default {
     },
     // 处理编辑
     handleEdit(record) {
-      this.visible = true // 显示模态框
-      this.mdl = { ...record } // 将选中的记录数据复制到模型中
+      this.$nextTick(() => {
+        this.$refs.serviceEditModal.init(record)
+      })
     },
     // 处理编辑确认
     handleOk(updatedRecord) {
-      this.confirmLoading = true
-
       // 模拟更新数据
       setTimeout(() => {
         const index = this.filteredDataSource.findIndex(item => item.id === updatedRecord.id)
@@ -364,34 +338,10 @@ export default {
           this.filteredDataSource.splice(index, 1, updatedRecord)
           this.filteredDataSource = [...this.filteredDataSource] // 触发视图更新
         }
-        this.visible = false
-        this.confirmLoading = false
+        this.$refs.serviceEditModal.visible = false
+        this.$refs.serviceEditModal.confirmLoading = false
         this.$message.success('编辑成功')
       }, 500)
-    },
-    // 处理编辑取消
-    handleCancel() {
-      this.visible = false
-      this.mdl = {
-        name: '',
-        type: undefined,
-        technology: undefined,
-        status: undefined,
-        industry: undefined,
-        scenario: undefined,
-        attribute: [],
-        number: 0,
-        norm: [],
-        source: {
-          companyName: '',
-          companyAddress: '',
-          companyContact: '',
-          companyIntroduce: '',
-          msIntroduce: '',
-          companyScore: 0,
-          msScore: 0
-        }
-      }
     },
     // 使用服务
     handleUse(record) {
@@ -410,7 +360,3 @@ export default {
   }
 }
 </script>
-
-<style lang="less" scoped>
-/* 页面样式在各组件中定义 */
-</style>
