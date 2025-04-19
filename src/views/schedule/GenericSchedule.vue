@@ -6,7 +6,7 @@
       @update-services="updateServices"
       @update-flow="updateFlow"
       @clear-flow="clearFlow"
-      :service-type="verticalType"
+      :vertical-type="verticalType"
     />
     <flow-panel
       ref="flowPanel"
@@ -15,7 +15,7 @@
       :initial-services="initServices"
       :loading-services="loadingServices"
       :loading-flow="loadingFlow"
-      :service-type="verticalType"
+      :vertical-type="verticalType"
     />
   </div>
 </template>
