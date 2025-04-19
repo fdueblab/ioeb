@@ -390,6 +390,8 @@ class {{apiName}}({{input}}):
         // 设置领域标题
         const domains = await dictionaryCache.loadDict('domain') || []
         this.domainTitle = domains.find(domain => domain.code === this.verticalType)?.text || '未知领域'
+        // 清除代码框
+        this.code = ''
       } catch (error) {
         console.error('加载字典数据失败:', error)
         this.$message.error('加载数据字典失败，请刷新重试')
@@ -500,7 +502,10 @@ class {{apiName}}({{input}}):
         console.error('程序Json数据不完整，无法渲染图表', this.programJson)
         return
       }
+      // 在属性内使用this指代的不是组件，所以要在外面先取要用的数据
       const json = this.programJson
+      const apiTypes = this.apiTypeOptions
+      const methodTypes = this.methodTypeOptions
       const processedNodes = json.nodes.map(node => ({
         x: node.x,
         y: node.y,
@@ -551,10 +556,8 @@ class {{apiName}}({{input}}):
             if (node) {
               let apiTypeText, methodTypeText
               try {
-                const getApiTypeMap = () => ({ 0: 'REST', 1: 'SOAP', 2: 'GraphQL' })
-                const getMethodTypeMap = () => ({ 0: 'GET', 1: 'POST', 2: 'PUT', 3: 'DELETE' })
-                apiTypeText = getApiTypeMap()[node.apiType]
-                methodTypeText = getMethodTypeMap()[node.methodType]
+                apiTypeText = apiTypes.find(item => item.code === node.apiType)?.text || '未知'
+                methodTypeText = methodTypes.find(item => item.code === node.methodType)?.text || '未知'
               } catch (e) {
                 apiTypeText = '未知'
                 methodTypeText = '未知'
