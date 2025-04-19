@@ -105,7 +105,6 @@
 
 <script>
 import { ArticleListContent, StandardFormRow, TagSelect } from '@/components'
-import { getServiceStatusMap } from '@/mock/data/map_data'
 import { getMetaAppData } from '@/mock/data/services_data'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
 import { streamAgent } from '@/utils/request'
@@ -151,7 +150,6 @@ export default {
       dataSetFiles: [],
       metricOptions: [],
       selectedMetric: 'all',
-      statusMap: getServiceStatusMap(),
       columns: [
         {
           title: '#',

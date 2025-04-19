@@ -164,7 +164,8 @@ export default {
         // 加载字典缓存
         this.statusDict = await dictionaryCache.loadDict('status') || []
         this.statusStyleDict = await dictionaryCache.loadDict('status_style') || []
-        this.normDict = await dictionaryCache.loadDict('norm') || []
+        // 微服务和元应用评分
+        this.normDict = [...(await dictionaryCache.loadDict('norm') || []), ...(await dictionaryCache.loadDict('performance_metric') || [])]
         this.attributeArr = await dictionaryCache.loadDict('attribute') || []
         this.typeArr = await dictionaryCache.loadDict('service_type') || []
         this.methodTypeOptions = await dictionaryCache.loadDict('method_type') || []
