@@ -335,7 +335,8 @@ export default {
         let requestData = null
         const headers = {}
         // 根据参数类型构建请求数据和请求头
-        switch (this.parameterType) {
+        // perhaps todo: 适配字典表中的ioType？
+        switch (this.apiList[0].parameterType) {
           case 2: // 文件上传
             const formData = new FormData()
             this.uploadFiles.forEach(file => {
@@ -370,7 +371,7 @@ export default {
             url = this.serviceUrl
         }
         // 文件类型
-        if (this.responseType === 2) {
+        if (this.apiList[0].responseType === 2) {
           const response = await request({
             url,
             method: api.method,
