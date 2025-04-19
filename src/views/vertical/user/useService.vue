@@ -39,7 +39,7 @@
               <template slot="parameterName" slot-scope="text, record" >
                 <span>
                   {{ record.name }}
-                  <a-tag v-if="record.type && !record.type.includes('file')" color="blue" size="small">
+                  <a-tag v-if="record.type" color="blue" size="small">
                     {{ record.type }}
                   </a-tag>
                   <a-tooltip v-if="record.des">
@@ -133,6 +133,7 @@ export default {
       selectedApi: undefined, // 默认选择的接口
       serviceUrl: '', // 服务地址
       method: '未选择', // 请求方法
+      // perhaps todo: 适配字典表中的ioType？
       parameterType: 0, // 参数类型
       responseType: 0, // 返回类型
       fileList: [], // 文件列表
