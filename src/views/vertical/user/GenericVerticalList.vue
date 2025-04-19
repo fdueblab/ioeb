@@ -418,18 +418,12 @@ export default {
     },
     // 使用服务
     handleUse(record) {
-      switch (record.status) {
-        case 0:
-          this.$message.error('服务部署失败，请重新部署后使用！')
-          break
-        case 2:
-          this.$message.info('服务未运行，请启动后使用！')
-          break
-        case 3:
-          this.$message.error('服务异常，暂无法使用！')
-          break
-        case 5:
-          this.$message.warning('服务部署中，暂无法使用！')
+      const statusType = this.statusStyleDict.find(item => item.code === record.status).text || 'default'
+      switch (statusType) {
+        case 'default':
+        case 'error':
+        case 'processing':
+          this.$message.info('该服务暂时无法使用！')
           break
         default:
           this.$emit('onGoUse', record)
