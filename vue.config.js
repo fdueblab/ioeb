@@ -138,8 +138,20 @@ const vueConfig = {
 
   devServer: {
     // development server port 8000
-    port: 8000
-    // If you want to turn on the proxy, please remove the mockjs /src/main.jsL11
+    port: 8000,
+    // 允许任何主机访问
+    host: '0.0.0.0',
+    // 允许所有来源
+    allowedHosts: 'all',
+    // 客户端配置
+    client: {
+      webSocketURL: {
+        hostname: '0.0.0.0',
+        pathname: '/ws',
+        port: 8000
+      }
+    },
+    // 如果需要代理，请去除下面的注释
     // proxy: {
     //   [process.env.VUE_APP_API_BASE_URL]: {
     //     target: `https://torna.kxyun.net/mock/msa/api`,

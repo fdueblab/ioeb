@@ -33,7 +33,7 @@ export async function generateVerticalUserRoutes() {
         name: 'vertical-user-aml',
         component: () => import('@/views/vertical/user/GenericVerticalDomain'),
         props: { verticalType: 'aml' },
-        meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher'] }
+        meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
       }]
     }
 
@@ -43,7 +43,7 @@ export async function generateVerticalUserRoutes() {
       name: `vertical-user-${domain.code}`,
       component: () => import('@/views/vertical/user/GenericVerticalDomain'),
       props: { verticalType: domain.code },
-      meta: { title: domain.text, keepAlive: true, permission: ['admin', 'publisher'] }
+      meta: { title: domain.text, keepAlive: true, permission: ['admin', 'publisher', 'user'] }
     }))
   } catch (error) {
     console.error('生成垂域路由失败:', error)
@@ -53,7 +53,7 @@ export async function generateVerticalUserRoutes() {
       name: 'vertical-user-aml',
       component: () => import('@/views/vertical/user/GenericVerticalDomain'),
       props: { verticalType: 'aml' },
-      meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher'] }
+      meta: { title: '跨境支付AI监测', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
     }]
   }
 }
@@ -71,7 +71,7 @@ export async function generateVerticalMSRoutes() {
         name: 'vertical-ms-aml',
         component: () => import('@/views/vertical/ms/GenericMicroService'),
         props: { verticalType: 'aml' },
-        meta: { title: '跨境支付AI监测服务发布', keepAlive: true, permission: ['admin', 'publisher'] }
+        meta: { title: '跨境支付AI监测服务发布', keepAlive: true, permission: ['publisher'] }
       }]
     }
 
@@ -81,7 +81,7 @@ export async function generateVerticalMSRoutes() {
       name: `vertical-ms-${domain.code}`,
       component: () => import('@/views/vertical/ms/GenericMicroService'),
       props: { verticalType: domain.code },
-      meta: { title: `${domain.text}服务发布`, keepAlive: true, permission: ['admin', 'publisher'] }
+      meta: { title: `${domain.text}服务发布`, keepAlive: true, permission: ['publisher'] }
     }))
   } catch (error) {
     console.error('生成垂域微服务路由失败:', error)
@@ -91,7 +91,7 @@ export async function generateVerticalMSRoutes() {
       name: 'vertical-ms-aml',
       component: () => import('@/views/vertical/ms/GenericMicroService'),
       props: { verticalType: 'aml' },
-      meta: { title: '跨境支付AI监测服务发布', keepAlive: true, permission: ['admin', 'publisher'] }
+      meta: { title: '跨境支付AI监测服务发布', keepAlive: true, permission: ['publisher'] }
     }]
   }
 }
@@ -109,7 +109,7 @@ export async function generateVerticalAppRoutes() {
         name: 'vertical-meta-app-aml',
         component: () => import('@/views/schedule/GenericSchedule'),
         props: { verticalType: 'aml' },
-        meta: { title: '跨境元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+        meta: { title: '跨境元应用智能体构建', keepAlive: true, permission: ['user'] }
       }]
     }
 
@@ -122,7 +122,7 @@ export async function generateVerticalAppRoutes() {
       meta: {
         title: domain.text.slice(0, 4) + '元应用智能体构建',
         keepAlive: true,
-        permission: ['admin', 'publisher', 'user']
+        permission: ['user']
       }
     }))
   } catch (error) {
@@ -133,7 +133,7 @@ export async function generateVerticalAppRoutes() {
       name: 'vertical-meta-app-aml',
       component: () => import('@/views/schedule/GenericSchedule'),
       props: { verticalType: 'aml' },
-      meta: { title: '跨境元应用智能体构建', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+      meta: { title: '跨境元应用智能体构建', keepAlive: true, permission: ['user'] }
     }]
   }
 }
@@ -212,7 +212,7 @@ export async function generateEvaluationRoutes() {
         path: '/evaluation/aml',
         name: 'evaluation-aml',
         component: RouteView,
-        meta: { title: '跨境支付AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+        meta: { title: '跨境支付AI服务及应用', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
         children: [
           {
             path: '/evaluation/aml/technology',
@@ -224,7 +224,7 @@ export async function generateEvaluationRoutes() {
           {
             path: '/evaluation/aml/emulation',
             name: 'evaluation-aml-emulation',
-            meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'user'] },
             component: () => import('@/views/evaluation/GenericEmulation'),
             props: { verticalType: 'aml' }
           }
@@ -237,7 +237,7 @@ export async function generateEvaluationRoutes() {
       path: `/evaluation/${domain.code}`,
       name: `evaluation-${domain.code}`,
       component: RouteView,
-      meta: { title: `${domain.text}`, keepAlive: true, permission: ['admin', 'publisher'] },
+      meta: { title: `${domain.text}`, keepAlive: true, permission: ['admin', 'publisher', 'user'] },
       children: [
         {
           path: `/evaluation/${domain.code}/technology`,
@@ -249,7 +249,7 @@ export async function generateEvaluationRoutes() {
         {
           path: `/evaluation/${domain.code}/emulation`,
           name: `evaluation-${domain.code}-emulation`,
-          meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
+          meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'user'] },
           component: () => import('@/views/evaluation/GenericEmulation'),
           props: { verticalType: domain.code }
         }
@@ -262,7 +262,7 @@ export async function generateEvaluationRoutes() {
       path: '/evaluation/aml',
       name: 'evaluation-aml',
       component: RouteView,
-      meta: { title: '跨境支付AI服务及应用', keepAlive: true, permission: ['admin', 'publisher'] },
+      meta: { title: '跨境支付AI服务及应用', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
       children: [
         {
           path: '/evaluation/aml/technology',
@@ -274,7 +274,7 @@ export async function generateEvaluationRoutes() {
         {
           path: '/evaluation/aml/emulation',
           name: 'evaluation-aml-emulation',
-          meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'publisher'] },
+          meta: { title: '元应用业务数据验证', keepAlive: true, permission: ['admin', 'user'] },
           component: () => import('@/views/evaluation/GenericEmulation'),
           props: { verticalType: 'aml' }
         }
@@ -314,12 +314,12 @@ export async function generateOperationRoutes() {
             name: 'operation-aml-container-status',
             component: () => import('@/views/operation/GenericContainerStatus'),
             props: { verticalType: 'aml' },
-            meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
+            meta: { title: '微服务容器化状态', keepAlive: true, permission: ['publisher'] }
           },
           {
             path: '/operation/aml/container-manage',
             name: 'operation-aml-container-manage',
-            meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
+            meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin'] },
             component: () => import('@/views/operation/GenericContainerManage'),
             props: { verticalType: 'aml' }
           }
@@ -339,12 +339,12 @@ export async function generateOperationRoutes() {
           name: `operation-${domain.code}-container-status`,
           component: () => import('@/views/operation/GenericContainerStatus'),
           props: { verticalType: domain.code },
-          meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
+          meta: { title: '微服务容器化状态', keepAlive: true, permission: ['publisher'] }
         },
         {
           path: `/operation/${domain.code}/container-manage`,
           name: `operation-${domain.code}-container-manage`,
-          meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
+          meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin'] },
           component: () => import('@/views/operation/GenericContainerManage'),
           props: { verticalType: domain.code }
         }
@@ -364,12 +364,12 @@ export async function generateOperationRoutes() {
           name: 'operation-aml-container-status',
           component: () => import('@/views/operation/GenericContainerStatus'),
           props: { verticalType: 'aml' },
-          meta: { title: '微服务容器化状态', keepAlive: true, permission: ['admin', 'publisher'] }
+          meta: { title: '微服务容器化状态', keepAlive: true, permission: ['publisher'] }
         },
         {
           path: '/operation/aml/container-manage',
           name: 'operation-aml-container-manage',
-          meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin', 'publisher'] },
+          meta: { title: '微服务容器化管理', keepAlive: true, permission: ['admin'] },
           component: () => import('@/views/operation/GenericContainerManage'),
           props: { verticalType: 'aml' }
         }
@@ -396,13 +396,13 @@ export const asyncRouterMap = [
     path: '/aml/monitor',
     name: 'aml-monitor-fullscreen',
     component: BlankLayout,
-    meta: { title: '跨境支付事中监测系统', permission: ['admin', 'publisher'] },
+    meta: { title: '跨境支付事中监测系统', permission: ['user'] },
     children: [
       {
         path: '',
         name: 'aml-monitor',
         component: () => import('@/views/aml/monitor'),
-        meta: { title: '跨境支付事中监测', keepAlive: true, permission: ['admin', 'publisher'] }
+        meta: { title: '跨境支付事中监测', keepAlive: true, permission: ['user'] }
       }
     ]
   },
@@ -411,13 +411,13 @@ export const asyncRouterMap = [
     path: '/aml/list',
     name: 'aml-list-fullscreen',
     component: BlankLayout,
-    meta: { title: '跨境支付风险商户查询', permission: ['admin', 'publisher'] },
+    meta: { title: '跨境支付风险商户查询', permission: ['user'] },
     children: [
       {
         path: '',
         name: 'aml-list',
         component: () => import('@/views/aml/list'),
-        meta: { title: '商户风险查询', keepAlive: true, permission: ['admin', 'publisher'] }
+        meta: { title: '商户风险查询', keepAlive: true, permission: ['user'] }
       }
     ]
   },
@@ -426,13 +426,13 @@ export const asyncRouterMap = [
     path: '/aml/detail/:id',
     name: 'aml-detail-fullscreen',
     component: BlankLayout,
-    meta: { title: '跨境支付商户风险详情', permission: ['admin', 'publisher'] },
+    meta: { title: '跨境支付商户风险详情', permission: ['user'] },
     children: [
       {
         path: '',
         name: 'aml-detail',
         component: () => import('@/views/aml/detail'),
-        meta: { title: '商户风险详情', keepAlive: false, permission: ['admin', 'publisher'] }
+        meta: { title: '商户风险详情', keepAlive: false, permission: ['user'] }
       }
     ]
   },
@@ -451,7 +451,7 @@ export const asyncRouterMap = [
         name: 'vertical-user',
         redirect: '/vertical-user/aml', // 默认重定向，会在路由初始化时被更新
         component: RouteView,
-        meta: { title: '微服务与元应用检索', keepAlive: true, icon: 'appstore', permission: ['admin', 'publisher'] },
+        meta: { title: '微服务与元应用检索', keepAlive: true, icon: 'appstore', permission: ['admin', 'publisher', 'user'] },
         children: [] // 子路由在路由初始化时动态加载
       },
       // 垂域原子微服务发布 - 从字典动态获取
@@ -460,7 +460,7 @@ export const asyncRouterMap = [
         name: 'vertical-ms',
         redirect: '/vertical-ms/aml', // 默认重定向，会在路由初始化时被更新
         component: RouteView,
-        meta: { title: '垂域原子微服务发布', keepAlive: true, icon: 'upload', permission: ['admin', 'publisher'] },
+        meta: { title: '垂域原子微服务发布', keepAlive: true, icon: 'upload', permission: ['publisher'] },
         children: [] // 子路由在路由初始化时动态加载
       },
       // 垂域元应用仿真构建 - 从字典动态获取
@@ -473,7 +473,7 @@ export const asyncRouterMap = [
           title: '垂域元应用仿真构建',
           keepAlive: true,
           icon: 'form',
-          permission: ['admin', 'publisher', 'user']
+          permission: ['user']
         },
         children: [] // 子路由在路由初始化时动态加载
       },
@@ -483,7 +483,7 @@ export const asyncRouterMap = [
         name: 'evaluation',
         redirect: '/evaluation/aml/technology',
         component: RouteView,
-        meta: { title: '技术评测与业务验证', keepAlive: true, icon: 'radar-chart', permission: ['admin', 'publisher'] },
+        meta: { title: '技术评测与业务验证', keepAlive: true, icon: 'radar-chart', permission: ['admin', 'publisher', 'user'] },
         children: [] // 子路由在路由初始化时动态加载
       },
       // 服务及应用运维管理
@@ -496,6 +496,7 @@ export const asyncRouterMap = [
         children: [] // 子路由在路由初始化时动态加载
       },
       // 技术资源服务发布
+      // TODO: 似乎已废弃
       {
         path: '/ms',
         name: 'ms',
@@ -518,6 +519,7 @@ export const asyncRouterMap = [
           }
         ]
       },
+      // TODO: 似乎已废弃
       {
         path: '/virtual',
         name: 'virtual',
@@ -596,6 +598,7 @@ export const asyncRouterMap = [
         ]
       },
       // 微服务容器化管理
+      // TODO: 似乎已废弃
       {
         path: '/microservices',
         name: 'microservices',
@@ -639,11 +642,13 @@ export const asyncRouterMap = [
         ]
       },
       // 应用服务动态组合
+      // TODO: 似乎已废弃
       {
         path: '/schedule',
         name: 'schedule',
         redirect: '/schedule/ef',
         component: RouteView,
+        hidden: true,
         meta: { title: '应用服务动态组合', keepAlive: true, icon: 'copy', permission: ['user'] },
         children: [
           {
@@ -680,7 +685,7 @@ export const asyncRouterMap = [
           title: '跨境支付事中监测',
           icon: 'fund',
           target: '_blank',
-          permission: ['admin', 'publisher']
+          permission: ['user']
         }
       },
       // 用户管理
@@ -691,7 +696,7 @@ export const asyncRouterMap = [
           title: '用户管理',
           keepAlive: true,
           icon: 'team',
-          permission: ['admin', 'publisher', 'user']
+          permission: ['admin']
         },
         component: () => import('@/views/user-manage')
       },
@@ -719,18 +724,49 @@ export const asyncRouterMap = [
         ]
       },
       // 应用实例
+      // TODO: 原有的两个应用实例已废弃，新增反洗钱监管系统实例
+      // {
+      //   path: '/aml/monitor',
+      //   name: 'aml-monitor-fullscreen',
+      //   component: BlankLayout,
+      //   meta: { title: '跨境支付事中监测系统', permission: ['user'] },
+      //   children: [
+          // {
+          //   path: '',
+          //   name: 'aml-monitor',
+          //   component: () => import('@/views/aml/monitor'),
+          //   meta: { title: '跨境支付事中监测', keepAlive: true, permission: ['user'] }
+          // }
+      //   ]
+      // },
       {
         path: '/application',
         name: 'application',
-        redirect: '/application/aircraft/history',
+        redirect: '/application/aml',
         component: RouteView,
         meta: { title: '应用实例', keepAlive: true, icon: 'pushpin', permission: ['user'] },
         children: [
           {
-            path: '/application/aircraft',
-            name: 'aircraft',
-            redirect: '/application/aircraft/history',
+            path: '/application/aml',
+            name: 'aml-app-template',
+            redirect: '/application/aml',
             component: PageView,
+            meta: { title: '跨境支付AI监测', icon: 'pushpin', permission: ['user'] },
+            children: [
+              {
+                path: '',
+                name: 'aml-monitor-template',
+                component: () => import('@/views/application/aml/monitor'),
+                meta: { title: '跨境支付事中监测', keepAlive: true, permission: ['user'] }
+              }
+            ]
+          },
+          {
+            path: '/application/aml',
+            name: 'aml',
+            redirect: '/application/aml/history',
+            component: PageView,
+            hidden: true,
             meta: { title: '应用实例：前沿装备远程操控系统', icon: 'pushpin', permission: ['user'] },
             children: [
               {
@@ -763,6 +799,7 @@ export const asyncRouterMap = [
             path: '/application/platform',
             name: '虚拟仿真案例应用',
             component: RouteView,
+            hidden: true,
             meta: { title: '应用实例：虚拟仿真案例云微服务', icon: 'flag', permission: ['user'] },
             children: [
               {
@@ -869,6 +906,7 @@ export const asyncRouterMap = [
         ]
       },
       // dashboard
+      // TODO: 似乎已废弃
       {
         path: '/dashboard',
         name: 'dashboard',
