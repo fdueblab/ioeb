@@ -51,7 +51,7 @@ export function createDictionary(category, data) {
 export function updateDictionary(category, code, data) {
   return request({
     url: `${API_BASE_URL}/dictionaries/${category}/${code}`,
-    method: 'put',
+    method: 'post',
     data
   })
 }
@@ -66,5 +66,16 @@ export function deleteDictionary(category, code) {
   return request({
     url: `${API_BASE_URL}/dictionaries/${category}/${code}`,
     method: 'delete'
+  })
+}
+
+/**
+ * 获取所有字典数据
+ * @returns {Promise} 返回所有字典数据
+ */
+export function getAllDictionaries() {
+  return request({
+    url: `${API_BASE_URL}/dictionaries/all`,
+    method: 'get'
   })
 }

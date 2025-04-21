@@ -1,0 +1,56 @@
+{
+    "privacy": {
+        "privacy_score": {
+            "value": "0.4527",
+            "range": [
+                0,
+                1
+            ]
+        }
+    },
+    "safety-fingerprint": {
+        "safety-fingerprint_score(cln mode)": {
+            "value": "0.25",
+            "range": "[0, 1]"
+        },
+        "safety-fingerprint_score(atk mode)": {
+            "value": "0.25",
+            "range": "[0, 1]"
+        }
+    },
+    "safety-watermark": {
+        "safety-watermark_score": {
+            "value": "0.6",
+            "range": [
+                0,
+                1
+            ]
+        }
+    },
+    "fairness": {
+        "fairness_score:": {
+            "value": "10.6201"
+        }
+    },
+    "robustness": {
+        "white_box_robustness_score": {
+            "value": "0.38",
+            "range": "[0, 1]"
+        },
+        "black_box_robustness_score": {
+            "value": "0.20",
+            "range": "[0, 1]"
+        }
+    },
+    "explainability": {
+        "explainablilty_score_2": {
+            "value": "0.6667"
+        },
+        "explainablilty_score_3": {
+            "value": "0.3333"
+        },
+        "explainablilty_score_4": {
+            "value": "0.3333"
+        }
+    }
+}

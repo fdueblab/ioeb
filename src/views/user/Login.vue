@@ -18,7 +18,7 @@
             <a-input
               size="large"
               type="text"
-              placeholder="账户: publisher/user/admin"
+              placeholder="请输入账户名"
               v-decorator="[
                 'username',
                 {rules: [{ required: true, message: $t('user.userName.required') }, { validator: handleUsernameOrEmail }], validateTrigger: 'change'}
@@ -31,7 +31,7 @@
           <a-form-item>
             <a-input-password
               size="large"
-              placeholder="密码: 123456"
+              placeholder="请输入密码"
               v-decorator="[
                 'password',
                 {rules: [{ required: true, message: $t('user.password.required') }], validateTrigger: 'blur'}
@@ -175,18 +175,12 @@ export default {
           delete loginParams.username
           loginParams[!state.loginType ? 'email' : 'username'] = values.username
           loginParams.password = md5(values.password)
-          const username = ['publisher', 'user']
-          const password = ['e10adc3949ba59abbe56e057f20f883e', 'e10adc3949ba59abbe56e057f20f883e']
-          if (!username.includes(loginParams.username) || !password.includes(loginParams.password)) {
-            this.isLoginError = true
-            state.loginBtn = false
-            return false
-          } else {
-            Login(loginParams)
-              .then((res) => this.loginSuccess(res))
-              .catch(err => this.requestFailed(err))
-              .finally(() => { state.loginBtn = false })
-          }
+
+          // 直接将登录请求发送到后端进行验证
+          Login(loginParams)
+            .then((res) => this.loginSuccess(res))
+            .catch(err => this.requestFailed(err))
+            .finally(() => { state.loginBtn = false })
         } else {
           setTimeout(() => {
             state.loginBtn = false
