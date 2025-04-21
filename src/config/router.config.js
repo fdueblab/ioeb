@@ -724,19 +724,49 @@ export const asyncRouterMap = [
         ]
       },
       // 应用实例
-      // TODO: 似乎已废弃
+      // TODO: 原有的两个应用实例已废弃，新增反洗钱监管系统实例
+      // {
+      //   path: '/aml/monitor',
+      //   name: 'aml-monitor-fullscreen',
+      //   component: BlankLayout,
+      //   meta: { title: '跨境支付事中监测系统', permission: ['user'] },
+      //   children: [
+          // {
+          //   path: '',
+          //   name: 'aml-monitor',
+          //   component: () => import('@/views/aml/monitor'),
+          //   meta: { title: '跨境支付事中监测', keepAlive: true, permission: ['user'] }
+          // }
+      //   ]
+      // },
       {
         path: '/application',
         name: 'application',
-        redirect: '/application/aircraft/history',
+        redirect: '/application/aml',
         component: RouteView,
         meta: { title: '应用实例', keepAlive: true, icon: 'pushpin', permission: ['user'] },
         children: [
           {
-            path: '/application/aircraft',
-            name: 'aircraft',
-            redirect: '/application/aircraft/history',
+            path: '/application/aml',
+            name: 'aml-app-template',
+            redirect: '/application/aml',
             component: PageView,
+            meta: { title: '跨境支付AI监测', icon: 'pushpin', permission: ['user'] },
+            children: [
+              {
+                path: '',
+                name: 'aml-monitor-template',
+                component: () => import('@/views/application/aml/monitor'),
+                meta: { title: '跨境支付事中监测', keepAlive: true, permission: ['user'] }
+              }
+            ]
+          },
+          {
+            path: '/application/aml',
+            name: 'aml',
+            redirect: '/application/aml/history',
+            component: PageView,
+            hidden: true,
             meta: { title: '应用实例：前沿装备远程操控系统', icon: 'pushpin', permission: ['user'] },
             children: [
               {
@@ -769,6 +799,7 @@ export const asyncRouterMap = [
             path: '/application/platform',
             name: '虚拟仿真案例应用',
             component: RouteView,
+            hidden: true,
             meta: { title: '应用实例：虚拟仿真案例云微服务', icon: 'flag', permission: ['user'] },
             children: [
               {
