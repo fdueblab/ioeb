@@ -7,7 +7,7 @@ import notification from 'ant-design-vue/es/notification'
 import { setDocumentTitle, domTitle } from '@/utils/domUtil'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { i18nRender } from '@/locales'
-import { preloadAllDict } from '@/utils/dictionaryCache' // 引入字典预加载功能
+import { preloadAllDict, loadDict } from '@/utils/dictionaryCache' // 引入字典预加载功能
 import {
   generateVerticalUserRoutes,
   getFirstVerticalUserPath,
@@ -63,12 +63,36 @@ router.beforeEach(async (to, from, next) => {
                 verticalUserRoute.children = await generateVerticalUserRoutes()
               }
               // 2. 垂域原子微服务发布
-              const verticalMSRoute = router.children.find(route => route.path === '/vertical-ms')
-              if (verticalMSRoute) {
-                // 获取第一个微服务路径作为重定向路径
-                verticalMSRoute.redirect = await getFirstMSPath()
-                // 动态生成微服务路由
-                verticalMSRoute.children = await generateVerticalMSRoutes()
+              // 如果有publisher权限
+              if (store.getters.roles.permissionList &&
+                  store.getters.roles.permissionList.includes('publisher')) {
+                const verticalMSRoute = router.children.find(route => route.path === '/vertical-ms')
+                if (verticalMSRoute) {
+                  // 获取第一个微服务路径作为重定向路径
+                  verticalMSRoute.redirect = await getFirstMSPath()
+                  // 动态生成微服务路由
+                  const allMSRoutes = await generateVerticalMSRoutes()
+
+                  // 根据用户权限过滤子路由
+                  if (allMSRoutes && allMSRoutes.length > 0) {
+                    // 对每个领域路由进行处理
+                    allMSRoutes.forEach(domainRoute => {
+                      if (domainRoute.children && domainRoute.children.length > 0) {
+                        // 过滤子路由，只保留用户有权限的路由
+                        domainRoute.children = domainRoute.children.filter(childRoute => {
+                          if (childRoute.meta && childRoute.meta.permission) {
+                            return childRoute.meta.permission.some(p =>
+                              store.getters.roles.permissionList.includes(p)
+                            )
+                          }
+                          return true
+                        })
+                      }
+                    })
+                  }
+
+                  verticalMSRoute.children = allMSRoutes
+                }
               }
               // 3. 垂域元应用仿真构建
               const verticalAppRoute = router.children.find(route => route.path === '/vertical-meta-app')
@@ -81,18 +105,76 @@ router.beforeEach(async (to, from, next) => {
               // 4. 技术评测与业务验证
               const verticalEvaluationRoute = router.children.find(route => route.path === '/evaluation')
               if (verticalEvaluationRoute) {
-                // 获取第一个路径作为重定向路径
-                verticalEvaluationRoute.redirect = await getFirstEvaluationPath()
+                // 根据用户权限设置重定向路径
+                if (store.getters.roles.permissionList &&
+                    (store.getters.roles.permissionList.includes('admin') ||
+                     store.getters.roles.permissionList.includes('publisher'))) {
+                  // admin或publisher权限的用户可以访问技术评测页面
+                  verticalEvaluationRoute.redirect = await getFirstEvaluationPath()
+                } else {
+                  // user权限的用户只能访问元应用业务数据验证页面
+                  const domains = await loadDict('domain', [])
+                  if (domains && domains.length > 0) {
+                    verticalEvaluationRoute.redirect = `/evaluation/${domains[0].code}/emulation`
+                  } else {
+                    verticalEvaluationRoute.redirect = '/evaluation/aml/emulation'
+                  }
+                }
                 // 动态生成技术评测与业务验证路由
-                verticalEvaluationRoute.children = await generateEvaluationRoutes()
+                const allEvaluationRoutes = await generateEvaluationRoutes()
+
+                // 根据用户权限过滤子路由
+                if (allEvaluationRoutes && allEvaluationRoutes.length > 0) {
+                  // 对每个领域路由进行处理
+                  allEvaluationRoutes.forEach(domainRoute => {
+                    if (domainRoute.children && domainRoute.children.length > 0) {
+                      // 过滤子路由，只保留用户有权限的路由
+                      domainRoute.children = domainRoute.children.filter(childRoute => {
+                        if (childRoute.meta && childRoute.meta.permission) {
+                          return childRoute.meta.permission.some(p =>
+                            store.getters.roles.permissionList.includes(p)
+                          )
+                        }
+                        return true
+                      })
+                    }
+                  })
+                }
+
+                verticalEvaluationRoute.children = allEvaluationRoutes
               }
               // 5. 服务及应用运维管理
-              const verticalOperationRoute = router.children.find(route => route.path === '/operation')
-              if (verticalEvaluationRoute) {
-                // 获取第一个路径作为重定向路径
-                verticalOperationRoute.redirect = await getFirstOperationPath()
-                // 动态生成技术评测与业务验证路由
-                verticalOperationRoute.children = await generateOperationRoutes()
+              // 如果有admin或publisher权限
+              if (store.getters.roles.permissionList &&
+                  (store.getters.roles.permissionList.includes('admin') ||
+                   store.getters.roles.permissionList.includes('publisher'))) {
+                const verticalOperationRoute = router.children.find(route => route.path === '/operation')
+                if (verticalOperationRoute) { // 修正变量名
+                  // 获取第一个路径作为重定向路径
+                  verticalOperationRoute.redirect = await getFirstOperationPath()
+                  // 动态生成运维管理路由
+                  const allOperationRoutes = await generateOperationRoutes()
+
+                  // 根据用户权限过滤子路由
+                  if (allOperationRoutes && allOperationRoutes.length > 0) {
+                    // 对每个领域路由进行处理
+                    allOperationRoutes.forEach(domainRoute => {
+                      if (domainRoute.children && domainRoute.children.length > 0) {
+                        // 过滤子路由，只保留用户有权限的路由
+                        domainRoute.children = domainRoute.children.filter(childRoute => {
+                          if (childRoute.meta && childRoute.meta.permission) {
+                            return childRoute.meta.permission.some(p =>
+                              store.getters.roles.permissionList.includes(p)
+                            )
+                          }
+                          return true
+                        })
+                      }
+                    })
+                  }
+
+                  verticalOperationRoute.children = allOperationRoutes
+                }
               }
               // 6. 使用指南
               const guideRoute = router.children.find(route => route.path === '/guide')
@@ -126,6 +208,7 @@ router.beforeEach(async (to, from, next) => {
             message: '错误',
             description: '请求用户信息失败，请重试'
           })
+          console.error('请求用户信息失败，请重试:', error)
           // 失败时，获取用户信息失败时，调用登出，来清空历史保留信息
           store.dispatch('Logout').then(() => {
             next({ path: loginRoutePath, query: { redirect: to.fullPath } })
