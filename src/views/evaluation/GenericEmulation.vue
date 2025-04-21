@@ -1,20 +1,25 @@
 <template>
   <page-header-wrapper :title="false">
     <a-row :gutter="24">
-      <a-col :span="10">
+      <a-col :span="12">
         <a-card :bordered="false">
           <div class="table-page-search-wrapper">
             <a-form layout="inline">
-              <a-row :gutter="48">
-                <a-col :span="18">
-                  <a-form-item label="元应用名称">
-                    <a-input v-model="queryParam.id" placeholder="请输入元应用名称"/>
+              <a-row :gutter="12">
+                <a-col :span="12">
+                  <a-form-item label="名称">
+                    <a-input v-model="queryParam.name" placeholder="输入名称以筛选" @change="handleSearch" allowClear />
                   </a-form-item>
                 </a-col>
-                <a-col :span="6">
-                  <div style="text-align: center;">
-                    <a-button type="primary" @click="handleSearch">查询</a-button>
-                  </div>
+                <a-col :span="12">
+                  <a-form-item label="状态">
+                    <a-select v-model="queryParam.status" @change="handleSearch">
+                      <a-select-option value="all">全部</a-select-option>
+                      <a-select-option v-for="(item, index) in statusDict" :key="index" :value="item.code">
+                        {{ item.text }}
+                      </a-select-option>
+                    </a-select>
+                  </a-form-item>
                 </a-col>
               </a-row>
             </a-form>
@@ -30,10 +35,13 @@
             <span slot="serial" slot-scope="text, record, index">
               {{ index + 1 }}
             </span>
+            <span slot="status" slot-scope="text">
+              <a-badge :status="statusStyleFilter(text)" :text="statusFilter(text)" />
+            </span>
           </a-table>
         </a-card>
       </a-col>
-      <a-col :span="14">
+      <a-col :span="12">
         <a-card :bordered="false">
           <a-form>
             <a-row :gutter="20">
@@ -55,7 +63,7 @@
                   </a-select>
                 </a-form-item>
               </a-col>
-              <a-col v-if="dataSetType === '0'" :span="6">
+              <a-col v-if="dataSetType === '0'" :span="8">
                 <a-form-item label="选择数据集">
                   <a-select placeholder="请选择" default-value="0">
                     <a-select-option v-for="(dataset, index) in domainDatasets" :key="index" :value="index.toString()">
@@ -85,7 +93,8 @@
             <a-form-item
               :wrapperCol="{ span: 24 }"
               style="text-align: center">
-              <a-button type="primary" :loading="testLoading" @click="onTest">开始验证</a-button>
+              <a-button v-if="tested" disabled icon="check">验证完成</a-button>
+              <a-button v-else type="primary" :loading="testLoading" @click="onTest" icon="bulb">开始验证</a-button>
             </a-form-item>
           </a-form>
         </a-card>
@@ -141,11 +150,15 @@ export default {
       visible: false,
       confirmLoading: false,
       testLoading: false,
+      tested: false,
       mdl: null,
-      // 高级搜索 展开/关闭
-      advanced: false,
       // 查询参数
-      queryParam: {},
+      queryParam: {
+        name: undefined,
+        status: 'all'
+      },
+      statusDict: [],
+      statusStyleDict: [],
       dataSetType: '0',
       dataSetFiles: [],
       metricOptions: [],
@@ -153,11 +166,18 @@ export default {
       columns: [
         {
           title: '#',
+          width: '80px',
           scopedSlots: { customRender: 'serial' }
         },
         {
           title: '元应用名称',
           dataIndex: 'name'
+        },
+        {
+          title: '状态',
+          dataIndex: 'status',
+          width: '160px',
+          scopedSlots: { customRender: 'status' }
         }
       ],
       dataLoading: false,
@@ -177,14 +197,15 @@ export default {
     }
   },
   created () {
+    this.loadDictionaryData()
     this.initData()
-    this.loadMetricOptions()
   },
   watch: {
     // 监听domain属性变化，当切换领域时重新加载数据
     verticalType(newDomain, oldDomain) {
       if (newDomain !== oldDomain) {
         this.initData()
+        this.loadDictionaryData()
       }
     }
   },
@@ -200,27 +221,47 @@ export default {
     }
   },
   methods: {
-    // 加载验证指标从字典缓存
-    async loadMetricOptions() {
+    statusFilter(type) {
+      if (type === undefined) {
+        return '未知状态'
+      }
+      if (!this.statusDict || !Array.isArray(this.statusDict)) {
+        return '未知状态'
+      }
+      const statusItem = this.statusDict.find(item => item && item.code === type)
+      return statusItem ? statusItem.text : '未知状态'
+    },
+    statusStyleFilter(type) {
+      if (type === undefined) {
+        return 'default'
+      }
+      if (!this.statusStyleDict || !Array.isArray(this.statusStyleDict)) {
+        return 'default'
+      }
+      const statusItem = this.statusStyleDict.find(item => item && item.code === type)
+      return statusItem ? statusItem.text : 'default'
+    },
+    // 加载验证指标和状态字典
+    async loadDictionaryData() {
       try {
         this.metricOptions = await dictionaryCache.loadDict('performance_metric') || []
-        console.log('metricOptions', this.metricOptions)
-        if (!this.metricOptions.length) {
-          console.warn('未能从缓存字典加载验证指标，使用备用数据')
-          // 如果字典加载失败，可以使用备用数据
-          this.metricOptions = [
-            { code: 'recall', text: '查全率' },
-            { code: 'precision', text: '查准率' },
-            { code: 'computation_efficiency', text: '计算效率' }
-          ]
-        }
+        const allStatus = await dictionaryCache.loadDict('status') || []
+        this.statusStyleDict = await dictionaryCache.loadDict('status_style') || []
+        // 筛选出运行中的状态
+        const runningStatusCode = this.statusStyleDict.filter(item => ['warning', 'success'].includes(item.text)).map(item => item.code)
+        this.statusDict = allStatus.filter(item => runningStatusCode.includes(item.code))
       } catch (error) {
-        console.error('加载验证指标字典失败:', error)
-        this.metricOptions = [
-          { code: 'recall', text: '查全率' },
-          { code: 'precision', text: '查准率' },
-          { code: 'computation_efficiency', text: '计算效率' }
+        console.error('加载评测指标字典失败:', error)
+        this.normOptions = [
+          { code: 'privacy', text: '隐私性' },
+          { code: 'safety-fingerprint', text: '安全性指纹' },
+          { code: 'safety-watermark', text: '安全性水印' },
+          { code: 'fairness', text: '公平性' },
+          { code: 'robustness', text: '鲁棒性' },
+          { code: 'explainability', text: '可解释性' }
         ]
+        this.statusDict = []
+        this.statusStyleDict = []
       }
     },
     async initData() {
@@ -234,8 +275,9 @@ export default {
 
         if (response && response.status === 'success') {
           console.log(`成功从API获取到${response.services.length}条元应用数据`)
-          // 标准化数据
-          this.dataSource = this.standardizeServiceData(response.services)
+          // 筛选出运行中的服务
+          const runningStatus = this.statusDict.map(item => item.code)
+          this.dataSource = response.services.filter(item => runningStatus.includes(item.status))
         } else {
           console.log('API获取失败，回退到静态数据')
           // 如果API调用失败，回退到静态数据
@@ -267,37 +309,21 @@ export default {
         return undefined
       }
     },
-    // 标准化API返回的数据，确保格式统一
-    standardizeServiceData(services) {
-      return services.map(service => {
-        // 确保norm属性存在且为数组
-        if (!service.norm || !Array.isArray(service.norm)) {
-          service.norm = []
-        }
-        // 确保source属性存在
-        if (!service.source) {
-          service.source = {
-            popoverTitle: '服务溯源',
-            companyName: '',
-            companyAddress: '',
-            companyContact: '',
-            companyIntroduce: '',
-            msIntroduce: '',
-            companyScore: 0,
-            msScore: 0
-          }
-        }
-        return service
-      })
-    },
     handleSearch() {
-      if (!this.queryParam.id) {
-        this.filteredDataSource = [...this.dataSource]
-        return
+      // 重置筛选后的数据
+      this.filteredDataSource = [...this.dataSource]
+      // 按名称筛选
+      if (this.queryParam.name) {
+        this.filteredDataSource = this.filteredDataSource.filter(item => {
+          return item.name && item.name.includes(this.queryParam.name)
+        })
       }
-      this.filteredDataSource = this.dataSource.filter(item => {
-        return item.name && item.name.includes(this.queryParam.id)
-      })
+      // 按状态筛选
+      if (this.queryParam.status && this.queryParam.status !== 'all') {
+        this.filteredDataSource = this.filteredDataSource.filter(item => {
+          return item.status === this.queryParam.status
+        })
+      }
     },
     handleRefresh() {
       if (this.isRefreshing) return
@@ -308,15 +334,14 @@ export default {
       })
     },
     handleReset() {
-      this.queryParam = { id: '' }
+      this.queryParam = { name: undefined, status: 'all' }
       this.filteredDataSource = [...this.dataSource]
-    },
-    handleChange (value) {
-      console.log(`selected ${value}`)
     },
     onSelectChange (selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
+      this.tested = false
+      this.response = ''
     },
     async customDataSetFileChose (options) {
       const { file } = options
@@ -471,9 +496,11 @@ export default {
           this.agentIsRunning = false
         },
         onComplete: () => {
+          // todo: 修改norm
+
           this.testLoading = false
           this.agentIsRunning = false
-          // todo: 修改norm
+          this.tested = true
         },
         onDataProcessError: (e) => {
           console.error('解析数据失败:', e)
@@ -515,6 +542,7 @@ export default {
         }
 
         // todo: 修改norm
+
         // 更新元应用状态 - 与原有逻辑保持一致
         const metaAppInfo = sessionStorage.getItem('metaAppInfo')
         if (metaAppInfo) {
@@ -533,6 +561,7 @@ export default {
 
         this.response = JSON.stringify(obj, null, 4)
         this.testLoading = false
+        this.tested = true
         this.$message.success(`${metaAppName} 验证完成！`)
       }, 1000)
     }

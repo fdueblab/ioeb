@@ -1,20 +1,25 @@
 <template>
   <page-header-wrapper :title="false">
     <a-row :gutter="24">
-      <a-col :span="10">
+      <a-col :span="12">
         <a-card :bordered="false">
           <div class="table-page-search-wrapper">
             <a-form layout="inline">
-              <a-row :gutter="48">
-                <a-col :span="18">
-                  <a-form-item label="服务名称">
-                    <a-input v-model="queryParam.id" placeholder=""/>
+              <a-row :gutter="12">
+                <a-col :span="12">
+                  <a-form-item label="名称">
+                    <a-input v-model="queryParam.name" placeholder="输入名称以筛选" @change="handleSearch" allowClear />
                   </a-form-item>
                 </a-col>
-                <a-col :span="6">
-                  <div style="text-align: center;">
-                    <a-button type="primary" @click="handleSearch">查询</a-button>
-                  </div>
+                <a-col :span="12">
+                  <a-form-item label="状态">
+                    <a-select v-model="queryParam.status" @change="handleSearch">
+                      <a-select-option value="all">全部</a-select-option>
+                      <a-select-option v-for="(item, index) in statusDict" :key="index" :value="item.code">
+                        {{ item.text }}
+                      </a-select-option>
+                    </a-select>
+                  </a-form-item>
                 </a-col>
               </a-row>
             </a-form>
@@ -30,10 +35,13 @@
             <span slot="serial" slot-scope="text, record, index">
               {{ index + 1 }}
             </span>
+            <span slot="status" slot-scope="text">
+              <a-badge :status="statusStyleFilter(text)" :text="statusFilter(text)" />
+            </span>
           </a-table>
         </a-card>
       </a-col>
-      <a-col :span="14">
+      <a-col :span="12">
         <a-card :bordered="false">
           <a-form>
             <a-row :gutter="20">
@@ -55,7 +63,7 @@
                   </a-select>
                 </a-form-item>
               </a-col>
-              <a-col v-if="dataSetType === '0'" :span="6">
+              <a-col v-if="dataSetType === '0'" :span="8">
                 <a-form-item label="选择数据集">
                   <a-select placeholder="请选择" default-value="0">
                     <a-select-option v-for="(dataset, index) in domainDatasets" :key="index" :value="index.toString()">
@@ -85,7 +93,8 @@
             <a-form-item
               :wrapperCol="{ span: 24 }"
               style="text-align: center">
-              <a-button type="primary" :loading="testLoading" @click="onTest">开始测评</a-button>
+              <a-button v-if="tested" disabled icon="check">测评完成</a-button>
+              <a-button v-else type="primary" :loading="testLoading" @click="onTest" icon="stock">开始测评</a-button>
             </a-form-item>
           </a-form>
         </a-card>
@@ -143,20 +152,29 @@ export default {
       visible: false,
       confirmLoading: false,
       testLoading: false,
+      tested: false,
       mdl: null,
-      // 高级搜索 展开/关闭
-      advanced: false,
       // 查询参数
-      queryParam: {},
-      // 加载数据方法 必须为 Promise 对象
+      queryParam: {
+        name: undefined,
+        status: 'all'
+      },
+      statusDict: [],
       columns: [
         {
           title: '#',
+          width: '80px',
           scopedSlots: { customRender: 'serial' }
         },
         {
           title: '服务名称',
           dataIndex: 'name'
+        },
+        {
+          title: '状态',
+          dataIndex: 'status',
+          width: '160px',
+          scopedSlots: { customRender: 'status' }
         }
       ],
       selectedMetric: 'all',
@@ -179,15 +197,15 @@ export default {
     }
   },
   created () {
+    this.loadDictionaryData()
     this.initData()
-    this.loadNormOptions()
   },
   watch: {
     // 监听domain属性变化，当切换领域时重新加载数据
     verticalType(newDomain, oldDomain) {
       if (newDomain !== oldDomain) {
         this.initData()
-        this.loadNormOptions()
+        this.loadDictionaryData()
       }
     }
   },
@@ -203,22 +221,35 @@ export default {
     }
   },
   methods: {
+    statusFilter(type) {
+      if (type === undefined) {
+        return '未知状态'
+      }
+      if (!this.statusDict || !Array.isArray(this.statusDict)) {
+        return '未知状态'
+      }
+      const statusItem = this.statusDict.find(item => item && item.code === type)
+      return statusItem ? statusItem.text : '未知状态'
+    },
+    statusStyleFilter(type) {
+      if (type === undefined) {
+        return 'default'
+      }
+      if (!this.statusStyleDict || !Array.isArray(this.statusStyleDict)) {
+        return 'default'
+      }
+      const statusItem = this.statusStyleDict.find(item => item && item.code === type)
+      return statusItem ? statusItem.text : 'default'
+    },
     // 加载评测指标从字典缓存
-    async loadNormOptions() {
+    async loadDictionaryData() {
       try {
         this.normOptions = await dictionaryCache.loadDict('norm') || []
-        if (!this.normOptions.length) {
-          console.warn('未能从缓存字典加载评测指标，使用备用数据')
-          // 如果字典加载失败，可以使用备用数据
-          this.normOptions = [
-            { code: 'privacy', text: '隐私性' },
-            { code: 'safety-fingerprint', text: '安全性指纹' },
-            { code: 'safety-watermark', text: '安全性水印' },
-            { code: 'fairness', text: '公平性' },
-            { code: 'robustness', text: '鲁棒性' },
-            { code: 'explainability', text: '可解释性' }
-          ]
-        }
+        const allStatus = await dictionaryCache.loadDict('status') || []
+        this.statusStyleDict = await dictionaryCache.loadDict('status_style') || []
+        // 筛选出运行中的状态
+        const runningStatusCode = this.statusStyleDict.filter(item => ['warning', 'success'].includes(item.text)).map(item => item.code)
+        this.statusDict = allStatus.filter(item => runningStatusCode.includes(item.code))
       } catch (error) {
         console.error('加载评测指标字典失败:', error)
         this.normOptions = [
@@ -229,6 +260,8 @@ export default {
           { code: 'robustness', text: '鲁棒性' },
           { code: 'explainability', text: '可解释性' }
         ]
+        this.statusDict = []
+        this.statusStyleDict = []
       }
     },
     async initData() {
@@ -242,8 +275,9 @@ export default {
 
         if (response && response.status === 'success') {
           console.log(`成功从API获取到${response.services.length}条服务数据`)
-          // 标准化数据
-          this.dataSource = this.standardizeServiceData(response.services)
+          // 筛选出运行中的服务
+          const runningStatus = this.statusDict.map(item => item.code)
+          this.dataSource = response.services.filter(item => runningStatus.includes(item.status))
         } else {
           console.log('API获取失败，回退到静态数据')
           // 如果API调用失败，回退到静态数据
@@ -275,58 +309,27 @@ export default {
         return undefined
       }
     },
-    // 标准化API返回的数据，确保格式统一
-    standardizeServiceData(services) {
-      return services.map(service => {
-        // 确保norm属性存在且为数组
-        if (!service.norm || !Array.isArray(service.norm)) {
-          service.norm = []
-        }
-        // 确保source属性存在
-        if (!service.source) {
-          service.source = {
-            popoverTitle: '服务溯源',
-            companyName: '',
-            companyAddress: '',
-            companyContact: '',
-            companyIntroduce: '',
-            msIntroduce: '',
-            companyScore: 0,
-            msScore: 0
-          }
-        }
-        return service
-      })
-    },
     handleSearch() {
-      if (!this.queryParam.id) {
-        this.filteredDataSource = [...this.dataSource]
-        return
+      // 重置筛选后的数据
+      this.filteredDataSource = [...this.dataSource]
+      // 按名称筛选
+      if (this.queryParam.name) {
+        this.filteredDataSource = this.filteredDataSource.filter(item => {
+          return item.name && item.name.includes(this.queryParam.name)
+        })
       }
-      this.filteredDataSource = this.dataSource.filter(item => {
-        return item.name && item.name.includes(this.queryParam.id)
-      })
-    },
-    handleAdd () {
-      this.$emit('onGoAdd')
-    },
-    handleEdit (record) {
-      console.log(record)
-    },
-    delConfirm() {
-      this.$message.success('删除成功！')
-    },
-    handleCancel () {
-      this.visible = false
-      const form = this.$refs.createModal.form
-      form.resetFields() // 清理表单数据（可不做）
-    },
-    handleChange (value) {
-      console.log(`selected ${value}`)
+      // 按状态筛选
+      if (this.queryParam.status && this.queryParam.status !== 'all') {
+        this.filteredDataSource = this.filteredDataSource.filter(item => {
+          return item.status === this.queryParam.status
+        })
+      }
     },
     onSelectChange (selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys
       this.selectedRows = selectedRows
+      this.tested = false
+      this.response = ''
     },
     async customDataSetFileChose (options) {
       const { file } = options
@@ -374,7 +377,6 @@ export default {
         this.runMockEvaluation(serviceName)
       }
     },
-
     // 添加新方法：使用Agent进行评测
     async runAgentEvaluation(serviceName) {
       // 准备表单数据
@@ -462,9 +464,11 @@ export default {
           this.agentIsRunning = false
         },
         onComplete: () => {
+          // todo: 修改norm
+
           this.testLoading = false
           this.agentIsRunning = false
-          // todo: 修改norm
+          this.tested = true
         },
         onDataProcessError: (e) => {
           console.error('解析数据失败:', e)
@@ -474,7 +478,6 @@ export default {
         }
       })
     },
-
     // 添加模拟评测方法
     runMockEvaluation(serviceName) {
       setTimeout(() => {
@@ -687,6 +690,7 @@ export default {
 
         this.response = JSON.stringify(obj, null, 4)
         this.testLoading = false
+        this.tested = true
         this.$message.success(`${serviceName} 测试完成！`)
       }, 1000)
     }
