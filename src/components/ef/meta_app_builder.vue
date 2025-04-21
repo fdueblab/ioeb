@@ -94,10 +94,10 @@
           <a-divider>应用信息</a-divider>
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="领域">
-                <a-select v-decorator="['domain', { rules: [{ required: true, message: '请选择元应用领域!' }], initialValue: 0 }]" placeholder="请选择元应用领域">
-                  <a-select-option :key="0" :value="0">
-                    {{ serviceType === 'aml' ? '跨境支付AI监测服务' : '无人飞机AI监控服务' }}
+              <a-form-item label="属性">
+                <a-select v-decorator="['attribute']" placeholder="请选择属性" allow-clear>
+                  <a-select-option v-for="(item, index) in attributeOptions" :key="index" :value="item.code">
+                    {{ item.text }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
@@ -105,8 +105,8 @@
             <a-col :span="12">
               <a-form-item label="行业">
                 <a-select v-decorator="['industry']" placeholder="请选择行业" allow-clear>
-                  <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="index">
-                    {{ item }}
+                  <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
+                    {{ item.text }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
@@ -116,8 +116,8 @@
             <a-col :span="12">
               <a-form-item label="场景">
                 <a-select v-decorator="['scenario']" placeholder="请选择元应用场景" allow-clear>
-                  <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="index">
-                    {{ item }}
+                  <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="item.code">
+                    {{ item.text }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
@@ -125,8 +125,8 @@
             <a-col :span="12">
               <a-form-item label="技术">
                 <a-select v-decorator="['technology']" placeholder="请选择元应用技术" allow-clear>
-                  <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="index">
-                    {{ item }}
+                  <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="item.code">
+                    {{ item.text }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
@@ -153,13 +153,14 @@
 </template>
 
 <script>
-import { getIndustryMap, getScenarioMap, getTechnologyMap } from '@/mock/data/map_data'
+import { createService } from '@/api/service'
+import dictionaryCache from '@/utils/dictionaryCache'
 
 export default {
   props: {
-    serviceType: {
+    verticalType: {
       type: String,
-      default: 'aml'
+      required: true
     },
     inputType: {
       type: Number,
@@ -185,6 +186,7 @@ export default {
   data() {
     return {
       visible: false,
+      attributeOptions: [],
       industryOptions: [],
       scenarioOptions: [],
       technologyOptions: [],
@@ -192,81 +194,97 @@ export default {
     }
   },
   methods: {
-    init() {
+    async init() {
       this.visible = true
-      this.industryOptions = getIndustryMap(this.serviceType)
-      this.scenarioOptions = getScenarioMap(this.serviceType)
-      this.technologyOptions = getTechnologyMap(this.serviceType)
+      this.attributeOptions = await dictionaryCache.loadDict('attribute') || []
+      this.industryOptions = await dictionaryCache.loadDict(`${this.verticalType}_industry`) || []
+      this.scenarioOptions = await dictionaryCache.loadDict(`${this.verticalType}_scenario`) || []
+      this.technologyOptions = await dictionaryCache.loadDict(`${this.verticalType}_technology`) || []
     },
     handleSubmit() {
-      // 这里可以处理提交逻辑
+      // 这里可以处理提交预览逻辑
     },
     handleOk() {
       const { form: { validateFields } } = this
       this.visible = true
-      validateFields((errors, values) => {
-        if (!errors) {
-          const { name, inputName, outputName, outputVisualization, submitButtonText } = values
-          let url = 'http://myApiServer.com/agent'
-          let method = 'POST'
-          let response = {
-            code: 200,
-            message: '调用成功！'
-          }
-          if (name.includes('课题一')) {
-            url = '/api/pj1_report_app'
-            method = 'POST'
-            response = {
+      validateFields(async (errors, values) => {
+          if (!errors) {
+            const { name, inputName, outputName, outputVisualization, submitButtonText } = values
+            let url = 'http://myApiServer.com/agent'
+            let method = 'post'
+            let response = {
               code: 200,
-              message: '获取成功!',
+              message: '微服务正在部署！',
               data: {
-                result: '基于图神经网络的跨境贸易支付监测模型的推理结果已经产生。模型在数据集上的表现如下：\n\n在100个节点中，有93个节点被判定为类别0，7个节点被判定为类别2。具体结果如下：\n\n- 类别0：节点1，节点2，节点3，节点4，节点9，节点10，节点11，节点12，节点13，节点14，节点15，节点16，节点17，节点\n18，节点19，节点20，节点21，节点22，节点23，节点24，节点25，节点26，节点27，节点28，节点29，节点30，节点31，节点\n32，节点33，节点34，节点35，节点36，节点37，节点38，节点39，节点40，节点41，节点42，节点43，节点44，节点45，节点\n46，节点47，节点48，节点49，节点50，节点51，节点52，节点53，节点54，节点55，节点56，节点57，节点58，节点59，节点\n60，节点61，节点62，节点63，节点65，节点66，节点67，节点68，节点69，节点70，节点71，节点72，节点73，节点74，节点\n75，节点76，节点77，节点78，节点79，节点80，节点81，节点82，节点83，节点84，节点85，节点86，节点87，节点88，节点\n89，节点90，节点91，节点92，节点93，节点94，节点95，节点96。\n\n- 类别2：节点0，节点5，节点6，节点7，节点8，节点64，节点97，节点98，节点99。\n\n总结，大多数节点（93%）被分类为类别0，而较小的部分（7%）被分类为类别2。这可能反映了在训练集中类别0的样本数量更多\n，模型在识别类别0的能力上表现得更好。同时，模型对于类别2的识别也有一定的能力。'
+                deployingStatus: 'pending'
               }
             }
-          }
-          const serviceData = {
-            ...values,
-            type: 1,
-            status: 1,
-            netWork: 'bridge',
-            port: '0.0.0.0:1021/TCP → 0.0.0.0:10021',
-            volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/metaApp',
-            source: {
-              popoverTitle: '可信云技术服务溯源',
-              companyName: '复旦大学课题组',
-              companyAddress: '暂无内容',
-              companyContact: '暂无内容',
-              companyIntroduce: '课题五',
-              msIntroduce: values.process || 'publisher构建的元应用',
-              companyScore: 5,
-              msScore: 5
-            },
-            apiList: [
-              {
-                name,
-                inputName,
-                outputName,
-                outputVisualization,
-                submitButtonText,
-                isFake: true,
-                url,
-                method,
-                parameterType: this.inputType,
-                responseType: this.outputType,
-                response
+            if (name.includes('课题一')) {
+              url = '/api/pj1_report_app'
+              method = 'post'
+              response = {
+                code: 200,
+                message: '获取成功!',
+                data: {
+                  result: '基于图神经网络的跨境贸易支付监测模型的推理结果已经产生。模型在数据集上的表现如下：\n\n在100个节点中，有93个节点被判定为类别0，7个节点被判定为类别2。具体结果如下：\n\n- 类别0：节点1，节点2，节点3，节点4，节点9，节点10，节点11，节点12，节点13，节点14，节点15，节点16，节点17，节点\n18，节点19，节点20，节点21，节点22，节点23，节点24，节点25，节点26，节点27，节点28，节点29，节点30，节点31，节点\n32，节点33，节点34，节点35，节点36，节点37，节点38，节点39，节点40，节点41，节点42，节点43，节点44，节点45，节点\n46，节点47，节点48，节点49，节点50，节点51，节点52，节点53，节点54，节点55，节点56，节点57，节点58，节点59，节点\n60，节点61，节点62，节点63，节点65，节点66，节点67，节点68，节点69，节点70，节点71，节点72，节点73，节点74，节点\n75，节点76，节点77，节点78，节点79，节点80，节点81，节点82，节点83，节点84，节点85，节点86，节点87，节点88，节点\n89，节点90，节点91，节点92，节点93，节点94，节点95，节点96。\n\n- 类别2：节点0，节点5，节点6，节点7，节点8，节点64，节点97，节点98，节点99。\n\n总结，大多数节点（93%）被分类为类别0，而较小的部分（7%）被分类为类别2。这可能反映了在训练集中类别0的样本数量更多\n，模型在识别类别0的能力上表现得更好。同时，模型对于类别2的识别也有一定的能力。'
+                }
               }
-            ],
-            number: '0'
+            }
+            const serviceData = {
+              ...values,
+              domain: this.verticalType,
+              type: 'meta',
+              status: 'deploying',
+              netWork: 'ioeb_app-network',
+              port: '0.0.0.0:1021/TCP → 0.0.0.0:10021',
+              volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/metaApp',
+              source: {
+                popoverTitle: '可信云技术服务溯源',
+                companyName: '复旦大学课题组',
+                companyAddress: '上海市杨浦区邯郸路220号',
+                companyContact: '021-65642222',
+                companyIntroduce: '课题五',
+                msIntroduce: !(values.environment || values.process) ? 'publisher构建的元应用' : `条件：${values.environment || ''}   处理：${values.process || ''}`,
+                companyScore: 5,
+                msScore: 5
+              },
+              apiList: [
+                {
+                  name,
+                  inputName,
+                  outputName,
+                  outputVisualization,
+                  submitButtonText,
+                  isFake: true,
+                  url,
+                  method,
+                  parameterType: this.inputType,
+                  responseType: this.outputType,
+                  response
+                }
+              ],
+              number: 0
+            }
+            try {
+              const response = await createService(serviceData)
+              if (response && response.status === 'success') {
+                this.$message.success('预发布成功！部署完成后可进行业务验证')
+                this.visible = false
+                this.$emit('close')
+              } else {
+                this.$message.error(response?.message || '预发布失败')
+              }
+            } catch (error) {
+              console.error('预发布失败:', error)
+              this.$message.error('预发布异常，请稍后重试！')
+            } finally {
+              this.uploadServiceLoading = false
+            }
+          } else {
+              console.log('errors', errors)
+            }
           }
-          sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
-          this.visible = false
-          this.$message.success('预发布成功！可进行评测与验证')
-          this.$emit('close')
-          window.location.href = `#/evaluation/${this.serviceType}/emulation`
-        } else {
-          console.log('errors', errors)
-        }
-      })
+        )
     },
     handleCancel() {
       this.visible = false

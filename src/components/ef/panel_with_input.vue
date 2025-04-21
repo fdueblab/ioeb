@@ -9,7 +9,7 @@
           <!--                     :disabled="!this.activeElement.type"></el-button>-->
           <el-divider direction="vertical"></el-divider>
           <el-button type="text" icon="el-icon-download" size="large" @click="downloadData"></el-button>
-          <el-button plain round @click="addMetaApp" icon="el-icon-s-grid" type="success" size="large">构建为元应用</el-button>
+          <el-button plain round @click="buildMetaApp" icon="el-icon-s-grid" type="success" size="large">构建为元应用</el-button>
           <div style="float: right;margin-right: 5px">
             <el-button plain round icon="el-icon-document" @click="dataInfo" size="mini">流程数据</el-button>
             <el-button plain round @click="dataReloadClear" icon="el-icon-refresh" size="mini">清空工作流</el-button>
@@ -65,7 +65,7 @@
     <meta-app-builder
       v-if="metaAppBuilderVisible"
       ref="metaAppBuilder"
-      :service-type="serviceType"
+      :vertical-type="verticalType"
       :input-type="data.inputType"
       :output-type="data.outputType"
       :pre-name="data.preName"
@@ -88,7 +88,6 @@ import FlowNodeForm from '@/components/ef/node_form_bottom'
 import ServicesAdder from '@/components/ef/services_adder'
 import MetaAppBuilder from '@/components/ef/meta_app_builder'
 import lodash from 'lodash'
-import { getDataA } from './data_A'
 import { getDataNew } from './data_new'
 
 export default {
@@ -109,9 +108,9 @@ export default {
       type: Boolean,
       default: false
     },
-    serviceType: {
+    verticalType: {
       type: String,
-      default: 'aml'
+      required: true
     }
   },
   data() {
@@ -521,9 +520,6 @@ export default {
     updateInitialFlow(newFlow) {
       this.dataReload(newFlow)
     },
-    dataReloadA() {
-      this.dataReload(getDataA())
-    },
     dataReloadClear() {
       this.dataReload(getDataNew())
     },
@@ -599,7 +595,7 @@ export default {
         this.$refs.servicesAdder.init()
       })
     },
-    addMetaApp() {
+    buildMetaApp() {
       if (this.data.nodeList.length > 0) {
         this.$message.info('正在构建元应用...')
         setTimeout(() => {
@@ -612,7 +608,6 @@ export default {
       } else {
         this.$message.error('请先创建元应用流程！')
       }
-
     },
     addExternalNode(node) {
       const nodeId = this.getUUID()

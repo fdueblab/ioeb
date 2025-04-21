@@ -37,9 +37,6 @@
 
     <!-- 编辑模态框 -->
     <service-edit-modal
-      :visible="visible"
-      :confirm-loading="confirmLoading"
-      :record="mdl"
       :status-dict="statusDict"
       :norm-dict="normDict"
       :type-arr="typeArr"
@@ -48,16 +45,14 @@
       :scenario-arr="scenarioArr"
       :attribute-arr="attributeArr"
       @ok="handleOk"
-      @cancel="handleCancel"
+      ref="serviceEditModal"
     />
   </page-header-wrapper>
 </template>
 
 <script>
-import { getMetaAppData, getServiceData } from '@/mock/data/services_data'
 import { filterServices, getServicesByVerticalType } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
-
 // 导入拆分出的组件
 import SearchForm from './components/SearchForm'
 import FilterCard from './components/FilterCard'
@@ -83,28 +78,6 @@ export default {
     return {
       // 开发模式标志
       isDev: this.$route.query.isDev === 'true',
-      visible: false,
-      confirmLoading: false,
-      mdl: {
-        name: '',
-        type: undefined,
-        technology: undefined,
-        status: undefined,
-        industry: undefined,
-        scenario: undefined,
-        attribute: [],
-        number: 0,
-        norm: [],
-        source: {
-          companyName: '',
-          companyAddress: '',
-          companyContact: '',
-          companyIntroduce: '',
-          msIntroduce: '',
-          companyScore: 0,
-          msScore: 0
-        }
-      },
       agentSearchData: [],
       statusDict: [],
       statusStyleDict: [],
@@ -338,48 +311,26 @@ export default {
           // 标准化数据
           this.dataSource = this.standardizeServiceData(response.services)
         } else {
-          console.log('API获取失败，回退到静态数据')
-          // 如果API调用失败，回退到静态数据
-          const [serviceData, metaData] = await Promise.all([
-            getServiceData(this.verticalType),
-            getMetaAppData(this.verticalType)
-          ])
-          // 标准化数据
-          this.dataSource = this.standardizeServiceData([...serviceData, ...metaData])
+          console.log('API获取失败')
+          this.dataSource = []
         }
-
         this.filteredDataSource = this.dataSource
       } catch (error) {
         console.error('初始化数据失败:', error)
-
-        // 出错时回退到静态数据
-        try {
-          const [serviceData, metaData] = await Promise.all([
-            getServiceData(this.verticalType),
-            getMetaAppData(this.verticalType)
-          ])
-          // 标准化数据
-          this.dataSource = this.standardizeServiceData([...serviceData, ...metaData])
-          this.filteredDataSource = this.dataSource
-        } catch (innerError) {
-          console.error('静态数据加载也失败:', innerError)
-          this.$message.error('加载数据失败，请刷新页面重试')
-          this.dataSource = []
-          this.filteredDataSource = []
-        }
+        this.dataSource = []
+        this.filteredDataSource = []
       } finally {
         this.dataLoading = false
       }
     },
     // 处理编辑
     handleEdit(record) {
-      this.visible = true // 显示模态框
-      this.mdl = { ...record } // 将选中的记录数据复制到模型中
+      this.$nextTick(() => {
+        this.$refs.serviceEditModal.init(record)
+      })
     },
     // 处理编辑确认
     handleOk(updatedRecord) {
-      this.confirmLoading = true
-
       // 模拟更新数据
       setTimeout(() => {
         const index = this.filteredDataSource.findIndex(item => item.id === updatedRecord.id)
@@ -387,34 +338,10 @@ export default {
           this.filteredDataSource.splice(index, 1, updatedRecord)
           this.filteredDataSource = [...this.filteredDataSource] // 触发视图更新
         }
-        this.visible = false
-        this.confirmLoading = false
+        this.$refs.serviceEditModal.visible = false
+        this.$refs.serviceEditModal.confirmLoading = false
         this.$message.success('编辑成功')
       }, 500)
-    },
-    // 处理编辑取消
-    handleCancel() {
-      this.visible = false
-      this.mdl = {
-        name: '',
-        type: undefined,
-        technology: undefined,
-        status: undefined,
-        industry: undefined,
-        scenario: undefined,
-        attribute: [],
-        number: 0,
-        norm: [],
-        source: {
-          companyName: '',
-          companyAddress: '',
-          companyContact: '',
-          companyIntroduce: '',
-          msIntroduce: '',
-          companyScore: 0,
-          msScore: 0
-        }
-      }
     },
     // 使用服务
     handleUse(record) {
@@ -433,7 +360,3 @@ export default {
   }
 }
 </script>
-
-<style lang="less" scoped>
-/* 页面样式在各组件中定义 */
-</style>

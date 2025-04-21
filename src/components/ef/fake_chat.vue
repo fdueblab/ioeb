@@ -45,9 +45,9 @@ import { getChatData } from '@/mock/data/chat_data'
 export default {
   name: 'FakeChat',
   props: {
-    serviceType: {
+    verticalType: {
       type: String,
-      default: 'aml'
+      required: true
     }
   },
   mounted() {
@@ -126,9 +126,9 @@ export default {
       this.scrollToBottom()
       const input = this.userInput
       this.userInput = ''
-      getChatData(this.serviceType, input).then((res) => {
+      getChatData(this.verticalType, input).then((res) => {
         const { chosenServices, serviceNodes, flowData } = res
-        const outputMessage = `按照您的需求，我选择了<code>${chosenServices.join('</code>, <code>')}</code>中的相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
+        const outputMessage = `按照您的需求，我选择了<b>${chosenServices.join('</b>, <b>')}</b>中的相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
         this.typeWriter(outputMessage)
         this.$emit('update-services', serviceNodes)
         this.$emit('update-flow', flowData)
@@ -282,14 +282,5 @@ export default {
   border: none;
   border-radius: 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* 添加样式以支持 <code> 标签的显示 */
-.message-content code {
-  background-color: #f4f4f4;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-family: monospace;
-  color: #d63384;
 }
 </style>
