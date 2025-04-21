@@ -1,5 +1,5 @@
 import { UserLayout, BasicLayout, BlankLayout, PageView } from '@/layouts'
-import { bxAnaalyse } from '@/core/icons'
+// import { bxAnaalyse } from '@/core/icons'
 import { loadDict } from '@/utils/dictionaryCache'
 
 const RouteView = {
