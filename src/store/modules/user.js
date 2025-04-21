@@ -58,7 +58,7 @@ const user = {
         // 请求后端获取用户信息 /api/user/info
         getInfo(username).then(response => {
           const { result } = response
-          if (result.role && result.role.permissionList.length > 0) {
+          if (result.role && result.role.permissionList && result.role.permissionList.length > 0) {
             const role = { ...result.role }
             role.permissions = result.role.permissions.map(permission => {
               const per = {
@@ -67,9 +67,9 @@ const user = {
                }
               return per
             })
-            // role.permissionList = role.permissions.map(permission => { return permission.permissionId })
-            // 适配新的userInfo格式
-            role.permissionList = role.permissions.map(permission => { return permission.roleId })
+            // 使用后端直接提供的 permissionList，不再重新生成
+            // role.permissionList = role.permissions.map(permission => { return permission.roleId })
+
             // 覆盖响应体的 role, 供下游使用
             result.role = role
 
