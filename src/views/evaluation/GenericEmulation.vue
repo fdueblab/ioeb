@@ -47,8 +47,20 @@
             <a-row :gutter="20">
               <a-col :span="8">
                 <a-form-item label="验证指标">
-                  <a-select v-model="selectedMetric">
-                    <a-select-option value="all">全部</a-select-option>
+                  <a-select
+                    ref="metricsSelect"
+                    v-model="selectedMetric"
+                    mode="multiple"
+                    placeholder="请选择验证指标"
+                    style="width: 100%"
+                    :dropdownStyle="{ padding: 0 }"
+                  >
+                    <div slot="dropdownRender" slot-scope="menu">
+                      <div style="padding: 8px; cursor: pointer; text-align: center; border-bottom: 1px solid #e8e8e8;">
+                        <a @click="selectAllMetrics">全选</a>
+                      </div>
+                      <v-nodes :vnodes="menu" />
+                    </div>
                     <a-select-option v-for="(item, index) in metricOptions" :key="index" :value="item.code">
                       {{ item.text }}
                     </a-select-option>
@@ -117,8 +129,9 @@ import { ArticleListContent, StandardFormRow, TagSelect } from '@/components'
 import { getMetaAppData } from '@/mock/data/services_data'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
 import { streamAgent } from '@/utils/request'
-import { filterServices } from '@/api/service'
+import { filterServices, updateService } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
+import store from '@/store'
 
 // 领域数据集配置
 const domainDatasetsMap = {
@@ -131,13 +144,20 @@ const domainDatasetsMap = {
   aircraft: ['飞行数据', '维护记录']
 }
 
+// 在export default前添加辅助组件
+const VNodes = {
+  functional: true,
+  render: (h, ctx) => ctx.props.vnodes
+}
+
 export default {
   name: 'GenericEmulation',
   components: {
     TagSelect,
     StandardFormRow,
     ArticleListContent,
-    AgentExecutionPanel
+    AgentExecutionPanel,
+    VNodes
   },
   props: {
     verticalType: {
@@ -162,7 +182,7 @@ export default {
       dataSetType: '0',
       dataSetFiles: [],
       metricOptions: [],
-      selectedMetric: 'all',
+      selectedMetric: [],
       columns: [
         {
           title: '#',
@@ -187,6 +207,53 @@ export default {
       selectedRows: [],
       response: '',
       isRefreshing: false,
+      // 模拟响应数据
+      mockResponse: {
+        code: 200,
+        message: '验证通过！',
+        data: {
+          'recall': {
+            'value': 0.96,
+            'description': '查全率',
+            'score': {
+              'value': 5,
+              'description': '最终评级'
+            }
+          },
+          'precision': {
+            'value': 0.91,
+            'description': '查准率',
+            'score': {
+              'value': 4,
+              'description': '最终评级'
+            }
+          },
+          'computation_efficiency': {
+            'value': 0.87,
+            'description': '计算效率',
+            'score': {
+              'value': 4,
+              'description': '最终评级'
+            }
+          },
+          'latency': {
+            'value': 235,
+            'description': '响应延迟(ms)',
+            'score': {
+              'value': 3,
+              'description': '最终评级'
+            }
+          },
+          'throughput': {
+            'value': 56.3,
+            'description': '吞吐量(请求/秒)',
+            'score': {
+              'value': 4,
+              'description': '最终评级'
+            }
+          }
+        }
+      },
       // Agent面板相关字段
       showAgentPanel: false,
       agentIsRunning: false,
@@ -216,7 +283,8 @@ export default {
     rowSelection () {
       return {
         selectedRowKeys: this.selectedRowKeys,
-        onChange: this.onSelectChange
+        onChange: this.onSelectChange,
+        type: 'radio'
       }
     }
   },
@@ -252,13 +320,10 @@ export default {
         this.statusDict = allStatus.filter(item => runningStatusCode.includes(item.code))
       } catch (error) {
         console.error('加载评测指标字典失败:', error)
-        this.normOptions = [
-          { code: 'privacy', text: '隐私性' },
-          { code: 'safety-fingerprint', text: '安全性指纹' },
-          { code: 'safety-watermark', text: '安全性水印' },
-          { code: 'fairness', text: '公平性' },
-          { code: 'robustness', text: '鲁棒性' },
-          { code: 'explainability', text: '可解释性' }
+        this.metricOptions = [
+          { code: 'recall', text: '查全率' },
+          { code: 'precision', text: '查准率' },
+          { code: 'computation_efficiency', text: '计算效率' }
         ]
         this.statusDict = []
         this.statusStyleDict = []
@@ -365,6 +430,10 @@ export default {
         this.$message.warning('请选择应用！')
         return
       }
+      if (this.selectedMetric.length === 0) {
+        this.$message.warning('请选择验证指标！')
+        return
+      }
 
       this.testLoading = true
 
@@ -405,7 +474,7 @@ export default {
       // 根据选择的指标值进行处理，默认包含所有指标
       let metricsToEvaluate = this.metricOptions.map(item => item.code)
       // 如果选择了特定指标
-      if (this.selectedMetric !== 'all') {
+      if (this.selectedMetric.length > 0) {
         metricsToEvaluate = [this.selectedMetric]
       }
 
@@ -458,34 +527,6 @@ export default {
               this.response = results.validation_result
             }
             this.$message.success(`${metaAppName} 验证完成！`)
-
-            // 更新元应用状态 - 与原有逻辑保持一致
-            const metaAppInfo = sessionStorage.getItem('metaAppInfo')
-            if (metaAppInfo) {
-              const serviceData = {
-                ...JSON.parse(sessionStorage.getItem('metaAppInfo')),
-                status: 4,
-                norm: [
-                  {
-                    key: 0,
-                    score: 5
-                  },
-                  {
-                    key: 1,
-                    score: 5
-                  },
-                  {
-                    key: 2,
-                    score: 5
-                  },
-                  {
-                    key: 3,
-                    score: 5
-                  }
-                ]
-              }
-              sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
-            }
           } else {
             // 若没有validation_result字段，展示整个结果对象
             this.response = JSON.stringify(results, null, 4)
@@ -494,10 +535,30 @@ export default {
 
           this.testLoading = false
           this.agentIsRunning = false
+          this.tested = true
+          // todo: 根据response结构和结果更新对应评分
+          // 根据选择的指标过滤结果
+          const filteredData = {}
+          if (this.selectedMetric.length > 0) {
+            this.selectedMetric.forEach(metric => {
+              if (this.mockResponse.data[metric]) {
+                filteredData[metric] = this.mockResponse.data[metric]
+              }
+            })
+            // 更新服务的norm字段
+            if (this.selectedRows.length > 0) {
+              const normToUpdate = []
+              for (const key in filteredData) {
+                normToUpdate.push({
+                  key,
+                  score: filteredData[key].score.value
+                })
+              }
+              this.updateServiceNorm(this.selectedRows[0], normToUpdate)
+            }
+          }
         },
         onComplete: () => {
-          // todo: 修改norm
-
           this.testLoading = false
           this.agentIsRunning = false
           this.tested = true
@@ -510,60 +571,95 @@ export default {
         }
       })
     },
-
+    // 添加新方法用于更新服务的norm字段
+    async updateServiceNorm(currentServiceData, normList) {
+      const isPlatForm = store.getters.roles?.permissionList?.includes('admin') || false
+      try {
+        // 获取当前服务数据
+        const currentService = { ...currentServiceData }
+        // 如果norm字段不存在，创建新数组
+        if (!currentService.norm) {
+          currentService.norm = []
+        }
+        // 更新每个norm
+        normList.forEach(normItem => {
+          // 准备norm数据
+          const normData = {
+            key: normItem.key,
+            score: normItem.score,
+            platformChecked: isPlatForm ? 1 : 0
+          }
+          // 检查是否已存在相同key的norm
+          let normExists = false
+          for (let i = 0; i < currentService.norm.length; i++) {
+            if (currentService.norm[i].key === normItem.key) {
+              // 更新已存在的norm
+              currentService.norm[i] = normData
+              normExists = true
+              break
+            }
+          }
+          // 如果不存在，添加新的norm
+          if (!normExists) {
+            currentService.norm.push(normData)
+          }
+        })
+        // 修改状态 todo: 应该在后端实现一个专门负责修改norm的接口，并实现状态的修改
+        currentService.status = isPlatForm ? 'release' : 'pre_release_pending'
+        // 调用API更新服务
+        await updateService(currentService.id, currentService)
+      } catch (error) {
+        console.error('更新服务验证指标失败:', error)
+      }
+    },
     // 添加模拟验证方法
     runMockValidation(metaAppName) {
       // 模拟异步请求
       setTimeout(() => {
+        // 根据选择的指标过滤结果
+        const filteredData = {}
+        if (this.selectedMetric.length > 0) {
+          this.selectedMetric.forEach(metric => {
+            if (this.mockResponse.data[metric]) {
+              filteredData[metric] = this.mockResponse.data[metric]
+            }
+          })
+        } else {
+          // 如果未选择任何指标，不进行过滤
+          return
+        }
+
+        // 更新服务的norm字段
+        if (this.selectedRows.length > 0) {
+          const normToUpdate = []
+          for (const key in filteredData) {
+            normToUpdate.push({
+              key,
+              score: filteredData[key].score.value
+            })
+          }
+          this.updateServiceNorm(this.selectedRows[0], normToUpdate)
+        }
+        // 构造响应对象并展示
         const obj = {
           code: 200,
           message: '验证通过！',
-          data: {
-            // 模拟数据
-            'recall': {
-              value: 1.00,
-              description: '查全率'
-            },
-            'precision': {
-              value: 0.97,
-              description: '查准率'
-            },
-            'computation_efficiency': {
-              value: 0.95,
-              description: '计算效率'
-            }
-          }
+          data: filteredData
         }
-        // 根据选择的指标过滤结果
-        if (this.selectedMetric !== 'all') {
-          const filteredData = {}
-          filteredData[this.selectedMetric] = obj.data[this.selectedMetric]
-          obj.data = filteredData
-        }
-
-        // todo: 修改norm
-
-        // 更新元应用状态 - 与原有逻辑保持一致
-        const metaAppInfo = sessionStorage.getItem('metaAppInfo')
-        if (metaAppInfo) {
-          const serviceData = {
-            ...JSON.parse(sessionStorage.getItem('metaAppInfo')),
-            status: 4,
-            norm: [
-              { key: 0, score: 5 },
-              { key: 1, score: 5 },
-              { key: 2, score: 5 },
-              { key: 3, score: 5 }
-            ]
-          }
-          sessionStorage.setItem('metaAppInfo', JSON.stringify(serviceData))
-        }
-
         this.response = JSON.stringify(obj, null, 4)
         this.testLoading = false
         this.tested = true
         this.$message.success(`${metaAppName} 验证完成！`)
       }, 1000)
+    },
+    selectAllMetrics() {
+      // 全选所有指标
+      this.selectedMetric = this.metricOptions.map(item => item.code)
+      // 关闭下拉框
+      setTimeout(() => {
+        // 让下拉框失去焦点，从而关闭
+        document.body.click()
+      }, 100)
     }
   }
 }

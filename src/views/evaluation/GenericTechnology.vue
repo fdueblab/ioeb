@@ -47,8 +47,20 @@
             <a-row :gutter="20">
               <a-col :span="8">
                 <a-form-item label="评测指标">
-                  <a-select v-model="selectedMetric">
-                    <a-select-option value="all">全部</a-select-option>
+                  <a-select
+                    ref="metricsSelect"
+                    v-model="selectedMetric"
+                    mode="multiple"
+                    placeholder="请选择评测指标"
+                    style="width: 100%"
+                    :dropdownStyle="{ padding: 0 }"
+                  >
+                    <div slot="dropdownRender" slot-scope="menu">
+                      <div style="padding: 8px; cursor: pointer; text-align: center; border-bottom: 1px solid #e8e8e8;">
+                        <a @click="selectAllMetrics">全选</a>
+                      </div>
+                      <v-nodes :vnodes="menu" />
+                    </div>
                     <a-select-option v-for="(item, index) in normOptions" :key="index" :value="item.code">
                       {{ item.text }}
                     </a-select-option>
@@ -117,8 +129,9 @@ import { ArticleListContent, StandardFormRow, TagSelect } from '@/components'
 import { getServiceData } from '@/mock/data/services_data'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
 import { streamAgent } from '@/utils/request'
-import { filterServices } from '@/api/service'
+import { filterServices, updateService } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
+import store from '@/store'
 
 // 领域数据集配置
 const domainDatasetsMap = {
@@ -131,13 +144,20 @@ const domainDatasetsMap = {
   aircraft: ['飞行数据', '航线规划', '维护记录']
 }
 
+// 在export default前添加辅助组件
+const VNodes = {
+  functional: true,
+  render: (h, ctx) => ctx.props.vnodes
+}
+
 export default {
   name: 'GenericTechnology',
   components: {
     TagSelect,
     StandardFormRow,
     ArticleListContent,
-    AgentExecutionPanel
+    AgentExecutionPanel,
+    VNodes
   },
   props: {
     verticalType: {
@@ -177,7 +197,7 @@ export default {
           scopedSlots: { customRender: 'status' }
         }
       ],
-      selectedMetric: 'all',
+      selectedMetric: [],
       normOptions: [],
       dataSetType: '0',
       dataSetFiles: [],
@@ -187,6 +207,217 @@ export default {
       selectedRowKeys: [],
       selectedRows: [],
       response: '',
+      mockResponse: {
+        code: 200,
+        message: '测试通过！',
+        data: {
+          'privacy': {
+            'Precision (Model 1)': {
+              'value': 0.4952,
+              'description': '模型1的精度'
+            },
+            'Recall (Model 1)': {
+              'value': 0.41,
+              'description': '模型1的召回率'
+            },
+            'Precision (Model 2)': {
+              'value': 0.3475,
+              'description': '模型2的精度'
+            },
+            'Recall (Model 2)': {
+              'value': 0.4872,
+              'description': '模型2的召回率'
+            },
+            'Kappa ': {
+              'value': 0.4527,
+              'description': 'Kappa值'
+            },
+            'Consistency Ratio': {
+              'value': 0.7945,
+              'description': '一致性比例'
+            },
+            'score': {
+              'value': 4,
+              'description': '最终评级'
+            }
+          },
+          'safety-fingerprint': {
+            'Results under cln mode': 0,
+            'sensi_point_ratio_origin_gt50.0(cln)': {
+              'value': 0.0,
+              'description': '指纹点敏感度大于50.0%的占比（cln模式）'
+            },
+            'sensi_point_ratio_origin_gt60.0(cln)': {
+              'value': 0.0,
+              'description': '指纹点敏感度大于50.0%的占比（cln模式）'
+            },
+            'num_positive_model(cln)': {
+              'value': 4,
+              'description': '总篡改模型个数（cln模式）'
+            },
+            'detection_success_rate_origin(cln)': {
+              'value': 25.0,
+              'description': '模型篡改检测成功率（cln模式）'
+            },
+            'fingerprint_score(cln)': {
+              'value': 0.25,
+              'description': '最终指纹得分（cln模式）'
+            },
+            'Results under atk mode': 0,
+            'sensi_point_ratio_origin_gt50.0(atk)': {
+              'value': 0.0,
+              'description': '指纹点敏感度大于50.0%的占比（atk模式）'
+            },
+            'sensi_point_ratio_origin_gt60.0(atk)': {
+              'value': 0.0,
+              'description': '指纹点敏感度大于50.0%的占比（atk模式）'
+            },
+            'num_positive_model(atk)': {
+              'value': 4,
+              'description': '总篡改模型个数（atk模式）'
+            },
+            'detection_success_rate_origin(atk)': {
+              'value': 25.0,
+              'description': '模型篡改检测成功率（atk模式）'
+            },
+            'fingerprint_score(atk)': {
+              'value': 0.25,
+              'description': '最终指纹得分（atk模式）'
+            },
+            'score': {
+              'value': 4,
+              'description': '最终评级'
+            }
+          },
+          'safety-watermark': {
+            'verification_ratio': {
+              'value': 0.1667,
+              'description': '生成异常样本的比例'
+            },
+            'acc': {
+              'value': 1.0,
+              'description': '对正常样本的识别准确性'
+            },
+            'positive_val': {
+              'value': [0.1667, 0.2667],
+              'description': '阳性模型对含有特殊触发器样本的验证准确性'
+            },
+            'negative_val': {
+              'value': [0.2, 0.0, 0.5, 0.0333, 0.0333, 0.8333, 0.1, 0.0, 0.2, 0.9667],
+              'description': '阴性模型对含有特殊触发器样本的验证准确性'
+            },
+            'score': {
+              'value': 5,
+              'description': '最终评级'
+            }
+          },
+          'fairness': {
+            'attribute': 'total_incoming_amount',
+            'fairness_score': 10.6201,
+            'description': '关于属性total_incoming_amount的公平性评估，数值越大代表越公平',
+            'score': {
+              'value': 5,
+              'description': '最终评级'
+            }
+          },
+          'robustness': {
+            'Surrogate model predict number before attack': {
+              'value': {
+                'on class 0': 422,
+                'on class 1': 1,
+                'on class 2': 31
+              },
+              'description':
+                'The result is the number of nodes for each class predicted by the surrogate model on the graph before the attack.'
+            },
+            'Surrogate model predict accuracy before attack': {
+              'value': {
+                'on class 0': 1.0,
+                'on class 1': 1.0,
+                'on class 2': 1.0
+              },
+              'description':
+                "The result is the accuracy before the attack, with the surrogate model's own predictions used as the ground truth, and thus it is 100%."
+            },
+            'Surrogate model predict number after attack': {
+              'value': {
+                'on class 0': 422,
+                'on class 1': 0,
+                'on class 2': 12
+              },
+              'description':
+                'The result is the number of nodes for each class predicted by the surrogate model on the graph after the attack.'
+            },
+            'Surrogate model predict accuracy after attack': {
+              'value': {
+                'on class 0': 1.0,
+                'on class 1': 0.0,
+                'on class 2': 0.3870967741935484
+              },
+              'description':
+                'The result is the prediction accuracy of the surrogate model after the attack, with its own predictions used as the ground truth (i.e., the accuracy before the attack is 100%).'
+            },
+            'White box robustness score': {
+              'value': 0.375,
+              'description': 'The result is the robustness score under the white-box attack scenario.'
+            },
+            'Black box robustness score': {
+              'value': 0.2,
+              'description': 'The result is the robustness score under the white-box attack scenario.'
+            },
+            'score': {
+              'value': 4,
+              'description': '最终评级'
+            }
+          },
+          'explainability': {
+            'subgraphs2': {
+              'value': './graph_dataset/delete_edges_outside_subgraph',
+              'description': 'Path to subgraph 2'
+            },
+            'subgraphs1': {
+              'value': './graph_dataset/original',
+              'description': 'Path to subgraph 1'
+            },
+            'jaccard_coefficient': {
+              'value': 0.3333,
+              'description': 'Jaccard Coefficient between subgraph 1 and subgraph 4'
+            },
+            'num_nodes_combined': {
+              'value': 4,
+              'description': 'Number of nodes in the combined subgraphs'
+            },
+            'num_edges_subgraph1': {
+              'value': 7,
+              'description': 'Number of edges in subgraph 1'
+            },
+            'num_edges_subgraph2': {
+              'value': 7,
+              'description': 'Number of edges in subgraph 2'
+            },
+            'subgraphs3': {
+              'value': './graph_dataset/delete_edges_within_subgraph',
+              'description': 'Path to subgraph 3'
+            },
+            'num_edges_subgraph3': {
+              'value': 6,
+              'description': 'Number of edges in subgraph 3'
+            },
+            'subgraphs4': {
+              'value': './graph_dataset/rerun',
+              'description': 'Path to subgraph 4'
+            },
+            'num_edges_subgraph4': {
+              'value': 6,
+              'description': 'Number of edges in subgraph 4'
+            },
+            'score': {
+              'value': 3,
+              'description': '最终评级'
+            }
+          }
+        }
+      },
       // Agent面板相关字段
       showAgentPanel: false,
       agentIsRunning: false,
@@ -216,7 +447,8 @@ export default {
     rowSelection () {
       return {
         selectedRowKeys: this.selectedRowKeys,
-        onChange: this.onSelectChange
+        onChange: this.onSelectChange,
+        type: 'radio'
       }
     }
   },
@@ -353,6 +585,10 @@ export default {
         this.$message.warning('请选择测评服务！')
         return
       }
+      if (this.selectedMetric.length === 0) {
+        this.$message.warning('请选择评测指标！')
+        return
+      }
       this.testLoading = true
       // 获取选中的服务名称
       const serviceName = this.selectedRows[0].name
@@ -386,8 +622,8 @@ export default {
       // 根据选择的指标值进行处理，默认包含所有指标
       let metricsToSend = this.normOptions.map(item => item.code).join(',')
       // 如果选择了特定指标
-      if (this.selectedMetric !== 'all') {
-        metricsToSend = this.selectedMetric
+      if (this.selectedMetric.length > 0) {
+        metricsToSend = this.selectedMetric.join(',')
       }
       formData.append('metrics', metricsToSend)
 
@@ -462,13 +698,35 @@ export default {
 
           this.testLoading = false
           this.agentIsRunning = false
+          this.tested = true
+          // todo: 根据response结构和结果更新对应评分
+          // 根据选择的指标过滤结果
+          const filteredData = {}
+          if (this.selectedMetric.length > 0) {
+            this.selectedMetric.forEach(metric => {
+              if (this.mockResponse.data[metric]) {
+                filteredData[metric] = this.mockResponse.data[metric]
+              }
+            })
+          } else {
+            // 如果未选择任何指标，不进行过滤
+            return
+          }
+          // 更新服务的norm字段
+          if (this.selectedRows.length > 0) {
+            const normToUpdate = []
+            for (const key in filteredData) {
+              normToUpdate.push({
+                key,
+                score: filteredData[key].score.value
+              })
+            }
+            this.updateServiceNorm(this.selectedRows[0], normToUpdate)
+          }
         },
         onComplete: () => {
-          // todo: 修改norm
-
           this.testLoading = false
           this.agentIsRunning = false
-          this.tested = true
         },
         onDataProcessError: (e) => {
           console.error('解析数据失败:', e)
@@ -481,218 +739,85 @@ export default {
     // 添加模拟评测方法
     runMockEvaluation(serviceName) {
       setTimeout(() => {
-        const obj = {
-          code: 200,
-          message: '测试通过！',
-          data: {
-            'privacy': {
-              'Precision (Model 1)': {
-                'value': 0.4952,
-                'description': '模型1的精度'
-              },
-              'Recall (Model 1)': {
-                'value': 0.41,
-                'description': '模型1的召回率'
-              },
-              'Precision (Model 2)': {
-                'value': 0.3475,
-                'description': '模型2的精度'
-              },
-              'Recall (Model 2)': {
-                'value': 0.4872,
-                'description': '模型2的召回率'
-              },
-              'Kappa ': {
-                'value': 0.4527,
-                'description': 'Kappa值'
-              },
-              'Consistency Ratio': {
-                'value': 0.7945,
-                'description': '一致性比例'
-              },
-              'score': {
-                'value': 0.4527,
-                'description': '最终得分'
-              }
-            },
-            'safety-fingerprint': {
-              'Results under cln mode': 0,
-              'sensi_point_ratio_origin_gt50.0(cln)': {
-                'value': 0.0,
-                'description': '指纹点敏感度大于50.0%的占比（cln模式）'
-              },
-              'sensi_point_ratio_origin_gt60.0(cln)': {
-                'value': 0.0,
-                'description': '指纹点敏感度大于50.0%的占比（cln模式）'
-              },
-              'num_positive_model(cln)': {
-                'value': 4,
-                'description': '总篡改模型个数（cln模式）'
-              },
-              'detection_success_rate_origin(cln)': {
-                'value': 25.0,
-                'description': '模型篡改检测成功率（cln模式）'
-              },
-              'fingerprint_score(cln)': {
-                'value': 0.25,
-                'description': '最终指纹得分（cln模式）'
-              },
-              'Results under atk mode': 0,
-              'sensi_point_ratio_origin_gt50.0(atk)': {
-                'value': 0.0,
-                'description': '指纹点敏感度大于50.0%的占比（atk模式）'
-              },
-              'sensi_point_ratio_origin_gt60.0(atk)': {
-                'value': 0.0,
-                'description': '指纹点敏感度大于50.0%的占比（atk模式）'
-              },
-              'num_positive_model(atk)': {
-                'value': 4,
-                'description': '总篡改模型个数（atk模式）'
-              },
-              'detection_success_rate_origin(atk)': {
-                'value': 25.0,
-                'description': '模型篡改检测成功率（atk模式）'
-              },
-              'fingerprint_score(atk)': {
-                'value': 0.25,
-                'description': '最终指纹得分（atk模式）'
-              }
-            },
-            'safety-watermark': {
-              'watermark_score': {
-                'value': 0.6,
-                'description': '最终水印得分'
-              },
-              'verification_ratio': {
-                'value': 0.1667,
-                'description': '生成异常样本的比例'
-              },
-              'acc': {
-                'value': 1.0,
-                'description': '对正常样本的识别准确性'
-              },
-              'positive_val': {
-                'value': [0.1667, 0.2667],
-                'description': '阳性模型对含有特殊触发器样本的验证准确性'
-              },
-              'negative_val': {
-                'value': [0.2, 0.0, 0.5, 0.0333, 0.0333, 0.8333, 0.1, 0.0, 0.2, 0.9667],
-                'description': '阴性模型对含有特殊触发器样本的验证准确性'
-              }
-            },
-            'fairness': {
-              'attribute': 'total_incoming_amount',
-              'fairness_score': 10.6201,
-              'description': '关于属性total_incoming_amount的公平性评估，数值越大代表越公平'
-            },
-            'robustness': {
-              'Surrogate model predict number before attack': {
-                'value': {
-                  'on class 0': 422,
-                  'on class 1': 1,
-                  'on class 2': 31
-                },
-                'description':
-                  'The result is the number of nodes for each class predicted by the surrogate model on the graph before the attack.'
-              },
-              'Surrogate model predict accuracy before attack': {
-                'value': {
-                  'on class 0': 1.0,
-                  'on class 1': 1.0,
-                  'on class 2': 1.0
-                },
-                'description':
-                  "The result is the accuracy before the attack, with the surrogate model's own predictions used as the ground truth, and thus it is 100%."
-              },
-              'Surrogate model predict number after attack': {
-                'value': {
-                  'on class 0': 422,
-                  'on class 1': 0,
-                  'on class 2': 12
-                },
-                'description':
-                  'The result is the number of nodes for each class predicted by the surrogate model on the graph after the attack.'
-              },
-              'Surrogate model predict accuracy after attack': {
-                'value': {
-                  'on class 0': 1.0,
-                  'on class 1': 0.0,
-                  'on class 2': 0.3870967741935484
-                },
-                'description':
-                  'The result is the prediction accuracy of the surrogate model after the attack, with its own predictions used as the ground truth (i.e., the accuracy before the attack is 100%).'
-              },
-              'White box robustness score': {
-                'value': 0.375,
-                'description': 'The result is the robustness score under the white-box attack scenario.',
-                'Black box robustness score': {
-                  'value': 0.2,
-                  'description': 'The result is the robustness score under the white-box attack scenario.'
-                }
-              }
-            },
-            'explainability': {
-              'subgraphs2': {
-                'value': './graph_dataset/delete_edges_outside_subgraph',
-                'description': 'Path to subgraph 2'
-              },
-              'subgraphs1': {
-                'value': './graph_dataset/original',
-                'description': 'Path to subgraph 1'
-              },
-              'jaccard_coefficient': {
-                'value': 0.3333,
-                'description': 'Jaccard Coefficient between subgraph 1 and subgraph 4'
-              },
-              'num_nodes_combined': {
-                'value': 4,
-                'description': 'Number of nodes in the combined subgraphs'
-              },
-              'num_edges_subgraph1': {
-                'value': 7,
-                'description': 'Number of edges in subgraph 1'
-              },
-              'num_edges_subgraph2': {
-                'value': 7,
-                'description': 'Number of edges in subgraph 2'
-              },
-              'score': {
-                'value': 0.3333,
-                'description': 'Final score based on Jaccard coefficient'
-              },
-              'subgraphs3': {
-                'value': './graph_dataset/delete_edges_within_subgraph',
-                'description': 'Path to subgraph 3'
-              },
-              'num_edges_subgraph3': {
-                'value': 6,
-                'description': 'Number of edges in subgraph 3'
-              },
-              'subgraphs4': {
-                'value': './graph_dataset/rerun',
-                'description': 'Path to subgraph 4'
-              },
-              'num_edges_subgraph4': {
-                'value': 6,
-                'description': 'Number of edges in subgraph 4'
-              }
-            }
-          }
-        }
         // 根据选择的指标过滤结果
-        if (this.selectedMetric !== 'all') {
-          const filteredData = {}
-          filteredData[this.selectedMetric] = obj.data[this.selectedMetric]
-          obj.data = filteredData
+        const filteredData = {}
+        if (this.selectedMetric.length > 0) {
+          this.selectedMetric.forEach(metric => {
+            if (this.mockResponse.data[metric]) {
+              filteredData[metric] = this.mockResponse.data[metric]
+            }
+          })
+        } else {
+          // 如果未选择任何指标，不进行过滤
+          return
         }
-        // todo: 修改norm
-
-        this.response = JSON.stringify(obj, null, 4)
+        // 更新服务的norm字段
+        if (this.selectedRows.length > 0) {
+          const normToUpdate = []
+          for (const key in filteredData) {
+            normToUpdate.push({
+              key,
+              score: filteredData[key].score.value
+            })
+          }
+          this.updateServiceNorm(this.selectedRows[0], normToUpdate)
+        }
+        this.response = JSON.stringify(filteredData, null, 4)
         this.testLoading = false
         this.tested = true
         this.$message.success(`${serviceName} 测试完成！`)
       }, 1000)
+    },
+    // 添加新方法用于更新服务的norm字段
+    async updateServiceNorm(currentServiceData, normList) {
+      const isPlatForm = store.getters.roles?.permissionList?.includes('admin') || false
+      try {
+        // 获取当前服务数据
+        const currentService = { ...currentServiceData }
+        // 如果norm字段不存在，创建新数组
+        if (!currentService.norm) {
+          currentService.norm = []
+        }
+        // 更新每个norm
+        normList.forEach(normItem => {
+          // 准备norm数据
+          const normData = {
+            key: normItem.key,
+            score: normItem.score,
+            platformChecked: isPlatForm ? 1 : 0
+          }
+          // 检查是否已存在相同key的norm
+          let normExists = false
+          for (let i = 0; i < currentService.norm.length; i++) {
+            if (currentService.norm[i].key === normItem.key) {
+              // 更新已存在的norm
+              currentService.norm[i] = normData
+              normExists = true
+              break
+            }
+          }
+          // 如果不存在，添加新的norm
+          if (!normExists) {
+            currentService.norm.push(normData)
+          }
+        })
+        // 修改状态 todo: 应该在后端实现一个专门负责修改norm的接口，并实现状态的修改
+        currentService.status = isPlatForm ? 'released' : 'pre_release_pending'
+        // 调用API更新服务
+        await updateService(currentService.id, currentService)
+      } catch (error) {
+        console.error('更新服务评测指标失败:', error)
+      }
+    },
+    // 修改全选方法
+    selectAllMetrics() {
+      // 全选所有指标
+      this.selectedMetric = this.normOptions.map(item => item.code)
+      // 关闭下拉框
+      setTimeout(() => {
+        // 让下拉框失去焦点，从而关闭
+        document.body.click()
+      }, 100)
     }
   }
 }
