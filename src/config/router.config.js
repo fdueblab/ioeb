@@ -283,6 +283,18 @@ export async function generateEvaluationRoutes() {
   }
 }
 
+export async function getFirstTechnologyPath() {
+  try {
+    const domains = await loadDict('domain', [])
+    if (domains && domains.length > 0) {
+      return `/evaluation/${domains[0].code}/technology`
+    }
+  } catch (error) {
+    console.error('获取第一个评测路径失败:', error)
+  }
+  return '/evaluation/aml/technology' // 默认返回aml路径
+}
+
 export async function getFirstEvaluationPath() {
   try {
     const domains = await loadDict('domain', [])
