@@ -283,6 +283,18 @@ export async function generateEvaluationRoutes() {
   }
 }
 
+export async function getFirstTechnologyPath() {
+  try {
+    const domains = await loadDict('domain', [])
+    if (domains && domains.length > 0) {
+      return `/evaluation/${domains[0].code}/technology`
+    }
+  } catch (error) {
+    console.error('获取第一个评测路径失败:', error)
+  }
+  return '/evaluation/aml/technology' // 默认返回aml路径
+}
+
 export async function getFirstEvaluationPath() {
   try {
     const domains = await loadDict('domain', [])
@@ -665,18 +677,6 @@ export const asyncRouterMap = [
           }
         ]
       },
-      // 数据统计（首页）
-      {
-        path: '/home',
-        name: 'home',
-        meta: {
-          title: '数据统计',
-          keepAlive: true,
-          icon: 'bar-chart',
-          permission: ['admin', 'publisher', 'user']
-        },
-        component: () => import('@/views/dashboard/Analysis')
-      },
       // 跨境支付事中监测系统（全屏）
       {
         path: '#/aml/monitor',
@@ -688,57 +688,8 @@ export const asyncRouterMap = [
           permission: ['user']
         }
       },
-      // 用户管理
-      {
-        path: '/user-manage',
-        name: 'user-manage',
-        meta: {
-          title: '用户管理',
-          keepAlive: true,
-          icon: 'team',
-          permission: ['admin']
-        },
-        component: () => import('@/views/user-manage')
-      },
-      // 使用指南
-      {
-        path: '/guide',
-        name: 'guide',
-        meta: { title: '使用指南', keepAlive: true, icon: 'book', permission: ['admin', 'publisher', 'user'] },
-        redirect: '/guide/intro',
-        component: RouteView,
-        children: [
-          {
-            path: '/guide/intro',
-            name: 'guide_intro',
-            component: () => import('@/views/guide/intro'),
-            meta: { title: '算法智能体平台简介', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          },
-          {
-            path: '/guide/operateGuide',
-            name: 'operateGuide',
-            component: () => import('@/views/guide/operateGuide'),
-            meta: { title: '操作指南', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          }
-          // 动态子路由将在路由初始化时加载
-        ]
-      },
       // 应用实例
       // TODO: 原有的两个应用实例已废弃，新增反洗钱监管系统实例
-      // {
-      //   path: '/aml/monitor',
-      //   name: 'aml-monitor-fullscreen',
-      //   component: BlankLayout,
-      //   meta: { title: '跨境支付事中监测系统', permission: ['user'] },
-      //   children: [
-          // {
-          //   path: '',
-          //   name: 'aml-monitor',
-          //   component: () => import('@/views/aml/monitor'),
-          //   meta: { title: '跨境支付事中监测', keepAlive: true, permission: ['user'] }
-          // }
-      //   ]
-      // },
       {
         path: '/application',
         name: 'application',
@@ -747,14 +698,14 @@ export const asyncRouterMap = [
         meta: { title: '应用实例', keepAlive: true, icon: 'pushpin', permission: ['user'] },
         children: [
           {
-            path: '/application/aml',
+            path: '',
             name: 'aml-app-template',
             redirect: '/application/aml',
             component: PageView,
             meta: { title: '跨境支付AI监测', icon: 'pushpin', permission: ['user'] },
             children: [
               {
-                path: '',
+                path: '/application/aml',
                 name: 'aml-monitor-template',
                 component: () => import('@/views/application/aml/monitor'),
                 meta: { title: '跨境支付事中监测', keepAlive: true, permission: ['user'] }
@@ -819,6 +770,53 @@ export const asyncRouterMap = [
               }
             ]
           }
+        ]
+      },
+      // 数据统计（首页）
+      {
+        path: '/home',
+        name: 'home',
+        meta: {
+          title: '数据统计',
+          keepAlive: true,
+          icon: 'bar-chart',
+          permission: ['admin', 'publisher', 'user']
+        },
+        component: () => import('@/views/dashboard/Analysis')
+      },
+      // 用户管理
+      {
+        path: '/user-manage',
+        name: 'user-manage',
+        meta: {
+          title: '用户管理',
+          keepAlive: true,
+          icon: 'team',
+          permission: ['admin']
+        },
+        component: () => import('@/views/user-manage')
+      },
+      // 使用指南
+      {
+        path: '/guide',
+        name: 'guide',
+        meta: { title: '使用指南', keepAlive: true, icon: 'book', permission: ['admin', 'publisher', 'user'] },
+        redirect: '/guide/intro',
+        component: RouteView,
+        children: [
+          {
+            path: '/guide/intro',
+            name: 'guide_intro',
+            component: () => import('@/views/guide/intro'),
+            meta: { title: '算法智能体平台简介', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+          },
+          {
+            path: '/guide/operateGuide',
+            name: 'operateGuide',
+            component: () => import('@/views/guide/operateGuide'),
+            meta: { title: '操作指南', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+          }
+          // 动态子路由将在路由初始化时加载
         ]
       },
       // account
