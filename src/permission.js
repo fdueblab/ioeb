@@ -7,7 +7,7 @@ import notification from 'ant-design-vue/es/notification'
 import { setDocumentTitle, domTitle } from '@/utils/domUtil'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { i18nRender } from '@/locales'
-import { preloadAllDict, loadDict } from '@/utils/dictionaryCache' // 引入字典预加载功能
+import { preloadAllDict } from '@/utils/dictionaryCache' // 引入字典预加载功能
 import {
   generateVerticalUserRoutes,
   getFirstVerticalUserPath,
@@ -17,7 +17,10 @@ import {
   getFirstAppPath,
   generateGuideRoutes,
   generateEvaluationRoutes,
-  getFirstEvaluationPath, generateOperationRoutes, getFirstOperationPath
+  getFirstEvaluationPath,
+  generateOperationRoutes,
+  getFirstOperationPath,
+  getFirstTechnologyPath
 } from '@/config/router.config' // 引入动态生成路由函数
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
@@ -109,16 +112,11 @@ router.beforeEach(async (to, from, next) => {
                 if (store.getters.roles.permissionList &&
                     (store.getters.roles.permissionList.includes('admin') ||
                      store.getters.roles.permissionList.includes('publisher'))) {
-                  // admin或publisher权限的用户可以访问技术评测页面
-                  verticalEvaluationRoute.redirect = await getFirstEvaluationPath()
+                  // admin或publisher权限的用户重定向到技术评测页面
+                  verticalEvaluationRoute.redirect = await getFirstTechnologyPath()
                 } else {
-                  // user权限的用户只能访问元应用业务数据验证页面
-                  const domains = await loadDict('domain', [])
-                  if (domains && domains.length > 0) {
-                    verticalEvaluationRoute.redirect = `/evaluation/${domains[0].code}/emulation`
-                  } else {
-                    verticalEvaluationRoute.redirect = '/evaluation/aml/emulation'
-                  }
+                  // user权限的用户只能重定向到元应用业务数据验证页面
+                  verticalEvaluationRoute.redirect = await getFirstEvaluationPath()
                 }
                 // 动态生成技术评测与业务验证路由
                 const allEvaluationRoutes = await generateEvaluationRoutes()

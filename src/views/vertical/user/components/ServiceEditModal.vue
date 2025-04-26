@@ -27,7 +27,7 @@
             <a-col :span="12">
               <a-form-item label="服务状态">
                 <a-select
-                  disabled
+                  :disabled="!isAdmin"
                   v-decorator="[
                     'status',
                     {
@@ -149,7 +149,22 @@
             </a-col>
           </a-row>
         </a-tab-pane>
-        <a-tab-pane key="tab2" tab="服务溯源">
+        <a-tab-pane v-if="currentRecord.norm && currentRecord.norm.length > 0" key="tab2" :tab="currentRecord.type === 'meta' ? '业务验证' : '技术评测'">
+          <a-row :gutter="16">
+            <a-col :span="8" v-for="(item, index) in currentRecord.norm" :key="index">
+              <a-form-item :label="getNormText(item.key)">
+                <el-rate
+                  :disabled="!isAdmin"
+                  v-model="item.score"
+                  show-score
+                  text-color="#ff9900"
+                />
+                <a-checkbox :disabled="!isAdmin" :checked="item.platformChecked === 1">平台已测评</a-checkbox>
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-tab-pane>
+        <a-tab-pane key="tab3" tab="服务溯源">
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="公司名称">
@@ -240,10 +255,16 @@
 </template>
 
 <script>
+import store from '@/store'
+
 export default {
   name: 'ServiceEditModal',
   props: {
     statusDict: {
+      type: Array,
+      default: () => []
+    },
+    normDict: {
       type: Array,
       default: () => []
     },
@@ -273,6 +294,7 @@ export default {
       visible: false,
       confirmLoading: false,
       form: null,
+      isAdmin: store.getters.roles?.permissionList?.includes('admin') || false,
       activeTab: 'tab1',
       currentRecord: {
         name: '',
@@ -331,6 +353,9 @@ export default {
           msScore: 0
         }
       }
+    },
+    getNormText(code) {
+      return this.normDict.find(item => item.code === code).text
     },
     handleOk() {
       this.form.validateFields((errors, values) => {
