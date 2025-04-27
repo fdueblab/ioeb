@@ -35,8 +35,6 @@ jobs:
 
       - name: Build and push frontend Docker image
         run: |
-          # docker build -t polarsnowleopard/ioeb-frontend:deploy_ums .
-          # docker push polarsnowleopard/ioeb-frontend:deploy_ums
           docker build -t polarsnowleopard/ioeb-frontend:deploy_fdueblab .
           docker push polarsnowleopard/ioeb-frontend:deploy_fdueblab
 
