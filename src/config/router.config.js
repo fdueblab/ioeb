@@ -930,6 +930,18 @@ export const asyncRouterMap = [
           target: '_blank'
         }
         // component: () => import('@/views/dashboard/Analysis')
+      },
+      {
+        path: 'http://131.252.10.118:10101',
+        name: 'model-eval',
+        meta: {
+          title: '模型评估',
+          keepAlive: true,
+          icon: 'experiment',
+          permission: ['admin', 'publisher', 'user'],
+          target: '_blank'
+        }
+        // component: () => import('@/views/dashboard/Analysis')
       }
     ]
   },

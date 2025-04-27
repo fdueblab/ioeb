@@ -741,7 +741,7 @@ class {{apiName}}({{input}}):
           netWork: 'bridge',
           port: '0.0.0.0:7777/TCP → 0.0.0.0:77777',
           volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-          status: 'deploying',
+          status: 'pre_release_unrated',
           number: 0,
           norm: [],
           source: {
