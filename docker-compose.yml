@@ -18,6 +18,8 @@ services:
       - /var/fdueblab.cn_nginx:/etc/nginx/ssl
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ./logs/nginx:/var/log/nginx
+    env_file:
+      - ./env/frontend.env
     networks:
       # - ioeb-backend_app-network
       - app-network
