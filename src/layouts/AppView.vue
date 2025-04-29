@@ -25,8 +25,8 @@ export default {
     async queryDownloadPath(appCode, type) {
       return new Promise((resolve) => {
         setTimeout(() => {
+          // 模拟amlMonitor的源码下载
           if (type === 'code' && appCode === 'amlMonitor') {
-            // 模拟amlMonitor的源码下载
             resolve('/fake_code.zip')
           } else {
             resolve(null)
