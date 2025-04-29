@@ -1,6 +1,24 @@
 <template>
   <page-header-wrapper :title="false">
-    <a-card :bordered="false" size="small" title="程序上传">
+    <a-card :bordered="false" size="small" title="提交类型">
+      <div class="table-page-search-wrapper">
+        <a-form layout="inline">
+          <a-row :gutter="20">
+            <a-col :span="24">
+              <a-form-item label="提交类型" required>
+                <a-radio-group v-model="submitType" @change="handleSubmitTypeChange">
+                  <a-radio-button value="algorithm">算法模型</a-radio-button>
+                  <a-radio-button value="microservice">微服务</a-radio-button>
+                </a-radio-group>
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-form>
+      </div>
+    </a-card>
+
+    <!-- 算法模型上传部分 -->
+    <a-card v-if="submitType === 'algorithm'" :bordered="false" size="small" title="程序上传">
       <div class="table-page-search-wrapper">
         <a-form layout="inline">
           <a-row :gutter="20">
@@ -46,7 +64,7 @@
                   :remove="removeProgramFile"
                   :customRequest="customProgramFilesChose"
                   :multiple="false">
-                  <a-button> <a-icon type="upload" /> 选择程序 </a-button>
+                  <a-button icon="file-add"> 选择程序 </a-button>
                 </a-upload>
               </a-form-item>
             </a-col>
@@ -63,6 +81,7 @@
               <a-form-item label="上传">
                 <a-button
                   type="primary"
+                  icon="upload"
                   @click="onUpload"
                   :disabled="programFiles.length === 0"
                   :loading="uploadProgramLoading"
@@ -75,12 +94,100 @@
         </a-form>
       </div>
     </a-card>
+
+    <!-- 微服务直接预发布部分 -->
+    <a-card v-if="submitType === 'microservice'" :bordered="false" size="small" title="微服务预发布">
+      <div class="table-page-search-wrapper">
+        <a-form layout="inline">
+          <a-row :gutter="20">
+            <a-col :span="4">
+              <a-form-item label="领域">
+                <span style="margin-left: 5px; font-size: 14px">{{ domainTitle }}</span>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="行业">
+                <a-select v-model="programInfo.industry" placeholder="请选择行业" allow-clear>
+                  <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
+                    {{ item.text }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="场景">
+                <a-select v-model="programInfo.scenario" placeholder="请选择场景" allow-clear>
+                  <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="item.code">
+                    {{ item.text }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="技术">
+                <a-select v-model="programInfo.technology" placeholder="请选择技术" allow-clear>
+                  <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="item.code">
+                    {{ item.text }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-row :gutter="20">
+            <a-col :span="4">
+              <a-form-item label="文件">
+                <a-upload
+                  accept=".zip,.7z,.jar"
+                  :file-list="programFiles"
+                  :remove="removeProgramFile"
+                  :customRequest="customProgramFilesChose"
+                  :multiple="false">
+                  <a-button> <a-icon type="folder-add" /> 选择文件 </a-button>
+                </a-upload>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="属性">
+                <a-select v-model="programInfo.attribute" placeholder="请选择属性" allow-clear>
+                  <a-select-option v-for="(item, index) in attributeOptions" :key="index" :value="item.code">
+                    {{ item.text }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="名称" required>
+                <a-input v-model="form.serviceName" placeholder="请输入微服务名称"/>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item tooltip="value*category">
+                <span slot="label">预发布
+                  <a-tooltip title="预发布后服务及应用运维管理中将出现部署在容器中的该服务，可以管理其部署状态并对其进行验证与测评">
+                    <a-icon type="question-circle-o" />
+                  </a-tooltip>
+                </span>
+                <a-button
+                  type="primary"
+                  icon="play-circle"
+                  @click="uploadService"
+                  :disabled="uploadServiceDisabled"
+                  :loading="uploadServiceLoading"
+                >
+                  预发布
+                </a-button>
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-form>
+      </div>
+    </a-card>
     <a-card v-if="options" :bordered="false" style="margin-top: 10px;">
       <div class="g6-x">
         <v-chart style="height: 100%; width: 100%;" :options="options" autoresize @click="handleNodeClick"/>
       </div>
     </a-card>
-    <a-card :bordered="false" style="margin-top: 10px; height: 610px;">
+    <a-card v-if="options" :bordered="false" style="margin-top: 10px; height: 610px;">
       <a-row :gutter="20">
         <a-col :span="12">
           <a-card :bodyStyle="{ padding: 0 }" style="height: 560px;">
@@ -188,6 +295,7 @@
                     </span>
                     <a-button
                       type="primary"
+                      icon="play-circle"
                       @click="uploadService"
                       :disabled="uploadServiceDisabled"
                       :loading="uploadServiceLoading"
@@ -364,11 +472,15 @@ class {{apiName}}({{input}}):
       agentSteps: [],
       agentError: '',
       agentWarning: '',
-      agentFinalResults: null
+      agentFinalResults: null,
+      submitType: 'algorithm'
     }
   },
   computed: {
     uploadServiceDisabled() {
+      if (this.submitType === 'microservice') {
+        return !this.form.serviceName || this.uploadFiles.length === 0
+      }
       return !this.form.serviceName || !this.form.apiName || this.uploadFiles.length === 0
     }
   },
@@ -392,6 +504,8 @@ class {{apiName}}({{input}}):
         this.domainTitle = domains.find(domain => domain.code === this.verticalType)?.text || '未知领域'
         // 清除代码框
         this.code = ''
+        // 重置提交类型
+        this.submitType = 'algorithm'
       } catch (error) {
         console.error('加载字典数据失败:', error)
         this.$message.error('加载数据字典失败，请刷新重试')
@@ -718,7 +832,11 @@ class {{apiName}}({{input}}):
     },
     // 上传微服务
     async uploadService() {
-      if (!this.form.serviceName || !this.form.apiName) {
+      if (!this.form.serviceName) {
+        this.$message.error('请填写微服务名称！')
+        return
+      }
+      if (this.submitType === 'algorithm' && !this.form.apiName) {
         this.$message.error('请填写必要的服务信息！')
         return
       }
@@ -822,6 +940,9 @@ class {{apiName}}({{input}}):
       this.uploadConfigFiles = []
       this.code = ''
       this.options = null
+    },
+    handleSubmitTypeChange() {
+      this.resetForm()
     }
   },
   watch: {
