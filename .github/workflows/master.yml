@@ -153,7 +153,7 @@ jobs:
 
           # 拷贝配置文件到服务器
           scp docker-compose.yml ubuntu@$SERVER_IP:~/ioeb/
-          scp nginx.conf ubuntu@$SERVER_IP:~/ioeb/
+          # scp nginx.conf ubuntu@$SERVER_IP:~/ioeb/
           scp -r api ubuntu@$SERVER_IP:~/ioeb/
 
           # 确保数据目录存在
