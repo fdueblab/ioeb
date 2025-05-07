@@ -11,15 +11,29 @@
       <span slot="serial" slot-scope="text, record, index">
         {{ index + 1 }}
       </span>
+      <template slot="statusTitle">
+        资源状态
+        <a-popover title="资源状态说明">
+          <a-icon type="question-circle-o" style="margin-left: 8px; cursor: pointer" />
+          <template slot="content">
+            <status-popover-content :statusDict="statusDict" :statusStyleDict="statusStyleDict" />
+          </template>
+        </a-popover>
+      </template>
       <template slot="name" slot-scope="text, record">
         <a-button type="link" size="large" @click="$emit('edit', record)">{{ text }}</a-button>
       </template>
-      <span slot="status" slot-scope="text">
-        <a-badge :status="statusStyleFilter(text)" :text="statusFilter(text)" />
-      </span>
+      <template slot="status" slot-scope="text">
+        <a-popover title="当前部署进度">
+          <template slot="content">
+            <status-popover-content :statusDict="statusDict" :statusStyleDict="statusStyleDict" :current-status-text="statusFilter(text)" :current-status-style="statusStyleFilter(text)" />
+          </template>
+          <a-badge :status="statusStyleFilter(text)" :text="statusFilter(text)" />
+        </a-popover>
+      </template>
       <span slot="norm" slot-scope="text">
         <template v-if="text && text.length">
-          <a-popover v-for="(item, index) in text" :key="index" title="可信云技术服务溯源">
+          <a-popover v-for="(item, index) in text" :key="index" title="可信云技术资源溯源">
             <template slot="content">
               <p>{{ normFilter(item.key) }}</p>
               <p><el-rate :value="item.score" disabled show-score text-color="#ff9900" /></p>
@@ -37,7 +51,7 @@
       </span>
       <span slot="source" slot-scope="text">
         <template v-if="text">
-          <a-popover :title="text.popoverTitle || '服务溯源'">
+          <a-popover :title="text.popoverTitle || '资源溯源'">
             <template slot="content">
               <h1>公司信息</h1>
               <p><strong>公司名称：</strong>{{ text.companyName || '暂无信息' }}</p>
@@ -46,15 +60,15 @@
               <p><strong>简介：</strong>{{ text.companyIntroduce || '暂无信息' }}</p>
               <p>综合可信度：</p>
               <el-rate :value="text.companyScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.companyScore || 0).toString()"></el-rate>
-              <h1>微服务信息</h1>
-              <p><strong>微服务描述:</strong> {{ text.msIntroduce || '暂无信息' }}</p>
+              <h1>资源信息</h1>
+              <p><strong>资源描述:</strong> {{ text.msIntroduce || '暂无信息' }}</p>
               <p>综合可信度：
                 <el-rate :value="text.msScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.msScore || 0).toString()"></el-rate>
               </p>
             </template>
             <a-tag color="blue" style="margin-bottom: 5px;">知识产权</a-tag>
           </a-popover>
-          <a-popover :title="text.popoverTitle || '服务溯源'">
+          <a-popover :title="text.popoverTitle || '资源溯源'">
             <template slot="content">
               <h1>公司信息</h1>
               <p><strong>公司名称：</strong>{{ text.companyName || '暂无信息' }}</p>
@@ -63,15 +77,15 @@
               <p><strong>简介：</strong>{{ text.companyIntroduce || '暂无信息' }}</p>
               <p>综合可信度：</p>
               <el-rate :value="text.companyScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.companyScore || 0).toString()"></el-rate>
-              <h1>微服务信息</h1>
-              <p><strong>微服务描述:</strong> {{ text.msIntroduce || '暂无信息' }}</p>
+              <h1>资源信息</h1>
+              <p><strong>资源描述:</strong> {{ text.msIntroduce || '暂无信息' }}</p>
               <p>综合可信度：
                 <el-rate :value="text.msScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.msScore || 0).toString()"></el-rate>
               </p>
             </template>
             <a-tag color="cyan" style="margin-bottom: 5px;">应用案例</a-tag>
           </a-popover>
-          <a-popover :title="text.popoverTitle || '服务溯源'">
+          <a-popover :title="text.popoverTitle || '资源溯源'">
             <template slot="content">
               <h1>公司信息</h1>
               <p><strong>公司名称：</strong>{{ text.companyName || '暂无信息' }}</p>
@@ -80,15 +94,15 @@
               <p><strong>简介：</strong>{{ text.companyIntroduce || '暂无信息' }}</p>
               <p>综合可信度：</p>
               <el-rate :value="text.companyScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.companyScore || 0).toString()"></el-rate>
-              <h1>微服务信息</h1>
-              <p><strong>微服务描述:</strong> {{ text.msIntroduce || '暂无信息' }}</p>
+              <h1>资源信息</h1>
+              <p><strong>资源描述:</strong> {{ text.msIntroduce || '暂无信息' }}</p>
               <p>综合可信度：
                 <el-rate :value="text.msScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.msScore || 0).toString()"></el-rate>
               </p>
             </template>
             <a-tag color="purple" style="margin-bottom: 5px;">舆情信息</a-tag>
           </a-popover>
-          <a-popover :title="text.popoverTitle || '服务溯源'">
+          <a-popover :title="text.popoverTitle || '资源溯源'">
             <template slot="content">
               <h1>公司信息</h1>
               <p><strong>公司名称：</strong>{{ text.companyName || '暂无信息' }}</p>
@@ -97,8 +111,8 @@
               <p><strong>简介：</strong>{{ text.companyIntroduce || '暂无信息' }}</p>
               <p>综合可信度：</p>
               <el-rate :value="text.companyScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.companyScore || 0).toString()"></el-rate>
-              <h1>微服务信息</h1>
-              <p><strong>微服务描述:</strong> {{ text.msIntroduce || '暂无信息' }}</p>
+              <h1>资源信息</h1>
+              <p><strong>资源描述:</strong> {{ text.msIntroduce || '暂无信息' }}</p>
               <p>综合可信度：
                 <el-rate :value="text.msScore || 0" disabled show-score text-color="#ff9900" :score-template="(text.msScore || 0).toString()"></el-rate>
               </p>
@@ -119,8 +133,13 @@
 </template>
 
 <script>
+import StatusPopoverContent from './StatusPopoverContent.vue'
+
 export default {
   name: 'ServiceTable',
+  components: {
+    StatusPopoverContent
+  },
   props: {
     dataSource: {
       type: Array,
@@ -160,13 +179,13 @@ export default {
           scopedSlots: { customRender: 'serial' }
         },
         {
-          title: '服务名称',
+          title: '资源名称',
           dataIndex: 'name',
           scopedSlots: { customRender: 'name' },
           customHeaderCell: () => ({ style: { paddingLeft: '25px' } })
         },
         {
-          title: '服务类型',
+          title: '资源类型',
           dataIndex: 'type',
           width: '120px',
           customRender: (text) => {
@@ -183,7 +202,7 @@ export default {
           }
         },
         {
-          title: '服务状态',
+          slots: { title: 'statusTitle' },
           dataIndex: 'status',
           scopedSlots: { customRender: 'status' },
           align: 'center'
