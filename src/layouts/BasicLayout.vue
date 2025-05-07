@@ -87,7 +87,7 @@ export default {
       query: {},
       // 用户类型
       title: '面向垂域应用',
-      subTitle: '的算法智能体平台',
+      subTitle: '的算法模型智能体平台',
       // 是否手机模式
       isMobile: false
     }

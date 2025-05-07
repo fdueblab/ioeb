@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    title="编辑服务信息"
+    title="编辑资源信息"
     :visible="visible"
     @ok="handleOk"
     @cancel="handleCancel"
@@ -12,12 +12,12 @@
         <a-tab-pane key="tab1" tab="基本信息">
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="服务名称">
+              <a-form-item label="资源名称">
                 <a-input
                   v-decorator="[
                     'name',
                     {
-                      rules: [{ required: true, message: '请输入服务名称' }],
+                      rules: [{ required: true, message: '请输入资源名称' }],
                       initialValue: currentRecord.name,
                     },
                   ]"
@@ -25,13 +25,13 @@
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="服务状态">
+              <a-form-item label="资源状态">
                 <a-select
                   :disabled="!isAdmin"
                   v-decorator="[
                     'status',
                     {
-                      rules: [{ required: true, message: '请选择服务状态' }],
+                      rules: [{ required: true, message: '请选择资源状态' }],
                       initialValue: currentRecord.status,
                     },
                   ]"
@@ -45,12 +45,12 @@
           </a-row>
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="服务类型">
+              <a-form-item label="资源类型">
                 <a-select
                   v-decorator="[
                     'type',
                     {
-                      rules: [{ required: true, message: '请选择服务类型' }],
+                      rules: [{ required: true, message: '请选择资源类型' }],
                       initialValue: currentRecord.type,
                     },
                   ]"
@@ -226,7 +226,7 @@
               :rows="3"
             />
           </a-form-item>
-          <a-form-item label="微服务描述">
+          <a-form-item label="资源描述">
             <a-textarea
               v-decorator="[
                 'source.msIntroduce',
@@ -239,7 +239,7 @@
           </a-form-item>
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="服务综合可信度">
+              <a-form-item label="资源综合可信度">
                 <el-rate
                   v-model="source.msScore"
                   show-score
@@ -370,7 +370,7 @@ export default {
           companyContact: values.source?.companyContact || '',
           companyIntroduce: values.source?.companyIntroduce || '',
           msIntroduce: values.source?.msIntroduce || '',
-          popoverTitle: '可信云技术服务溯源'
+          popoverTitle: '可信云技术资源溯源'
         }
         // 合并所有数据
         const updatedRecord = {

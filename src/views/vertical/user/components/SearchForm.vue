@@ -3,8 +3,8 @@
     <a-form layout="vertical">
       <a-row :gutter="16">
         <a-col :span="8">
-          <a-form-item label="微服务/元应用名称">
-            <a-input v-model="form.name" placeholder="请输入微服务/元应用名称" />
+          <a-form-item label="名称">
+            <a-input v-model="form.name" placeholder="请输入名称" />
           </a-form-item>
           <a-form-item label="通用描述">
             <a-input v-model="form.description" placeholder="请输入通用描述" />
