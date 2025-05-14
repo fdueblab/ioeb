@@ -33,7 +33,7 @@
       </template>
       <span slot="norm" slot-scope="text">
         <template v-if="text && text.length">
-          <a-popover v-for="(item, index) in text" :key="index" title="可信云技术资源溯源">
+          <a-popover v-for="(item, index) in text" :key="index" title="技术评测结果">
             <template slot="content">
               <p>{{ normFilter(item.key) }}</p>
               <p><el-rate :value="item.score" disabled show-score text-color="#ff9900" /></p>
@@ -46,7 +46,12 @@
           </a-popover>
         </template>
         <template v-else>
-          <a-tag color="red"><a-icon type="info-circle" /> 未测评</a-tag>
+          <a-popover title="技术评测结果">
+            <template slot="content">
+              <span><a-icon theme="twoTone" twoToneColor="red" type="info-circle" /> 未进行任何测评</span>
+            </template>
+            <a-tag color="red"><a-icon type="info-circle" /> 未测评</a-tag>
+          </a-popover>
         </template>
       </span>
       <span slot="source" slot-scope="text">
