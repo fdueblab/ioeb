@@ -126,7 +126,7 @@
       </span>
       <span slot="action" slot-scope="text, record">
         <a-button type="link" @click="$emit('edit', record)">编辑</a-button>
-        <a-button type="link" @click="$emit('use', record)">使用</a-button>
+        <a-button type="link" @click="$emit('use', record)">测试</a-button>
       </span>
     </a-table>
   </div>
