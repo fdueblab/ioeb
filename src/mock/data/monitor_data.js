@@ -59,7 +59,7 @@ const reportConfig = {
 // 默认页面配置
 const defaultPageConfig = {
   id: 'default',
-  name: '默认监测页面',
+  name: '用户前端定制',
   dataInput: dataInputConfig,
   statistics: statisticsConfig,
   report: reportConfig

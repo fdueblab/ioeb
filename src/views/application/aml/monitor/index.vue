@@ -6,7 +6,7 @@
         <a-col :span="24">
           <div class="page-toolbar">
             <div class="page-title">
-              <span>当前页面：{{ currentPageConfig.name }}</span>
+              <span>当前模块：{{ currentPageConfig.name }}</span>
             </div>
             <div class="page-actions">
               <a-button
