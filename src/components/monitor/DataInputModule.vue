@@ -3,7 +3,7 @@
     <a-card class="section-card" :bordered="false">
       <div class="section-header">
         <h3>{{ moduleConfig.title }}</h3>
-        <div class="section-tag">
+        <div class="section-tag" v-if="moduleConfig.showTag">
           <a-tag :color="moduleConfig.tagColor">{{ moduleConfig.tagText }}</a-tag>
         </div>
       </div>
@@ -29,17 +29,27 @@
             type="primary"
             size="large"
             :loading="loading"
-            style="width: 200px; margin: 0 auto;"
             @click="toggleMonitoring"
           >
+            <a-icon :type="isMonitoring ? (moduleConfig.buttonStopIcon || 'pause-circle') : (moduleConfig.buttonIcon || 'play-circle')" />
             {{ isMonitoring ? moduleConfig.buttonStopText : moduleConfig.buttonText }}
           </a-button>
         </div>
 
         <!-- 监测信息 -->
         <div v-if="isMonitoring" class="monitoring-info">
-          已监测交易数: <span>{{ transactionCount }}</span> 笔 | 监测时长: <span>{{ monitoringDuration }}</span> |
-          异常交易: <span>{{ anomalyCount }}</span> 笔
+          <div class="monitoring-metric">
+            <a-icon type="transaction" />
+            已监测交易数: <span>{{ transactionCount }}</span> 笔
+          </div>
+          <div class="monitoring-metric">
+            <a-icon type="clock-circle" />
+            监测时长: <span>{{ monitoringDuration }}</span>
+          </div>
+          <div class="monitoring-metric">
+            <a-icon type="warning" />
+            异常交易: <span>{{ anomalyCount }}</span> 笔
+          </div>
         </div>
       </div>
 
@@ -399,8 +409,14 @@ export default {
   .section-card {
     margin-bottom: 16px;
     border: 1px solid #f0f0f0;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.09);
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
 
     /deep/ .ant-card-body {
       padding: 0;
@@ -412,27 +428,46 @@ export default {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    background-color: #fafafa;
+    padding: 14px 18px;
+    background-color: #f8f9fa;
     border-bottom: 1px solid #f0f0f0;
+    position: relative;
+
+    &:before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(to bottom, #1890ff, #52c41a);
+    }
 
     h3 {
       font-size: 16px;
-      font-weight: bold;
-      color: #333;
+      font-weight: 600;
+      color: #1e3799;
       margin: 0;
     }
 
     .section-tag {
       display: flex;
       align-items: center;
+
+      /deep/ .ant-tag {
+        border-radius: 4px;
+        font-weight: 500;
+        padding: 2px 8px;
+        margin-right: 0;
+      }
     }
   }
 
   // 控制面板样式
   .control-panel {
-    padding: 16px;
+    padding: 20px;
     background-color: #fff;
+    border-bottom: 1px solid #f5f5f5;
   }
 
   // 控制中心样式
@@ -456,36 +491,88 @@ export default {
     font-size: 14px;
     color: #666;
     margin-bottom: 8px;
+    border-radius: 20px;
+    padding: 5px 15px;
+    background-color: #f5f5f5;
+    width: fit-content;
+    margin: 0 auto 15px;
   }
 
   .status-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    margin-right: 5px;
+    margin-right: 8px;
+    position: relative;
+
+    &.status-active {
+      background-color: #52c41a;
+      box-shadow: 0 0 0 4px rgba(82, 196, 26, 0.2);
+      animation: pulse 2s infinite;
+    }
+
+    &.status-inactive {
+      background-color: #f5222d;
+    }
   }
 
-  .status-active {
-    background-color: #52c41a;
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(82, 196, 26, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 6px rgba(82, 196, 26, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(82, 196, 26, 0);
+    }
   }
 
-  .status-inactive {
-    background-color: #f5222d;
+  .control-button {
+    width: 200px;
+    height: 40px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    margin: 0 auto;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+    }
+
+    /deep/ .anticon {
+      margin-right: 8px;
+    }
   }
 
   // 监测信息样式
   .monitoring-info {
-    margin-top: 16px;
-    font-size: 14px;
-    color: #666;
-    text-align: center;
-    padding: 8px;
-    background-color: #f9f9f9;
-    border-radius: 4px;
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px;
+    background-color: #f0f7ff;
+    border-radius: 8px;
 
-    span {
-      font-weight: bold;
-      color: #1890ff;
+    .monitoring-metric {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      color: #555;
+
+      /deep/ .anticon {
+        font-size: 18px;
+        margin-right: 6px;
+        color: #1890ff;
+      }
+
+      span {
+        font-weight: bold;
+        color: #1890ff;
+        margin: 0 4px;
+      }
     }
   }
 
@@ -493,21 +580,49 @@ export default {
   .sub-section-title {
     font-size: 15px;
     font-weight: 600;
-    color: #333;
-    margin: 16px 0 12px 16px;
-    padding-left: 8px;
+    color: #444;
+    margin: 20px 0 12px 16px;
+    padding-left: 10px;
     border-left: 3px solid #1890ff;
   }
 
   // 表格容器样式
   .alert-table-container {
     padding: 0 16px 16px 16px;
+
+    .alerts-table {
+      /deep/ .ant-table-thead > tr > th {
+        background-color: #f8f9fa;
+        color: #444;
+        font-weight: 500;
+      }
+
+      /deep/ .ant-table-tbody > tr:hover > td {
+        background-color: #f0f7ff;
+      }
+
+      /deep/ .ant-table-row {
+        transition: all 0.2s ease;
+      }
+
+      /deep/ .ant-pagination-item-active {
+        border-color: #1890ff;
+
+        a {
+          color: #1890ff;
+        }
+      }
+    }
   }
 
   // 空表格样式
   .empty-alerts {
-    padding: 20px 0;
+    padding: 30px 0;
     text-align: center;
+
+    /deep/ .ant-empty-description {
+      color: #999;
+    }
   }
 }
 </style>
