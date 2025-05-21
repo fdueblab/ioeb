@@ -34,7 +34,6 @@ import DataInputModule from '@/components/monitor/DataInputModule'
 import StatisticsModule from '@/components/monitor/StatisticsModule'
 import ReportModule from '@/components/monitor/ReportModule'
 import ModuleEditor from '@/components/monitor/ModuleEditor'
-import PageSelector from '@/components/monitor/PageSelector'
 
 export {
   AvatarList,
@@ -69,6 +68,5 @@ export {
   DataInputModule,
   StatisticsModule,
   ReportModule,
-  ModuleEditor,
-  PageSelector
+  ModuleEditor
 }
