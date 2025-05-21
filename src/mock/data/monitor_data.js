@@ -6,6 +6,7 @@ const dataInputConfig = {
   tagText: '调用数据接入/实时监测智能体',
   tagColor: 'blue',
   visible: true,
+  showTag: true,
   dataSources: [
     { value: 'default_data', label: '默认数据' },
     { value: 'business_data_1', label: '跨境支付业务数据源1' },
@@ -27,6 +28,7 @@ const statisticsConfig = {
   tagText: '调用统计分析智能体',
   tagColor: 'green',
   visible: true,
+  showTag: true,
   overviewTitle: '当前监测期间交易总览',
   overviewLabels: {
     duration: '监测时长：',
@@ -50,6 +52,7 @@ const reportConfig = {
   tagText: '调用报告生成智能体',
   tagColor: 'purple',
   visible: true,
+  showTag: true,
   description: '生成监测报告将对当前监测期间的交易数据进行分析，包括异常交易检测、风险评估和建议措施。报告将基于图神经网络(GNN)模型对交易网络的分析结果。',
   reportContentTitle: '监测报告',
   generateButtonText: '生成监测报告',
