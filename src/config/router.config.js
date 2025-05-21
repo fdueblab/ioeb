@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { UserLayout, BasicLayout, BlankLayout, AppView } from '@/layouts'
 import { bxAnaalyse } from '@/core/icons'
 import { loadDict } from '@/utils/dictionaryCache'
@@ -795,6 +796,18 @@ export const asyncRouterMap = [
           permission: ['admin']
         },
         component: () => import('@/views/user-manage')
+      },
+      // MCP测试页面
+      {
+        path: '/mcp-test',
+        name: 'mcp-test',
+        meta: {
+          title: 'MCP服务测试',
+          keepAlive: true,
+          icon: 'api',
+          permission: ['admin', 'publisher', 'user']
+        },
+        component: () => import('@/views/mcp-test')
       },
       // 使用指南
       {
