@@ -67,7 +67,6 @@ const reportConfig = {
 // 默认页面配置
 const defaultPageConfig = {
   id: 'default',
-  name: '用户前端定制',
   dataInput: dataInputConfig,
   statistics: statisticsConfig,
   report: reportConfig
@@ -78,7 +77,6 @@ const pageConfigs = [
   defaultPageConfig,
   {
     id: 'custom1',
-    name: '自定义监测页面1',
     dataInput: {
       ...dataInputConfig,
       title: '业务数据接入',
