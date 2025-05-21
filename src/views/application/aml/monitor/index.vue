@@ -10,11 +10,11 @@
             </div>
             <div class="page-actions">
               <a-button
-                type="primary"
+                type="link"
                 @click="toggleEditMode"
                 style="margin-right: 8px"
               >
-                {{ isEditing ? '保存并退出编辑' : '编辑页面' }}
+                <a-icon :type="isEditing ? 'save' : 'edit'" /> {{ isEditing ? '保存并退出编辑' : '编辑页面' }}
               </a-button>
               <!-- 暂时隐藏页面管理功能
               <a-button @click="showPageList">
@@ -65,7 +65,7 @@
           <div class="page-header">
             <h2>{{ currentPageConfig.name }}</h2>
             <div class="page-actions">
-              <a-button type="primary" @click="toggleEditMode">
+              <a-button type="link" @click="toggleEditMode">
                 <a-icon type="edit" /> 编辑页面
               </a-button>
               <!-- 暂时隐藏页面管理功能

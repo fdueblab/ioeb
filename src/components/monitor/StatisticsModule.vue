@@ -10,7 +10,10 @@
 
       <div class="statistics-container">
         <div class="statistics-section">
-          <h3 class="statistics-title">{{ moduleConfig.overviewTitle }}</h3>
+          <h3 class="statistics-title">
+            <a-icon type="area-chart" />
+            {{ moduleConfig.overviewTitle }}
+          </h3>
           <div class="statistics-item">
             <span class="label">{{ moduleConfig.overviewLabels.duration }}</span>
             <span class="value">{{ monitoringState.monitoringDuration || '00:00:00' }}</span>
@@ -30,7 +33,10 @@
         </div>
 
         <div class="statistics-section">
-          <h3 class="statistics-title">{{ moduleConfig.anomalyTitle }}</h3>
+          <h3 class="statistics-title">
+            <a-icon type="warning" />
+            {{ moduleConfig.anomalyTitle }}
+          </h3>
           <div class="statistics-item">
             <span class="label">{{ moduleConfig.anomalyLabels.highRisk }}</span>
             <span class="value">{{ statisticsData.highRiskCount }} 笔 ({{
@@ -63,7 +69,9 @@
           type="primary"
           @click="generateStats"
           :disabled="!monitoringState.isMonitoring && !monitoringState.hasMonitoringData"
+          class="action-button"
         >
+          <a-icon :type="moduleConfig.buttonIcon || 'reload'" />
           {{ moduleConfig.buttonText }}
         </a-button>
       </div>
@@ -240,8 +248,14 @@ export default {
   .section-card {
     margin-bottom: 16px;
     border: 1px solid #f0f0f0;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.09);
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
 
     /deep/ .ant-card-body {
       padding: 0;
@@ -253,20 +267,38 @@ export default {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    background-color: #fafafa;
+    padding: 14px 18px;
+    background-color: #f8f9fa;
     border-bottom: 1px solid #f0f0f0;
+    position: relative;
+
+    &:before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(to bottom, #1890ff, #52c41a);
+    }
 
     h3 {
       font-size: 16px;
-      font-weight: bold;
-      color: #333;
+      font-weight: 600;
+      color: #1e3799;
       margin: 0;
     }
 
     .section-tag {
       display: flex;
       align-items: center;
+
+      /deep/ .ant-tag {
+        border-radius: 4px;
+        font-weight: 500;
+        padding: 2px 8px;
+        margin-right: 0;
+      }
     }
   }
 
@@ -274,7 +306,8 @@ export default {
   .statistics-container {
     display: flex;
     flex-wrap: wrap;
-    padding: 16px;
+    padding: 20px;
+    background: #fff;
 
     .statistics-section {
       width: 50%;
@@ -286,25 +319,45 @@ export default {
   // 统计区域样式
   .statistics-section {
     margin-bottom: 15px;
+
+    &:hover .statistics-title {
+      color: #1890ff;
+    }
   }
 
   .statistics-title {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     color: #1e3799;
-    margin-bottom: 12px;
-    padding-left: 8px;
-    border-left: 3px solid #1e3799;
+    margin-bottom: 16px;
+    padding: 0 0 8px 10px;
+    border-bottom: 2px solid #e8e8e8;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+
+    /deep/ .anticon {
+      margin-right: 8px;
+      font-size: 18px;
+      color: #1890ff;
+    }
   }
 
   .statistics-item {
     display: flex;
-    padding: 5px 0;
+    padding: 8px 0;
     line-height: 1.5;
+    transition: all 0.2s ease;
+    border-bottom: 1px dashed #f0f0f0;
+
+    &:hover {
+      background-color: #f9f9f9;
+      padding-left: 5px;
+    }
   }
 
   .statistics-item .label {
-    width: 120px;
+    width: 130px;
     font-weight: 500;
     color: #666;
   }
@@ -312,14 +365,28 @@ export default {
   .statistics-item .value {
     flex: 1;
     color: #1f2f3d;
+    font-weight: 500;
   }
 
   // 区域底部样式
   .section-footer {
-    padding: 12px 16px;
+    padding: 16px;
     border-top: 1px solid #f0f0f0;
     text-align: center;
     background-color: #fafafa;
+
+    .action-button {
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+      }
+
+      /deep/ .anticon {
+        margin-right: 8px;
+      }
+    }
   }
 }
 </style>
