@@ -3,7 +3,7 @@
     <a-card class="section-card" :bordered="false">
       <div class="section-header">
         <h3>{{ moduleConfig.title }}</h3>
-        <div class="section-tag">
+        <div class="section-tag" v-if="moduleConfig.showTag">
           <a-tag :color="moduleConfig.tagColor">{{ moduleConfig.tagText }}</a-tag>
         </div>
       </div>
