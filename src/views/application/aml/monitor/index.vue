@@ -10,17 +10,12 @@
             </div>
             <div class="page-actions">
               <a-button
-                type="primary"
+                type="link"
                 @click="toggleEditMode"
                 style="margin-right: 8px"
               >
-                {{ isEditing ? '保存并退出编辑' : '编辑页面' }}
+                <a-icon :type="isEditing ? 'export' : 'edit'" /> {{ isEditing ? '保存并退出编辑' : '编辑页面' }}
               </a-button>
-              <!-- 暂时隐藏页面管理功能
-              <a-button @click="showPageList">
-                <a-icon type="appstore" /> 页面管理
-              </a-button>
-              -->
             </div>
           </div>
         </a-col>
@@ -65,14 +60,9 @@
           <div class="page-header">
             <h2>{{ currentPageConfig.name }}</h2>
             <div class="page-actions">
-              <a-button type="primary" @click="toggleEditMode">
+              <a-button type="link" @click="toggleEditMode">
                 <a-icon type="edit" /> 编辑页面
               </a-button>
-              <!-- 暂时隐藏页面管理功能
-              <a-button @click="showPageList" style="margin-left: 8px">
-                <a-icon type="appstore" /> 页面管理
-              </a-button>
-              -->
             </div>
           </div>
 
@@ -100,25 +90,6 @@
         </a-col>
       </a-row>
     </a-card>
-
-    <!-- 页面管理抽屉 -- 暂时隐藏
-    <a-drawer
-      title="监测页面管理"
-      placement="right"
-      :closable="true"
-      :visible="pageListVisible"
-      @close="pageListVisible = false"
-      width="400"
-    >
-      <PageSelector
-        :currentPageId="currentPageId"
-        :pageList="pageList"
-        @select-page="handleSelectPage"
-        @create-page="handleCreatePage"
-        @delete-page="handleDeletePage"
-      />
-    </a-drawer>
-    -->
   </div>
 </template>
 
@@ -127,7 +98,6 @@ import DataInputModule from '@/components/monitor/DataInputModule'
 import StatisticsModule from '@/components/monitor/StatisticsModule'
 import ReportModule from '@/components/monitor/ReportModule'
 import ModuleEditor from '@/components/monitor/ModuleEditor'
-import PageSelector from '@/components/monitor/PageSelector'
 import { getPageConfigs, getPageConfig, savePageConfig, createNewPage, deletePage } from '@/mock/data/monitor_data'
 
 export default {
@@ -136,8 +106,7 @@ export default {
     DataInputModule,
     StatisticsModule,
     ReportModule,
-    ModuleEditor,
-    PageSelector
+    ModuleEditor
   },
   data() {
     return {

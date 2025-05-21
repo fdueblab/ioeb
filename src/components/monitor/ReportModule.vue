@@ -3,7 +3,7 @@
     <a-card class="section-card" :bordered="false">
       <div class="section-header">
         <h3>{{ moduleConfig.title }}</h3>
-        <div class="section-tag">
+        <div class="section-tag" v-if="moduleConfig.showTag">
           <a-tag :color="moduleConfig.tagColor">{{ moduleConfig.tagText }}</a-tag>
         </div>
       </div>
@@ -15,8 +15,14 @@
 
         <!-- 报告内容区域 -->
         <div v-if="monitoringReport" class="report-content">
-          <h4 class="report-content-title">{{ moduleConfig.reportContentTitle }}</h4>
-          <div class="report-timestamp" v-if="reportTimestamp">生成时间: {{ reportTimestamp }}</div>
+          <h4 class="report-content-title">
+            <a-icon type="file-text" />
+            {{ moduleConfig.reportContentTitle }}
+          </h4>
+          <div class="report-timestamp" v-if="reportTimestamp">
+            <a-icon type="clock-circle" />
+            生成时间: {{ reportTimestamp }}
+          </div>
           <a-spin v-if="reportLoading" class="report-loading" />
           <div v-else class="report-text">
             <pre>{{ monitoringReport }}</pre>
@@ -29,7 +35,9 @@
             @click="generateReport"
             :loading="reportLoading"
             :disabled="!monitoringState.isMonitoring && !monitoringState.hasMonitoringData"
+            class="action-button"
           >
+            <a-icon :type="moduleConfig.generateButtonIcon || 'file-text'" />
             {{ moduleConfig.generateButtonText }}
           </a-button>
 
@@ -39,7 +47,10 @@
             :okText="moduleConfig.resetConfirmOkText"
             :cancelText="moduleConfig.resetConfirmCancelText"
           >
-            <a-button type="danger">{{ moduleConfig.resetButtonText }}</a-button>
+            <a-button type="danger" class="action-button danger-button">
+              <a-icon :type="moduleConfig.resetButtonIcon || 'delete'" />
+              {{ moduleConfig.resetButtonText }}
+            </a-button>
           </a-popconfirm>
         </div>
       </div>
@@ -219,8 +230,14 @@ export default {
   .section-card {
     margin-bottom: 16px;
     border: 1px solid #f0f0f0;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.09);
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
 
     /deep/ .ant-card-body {
       padding: 0;
@@ -232,69 +249,116 @@ export default {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    background-color: #fafafa;
+    padding: 14px 18px;
+    background-color: #f8f9fa;
     border-bottom: 1px solid #f0f0f0;
+    position: relative;
+
+    &:before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(to bottom, #1890ff, #52c41a);
+    }
 
     h3 {
       font-size: 16px;
-      font-weight: bold;
-      color: #333;
+      font-weight: 600;
+      color: #1e3799;
       margin: 0;
     }
 
     .section-tag {
       display: flex;
       align-items: center;
+
+      /deep/ .ant-tag {
+        border-radius: 4px;
+        font-weight: 500;
+        padding: 2px 8px;
+        margin-right: 0;
+      }
     }
   }
 
   // 报告容器样式
   .report-container {
-    padding: 16px;
+    padding: 20px;
+    background-color: #fff;
 
     .report-description {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       color: #666;
-      line-height: 1.6;
+      line-height: 1.8;
+      padding: 12px;
+      background-color: #f9f9f9;
+      border-left: 3px solid #1890ff;
+      border-radius: 0 4px 4px 0;
     }
 
     .report-content {
-      margin: 16px 0;
-      padding: 16px;
+      margin: 20px 0;
+      padding: 20px;
       background-color: #f9f9f9;
       border: 1px solid #eee;
-      border-radius: 4px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
 
       .report-content-title {
         font-size: 16px;
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 8px;
+        font-weight: 600;
+        color: #1e3799;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+
+        /deep/ .anticon {
+          margin-right: 8px;
+          color: #1890ff;
+        }
       }
 
       .report-timestamp {
-        font-size: 12px;
+        font-size: 13px;
         color: #999;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+
+        /deep/ .anticon {
+          margin-right: 5px;
+          color: #999;
+        }
       }
 
       .report-loading {
         display: flex;
         justify-content: center;
-        padding: 20px 0;
+        padding: 30px 0;
       }
 
       .report-text {
         max-height: 400px;
         overflow-y: auto;
+        background-color: #fff;
+        padding: 16px;
+        border-radius: 6px;
+        border: 1px solid #eee;
 
         pre {
           white-space: pre-wrap;
           word-wrap: break-word;
           font-family: 'Courier New', Courier, monospace;
           font-size: 14px;
-          line-height: 1.5;
+          line-height: 1.6;
           color: #333;
         }
       }
@@ -303,8 +367,27 @@ export default {
     .report-actions {
       display: flex;
       justify-content: center;
-      gap: 16px;
-      margin-top: 16px;
+      gap: 20px;
+      margin-top: 20px;
+
+      .action-button {
+        min-width: 120px;
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+        }
+
+        /deep/ .anticon {
+          margin-right: 8px;
+        }
+      }
+
+      .danger-button {
+        &:hover {
+          box-shadow: 0 4px 12px rgba(245, 34, 45, 0.4);
+        }
+      }
     }
   }
 }
