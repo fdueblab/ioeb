@@ -259,10 +259,6 @@
             </div>
           </a-tab-pane>
         </a-tabs>
-
-        <div class="editor-actions">
-          <a-button type="primary" @click="saveConfig">保存到数据库</a-button>
-        </div>
       </a-spin>
     </a-card>
   </div>
@@ -329,16 +325,6 @@ export default {
     handleIconSelect(module, property, icon) {
       this.moduleConfig[module][property] = icon
       this.emitConfigChange()
-    },
-
-    saveConfig() {
-      this.loading = true
-      this.$emit('save-config', cloneDeep(this.moduleConfig))
-
-      // 模拟保存过程
-      setTimeout(() => {
-        this.loading = false
-      }, 800)
     }
   }
 }
@@ -354,15 +340,6 @@ export default {
 
     &:hover {
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-    }
-
-    /deep/ .ant-card-head {
-      background: linear-gradient(to right, #1890ff, #52c41a);
-
-      .ant-card-head-title {
-        color: white;
-        font-weight: 600;
-      }
     }
   }
 
