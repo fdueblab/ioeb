@@ -1,6 +1,6 @@
 <template>
   <div class="module-editor">
-    <a-card title="模块配置" :bordered="false">
+    <a-card title="模块配置" :bordered="false" class="editor-card">
       <a-spin :spinning="loading">
         <a-tabs v-model="activeTab" @change="handleTabChange">
           <a-tab-pane key="dataInput" tab="数据接入模块">
@@ -30,10 +30,36 @@
             <div class="editor-section">
               <h3 class="section-title">按钮文本</h3>
               <a-form-item label="开始按钮文本">
-                <a-input v-model="moduleConfig.dataInput.buttonText" placeholder="请输入开始按钮文本" @change="emitConfigChange" />
+                <div class="input-with-icon-selector">
+                  <a-input v-model="moduleConfig.dataInput.buttonText" placeholder="请输入开始按钮文本" @change="emitConfigChange" />
+                  <a-dropdown>
+                    <a-button style="margin-left: 8px">
+                      <a-icon :type="moduleConfig.dataInput.buttonIcon || 'play-circle'" />
+                      <a-icon type="down" />
+                    </a-button>
+                    <a-menu slot="overlay" @click="e => handleIconSelect('dataInput', 'buttonIcon', e.key)">
+                      <a-menu-item v-for="icon in iconOptions" :key="icon">
+                        <a-icon :type="icon" /> {{ icon }}
+                      </a-menu-item>
+                    </a-menu>
+                  </a-dropdown>
+                </div>
               </a-form-item>
               <a-form-item label="停止按钮文本">
-                <a-input v-model="moduleConfig.dataInput.buttonStopText" placeholder="请输入停止按钮文本" @change="emitConfigChange" />
+                <div class="input-with-icon-selector">
+                  <a-input v-model="moduleConfig.dataInput.buttonStopText" placeholder="请输入停止按钮文本" @change="emitConfigChange" />
+                  <a-dropdown>
+                    <a-button style="margin-left: 8px">
+                      <a-icon :type="moduleConfig.dataInput.buttonStopIcon || 'pause-circle'" />
+                      <a-icon type="down" />
+                    </a-button>
+                    <a-menu slot="overlay" @click="e => handleIconSelect('dataInput', 'buttonStopIcon', e.key)">
+                      <a-menu-item v-for="icon in iconOptions" :key="icon">
+                        <a-icon :type="icon" /> {{ icon }}
+                      </a-menu-item>
+                    </a-menu>
+                  </a-dropdown>
+                </div>
               </a-form-item>
               <a-form-item label="预警表格标题">
                 <a-input v-model="moduleConfig.dataInput.alertTitle" placeholder="请输入预警表格标题" @change="emitConfigChange" />
@@ -95,7 +121,20 @@
                 </a-select>
               </a-form-item>
               <a-form-item label="更新按钮文本">
-                <a-input v-model="moduleConfig.statistics.buttonText" placeholder="请输入更新按钮文本" @change="emitConfigChange" />
+                <div class="input-with-icon-selector">
+                  <a-input v-model="moduleConfig.statistics.buttonText" placeholder="请输入更新按钮文本" @change="emitConfigChange" />
+                  <a-dropdown>
+                    <a-button style="margin-left: 8px">
+                      <a-icon :type="moduleConfig.statistics.buttonIcon || 'reload'" />
+                      <a-icon type="down" />
+                    </a-button>
+                    <a-menu slot="overlay" @click="e => handleIconSelect('statistics', 'buttonIcon', e.key)">
+                      <a-menu-item v-for="icon in iconOptions" :key="icon">
+                        <a-icon :type="icon" /> {{ icon }}
+                      </a-menu-item>
+                    </a-menu>
+                  </a-dropdown>
+                </div>
               </a-form-item>
             </div>
 
@@ -173,14 +212,40 @@
                 <a-input v-model="moduleConfig.report.reportContentTitle" placeholder="请输入报告标题" @change="emitConfigChange" />
               </a-form-item>
               <a-form-item label="生成按钮文本">
-                <a-input v-model="moduleConfig.report.generateButtonText" placeholder="请输入生成按钮文本" @change="emitConfigChange" />
+                <div class="input-with-icon-selector">
+                  <a-input v-model="moduleConfig.report.generateButtonText" placeholder="请输入生成按钮文本" @change="emitConfigChange" />
+                  <a-dropdown>
+                    <a-button style="margin-left: 8px">
+                      <a-icon :type="moduleConfig.report.generateButtonIcon || 'file-text'" />
+                      <a-icon type="down" />
+                    </a-button>
+                    <a-menu slot="overlay" @click="e => handleIconSelect('report', 'generateButtonIcon', e.key)">
+                      <a-menu-item v-for="icon in iconOptions" :key="icon">
+                        <a-icon :type="icon" /> {{ icon }}
+                      </a-menu-item>
+                    </a-menu>
+                  </a-dropdown>
+                </div>
               </a-form-item>
             </div>
 
             <div class="editor-section">
               <h3 class="section-title">重置选项</h3>
               <a-form-item label="重置按钮文本">
-                <a-input v-model="moduleConfig.report.resetButtonText" placeholder="请输入重置按钮文本" @change="emitConfigChange" />
+                <div class="input-with-icon-selector">
+                  <a-input v-model="moduleConfig.report.resetButtonText" placeholder="请输入重置按钮文本" @change="emitConfigChange" />
+                  <a-dropdown>
+                    <a-button style="margin-left: 8px">
+                      <a-icon :type="moduleConfig.report.resetButtonIcon || 'delete'" />
+                      <a-icon type="down" />
+                    </a-button>
+                    <a-menu slot="overlay" @click="e => handleIconSelect('report', 'resetButtonIcon', e.key)">
+                      <a-menu-item v-for="icon in iconOptions" :key="icon">
+                        <a-icon :type="icon" /> {{ icon }}
+                      </a-menu-item>
+                    </a-menu>
+                  </a-dropdown>
+                </div>
               </a-form-item>
               <a-form-item label="确认提示文本">
                 <a-input v-model="moduleConfig.report.resetConfirmTitle" placeholder="请输入确认提示文本" @change="emitConfigChange" />
@@ -196,7 +261,7 @@
         </a-tabs>
 
         <div class="editor-actions">
-          <!-- 已实现实时更新，移除保存按钮 -->
+          <a-button type="primary" @click="saveConfig">保存到数据库</a-button>
         </div>
       </a-spin>
     </a-card>
@@ -218,7 +283,16 @@ export default {
     return {
       activeTab: 'dataInput',
       moduleConfig: cloneDeep(this.initialConfig),
-      loading: false
+      loading: false,
+      iconOptions: [
+        'play-circle', 'pause-circle', 'stop', 'reload',
+        'cloud-upload', 'cloud-download', 'cloud-sync',
+        'pie-chart', 'bar-chart', 'line-chart', 'area-chart',
+        'database', 'file-text', 'file-excel', 'file-pdf',
+        'dashboard', 'check-circle', 'clock-circle', 'warning',
+        'delete', 'redo', 'undo', 'sync', 'setting',
+        'rocket', 'bulb', 'api', 'build'
+      ]
     }
   },
   watch: {
@@ -250,6 +324,21 @@ export default {
     emitConfigChange() {
       // 实时向父组件传递配置更新
       this.$emit('config-change', cloneDeep(this.moduleConfig))
+    },
+
+    handleIconSelect(module, property, icon) {
+      this.moduleConfig[module][property] = icon
+      this.emitConfigChange()
+    },
+
+    saveConfig() {
+      this.loading = true
+      this.$emit('save-config', cloneDeep(this.moduleConfig))
+
+      // 模拟保存过程
+      setTimeout(() => {
+        this.loading = false
+      }, 800)
     }
   }
 }
@@ -257,13 +346,42 @@ export default {
 
 <style lang="less" scoped>
 .module-editor {
+  .editor-card {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    /deep/ .ant-card-head {
+      background: linear-gradient(to right, #1890ff, #52c41a);
+
+      .ant-card-head-title {
+        color: white;
+        font-weight: 600;
+      }
+    }
+  }
+
   .editor-section {
     margin-bottom: 24px;
+    background-color: #ffffff;
+    padding: 16px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
 
     .section-title {
       font-size: 16px;
-      font-weight: 500;
-      color: #333;
+      font-weight: 600;
+      color: #1890ff;
       margin-bottom: 16px;
       padding-bottom: 8px;
       border-bottom: 1px dashed #e8e8e8;
@@ -273,7 +391,15 @@ export default {
   .data-source-item {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: #f0f7ff;
+    }
   }
 
   .editor-actions {
@@ -281,6 +407,37 @@ export default {
     padding-top: 16px;
     border-top: 1px solid #f0f0f0;
     text-align: right;
+  }
+
+  .input-with-icon-selector {
+    display: flex;
+    align-items: center;
+  }
+
+  /deep/ .ant-tabs-nav .ant-tabs-tab {
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: #1890ff;
+    }
+
+    &.ant-tabs-tab-active {
+      font-weight: 600;
+    }
+  }
+
+  /deep/ .ant-form-item-label label {
+    color: #333;
+    font-weight: 500;
+  }
+
+  /deep/ .ant-btn {
+    transition: all 0.3s ease;
+
+    &:not(.ant-btn-primary):not(.ant-btn-danger):hover {
+      color: #1890ff;
+      border-color: #1890ff;
+    }
   }
 }
 </style>

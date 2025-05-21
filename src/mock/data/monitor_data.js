@@ -15,7 +15,9 @@ const dataInputConfig = {
     { value: 'all', label: '全部数据源' }
   ],
   buttonText: '开始监测',
+  buttonIcon: 'play-circle',
   buttonStopText: '停止监测',
+  buttonStopIcon: 'pause-circle',
   alertTitle: '实时预警'
 }
 
@@ -38,7 +40,8 @@ const statisticsConfig = {
     mediumRisk: '中风险交易：',
     lowRisk: '低风险交易：'
   },
-  buttonText: '更新统计分析'
+  buttonText: '更新统计分析',
+  buttonIcon: 'reload'
 }
 
 // 报告生成模块配置
@@ -50,7 +53,9 @@ const reportConfig = {
   description: '生成监测报告将对当前监测期间的交易数据进行分析，包括异常交易检测、风险评估和建议措施。报告将基于图神经网络(GNN)模型对交易网络的分析结果。',
   reportContentTitle: '监测报告',
   generateButtonText: '生成监测报告',
+  generateButtonIcon: 'file-text',
   resetButtonText: '重置监测',
+  resetButtonIcon: 'delete',
   resetConfirmTitle: '确定要重置监测状态吗？这将清除所有监测数据。',
   resetConfirmOkText: '确定',
   resetConfirmCancelText: '取消'
