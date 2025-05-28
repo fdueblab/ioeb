@@ -9,6 +9,7 @@
                 <a-radio-group v-model="submitType" @change="handleSubmitTypeChange">
                   <a-radio-button value="algorithm">算法模型</a-radio-button>
                   <a-radio-button value="microservice">微服务</a-radio-button>
+                  <a-radio-button disabled>智能体</a-radio-button>
                 </a-radio-group>
               </a-form-item>
             </a-col>
@@ -147,11 +148,10 @@
               </a-form-item>
             </a-col>
             <a-col :span="6">
-              <a-form-item label="属性">
-                <a-select v-model="programInfo.attribute" placeholder="请选择属性" allow-clear>
-                  <a-select-option v-for="(item, index) in attributeOptions" :key="index" :value="item.code">
-                    {{ item.text }}
-                  </a-select-option>
+              <a-form-item label="类型" required>
+                <a-select v-model="form.serverType" placeholder="请选择服务类型" allow-clear>
+                  <a-select-option value="restful">Restful Server</a-select-option>
+                  <a-select-option value="mcp">MCP Server</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -438,6 +438,7 @@ class {{apiName}}({{input}}):
       options: null,
       // 表单数据
       form: {
+        serverType: undefined,
         apiName: undefined,
         apiType: undefined,
         methodType: undefined,

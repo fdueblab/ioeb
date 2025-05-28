@@ -30,6 +30,11 @@ import Dialog from '@/components/Dialog'
 
 import DescriptionList from '@/components/DescriptionList'
 
+import DataInputModule from '@/components/monitor/DataInputModule'
+import StatisticsModule from '@/components/monitor/StatisticsModule'
+import ReportModule from '@/components/monitor/ReportModule'
+import ModuleEditor from '@/components/monitor/ModuleEditor'
+
 export {
   AvatarList,
   Bar,
@@ -57,5 +62,11 @@ export {
 
   Dialog,
 
-  DescriptionList
+  DescriptionList,
+
+  // 监测页面组件
+  DataInputModule,
+  StatisticsModule,
+  ReportModule,
+  ModuleEditor
 }

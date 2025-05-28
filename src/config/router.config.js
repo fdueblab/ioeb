@@ -510,7 +510,7 @@ export const asyncRouterMap = [
                 path: '/application/aml',
                 name: 'aml-monitor-template',
                 component: () => import('@/views/application/aml/monitor'),
-                meta: { title: '跨境支付事中监测', appCode: 'amlMonitor', keepAlive: true, permission: ['user'] }
+                meta: { title: '风险监测系统定制', appCode: 'amlMonitor', keepAlive: true, permission: ['user'] }
               }
             ]
           }
