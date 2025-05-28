@@ -1,6 +1,6 @@
 // eslint-disable-next-line camelcase
 const data_new = {
-  name: '新工作流',
+  name: '新元应用',
   nodeList: [],
   lineList: []
 }
