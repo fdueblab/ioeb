@@ -871,24 +871,24 @@ class {{apiName}}({{input}}):
         for (let i = 0; i < binaryData.length; i++) {
           bytes[i] = binaryData.charCodeAt(i)
         }
-        
+
         // 创建Blob对象
         const blob = new Blob([bytes], { type: 'application/zip' })
-        
+
         // 创建下载链接
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
         link.download = servicePackage.filename || 'service_package.zip'
-        
+
         // 触发下载
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
-        
+
         // 释放URL对象
         window.URL.revokeObjectURL(url)
-        
+
         this.$message.success('服务包下载完成')
       } catch (error) {
         console.error('下载服务包失败:', error)
@@ -964,13 +964,13 @@ class {{apiName}}({{input}}):
       }
 
       this.uploadServiceLoading = true
-      
+
       try {
         // 如果有缓存的文件，先进行服务封装
         if (this.cachedFile) {
           await this.realServicePackageAgent(this.cachedFile)
         }
-        
+
         const data = {
           name: this.form.serviceName,
           attribute: this.programInfo.attribute,
