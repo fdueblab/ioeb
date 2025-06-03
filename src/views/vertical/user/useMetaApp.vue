@@ -168,7 +168,7 @@ export default {
       loadEasyFlowFinish: false,
       services: [],
       data: {
-        name: '新工作流',
+        name: '新元应用',
         preName: '元应用名称',
         preInputName: '输入内容',
         preOutputName: '输出内容',
