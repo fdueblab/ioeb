@@ -6,7 +6,7 @@
         <a-col :span="24">
           <div class="page-toolbar">
             <div class="page-title">
-              <span>当前模块：{{ currentPageConfig.name }}</span>
+              <span>用户前端定制</span>
             </div>
             <div class="page-actions">
               <a-button
@@ -58,7 +58,7 @@
       <a-row v-else>
         <a-col :span="24">
           <div class="page-header">
-            <h2>{{ currentPageConfig.name }}</h2>
+            <h2>用户前端原型</h2>
             <div class="page-actions">
               <a-button type="link" @click="toggleEditMode">
                 <a-icon type="edit" /> 编辑页面
