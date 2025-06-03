@@ -801,7 +801,7 @@ class {{apiName}}({{input}}):
         formData.append('file', file.originFileObj || file)
 
         // 使用封装的streamAgent方法
-        streamAgent('/api/agent/aml_report', formData, {
+        streamAgent('/api/agent/service_packaging', formData, {
           onStart: () => {
             this.uploadServiceLoading = true
             this.agentIsRunning = true

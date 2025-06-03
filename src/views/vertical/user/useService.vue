@@ -376,24 +376,24 @@ export default {
       switch (type.toLowerCase()) {
         case 'int':
         case 'integer':
-          return `请输入整数，例如：42`
+          return `请输入整数`
         case 'float':
         case 'double':
         case 'number':
-          return `请输入数字，例如：3.14`
+          return `请输入数字`
         case 'boolean':
         case 'bool':
           return `请输入true或false`
         case 'array':
         case 'list':
-          return `请输入数组，例如：[1, 2, 3]`
+          return `请输入数组`
         case 'object':
         case 'json':
-          return `请输入JSON对象，例如：{"key": "value"}`
+          return `请输入JSON对象`
         default:
           // 处理类型后缀为[]的情况
           if (type.includes('[]')) {
-            return `请输入${type.replace('[]', '')}数组，例如：[1, 2, 3]`
+            return `请输入${type.replace('[]', '')}数组`
           }
           return `请输入${name}`
       }
