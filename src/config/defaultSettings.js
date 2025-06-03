@@ -23,7 +23,7 @@ export default {
   menu: {
     locale: true
   },
-  title: '算法智能体服务平台',
+  title: '算法模型智能体平台',
   pwa: false,
   iconfontUrl: '',
   production: process.env.NODE_ENV === 'production' && process.env.VUE_APP_PREVIEW !== 'true'
