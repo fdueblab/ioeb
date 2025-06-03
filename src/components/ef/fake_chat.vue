@@ -169,7 +169,7 @@ export default {
       this.showSuggestions = false
       this.suggestions = [...this.defaultSuggestions]
       this.filteredSuggestions = [...this.defaultSuggestions]
-      this.messages.push({ text: '请告诉我您对应用的需求，我将根据您的需求生成元应用工作流', isUser: false })
+      this.messages.push({ text: '请告诉我您对应用的需求，我将根据您的需求尝试生成元应用', isUser: false })
     },
     refresh() {
       this.init()

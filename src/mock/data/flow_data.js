@@ -1,5 +1,5 @@
 const pj1Flow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '课题一风险识别报告生成元应用',
   preInputName: '课题一跨境支付数据',
   preOutputName: '课题一风险评估报告',
@@ -83,7 +83,7 @@ const pj1Flow = {
 }
 
 const pj2Flow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '课题二风险识别报告生成元应用',
   preInputName: '跨境支付数据',
   preOutputName: '课题二风险评估报告',
@@ -167,7 +167,7 @@ const pj2Flow = {
 }
 
 const aircraftFlow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '智能飞行控制',
   preInputName: '智能飞行器参数',
   preOutputName: '智能飞行器任务结果',
@@ -237,7 +237,7 @@ const aircraftFlow = {
 }
 
 const pj1pj4pj3Flow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '金融风险报告生成',
   preInputName: '跨境贸易数据',
   preOutputName: '金融风险报告',
@@ -322,7 +322,7 @@ const pj1pj4pj3Flow = {
 }
 
 const pj4Flow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '课题四模型评测-安全性指纹',
   preInputName: '课题四模型数据',
   preOutputName: '课题四安全性指纹报告',
@@ -363,7 +363,7 @@ const pj4Flow = {
 }
 
 const healthFlow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '乡村医疗AI辅助诊断元应用',
   preInputName: '患者医疗数据',
   preOutputName: '诊断与健康管理方案',
@@ -559,7 +559,7 @@ const agricultureFlow = {
 }
 
 const evtolFlow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: 'eVTOL智能飞行控制元应用',
   preInputName: '飞行任务参数',
   preOutputName: '飞行控制结果',
@@ -656,7 +656,7 @@ const evtolFlow = {
 }
 
 const ecommerceFlow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '跨境电商智能营销元应用',
   preInputName: '产品信息与市场需求',
   preOutputName: '多语言营销方案',
@@ -753,7 +753,7 @@ const ecommerceFlow = {
 }
 
 const homeAIFlow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '家庭智能助手元应用',
   preInputName: '家庭环境数据与指令',
   preOutputName: '智能家庭管理方案',
