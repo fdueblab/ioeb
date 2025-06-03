@@ -17,7 +17,7 @@ const pj1Flow = {
       input: 'zip File',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '9000',
@@ -101,7 +101,7 @@ const pj2Flow = {
       input: 'zip File',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '9000',
@@ -255,7 +255,7 @@ const pj1pj4pj3Flow = {
       input: 'text',
       output: 'pdf',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '9000',
@@ -340,7 +340,7 @@ const pj4Flow = {
       input: 'vector',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '11000',
@@ -381,7 +381,7 @@ const healthFlow = {
       input: 'multipart',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '8001',
@@ -466,7 +466,7 @@ const agricultureFlow = {
       input: 'json/image',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '30001',
@@ -577,7 +577,7 @@ const evtolFlow = {
       input: 'json',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '40001',
@@ -674,7 +674,7 @@ const ecommerceFlow = {
       input: 'json',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '50001',
@@ -771,7 +771,7 @@ const homeAIFlow = {
       input: 'json',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '60001',
@@ -849,6 +849,47 @@ const homeAIFlow = {
   ]
 }
 
+const pjNewFlow = {
+  preName: '金融欺诈检测推理元应用',
+  preInputName: '金融交易数据',
+  preOutputName: '欺诈检测评估报告',
+  inputType: 2,
+  outputType: 1,
+  nodeList: [
+    {
+      id: '10000',
+      name: 'metaAppAgent',
+      type: 'start',
+      state: 'toBuild'
+    },
+    {
+      id: '9000',
+      name: 'batchAnalyzeTransactions',
+      type: 'process',
+      state: 'success'
+    },
+    {
+      id: '9101',
+      name: 'generateReport',
+      type: 'process',
+      state: 'warning'
+    },
+    {
+      id: '9102',
+      name: 'getReportData',
+      type: 'process',
+      state: 'warning'
+    }
+  ],
+  lineList: [
+    { from: '10000', to: '9000' },
+    { from: '9000', to: '10000' },
+    { from: '10000', to: '9101' },
+    { from: '9101', to: '9102' },
+    { from: '9102', to: '10000' }
+  ]
+}
+
 export function getPj1Flow() {
   return pj1Flow
 }
@@ -863,6 +904,10 @@ export function getPj1Pj4Pj3Flow() {
 
 export function getPj4Flow() {
   return pj4Flow
+}
+
+export function getPjNewFlow() {
+  return pjNewFlow
 }
 
 export function getTecTempFlow() {
