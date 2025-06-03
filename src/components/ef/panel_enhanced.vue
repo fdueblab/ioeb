@@ -17,7 +17,7 @@
           <div class="toolbar-right">
             <a-space>
               <a-tooltip title="导出流程数据">
-                <a-button shape="circle" icon="file-text" @click="downloadData" />
+                <a-button shape="circle" icon="download" @click="downloadData" />
               </a-tooltip>
               <a-tooltip title="智能体数据">
                 <a-button shape="circle" icon="file-text" @click="dataInfo" />
@@ -26,7 +26,7 @@
                 <a-button shape="circle" icon="reload" @click="dataReloadClear" />
               </a-tooltip>
               <a-tooltip title="添加工具">
-                <a-button type="primary" shape="circle" icon="plus" @click="addServices" />
+                <a-button type="primary" ghost shape="circle" icon="plus" @click="addServices" />
               </a-tooltip>
             </a-space>
           </div>
@@ -68,7 +68,9 @@
               position: 'absolute',
               left: node.left,
               top: node.top,
-              zIndex: 5
+              zIndex: 5,
+              opacity: nodePositionsCalculated ? 1 : 0,
+              transition: 'opacity 0.3s ease'
             }"
           />
         </template>
@@ -144,6 +146,7 @@ export default {
       metaAppBuilderVisible: false,
       buildingMetaApp: false,
       loadEasyFlowFinish: false,
+      nodePositionsCalculated: false,
       services: [],
       data: {
         name: '新元应用',
@@ -268,9 +271,9 @@ export default {
       console.log('画布尺寸:', containerWidth, containerHeight)
       console.log('节点列表:', this.data.nodeList)
 
-      // 画布中心点
+      // 画布中心点 - 稍微上移一些以获得更好的视觉平衡
       const centerX = containerWidth / 2
-      const centerY = containerHeight / 2
+      const centerY = containerHeight / 2 - 20  // 上移20px
 
       // 节点尺寸
       const nodeWidth = 160
@@ -288,37 +291,115 @@ export default {
       console.log('智能体节点:', agentNodes)
       console.log('工具节点:', toolNodes)
 
-      // 智能体节点放在中心
-      agentNodes.forEach((node, index) => {
+      // 智能体节点放在中心 - 如果有多个智能体，围绕中心分布
+      if (agentNodes.length === 1) {
+        // 单个智能体放在中心
+        const node = agentNodes[0]
         const newLeft = (centerX - nodeWidth / 2) + 'px'
-        const newTop = (centerY - nodeHeight / 2 + index * (nodeHeight + spacing)) + 'px'
+        const newTop = (centerY - nodeHeight / 2) + 'px'
 
-        // 使用Vue.set确保响应式更新
         this.$set(node, 'left', newLeft)
         this.$set(node, 'top', newTop)
-
         console.log(`智能体节点 ${node.name} 位置:`, node.left, node.top)
-      })
+      } else if (agentNodes.length > 1) {
+        // 多个智能体水平排列在中心
+        const totalWidth = agentNodes.length * nodeWidth + (agentNodes.length - 1) * 20
+        const startX = centerX - totalWidth / 2
+
+        agentNodes.forEach((node, index) => {
+          const newLeft = (startX + index * (nodeWidth + 20)) + 'px'
+          const newTop = (centerY - nodeHeight / 2) + 'px'
+
+          this.$set(node, 'left', newLeft)
+          this.$set(node, 'top', newTop)
+          console.log(`智能体节点 ${node.name} 位置:`, node.left, node.top)
+        })
+      }
 
       // 工具节点围绕智能体分布
       if (toolNodes.length > 0) {
-        const radius = Math.max(200, Math.min(containerWidth, containerHeight) / 4)
-        const angleStep = (2 * Math.PI) / Math.max(toolNodes.length, 4)
+        // 使用更大的基础半径，让节点分布更远
+        const baseRadius = Math.max(220, Math.min(containerWidth, containerHeight) / 3)
+
+        console.log('画布尺寸:', containerWidth, containerHeight)
+        console.log('中心点:', centerX, centerY)
+        console.log('基础半径:', baseRadius)
+
+        // 根据节点数量定义特定的角度分布
+        let angles = []
+
+        switch (toolNodes.length) {
+          case 1:
+            // 1个节点：放在下方
+            angles = [Math.PI/2]
+            break
+          case 2:
+            // 2个节点：上下分布
+            angles = [-Math.PI/2, Math.PI/2]
+            break
+          case 3:
+            // 3个节点：优化的三角形分布，上方两个角更接近左右边缘
+            angles = [Math.PI/2, 7*Math.PI/6, 11*Math.PI/6]  // 90°, 210°, 330°
+            break
+          case 4:
+            // 4个节点：左上、右上、左下、右下（四角分布）
+            angles = [-3*Math.PI/4, -Math.PI/4, 3*Math.PI/4, Math.PI/4]
+            break
+          case 5:
+            // 5个节点：五边形分布
+            angles = [-Math.PI/2, -Math.PI/2 + 2*Math.PI/5, -Math.PI/2 + 4*Math.PI/5,
+                     -Math.PI/2 + 6*Math.PI/5, -Math.PI/2 + 8*Math.PI/5]
+            break
+          case 6:
+            // 6个节点：六边形分布
+            angles = [0, Math.PI/3, 2*Math.PI/3, Math.PI, 4*Math.PI/3, 5*Math.PI/3]
+            break
+          default:
+            // 多于6个节点：均匀圆形分布
+            const angleStep = (2 * Math.PI) / toolNodes.length
+            angles = Array.from({length: toolNodes.length}, (_, i) => i * angleStep - Math.PI/2)
+            break
+        }
 
         toolNodes.forEach((node, index) => {
-          const angle = index * angleStep
-          const x = centerX + radius * Math.cos(angle) - nodeWidth / 2
-          const y = centerY + radius * Math.sin(angle) - nodeHeight / 2
+          const angle = angles[index]
+          const x = centerX + baseRadius * Math.cos(angle) - nodeWidth / 2
+          const y = centerY + baseRadius * Math.sin(angle) - nodeHeight / 2
 
-          // 确保节点在画布范围内
-          const newLeft = Math.max(20, Math.min(x, containerWidth - nodeWidth - 20)) + 'px'
-          const newTop = Math.max(20, Math.min(y, containerHeight - nodeHeight - 20)) + 'px'
+          // 智能边界检查：根据角度位置调整边距
+          let leftMargin = 5, rightMargin = 5, topMargin = 5, bottomMargin = 5
+
+          // 对于接近垂直边界的节点（正上、正下），使用更大的边距
+          const absAngle = Math.abs(angle % (2 * Math.PI))
+          const isNearVertical = Math.abs(Math.sin(angle)) > 0.8  // 接近垂直方向
+          const isNearHorizontal = Math.abs(Math.cos(angle)) > 0.8  // 接近水平方向
+          // 调整角落检测：包括四角和三角形的上方角落
+          const isCorner = (Math.abs(Math.sin(angle)) > 0.5 && Math.abs(Math.cos(angle)) >= 0.5) ||  // 标准四角
+                          (Math.abs(Math.sin(angle)) > 0.7 && Math.abs(Math.cos(angle)) > 0.3)   // 三角形的上方角落
+          // 专门检测三角形的上方角落（主要受左右边距影响）
+          const isUpperCorner = Math.sin(angle) < -0.7 && Math.abs(Math.cos(angle)) > 0.3  // 上方角落
+
+          if (isNearVertical) {
+            topMargin = bottomMargin = 15  // 垂直方向需要更多边距
+          } else if (isNearHorizontal) {
+            leftMargin = rightMargin = 5  // 水平方向适中边距
+          } else if (isUpperCorner) {
+            // 三角形上方角落：左右边距最小，上下边距适中
+            leftMargin = rightMargin = 2
+            topMargin = bottomMargin = 8
+          } else if (isCorner) {
+            // 其他四角节点使用最小边距
+            leftMargin = rightMargin = topMargin = bottomMargin = 3
+          }
+
+          const newLeft = Math.max(leftMargin, Math.min(x, containerWidth - nodeWidth - rightMargin)) + 'px'
+          const newTop = Math.max(topMargin, Math.min(y, containerHeight - nodeHeight - bottomMargin)) + 'px'
 
           // 使用Vue.set确保响应式更新
           this.$set(node, 'left', newLeft)
           this.$set(node, 'top', newTop)
 
-          console.log(`工具节点 ${node.name} 位置:`, node.left, node.top)
+          console.log(`工具节点 ${node.name} 角度:${(angle * 180 / Math.PI).toFixed(1)}° 位置:`, node.left, node.top)
         })
       }
 
@@ -328,6 +409,7 @@ export default {
       // 确保DOM更新后重绘连线
       this.$nextTick(() => {
         console.log('位置更新完成')
+        this.nodePositionsCalculated = true  // 位置计算完成，显示节点
         if (this.jsPlumb && this.loadEasyFlowFinish) {
           this.jsPlumb.repaintEverything()
         }
@@ -562,11 +644,7 @@ export default {
         type: nodeMenu.type || 'process',
         left: '0px',  // 初始位置，后续会自动计算
         top: '0px',
-        ico: nodeMenu.ico || 'el-icon-setting',
-        state: 'success',
-        input: 'json',
-        output: 'json',
-        version: '1.0'
+        state: 'success'
       }
 
       this.data.nodeList.push(node)
@@ -656,6 +734,7 @@ export default {
     },
     dataReload(data) {
       this.easyFlowVisible = false
+      this.nodePositionsCalculated = false  // 重置节点位置计算状态
       this.data = {
         name: '新元应用',
         preName: '元应用名称',
@@ -734,13 +813,7 @@ export default {
           id: nodeId,
           name: item.name || item.text || item.title || `工具${this.data.nodeList.length + 1}`,
           type: 'process',
-          left: '0px',
-          top: '0px',
-          ico: 'el-icon-setting',
-          state: 'success',
-          input: 'json',
-          output: 'json',
-          version: '1.0'
+          state: 'success'
         }
         this.data.nodeList.push(node)
         addedNodeIds.push(nodeId)
@@ -814,13 +887,7 @@ export default {
         id: nodeId,
         name: node.name,
         type: node.type,
-        left: '0px',
-        top: '0px',
-        ico: 'el-icon-setting',
-        state: 'success',
-        input: node.input || 'json',
-        output: node.output || 'json',
-        version: node.version || '1.0'
+        state: 'success'
       }
 
       this.data.nodeList.push(newNode)
@@ -936,7 +1003,7 @@ export default {
 
 // 左侧边栏
 .ef-sidebar {
-  width: 280px;
+  width: 260px;
   background: #fafafa;
   border-right: 1px solid #e8e8e8;
   position: relative;

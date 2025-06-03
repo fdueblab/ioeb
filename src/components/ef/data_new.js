@@ -6,13 +6,7 @@ const data_new = {
       id: 'agent_001',
       name: 'metaAppAgent',
       type: 'start',
-      left: '0px',
-      top: '0px',
-      ico: 'el-icon-cpu',
-      state: 'toBuild',
-      input: 'json',
-      output: 'json',
-      version: '1.0'
+      state: 'toBuild'
     }
   ],
   lineList: []
