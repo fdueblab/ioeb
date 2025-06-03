@@ -8,11 +8,17 @@
           <span class="ef-node-psubmenu" @click="m.open = !m.open"><i
             :class="{'el-icon-caret-bottom': m.open,'el-icon-caret-right': !m.open}"></i>{{ m.name }}</span>
           <ul v-show="m.open" class="f-node-menu-ul">
-            <draggable @end="end" @start="move" v-model="m.children" :options="draggableOptions">
-              <li v-for="subMenu in m.children" class="ef-node-menu-li" :key="subMenu.id" :type="subMenu.type">
-                <i :class="subMenu.ico" style="margin-right: 8px;"></i> {{ subMenu.name }}
-              </li>
-            </draggable>
+            <!--            <draggable @end="end" @start="move" v-model="m.children" :options="draggableOptions">-->
+            <!--              <li v-for="subMenu in m.children" class="ef-node-menu-li" :key="subMenu.id" :type="subMenu.type">-->
+            <!--                <i class="el-icon-setting" style="margin-right: 8px;"></i> {{ subMenu.name }}-->
+            <!--              </li>-->
+            <!--            </draggable>-->
+            <li v-for="subMenu in m.children"
+                style="display: flex; align-items: center; padding: 6px; color: #666; transition: background-color 0.3s;"
+                :key="subMenu.id"
+                :type="subMenu.type">
+              <i class="el-icon-setting" style="margin-right: 8px;"></i> {{ subMenu.name }}
+            </li>
           </ul>
         </div>
       </ul>

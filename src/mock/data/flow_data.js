@@ -1,5 +1,5 @@
 const pj1Flow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '课题一风险识别报告生成元应用',
   preInputName: '课题一跨境支付数据',
   preOutputName: '课题一风险评估报告',
@@ -17,7 +17,7 @@ const pj1Flow = {
       input: 'zip File',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '9000',
@@ -83,7 +83,7 @@ const pj1Flow = {
 }
 
 const pj2Flow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '课题二风险识别报告生成元应用',
   preInputName: '跨境支付数据',
   preOutputName: '课题二风险评估报告',
@@ -101,7 +101,7 @@ const pj2Flow = {
       input: 'zip File',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '9000',
@@ -167,7 +167,7 @@ const pj2Flow = {
 }
 
 const aircraftFlow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '智能飞行控制',
   preInputName: '智能飞行器参数',
   preOutputName: '智能飞行器任务结果',
@@ -237,7 +237,7 @@ const aircraftFlow = {
 }
 
 const pj1pj4pj3Flow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '金融风险报告生成',
   preInputName: '跨境贸易数据',
   preOutputName: '金融风险报告',
@@ -255,7 +255,7 @@ const pj1pj4pj3Flow = {
       input: 'text',
       output: 'pdf',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '9000',
@@ -322,7 +322,7 @@ const pj1pj4pj3Flow = {
 }
 
 const pj4Flow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '课题四模型评测-安全性指纹',
   preInputName: '课题四模型数据',
   preOutputName: '课题四安全性指纹报告',
@@ -340,7 +340,7 @@ const pj4Flow = {
       input: 'vector',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '11000',
@@ -363,7 +363,7 @@ const pj4Flow = {
 }
 
 const healthFlow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '乡村医疗AI辅助诊断元应用',
   preInputName: '患者医疗数据',
   preOutputName: '诊断与健康管理方案',
@@ -381,7 +381,7 @@ const healthFlow = {
       input: 'multipart',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '8001',
@@ -466,7 +466,7 @@ const agricultureFlow = {
       input: 'json/image',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '30001',
@@ -559,7 +559,7 @@ const agricultureFlow = {
 }
 
 const evtolFlow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: 'eVTOL智能飞行控制元应用',
   preInputName: '飞行任务参数',
   preOutputName: '飞行控制结果',
@@ -577,7 +577,7 @@ const evtolFlow = {
       input: 'json',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '40001',
@@ -656,7 +656,7 @@ const evtolFlow = {
 }
 
 const ecommerceFlow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '跨境电商智能营销元应用',
   preInputName: '产品信息与市场需求',
   preOutputName: '多语言营销方案',
@@ -674,7 +674,7 @@ const ecommerceFlow = {
       input: 'json',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '50001',
@@ -753,7 +753,7 @@ const ecommerceFlow = {
 }
 
 const homeAIFlow = {
-  name: '元应用工作流',
+  name: '新元应用',
   preName: '家庭智能助手元应用',
   preInputName: '家庭环境数据与指令',
   preOutputName: '智能家庭管理方案',
@@ -771,7 +771,7 @@ const homeAIFlow = {
       input: 'json',
       output: 'json',
       version: '1.0',
-      state: 'running'
+      state: 'toBuild'
     },
     {
       id: '60001',
@@ -849,6 +849,47 @@ const homeAIFlow = {
   ]
 }
 
+const pjNewFlow = {
+  preName: '金融欺诈检测推理元应用',
+  preInputName: '金融交易数据',
+  preOutputName: '欺诈检测评估报告',
+  inputType: 2,
+  outputType: 1,
+  nodeList: [
+    {
+      id: '10000',
+      name: 'metaAppAgent',
+      type: 'start',
+      state: 'toBuild'
+    },
+    {
+      id: '9000',
+      name: 'batchAnalyzeTransactions',
+      type: 'process',
+      state: 'success'
+    },
+    {
+      id: '9101',
+      name: 'generateReport',
+      type: 'process',
+      state: 'warning'
+    },
+    {
+      id: '9102',
+      name: 'getReportData',
+      type: 'process',
+      state: 'warning'
+    }
+  ],
+  lineList: [
+    { from: '10000', to: '9000' },
+    { from: '9000', to: '10000' },
+    { from: '10000', to: '9101' },
+    { from: '9101', to: '9102' },
+    { from: '9102', to: '10000' }
+  ]
+}
+
 export function getPj1Flow() {
   return pj1Flow
 }
@@ -863,6 +904,10 @@ export function getPj1Pj4Pj3Flow() {
 
 export function getPj4Flow() {
   return pj4Flow
+}
+
+export function getPjNewFlow() {
+  return pjNewFlow
 }
 
 export function getTecTempFlow() {

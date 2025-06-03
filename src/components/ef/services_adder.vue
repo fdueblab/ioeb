@@ -14,9 +14,10 @@
         @change="handleSearch"
         clearable
       />
+      <!-- todo: 数据库获取，重写节点勾选逻辑和添加方法 -->
       <el-tree
         :data="filterData"
-        empty-text=""
+        empty-text="服务数据正在迁移重构，暂不支持从此处添加工具"
         show-checkbox
         v-loading="loading"
         node-key="id"
@@ -26,8 +27,9 @@
         @check-change="handleCheckChange"
         class="service-tree"
       >
-        <span slot-scope="{ node, data }" class="custom-tree-node">
-          <i v-if="data.ico" :class="data.ico" class="node-icon" />
+        <!-- <span slot-scope="{ node, data }" class="custom-tree-node">-->
+        <span slot-scope="{ node }" class="custom-tree-node">
+          <!-- <i v-if="data.ico" :class="data.ico" class="node-icon" />-->
           <span class="node-label">{{ node.label }}</span>
         </span>
       </el-tree>
@@ -35,13 +37,13 @@
 
     <span slot="footer" class="dialog-footer">
       <el-button @click="onClose" class="cancel-button">取消</el-button>
-      <el-button type="primary" @click="onConfirm" class="confirm-button">确定</el-button>
+      <el-button type="primary" @click="onConfirm" class="confirm-button" disabled>确定</el-button>
     </span>
   </el-dialog>
 </template>
 
 <script>
-import { getAllAmlServiceNodes } from '@/mock/data/service_nodes'
+// import { getAllAmlServiceNodes } from '@/mock/data/service_nodes'
 import cloneDeep from 'lodash.clonedeep'
 
 export default {
@@ -84,7 +86,8 @@ export default {
       }, 500)
     },
     fetchServices() {
-      this.services = getAllAmlServiceNodes()
+      // todo: 从数据库获取
+      // this.services = getAllAmlServiceNodes()
       this.filterData = this.services
     },
     initSelectedItems() {
@@ -100,6 +103,7 @@ export default {
       })
       this.disableNodes(this.services)
     },
+    // todo: 下面都要重写
     disableNodes(nodes) {
       nodes.forEach(node => {
         if (node.children) {

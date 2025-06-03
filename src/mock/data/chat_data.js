@@ -1,4 +1,16 @@
-import { getAircraftFlow, getPj1Flow, getPj4Flow, getPj2Flow, getPj1Pj4Pj3Flow, getHealthFlow, getAgricultureFlow, getEvtolFlow, getEcommerceFlow, getHomeAIFlow } from '@/mock/data/flow_data'
+import {
+  getAircraftFlow,
+  getPj1Flow,
+  getPj4Flow,
+  getPj2Flow,
+  getPj1Pj4Pj3Flow,
+  getHealthFlow,
+  getAgricultureFlow,
+  getEvtolFlow,
+  getEcommerceFlow,
+  getHomeAIFlow,
+  getPjNewFlow
+} from '@/mock/data/flow_data'
 
 const aircraftPj = {
   chosenServices: ['目标识别微服务', '远程控制微服务'],
@@ -283,6 +295,58 @@ const pj4 = {
     }
   ],
   flowData: getPj4Flow()
+}
+
+const pjNew = {
+  chosenServices: ['基于多智能体协作的金融欺诈检测推理服务', '样例报告生成微服务'],
+  serviceNodes: [
+    {
+      id: '9',
+      type: 'group',
+      name: '跨境支付AI监测服务',
+      open: true,
+      children: [
+        {
+          id: '90',
+          type: 'group',
+          name: '基于多智能体协作的金融欺诈检测推理服务',
+          open: true,
+          children: [
+            {
+              id: '9000',
+              type: 'batchAnalyzeTransactions',
+              name: 'batchAnalyzeTransactions',
+              ico: 'el-icon-data-line',
+              style: {}
+            }
+          ]
+        },
+        {
+          id: '91',
+          type: 'group',
+          name: '样例报告生成微服务',
+          open: true,
+          children: [
+            {
+              id: '9101',
+              name: 'generateReport',
+              type: 'process',
+              ico: 'el-icon-document-add',
+              style: {}
+            },
+            {
+              id: '9102',
+              name: 'getReportData',
+              type: 'process',
+              ico: 'el-icon-zoom-in',
+              style: {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  flowData: getPjNewFlow()
 }
 
 const healthPj = {
@@ -686,6 +750,8 @@ export function getChatData(serviceType, userInput) {
             resolve(pj1)
           } else if (userInput.includes('课题二')) {
             resolve(pj2)
+          } else if (userInput.includes('欺诈')) {
+            resolve(pjNew)
           } else {
             reject(new Error())
           }
