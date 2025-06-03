@@ -408,6 +408,8 @@ export default {
       configFiles: [],
       uploadFiles: [],
       uploadConfigFiles: [],
+      // 缓存的原始文件，用于服务封装
+      cachedFile: null,
       code: '',
       codeTemplate: `# 微服务名称: {{serviceName}}
 
@@ -574,10 +576,13 @@ class {{apiName}}({{input}}):
       const file = this.uploadFiles[0]
       const fileExt = file.name.split('.').pop().toLowerCase()
 
+      // 缓存文件用于后续服务封装
+      this.cachedFile = file
+
       // 根据文件类型和垂直领域处理上传
-      if (fileExt === 'zip') {
+      if (fileExt === 'zip' || this.verticalType === 'aml') {
         // 真实代码分析逻辑
-        this.realCodeAnalysis(file)
+        this.realCodeAnalysisAgent(file)
       } else {
         // 其他领域的模拟上传逻辑
         this.mockCodeAnalysis(file)
@@ -697,7 +702,7 @@ class {{apiName}}({{input}}):
     },
 
     // 真实代码分析
-    realCodeAnalysis(file) {
+    realCodeAnalysisAgent(file) {
       // 重置Agent面板状态
       this.agentSteps = []
       this.agentError = ''
@@ -780,6 +785,117 @@ class {{apiName}}({{input}}):
       })
     },
 
+    // 真实服务封装
+    realServicePackageAgent(file) {
+      return new Promise((resolve, reject) => {
+        // 重置Agent面板状态
+        this.agentSteps = []
+        this.agentError = ''
+        this.agentWarning = ''
+        this.agentFinalResults = null
+        this.agentIsRunning = true
+        this.showAgentPanel = true
+
+        // 准备FormData
+        const formData = new FormData()
+        formData.append('file', file.originFileObj || file)
+
+        // 使用封装的streamAgent方法
+        streamAgent('/api/agent/aml_report', formData, {
+          onStart: () => {
+            this.uploadServiceLoading = true
+            this.agentIsRunning = true
+          },
+          onStep: (data) => {
+            this.agentSteps.push(data)
+          },
+          onError: (error) => {
+            this.agentError = error
+            this.uploadServiceLoading = false
+            this.agentIsRunning = false
+            this.$message.error('服务封装出错: ' + error)
+            reject(error)
+          },
+          onWarning: (warning) => {
+            this.agentWarning = warning
+            this.uploadServiceLoading = false
+            this.agentIsRunning = false
+            this.$message.warning(warning)
+            reject(warning)
+          },
+          onFinalResult: (results) => {
+            this.agentFinalResults = results
+
+            // 从最终结果中提取服务包数据
+            if (results && results.service_package) {
+              try {
+                const servicePackage = results.service_package
+                // 下载返回的压缩文件
+                this.downloadServicePackage(servicePackage)
+                this.$message.success('服务封装成功，正在下载服务包...')
+                resolve(servicePackage)
+              } catch (e) {
+                console.error('处理服务包数据出错:', e)
+                this.$message.error('服务包数据处理失败')
+                reject(e)
+              }
+            } else {
+              this.$message.error('未能获取服务包数据')
+              reject(new Error('未能获取服务包数据'))
+            }
+
+            this.uploadServiceLoading = false
+            this.agentIsRunning = false
+          },
+          onComplete: () => {
+            this.uploadServiceLoading = false
+            this.agentIsRunning = false
+          },
+          onDataProcessError: (e, line) => {
+            console.error('解析数据失败:', e, line)
+            this.agentError = '解析数据失败: ' + e.message
+            this.uploadServiceLoading = false
+            this.agentIsRunning = false
+            reject(e)
+          }
+        })
+      })
+    },
+
+    // 下载服务包
+    downloadServicePackage(servicePackage) {
+      try {
+        // 将base64内容转换为二进制数据
+        const binaryData = atob(servicePackage.content)
+        const bytes = new Uint8Array(binaryData.length)
+        for (let i = 0; i < binaryData.length; i++) {
+          bytes[i] = binaryData.charCodeAt(i)
+        }
+        
+        // 创建Blob对象
+        const blob = new Blob([bytes], { type: 'application/zip' })
+        
+        // 创建下载链接
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = servicePackage.filename || 'service_package.zip'
+        
+        // 触发下载
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        
+        // 释放URL对象
+        window.URL.revokeObjectURL(url)
+        
+        this.$message.success('服务包下载完成')
+      } catch (error) {
+        console.error('下载服务包失败:', error)
+        this.$message.error('下载服务包失败')
+      }
+    },
+
     // 点击节点处理
     handleNodeClick(params) {
       // 检查是否有节点ID
@@ -848,7 +964,13 @@ class {{apiName}}({{input}}):
       }
 
       this.uploadServiceLoading = true
+      
       try {
+        // 如果有缓存的文件，先进行服务封装
+        if (this.cachedFile) {
+          await this.realServicePackageAgent(this.cachedFile)
+        }
+        
         const data = {
           name: this.form.serviceName,
           attribute: this.programInfo.attribute,
@@ -939,6 +1061,7 @@ class {{apiName}}({{input}}):
       this.configFiles = []
       this.uploadFiles = []
       this.uploadConfigFiles = []
+      this.cachedFile = null
       this.code = ''
       this.options = null
     },
