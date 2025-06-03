@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import FlowPanel from '@/components/ef/panel_with_input'
+import FlowPanel from '@/components/ef/panel_enhanced'
 import FakeChat from '@/components/ef/fake_chat'
 import dictionaryCache from '@/utils/dictionaryCache'
 

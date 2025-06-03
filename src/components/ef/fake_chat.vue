@@ -75,7 +75,7 @@ export default {
         { value: '我想基于课题三的算法构建一个智能分析系统' },
         { value: '我想基于课题四的算法开发一个数据处理应用' },
         { value: '我需要使用课题一和课题三的技术开发一个金融风控系统' },
-        { value: '请帮我用课题四的模型创建一个预测分析工具' }
+        { value: '请帮我实现一个简单的金融欺诈检测应用' }
       ],
       defaultSuggestions: [
         { value: '我想基于课题一的算法生成一个跨境支付报告生成应用' },
@@ -83,7 +83,7 @@ export default {
         { value: '我想基于课题三的算法构建一个智能分析系统' },
         { value: '我想基于课题四的算法开发一个数据处理应用' },
         { value: '我需要使用课题一和课题三的技术开发一个金融风控系统' },
-        { value: '请帮我用课题四的模型创建一个预测分析工具' }
+        { value: '请帮我实现一个简单的金融欺诈检测应用' }
       ],
       filteredSuggestions: []
     }
@@ -169,7 +169,7 @@ export default {
       this.showSuggestions = false
       this.suggestions = [...this.defaultSuggestions]
       this.filteredSuggestions = [...this.defaultSuggestions]
-      this.messages.push({ text: '请告诉我您对应用的需求，我将根据您的需求生成元应用工作流', isUser: false })
+      this.messages.push({ text: '请告诉我您对应用的需求，我将根据您的需求尝试生成元应用', isUser: false })
     },
     refresh() {
       this.init()
@@ -241,17 +241,17 @@ export default {
 
 .suggestion-dropdown {
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 0;
   width: 100%;
   background-color: #fff;
   border: 1px solid #d9d9d9;
-  border-radius: 0 0 4px 4px;
+  border-radius: 4px 4px 0 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 9999;
   max-height: 200px;
   overflow-y: auto;
-  margin-top: 2px;
+  margin-bottom: 2px;
   transform: translateZ(0);
 }
 
