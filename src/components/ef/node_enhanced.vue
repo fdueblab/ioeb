@@ -75,9 +75,9 @@ export default {
     nodeIcoClass() {
       // 统一图标显示
       if (this.isMetaAgent) {
-        return 'el-icon-cpu' // 机器人图标
+        return 'el-icon-cpu'
       } else {
-        return 'el-icon-setting' // 扳手图标
+        return 'el-icon-setting'
       }
     },
 
@@ -90,8 +90,8 @@ export default {
     },
 
     nodeTypeLabel() {
-      if (this.isMetaAgent) return '智能体'
-      return this.node.type === 'process' ? '工具' : '节点'
+      if (this.isMetaAgent) return '元应用智能体'
+      return 'MCP工具'
     },
 
     nodeTypeTagClass() {
@@ -227,23 +227,23 @@ export default {
 .ef-node-main {
   display: flex;
   align-items: flex-start;
-  padding: 12px;  // 缩小20% (16px -> 12px)
+  padding: 12px;
   position: relative;
 }
 
 // 图标容器
 .ef-node-icon-container {
-  margin-right: 8px;  // 缩小20% (12px -> 8px)
+  margin-right: 8px;
 }
 
 .ef-node-icon-bg {
-  width: 32px;  // 缩小20% (40px -> 32px)
-  height: 32px;  // 缩小20% (40px -> 32px)
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;  // 缩小20% (18px -> 16px)
+  font-size: 16px;
 
   &.icon-bg-agent {
     background: rgba(255, 255, 255, 0.2);
@@ -283,7 +283,7 @@ export default {
 }
 
 .ef-node-title {
-  font-size: 12px;  // 缩小20% (14px -> 12px)
+  font-size: 12px;
   font-weight: 500;
   margin-bottom: 4px;
   overflow: hidden;
@@ -293,10 +293,10 @@ export default {
 
 .ef-node-type-tag {
   display: inline-block;
-  padding: 2px 4px;  // 缩小20% (2px 6px -> 2px 4px)
+  padding: 2px 4px;
   border-radius: 4px;
   font-size: 12px;
-  margin-bottom: 4px;  // 缩小20% (6px -> 4px)
+  margin-bottom: 4px;
 
   &.type-tag-agent {
     background: rgba(255, 255, 255, 0.2);
