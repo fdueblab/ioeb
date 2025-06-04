@@ -1,6 +1,7 @@
 <template>
-  <div v-if="easyFlowVisible" style="height: calc(100vh);">
-    <el-row>
+  <div v-if="easyFlowVisible" :style="containerStyle">
+    <!-- 工具栏 - 可选显示 -->
+    <el-row v-if="showToolbar">
       <el-col :span="24">
         <div class="ef-tooltar-enhanced">
           <div class="toolbar-left">
@@ -34,9 +35,9 @@
       </el-col>
     </el-row>
 
-    <div class="ef-main-container">
-      <!-- 左侧工具栏 -->
-      <div class="ef-sidebar">
+    <div class="ef-main-container" :style="mainContainerStyle">
+      <!-- 左侧工具栏 - 可选显示 -->
+      <div v-if="showSidebar" class="ef-sidebar">
         <div v-if="loadingServices" class="loading-overlay">
           <a-spin size="large" />
         </div>
@@ -146,6 +147,26 @@ export default {
     verticalType: {
       type: String,
       required: true
+    },
+    showToolbar: {
+      type: Boolean,
+      default: true
+    },
+    showSidebar: {
+      type: Boolean,
+      default: true
+    }
+  },
+  computed: {
+    containerStyle() {
+      return {
+        height: this.showToolbar ? 'calc(100vh)' : '100%'
+      }
+    },
+    mainContainerStyle() {
+      return {
+        height: this.showToolbar ? 'calc(100% - 65px)' : '100%'
+      }
     }
   },
   data() {

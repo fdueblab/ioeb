@@ -23,33 +23,25 @@ const fraudDetectionApp = {
               id: '9001',
               type: 'tool',
               name: 'batchAnalyzeTransactions',
-              description: '批量分析交易数据',
-              ico: 'el-icon-data-analysis',
-              style: {}
+              description: '批量分析交易数据'
             },
             {
               id: '9002',
               type: 'tool',
               name: 'detectAnomalies',
-              description: '检测异常交易模式',
-              ico: 'el-icon-warning',
-              style: {}
+              description: '检测异常交易模式'
             },
             {
               id: '9003',
               type: 'tool',
               name: 'calculateRiskScore',
-              description: '计算风险评分',
-              ico: 'el-icon-pie-chart',
-              style: {}
+              description: '计算风险评分'
             },
             {
               id: '9004',
               type: 'tool',
               name: 'extractFeatures',
-              description: '提取交易特征',
-              ico: 'el-icon-folder-opened',
-              style: {}
+              description: '提取交易特征'
             }
           ]
         },
@@ -64,17 +56,13 @@ const fraudDetectionApp = {
               id: '9101',
               name: 'generateReport',
               description: '生成检测报告',
-              type: 'tool',
-              ico: 'el-icon-document-add',
-              style: {}
+              type: 'tool'
             },
             {
               id: '9102',
               name: 'getReportData',
               description: '获取报告数据',
-              type: 'tool',
-              ico: 'el-icon-edit-outline',
-              style: {}
+              type: 'tool'
             }
           ]
         },
@@ -89,33 +77,25 @@ const fraudDetectionApp = {
               id: '9201',
               name: 'getReportData',
               description: '获取报告数据',
-              type: 'tool',
-              ico: 'el-icon-zoom-in',
-              style: {}
+              type: 'tool'
             },
             {
               id: '9202',
               name: 'storeResults',
               description: '存储分析结果',
-              type: 'tool',
-              ico: 'el-icon-folder-add',
-              style: {}
+              type: 'tool'
             },
             {
               id: '9203',
               name: 'queryHistoricalData',
               description: '查询历史数据',
-              type: 'tool',
-              ico: 'el-icon-search',
-              style: {}
+              type: 'tool'
             },
             {
               id: '9204',
               name: 'backupData',
               description: '备份重要数据',
-              type: 'tool',
-              ico: 'el-icon-upload',
-              style: {}
+              type: 'tool'
             }
           ]
         }
@@ -193,33 +173,25 @@ const medicalDiagnosisApp = {
               id: '8001',
               type: 'tool',
               name: 'transcribe',
-              description: '语音转文字',
-              ico: 'el-icon-microphone',
-              style: {}
+              description: '语音转文字'
             },
             {
               id: '8002',
               type: 'tool',
               name: 'detectLanguage',
-              description: '检测语言类型',
-              ico: 'el-icon-headset',
-              style: {}
+              description: '检测语言类型'
             },
             {
               id: '8003',
               type: 'tool',
               name: 'filterNoise',
-              description: '语音降噪处理',
-              ico: 'el-icon-magic-stick',
-              style: {}
+              description: '语音降噪处理'
             },
             {
               id: '8004',
               type: 'tool',
               name: 'extractKeywords',
-              description: '提取关键词',
-              ico: 'el-icon-key',
-              style: {}
+              description: '提取关键词'
             }
           ]
         },
@@ -234,33 +206,25 @@ const medicalDiagnosisApp = {
               id: '8101',
               type: 'tool',
               name: 'diagnose',
-              description: '医疗影像诊断',
-              ico: 'el-icon-picture',
-              style: {}
+              description: '医疗影像诊断'
             },
             {
               id: '8102',
               type: 'tool',
               name: 'analyzeSymptoms',
-              description: '症状分析',
-              ico: 'el-icon-search',
-              style: {}
+              description: '症状分析'
             },
             {
               id: '8103',
               type: 'tool',
               name: 'suggestTreatment',
-              description: '治疗建议',
-              ico: 'el-icon-first-aid-kit',
-              style: {}
+              description: '治疗建议'
             },
             {
               id: '8104',
               type: 'tool',
               name: 'riskAssessment',
-              description: '风险评估',
-              ico: 'el-icon-warning',
-              style: {}
+              description: '风险评估'
             }
           ]
         },
@@ -275,33 +239,25 @@ const medicalDiagnosisApp = {
               id: '8201',
               type: 'tool',
               name: 'analyze',
-              description: '健康数据分析',
-              ico: 'el-icon-data-analysis',
-              style: {}
+              description: '健康数据分析'
             },
             {
               id: '8202',
               type: 'tool',
               name: 'trackVitals',
-              description: '生命体征追踪',
-              ico: 'el-icon-monitor',
-              style: {}
+              description: '生命体征追踪'
             },
             {
               id: '8203',
               type: 'tool',
               name: 'predictTrends',
-              description: '健康趋势预测',
-              ico: 'el-icon-data-line',
-              style: {}
+              description: '健康趋势预测'
             },
             {
               id: '8204',
               type: 'tool',
               name: 'generateReports',
-              description: '生成健康报告',
-              ico: 'el-icon-document',
-              style: {}
+              description: '生成健康报告'
             }
           ]
         }
@@ -392,33 +348,25 @@ const agricultureApp = {
               id: '5001',
               type: 'tool',
               name: 'analyzeImage',
-              description: '农作物图像分析',
-              ico: 'el-icon-picture',
-              style: {}
+              description: '农作物图像分析'
             },
             {
               id: '5002',
               type: 'tool',
               name: 'identifyDisease',
-              description: '病虫害识别',
-              ico: 'el-icon-warning',
-              style: {}
+              description: '病虫害识别'
             },
             {
               id: '5003',
               type: 'tool',
               name: 'assessGrowth',
-              description: '生长状态评估',
-              ico: 'el-icon-data-analysis',
-              style: {}
+              description: '生长状态评估'
             },
             {
               id: '5004',
               type: 'tool',
               name: 'detectWeeds',
-              description: '杂草检测',
-              ico: 'el-icon-view',
-              style: {}
+              description: '杂草检测'
             }
           ]
         },
@@ -433,33 +381,25 @@ const agricultureApp = {
               id: '5101',
               type: 'tool',
               name: 'predictYield',
-              description: '产量预测',
-              ico: 'el-icon-data-line',
-              style: {}
+              description: '产量预测'
             },
             {
               id: '5102',
               type: 'tool',
               name: 'recommendActions',
-              description: '农事建议',
-              ico: 'el-icon-s-check',
-              style: {}
+              description: '农事建议'
             },
             {
               id: '5103',
               type: 'tool',
               name: 'optimizeIrrigation',
-              description: '灌溉优化',
-              ico: 'el-icon-refresh',
-              style: {}
+              description: '灌溉优化'
             },
             {
               id: '5104',
               type: 'tool',
               name: 'fertilizeRecommend',
-              description: '施肥建议',
-              ico: 'el-icon-magic-stick',
-              style: {}
+              description: '施肥建议'
             }
           ]
         }
@@ -524,33 +464,25 @@ const aircraftApp = {
               id: '3001',
               type: 'tool',
               name: 'getTargetLocation',
-              description: '获取目标位置',
-              ico: 'el-icon-location-information',
-              style: {}
+              description: '获取目标位置'
             },
             {
               id: '3002',
               type: 'tool',
               name: 'getTargetInfo',
-              description: '获取目标信息',
-              ico: 'el-icon-user',
-              style: {}
+              description: '获取目标信息'
             },
             {
               id: '3003',
               type: 'tool',
               name: 'trackTarget',
-              description: '目标跟踪',
-              ico: 'el-icon-aim',
-              style: {}
+              description: '目标跟踪'
             },
             {
               id: '3004',
               type: 'tool',
               name: 'classifyTarget',
-              description: '目标分类',
-              ico: 'el-icon-menu',
-              style: {}
+              description: '目标分类'
             }
           ]
         },
@@ -565,33 +497,25 @@ const aircraftApp = {
               id: '3101',
               type: 'tool',
               name: 'setTargetLocation',
-              description: '设置目标位置',
-              ico: 'el-icon-add-location',
-              style: {}
+              description: '设置目标位置'
             },
             {
               id: '3102',
               type: 'tool',
               name: 'setMotionMode',
-              description: '设置运动模式',
-              ico: 'el-icon-rank',
-              style: {}
+              description: '设置运动模式'
             },
             {
               id: '3103',
               type: 'tool',
               name: 'adjustAltitude',
-              description: '调整飞行高度',
-              ico: 'el-icon-top',
-              style: {}
+              description: '调整飞行高度'
             },
             {
               id: '3104',
               type: 'tool',
               name: 'emergencyLanding',
-              description: '紧急降落',
-              ico: 'el-icon-bottom',
-              style: {}
+              description: '紧急降落'
             }
           ]
         }
@@ -656,33 +580,25 @@ const ecommerceApp = {
               id: '6001',
               type: 'tool',
               name: 'translateContent',
-              description: '内容翻译',
-              ico: 'el-icon-document',
-              style: {}
+              description: '内容翻译'
             },
             {
               id: '6002',
               type: 'tool',
               name: 'generateDescription',
-              description: '生成商品描述',
-              ico: 'el-icon-edit-outline',
-              style: {}
+              description: '生成商品描述'
             },
             {
               id: '6003',
               type: 'tool',
               name: 'localizeContent',
-              description: '内容本地化',
-              ico: 'el-icon-location',
-              style: {}
+              description: '内容本地化'
             },
             {
               id: '6004',
               type: 'tool',
               name: 'optimizeSEO',
-              description: 'SEO优化',
-              ico: 'el-icon-search',
-              style: {}
+              description: 'SEO优化'
             }
           ]
         },
@@ -697,33 +613,25 @@ const ecommerceApp = {
               id: '6101',
               type: 'tool',
               name: 'analyzeTrend',
-              description: '趋势分析',
-              ico: 'el-icon-data-analysis',
-              style: {}
+              description: '趋势分析'
             },
             {
               id: '6102',
               type: 'tool',
               name: 'predictSales',
-              description: '销量预测',
-              ico: 'el-icon-data-line',
-              style: {}
+              description: '销量预测'
             },
             {
               id: '6103',
               type: 'tool',
               name: 'competitorAnalysis',
-              description: '竞品分析',
-              ico: 'el-icon-pie-chart',
-              style: {}
+              description: '竞品分析'
             },
             {
               id: '6104',
               type: 'tool',
               name: 'priceOptimization',
-              description: '价格优化',
-              ico: 'el-icon-money',
-              style: {}
+              description: '价格优化'
             }
           ]
         }
@@ -788,33 +696,25 @@ const evtolApp = {
               id: '4001',
               type: 'tool',
               name: 'pathPlanner',
-              description: '路径规划',
-              ico: 'el-icon-map-location',
-              style: {}
+              description: '路径规划'
             },
             {
               id: '4002',
               type: 'tool',
               name: 'flightController',
-              description: '飞行控制',
-              ico: 'el-icon-rank',
-              style: {}
+              description: '飞行控制'
             },
             {
               id: '4003',
               type: 'tool',
               name: 'stabilityControl',
-              description: '稳定性控制',
-              ico: 'el-icon-aim',
-              style: {}
+              description: '稳定性控制'
             },
             {
               id: '4004',
               type: 'tool',
               name: 'autoLanding',
-              description: '自动降落',
-              ico: 'el-icon-bottom',
-              style: {}
+              description: '自动降落'
             }
           ]
         },
@@ -829,33 +729,25 @@ const evtolApp = {
               id: '4101',
               type: 'tool',
               name: 'environmentPerception',
-              description: '环境感知',
-              ico: 'el-icon-view',
-              style: {}
+              description: '环境感知'
             },
             {
               id: '4102',
               type: 'tool',
               name: 'obstacleDetection',
-              description: '障碍物检测',
-              ico: 'el-icon-warning',
-              style: {}
+              description: '障碍物检测'
             },
             {
               id: '4103',
               type: 'tool',
               name: 'weatherAnalysis',
-              description: '天气分析',
-              ico: 'el-icon-cloudy',
-              style: {}
+              description: '天气分析'
             },
             {
               id: '4104',
               type: 'tool',
               name: 'safetyAssessment',
-              description: '安全评估',
-              ico: 'el-icon-lock',
-              style: {}
+              description: '安全评估'
             }
           ]
         }
@@ -920,33 +812,25 @@ const homeAIApp = {
               id: '7001',
               type: 'tool',
               name: 'objectDetection',
-              description: '物体检测',
-              ico: 'el-icon-view',
-              style: {}
+              description: '物体检测'
             },
             {
               id: '7002',
               type: 'tool',
               name: 'spatialMapping',
-              description: '空间映射',
-              ico: 'el-icon-map-location',
-              style: {}
+              description: '空间映射'
             },
             {
               id: '7003',
               type: 'tool',
               name: 'homeSecurityMonitor',
-              description: '家庭安防监控',
-              ico: 'el-icon-camera',
-              style: {}
+              description: '家庭安防监控'
             },
             {
               id: '7004',
               type: 'tool',
               name: 'environmentControl',
-              description: '环境控制',
-              ico: 'el-icon-setting',
-              style: {}
+              description: '环境控制'
             }
           ]
         },
@@ -961,33 +845,25 @@ const homeAIApp = {
               id: '7101',
               type: 'tool',
               name: 'naturalLanguageUnderstanding',
-              description: '自然语言理解',
-              ico: 'el-icon-chat-line-round',
-              style: {}
+              description: '自然语言理解'
             },
             {
               id: '7102',
               type: 'tool',
               name: 'emotionRecognition',
-              description: '情感识别',
-              ico: 'el-icon-user',
-              style: {}
+              description: '情感识别'
             },
             {
               id: '7103',
               type: 'tool',
               name: 'voiceInteraction',
-              description: '语音交互',
-              ico: 'el-icon-microphone',
-              style: {}
+              description: '语音交互'
             },
             {
               id: '7104',
               type: 'tool',
               name: 'personalAssistant',
-              description: '个人助理',
-              ico: 'el-icon-service',
-              style: {}
+              description: '个人助理'
             }
           ]
         }
@@ -1052,25 +928,19 @@ const pj1App = {
               id: '9002',
               type: 'tool',
               name: 'preprocess',
-              description: '数据预处理',
-              ico: 'el-icon-c-scale-to-original',
-              style: {}
+              description: '数据预处理'
             },
             {
               id: '9005',
               type: 'tool',
               name: 'predict',
-              description: '风险预测',
-              ico: 'el-icon-data-line',
-              style: {}
+              description: '风险预测'
             },
             {
               id: '9006',
               type: 'tool',
               name: 'visualize',
-              description: '可视化分析',
-              ico: 'el-icon-pie-chart',
-              style: {}
+              description: '可视化分析'
             }
           ]
         },
@@ -1085,17 +955,13 @@ const pj1App = {
               id: '9101',
               name: 'generateReport',
               description: '生成样例报告',
-              type: 'tool',
-              ico: 'el-icon-document-add',
-              style: {}
+              type: 'tool'
             },
             {
               id: '9102',
               name: 'getReportData',
               description: '获取报告数据',
-              type: 'tool',
-              ico: 'el-icon-zoom-in',
-              style: {}
+              type: 'tool'
             }
           ]
         }
@@ -1157,25 +1023,19 @@ const pj2App = {
               id: '9002',
               type: 'tool',
               name: 'preprocess',
-              description: '安全数据预处理',
-              ico: 'el-icon-c-scale-to-original',
-              style: {}
+              description: '安全数据预处理'
             },
             {
               id: '9005',
               type: 'tool',
               name: 'predict',
-              description: '多方计算预测',
-              ico: 'el-icon-data-line',
-              style: {}
+              description: '多方计算预测'
             },
             {
               id: '9006',
               type: 'tool',
               name: 'visualize',
-              description: '安全可视化',
-              ico: 'el-icon-pie-chart',
-              style: {}
+              description: '安全可视化'
             }
           ]
         },
@@ -1190,17 +1050,13 @@ const pj2App = {
               id: '9101',
               name: 'generateReport',
               description: '生成课题二报告',
-              type: 'tool',
-              ico: 'el-icon-document-add',
-              style: {}
+              type: 'tool'
             },
             {
               id: '9102',
               name: 'getReportData',
               description: '获取安全报告数据',
-              type: 'tool',
-              ico: 'el-icon-zoom-in',
-              style: {}
+              type: 'tool'
             }
           ]
         }
@@ -1262,26 +1118,19 @@ const pj4App = {
               id: '9401',
               type: 'tool',
               name: 'safetyFingerprint',
-              description: '安全性指纹识别',
-              ico: 'el-icon-finished',
-              style: {},
-              url: '/api/project4/safety-fingerprint'
+              description: '安全性指纹识别'
             },
             {
               id: '9402',
               type: 'tool',
               name: 'modelEvaluation',
-              description: '模型安全评估',
-              ico: 'el-icon-s-check',
-              style: {}
+              description: '模型安全评估'
             },
             {
               id: '9403',
               type: 'tool',
               name: 'securityAnalysis',
-              description: '安全性分析',
-              ico: 'el-icon-lock',
-              style: {}
+              description: '安全性分析'
             }
           ]
         }
@@ -1332,17 +1181,13 @@ const pj1pj4pj3App = {
               id: '9002',
               type: 'tool',
               name: 'preprocess',
-              description: '数据预处理',
-              ico: 'el-icon-c-scale-to-original',
-              style: {}
+              description: '数据预处理'
             },
             {
               id: '9005',
               type: 'tool',
               name: 'predict',
-              description: '风险预测',
-              ico: 'el-icon-data-line',
-              style: {}
+              description: '风险预测'
             }
           ]
         },
@@ -1357,10 +1202,7 @@ const pj1pj4pj3App = {
               id: '9401',
               type: 'tool',
               name: 'safetyFingerprint',
-              description: '安全性指纹识别',
-              ico: 'el-icon-finished',
-              style: {},
-              url: '/api/project4/safety-fingerprint'
+              description: '安全性指纹识别'
             }
           ]
         },
@@ -1375,26 +1217,19 @@ const pj1pj4pj3App = {
               id: '9302',
               type: 'tool',
               name: 'generateReport',
-              description: '生成综合风险报告',
-              ico: 'el-icon-document-add',
-              style: {},
-              url: '/api/project3/generate-report'
+              description: '生成综合风险报告'
             },
             {
               id: '9303',
               type: 'tool',
               name: 'riskAssessment',
-              description: '综合风险评估',
-              ico: 'el-icon-warning',
-              style: {}
+              description: '综合风险评估'
             },
             {
               id: '9304',
               type: 'tool',
               name: 'reportFormatting',
-              description: '报告格式化',
-              ico: 'el-icon-edit',
-              style: {}
+              description: '报告格式化'
             }
           ]
         }
