@@ -97,7 +97,7 @@ import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
 /* eslint-disable */
 import PanelEnhanced from '@/components/ef/panel_enhanced'
-import { getMetaAppData } from '@/mock/data/meta_apps_data'
+import { getMetaAppNodes } from '@/mock/data/meta_apps_data'
 
 export default {
   name: 'UseMetaApp',
@@ -293,7 +293,7 @@ export default {
       let metaAppData;
       switch (this.apiList[0]?.name) {
         case '技术评测元应用':
-          metaAppData = await getMetaAppData(this.verticalType, '课题四')
+          metaAppData = await getMetaAppNodes(this.verticalType, '课题四')
           this.$refs.flowPanel.updateInitialFlow(metaAppData.flowData)
           break
         case '无人机智能投递':
@@ -302,11 +302,11 @@ export default {
         case 'eVTOL智能飞行控制元应用':
         case '跨境电商智能营销元应用':
         case '家庭智能助手元应用':
-          metaAppData = await getMetaAppData(this.verticalType, '')
+          metaAppData = await getMetaAppNodes(this.verticalType, '')
           this.$refs.flowPanel.updateInitialFlow(metaAppData.flowData)
           break
         default:
-          metaAppData = await getMetaAppData(this.verticalType, '课题一')
+          metaAppData = await getMetaAppNodes(this.verticalType, '课题一')
           this.$refs.flowPanel.updateInitialFlow(metaAppData.flowData)
           break
       }
