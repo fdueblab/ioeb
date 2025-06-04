@@ -1281,7 +1281,7 @@ const pj1pj4pj3App = {
 }
 
 // 导出函数
-export function getMetaAppData(serviceType, userInput) {
+export function getMetaAppNodes(serviceType, userInput) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       switch (serviceType) {

@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import { getMetaAppData } from '@/mock/data/meta_apps_data'
+import { getMetaAppNodes } from '@/mock/data/meta_apps_data'
 
 export default {
   name: 'FakeChat',
@@ -126,7 +126,7 @@ export default {
       this.scrollToBottom()
       const input = this.userInput
       this.userInput = ''
-      getMetaAppData(this.verticalType, input).then((res) => {
+      getMetaAppNodes(this.verticalType, input).then((res) => {
         const { chosenServices, serviceNodes, flowData } = res
         const outputMessage = `按照您的需求，我选择了<b>${chosenServices.join('</b>, <b>')}</b>中的相关服务，并准备了待构建的任务智能体用于智能调用服务。您可以通过添加服务按钮来添加其它所需服务。`
         this.typeWriter(outputMessage)
