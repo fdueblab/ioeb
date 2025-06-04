@@ -10,12 +10,10 @@
           <!-- 微服务层级 -->
           <span class="ef-node-service" @click="service.open = !service.open">
             <i :class="{'el-icon-caret-bottom': service.open,'el-icon-caret-right': !service.open}"></i>
-            <!-- todo: 根据状态改颜色-->
             <i class="el-icon-help service-icon"></i>
             {{ service.name }}
           </span>
           <!-- 工具列表（默认折叠） -->
-          <!-- todo: 根据父节点状态改颜色-->
           <ul v-show="service.open" class="f-node-tool-ul">
             <li v-for="tool in service.children"
                 :key="tool.id"
@@ -185,7 +183,6 @@
 
 .service-icon {
   margin-right: 8px;
-  color: #52c41a;
   font-size: 16px;
 }
 

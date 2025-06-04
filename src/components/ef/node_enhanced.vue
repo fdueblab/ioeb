@@ -15,8 +15,7 @@
       <!-- 节点图标 -->
       <div class="node-icon">
         <i v-if="isMetaAgent" class="el-icon-cpu"></i>
-        <!-- todo: 根据状态改颜色-->
-        <i v-else class="el-icon-help"></i>
+        <i v-else class="el-icon-setting"></i>
       </div>
 
       <!-- 节点信息 -->
@@ -59,7 +58,6 @@
       <div v-if="!isMetaAgent && node.tools && node.tools.length > 0" class="tooltip-tools">
         <div class="tools-title">包含工具:</div>
         <div class="tools-list">
-          <!-- todo: 根据服务状态改颜色-->
           <div v-for="tool in node.tools" :key="tool.name" class="tool-item">
             <span class="tool-name">{{ tool.name }}</span>
             <span class="tool-desc">{{ tool.description }}</span>
@@ -276,11 +274,14 @@ export default {
 
 // 工具节点样式
 .ef-node-tool {
-  background: #ffffff;
-  border: 1px solid #e8e8e8;
+  background: linear-gradient(135deg, #f6f8fc 0%, #e8f4f8 100%);
+  border: 1px solid #d1e9ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.08);
 
   &:hover {
     border-color: #40a9ff;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e1f0ff 100%);
+    box-shadow: 0 4px 16px rgba(24, 144, 255, 0.15);
   }
 }
 
@@ -344,8 +345,9 @@ export default {
   }
 
   &.type-tag-tool {
-    background: #f0f0f0;
-    color: #666;
+    background: rgba(24, 144, 255, 0.1);
+    color: #1890ff;
+    font-weight: 500;
   }
 }
 
@@ -711,11 +713,13 @@ export default {
 
 /* MCP Server图标样式 */
 .ef-node-tool .node-icon {
-  background: #f6ffed;
-  border: 1px solid #b7eb8f;
+  background: linear-gradient(135deg, #87cefa 0%, #87CEEB 100%);
+  border: 1px solid #91d5ff;
+  box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
 }
 
 .ef-node-tool .node-icon i {
-  color: #52c41a;
+  color: white;
+  font-weight: bold;
 }
 </style>
