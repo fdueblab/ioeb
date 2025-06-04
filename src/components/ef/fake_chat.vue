@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import { getChatData } from '@/mock/data/chat_data'
+import { getMetaAppNodes } from '@/mock/data/meta_apps_data'
 
 export default {
   name: 'FakeChat',
@@ -126,16 +126,16 @@ export default {
       this.scrollToBottom()
       const input = this.userInput
       this.userInput = ''
-      getChatData(this.verticalType, input).then((res) => {
+      getMetaAppNodes(this.verticalType, input).then((res) => {
         const { chosenServices, serviceNodes, flowData } = res
-        const outputMessage = `按照您的需求，我选择了<b>${chosenServices.join('</b>, <b>')}</b>中的相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
+        const outputMessage = `按照您的需求，我选取了<b>${chosenServices.join('</b>, <b>')}</b>作为可供任务智能体调用的服务。您可以通过右上角的添加服务按钮来增加智能体可调用的服务或在右侧删除不必要的服务。`
         this.typeWriter(outputMessage)
         this.$emit('update-services', serviceNodes)
         this.$emit('update-flow', flowData)
         this.placeholder = '已智能生成工作流'
         this.isGenerated = true
       }).catch(() => {
-        const outputMessage = '非常抱歉，未能理解您的需求。本系统目前仅支持基于课题一、课题二、课题三、课题四的相关算法构建简单的元应用。'
+        const outputMessage = '非常抱歉，未能理解您的需求。本系统目前仅支持基于课题一、课题二、课题三、课题四或课题组内的金融欺诈检测相关算法构建简单的元应用。'
         this.typeWriter(outputMessage)
         this.isInputEnabled = true
       })
