@@ -128,7 +128,7 @@ export default {
       this.userInput = ''
       getMetaAppNodes(this.verticalType, input).then((res) => {
         const { chosenServices, serviceNodes, flowData } = res
-        const outputMessage = `按照您的需求，我选择了<b>${chosenServices.join('</b>, <b>')}</b>中的相关服务，并准备了待构建的任务智能体用于智能调用服务。您可以通过添加服务按钮来添加其它所需服务。`
+        const outputMessage = `按照您的需求，我选取了<b>${chosenServices.join('</b>, <b>')}</b>作为可供任务智能体调用的服务。您可以通过右上角的添加服务按钮来增加智能体可调用的服务或在右侧删除不必要的服务。`
         this.typeWriter(outputMessage)
         this.$emit('update-services', serviceNodes)
         this.$emit('update-flow', flowData)
