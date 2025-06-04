@@ -161,7 +161,8 @@ export default {
       // 服务器地址示例
       serverExamples: [
         { name: '利奈唑胺给药优化MCP Server', url: 'http://fdueblab.cn:25013/sse' },
-        { name: '围标检测MCP Server', url: 'http://fdueblab.cn:26023/sse' }
+        { name: '围标检测MCP Server', url: 'http://fdueblab.cn:26023/sse' },
+        { name: '多智能体欺诈检测MCP Server', url: 'http://fdueblab.cn:8778/sse' }
       ],
 
       // 消息示例
