@@ -124,7 +124,6 @@ import FlowInfo from '@/components/ef/info'
 import ServicesAdder from '@/components/ef/services_adder'
 import MetaAppBuilder from '@/components/ef/meta_app_builder'
 import lodash from 'lodash'
-import { getDataNew } from './data_new'
 
 export default {
   props: {
@@ -254,11 +253,22 @@ export default {
 
       try {
         const parsedData = this.initialFlow
-        // 只保留节点信息，忽略连线信息
+
+        // 自动添加智能体节点
+        const agentNode = {
+          id: 'metaAppAgent_' + this.getUUID(),
+          name: 'metaAppAgent',
+          type: 'start',
+          state: 'toBuild'
+        }
+
+        // 清空位置信息和连线，后续自动生成
         const cleanData = {
           ...parsedData,
+          nodeList: [agentNode, ...parsedData.nodeList],
           lineList: [] // 清空连线，后续自动生成
         }
+
         this.dataReload(cleanData);
       } catch (error) {
         console.error('Failed to get initial flow', error)
@@ -271,6 +281,9 @@ export default {
 
     // 自动布局算法
     calculateNodePositions() {
+      console.log('=== calculateNodePositions 开始 ===')
+      console.log('当前 data.nodeList:', JSON.stringify(this.data.nodeList, null, 2))
+
       // 确保容器存在并有正确尺寸
       if (!this.$refs.efContainer) {
         console.warn('画布容器未准备好，延迟执行布局')
@@ -839,10 +852,54 @@ export default {
       })
     },
     updateInitialFlow(newFlow) {
-      this.dataReload(newFlow)
+      console.log('updateInitialFlow 被调用，newFlow:', newFlow)
+
+      // 检查新流程是否已包含智能体节点
+      const hasAgentNode = newFlow?.nodeList?.some(node =>
+        node.name === 'metaAppAgent' || node.type === 'start'
+      )
+
+      console.log('是否已有智能体节点:', hasAgentNode)
+
+      if (!hasAgentNode && newFlow?.nodeList) {
+        // 如果没有智能体节点，添加一个
+        const agentNode = {
+          id: 'metaAppAgent_' + this.getUUID(),
+          name: 'metaAppAgent',
+          type: 'start',
+          state: 'toBuild'
+        }
+
+        console.log('添加智能体节点:', agentNode)
+
+        const flowWithAgent = {
+          ...newFlow,
+          nodeList: [agentNode, ...newFlow.nodeList],
+          lineList: [] // 清空连线，后续自动生成
+        }
+
+        console.log('带智能体的流程数据:', flowWithAgent)
+        this.dataReload(flowWithAgent)
+      } else {
+        console.log('使用原始流程数据')
+        this.dataReload(newFlow)
+      }
     },
     dataReloadClear() {
-      this.dataReload(getDataNew())
+      // 创建默认数据，包含智能体节点
+      const defaultData = {
+        preName: '新元应用',
+        nodeList: [
+          {
+            id: 'metaAppAgent_' + this.getUUID(),
+            name: 'metaAppAgent',
+            type: 'start',
+            state: 'toBuild'
+          }
+        ],
+        lineList: []
+      }
+      this.dataReload(defaultData)
     },
     downloadData() {
       this.$confirm('确定要下载流程数据吗？', '下载确认', {

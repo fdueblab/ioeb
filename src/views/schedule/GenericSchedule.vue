@@ -100,6 +100,8 @@ export default {
 
     clearFlow() {
       this.$refs.flowPanel.dataReloadClear()
+      // 只有在没有服务数据时才设置空的服务列表
+      if (!this.initServices || this.initServices.length === 0) {
       this.$refs.flowPanel.setServices([
         {
           id: '9',
@@ -109,6 +111,7 @@ export default {
           children: []
         }
       ])
+      }
     }
   }
 }
