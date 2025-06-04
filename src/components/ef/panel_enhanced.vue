@@ -177,9 +177,9 @@ export default {
           dashstyle: "0"
         },
         HoverPaintStyle: {
-          strokeWidth: 4,
+          strokeWidth: 5,
           stroke: "#722ed1",
-          dashstyle: "4 2"
+          dashstyle: "0"
         },
         EndpointStyle: {
           fill: "#1890ff",

@@ -68,7 +68,7 @@
           </a-row>
           <a-row :gutter="20">
             <a-col :span="4">
-              <a-form-item>
+              <a-form-item :wrapperCol="{ span: 12 }">
                 <span slot="label">程序
                   <a-tooltip title="请确保程序遵循文档中的规约，否则将无法成功上传使用">
                     <a-icon type="question-circle-o" />
