@@ -385,55 +385,55 @@ const healthFlow = {
     },
     {
       id: '8001',
-      name: 'transcribe',
+      name: '语音识别服务',
       type: 'process',
-      url: 'https://myApiServer.com/health/voice/transcribe',
-      left: '0',
-      top: '155px',
-      ico: 'el-icon-microphone',
-      input: 'audio file',
-      output: 'json',
-      version: '1.2',
-      state: 'success'
+      state: 'success',
+      serviceName: 'SpeechRecognitionService',
+      tools: [
+        { name: 'transcribe', description: '语音转文字' },
+        { name: 'detectLanguage', description: '检测语言类型' },
+        { name: 'filterNoise', description: '语音降噪处理' },
+        { name: 'extractKeywords', description: '提取关键词' }
+      ]
     },
     {
       id: '8101',
-      name: 'diagnose',
+      name: '医疗诊断服务',
       type: 'process',
-      url: 'https://myApiServer.com/health/diagnose',
-      left: '125px',
-      top: '340px',
-      ico: 'el-icon-picture',
       state: 'success',
-      input: 'image file',
-      output: 'json',
-      version: '1.1'
+      serviceName: 'MedicalDiagnosisService',
+      tools: [
+        { name: 'diagnose', description: '医疗影像诊断' },
+        { name: 'analyzeSymptoms', description: '症状分析' },
+        { name: 'suggestTreatment', description: '治疗建议' },
+        { name: 'riskAssessment', description: '风险评估' }
+      ]
     },
     {
       id: '8201',
-      name: 'analyze',
+      name: '健康监测服务',
       type: 'process',
-      url: 'https://myApiServer.com/health/monitor/analyze',
-      left: '350px',
-      top: '340px',
-      ico: 'el-icon-data-analysis',
       state: 'success',
-      input: 'json',
-      output: 'json',
-      version: '1.0'
+      serviceName: 'HealthMonitoringService',
+      tools: [
+        { name: 'analyze', description: '健康数据分析' },
+        { name: 'trackVitals', description: '生命体征追踪' },
+        { name: 'predictTrends', description: '健康趋势预测' },
+        { name: 'generateReports', description: '生成健康报告' }
+      ]
     },
     {
       id: '8202',
-      name: 'alert',
+      name: '预警通知服务',
       type: 'process',
-      url: 'https://myApiServer.com/health/monitor/alert',
-      left: '460px',
-      top: '75px',
-      ico: 'el-icon-bell',
       state: 'warning',
-      input: 'json',
-      output: 'json',
-      version: '0.9'
+      serviceName: 'AlertNotificationService',
+      tools: [
+        { name: 'alert', description: '健康预警' },
+        { name: 'sendNotification', description: '发送通知' },
+        { name: 'escalateUrgent', description: '紧急情况升级' },
+        { name: 'logEvents', description: '记录预警事件' }
+      ]
     }
   ],
   lineList: [
@@ -864,21 +864,42 @@ const pjNewFlow = {
     },
     {
       id: '9000',
-      name: 'batchAnalyzeTransactions',
+      name: '基于多智能体协作的金融欺诈检测推理服务',
       type: 'process',
-      state: 'success'
+      state: 'success',
+      serviceName: 'DataAnalysisService',
+      tools: [
+        { name: 'batchAnalyzeTransactions', description: '批量分析交易数据' },
+        { name: 'detectAnomalies', description: '检测异常交易模式' },
+        { name: 'calculateRiskScore', description: '计算风险评分' },
+        { name: 'extractFeatures', description: '提取交易特征' }
+      ]
     },
     {
       id: '9101',
-      name: 'generateReport',
+      name: '报告生成服务',
       type: 'process',
-      state: 'warning'
+      state: 'success',
+      serviceName: 'ReportService',
+      tools: [
+        { name: 'generateReport', description: '生成检测报告' },
+        { name: 'formatResults', description: '格式化分析结果' },
+        { name: 'exportToPDF', description: '导出PDF报告' },
+        { name: 'sendNotification', description: '发送报告通知' }
+      ]
     },
     {
       id: '9102',
-      name: 'getReportData',
+      name: '数据管理服务',
       type: 'process',
-      state: 'warning'
+      state: 'warning',
+      serviceName: 'DataManagementService',
+      tools: [
+        { name: 'getReportData', description: '获取报告数据' },
+        { name: 'storeResults', description: '存储分析结果' },
+        { name: 'queryHistoricalData', description: '查询历史数据' },
+        { name: 'backupData', description: '备份重要数据' }
+      ]
     }
   ],
   lineList: [

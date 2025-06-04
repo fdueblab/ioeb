@@ -25,7 +25,7 @@
               <a-tooltip title="重置元应用">
                 <a-button shape="circle" icon="reload" @click="dataReloadClear" />
               </a-tooltip>
-              <a-tooltip title="添加工具">
+              <a-tooltip title="添加服务">
                 <a-button type="primary" ghost shape="circle" icon="plus" @click="addServices" />
               </a-tooltip>
             </a-space>
@@ -54,11 +54,23 @@
         <!-- 画布背景网格 -->
         <div class="canvas-grid"></div>
 
+        <!-- 连线悬停标签 -->
+        <div v-if="connectionLabel.visible"
+             class="connection-hover-label"
+             :class="`label-${connectionLabel.type}`"
+             :style="{
+               left: connectionLabel.x + 'px',
+               top: connectionLabel.y + 'px'
+             }">
+          {{ connectionLabel.text }}
+        </div>
+
         <!-- 节点渲染 -->
         <template v-for="node in data.nodeList">
           <flow-node-enhanced
             :key="node.id"
             :node="node"
+            :app-name="data.preName"
             :activeElement="activeElement"
             @changeNodeSite="changeNodeSite"
             @nodeRightMenu="nodeRightMenu"
@@ -107,7 +119,7 @@
 import draggable from 'vuedraggable'
 import { easyFlowMixin } from '@/components/ef/mixins'
 import flowNodeEnhanced from '@/components/ef/node_enhanced'
-import nodeMenu from '@/components/ef/node_menu_with_input'
+import nodeMenu from '@/components/ef/node_menu_enhanced'
 import FlowInfo from '@/components/ef/info'
 import ServicesAdder from '@/components/ef/services_adder'
 import MetaAppBuilder from '@/components/ef/meta_app_builder'
@@ -163,6 +175,13 @@ export default {
         nodeId: undefined,
         sourceId: undefined,
         targetId: undefined
+      },
+      connectionLabel: {
+        visible: false,
+        text: '',
+        x: 0,
+        y: 0,
+        type: ''
       },
       isTesting: false,
       intervalId: null,
@@ -228,14 +247,19 @@ export default {
       return Math.random().toString(36).substr(3, 10)
     },
     parseInitialFlowText() {
-      if (!this.initialFlow || !this.initialFlow.nodeList || !this.initialFlow.lineList) {
+      if (!this.initialFlow || !this.initialFlow.nodeList) {
         this.dataReloadClear()
         return
       }
 
       try {
         const parsedData = this.initialFlow
-        this.dataReload(parsedData);
+        // 只保留节点信息，忽略连线信息
+        const cleanData = {
+          ...parsedData,
+          lineList: [] // 清空连线，后续自动生成
+        }
+        this.dataReload(cleanData);
       } catch (error) {
         console.error('Failed to get initial flow', error)
         this.dataReloadClear()
@@ -280,7 +304,7 @@ export default {
       const nodeHeight = 60
       const spacing = 50 // 节点间距
 
-      // 分离智能体和工具节点
+      // 分离智能体和服务节点
       const agentNodes = this.data.nodeList.filter(node =>
         node.name === 'metaAppAgent' || node.type === 'start'
       )
@@ -289,7 +313,7 @@ export default {
       )
 
       console.log('智能体节点:', agentNodes)
-      console.log('工具节点:', toolNodes)
+      console.log('服务节点:', toolNodes)
 
       // 智能体节点放在中心 - 如果有多个智能体，围绕中心分布
       if (agentNodes.length === 1) {
@@ -316,7 +340,7 @@ export default {
         })
       }
 
-      // 工具节点围绕智能体分布
+      // 服务节点围绕智能体分布
       if (toolNodes.length > 0) {
         // 使用更大的基础半径，让节点分布更远
         const baseRadius = Math.max(220, Math.min(containerWidth, containerHeight) / 3)
@@ -399,7 +423,7 @@ export default {
           this.$set(node, 'left', newLeft)
           this.$set(node, 'top', newTop)
 
-          console.log(`工具节点 ${node.name} 角度:${(angle * 180 / Math.PI).toFixed(1)}° 位置:`, node.left, node.top)
+          console.log(`服务节点 ${node.name} 角度:${(angle * 180 / Math.PI).toFixed(1)}° 位置:`, node.left, node.top)
         })
       }
 
@@ -481,7 +505,6 @@ export default {
     // 加载流程
     loadEasyFlow() {
       console.log('开始加载流程，节点数量:', this.data.nodeList.length)
-      console.log('连线数量:', this.data.lineList.length)
 
       // 先确保DOM已渲染，再计算节点位置
       this.$nextTick(() => {
@@ -499,42 +522,8 @@ export default {
           // 暂时设置标志防止connection事件被触发
           this.loadEasyFlowFinish = false;
 
-          // 初始化连线
-          for (let i = 0; i < this.data.lineList.length; i++) {
-            const line = this.data.lineList[i];
-            console.log('创建连线:', line.from, '->', line.to)
-
-            // 检查是否是智能体连接
-            const sourceNode = this.data.nodeList.find(n => n.id === line.from);
-            const targetNode = this.data.nodeList.find(n => n.id === line.to);
-            const isAgentConnection = sourceNode?.name === 'metaAppAgent' || targetNode?.name === 'metaAppAgent';
-
-            let connParam = {
-              source: line.from,
-              target: line.to,
-              label: line.label ? line.label : '',
-              connector: ["Bezier", { curviness: 60 }],
-              anchors: line.anchors ? line.anchors : undefined,
-              paintStyle: isAgentConnection ? {
-                strokeWidth: 4,
-                stroke: "#722ed1",
-                outlineStroke: "transparent",
-                outlineWidth: 8,
-                dashstyle: "0"
-              } : this.jsplumbSetting.PaintStyle,
-            };
-
-            try {
-              const conn = this.jsPlumb.connect(connParam, this.jsplumbConnectOptions);
-              // 为智能体连接添加特效
-              if (isAgentConnection) {
-                conn.addClass('agent-connection');
-              }
-              console.log('连线创建成功:', line.from, '->', line.to)
-            } catch (error) {
-              console.error('连线创建失败:', line, error)
-            }
-          }
+          // 自动创建智能体与服务节点之间的双向连线
+          this.createAutoConnections();
 
           this.$nextTick(() => {
             this.loadEasyFlowFinish = true;
@@ -544,36 +533,121 @@ export default {
       })
     },
 
-    // 创建连线的辅助方法，不触发事件
-    createConnection(from, to, skipEvent = false) {
-      const sourceNode = this.data.nodeList.find(n => n.id === from);
-      const isAgentConnection = sourceNode?.name === 'metaAppAgent' || sourceNode?.type === 'start';
+    // 自动创建连线：智能体与每个服务节点之间建立双向连线
+    createAutoConnections() {
+      // 找到智能体节点
+      const agentNodes = this.data.nodeList.filter(node =>
+        node.name === 'metaAppAgent' || node.type === 'start'
+      )
 
+      // 找到服务节点
+      const toolNodes = this.data.nodeList.filter(node =>
+        node.name !== 'metaAppAgent' && node.type !== 'start'
+      )
+
+      console.log('创建自动连线 - 智能体节点:', agentNodes.length, '服务节点:', toolNodes.length)
+
+      // 为每个智能体节点与每个节点建立双向连线
+      agentNodes.forEach(agentNode => {
+        toolNodes.forEach(toolNode => {
+          // 智能体 -> 服务（调用）
+          this.createAutoConnection(agentNode.id, toolNode.id, 'call')
+          // 服务 -> 智能体（返回）
+          this.createAutoConnection(toolNode.id, agentNode.id, 'return')
+        })
+      })
+
+      console.log('自动连线创建完成，总连线数:', this.data.lineList.length)
+    },
+
+    // 创建自动连线（不触发事件）
+    createAutoConnection(from, to, type = 'call') {
       try {
+        // 检查是否已存在相同类型的连线
+        const existingLine = this.data.lineList.find(line =>
+          line.from === from && line.to === to && line.type === type
+        );
+        if (existingLine) {
+          console.log(`连线已存在: ${type} ${from} -> ${to}`)
+          return;
+        }
+
+        const sourceNode = this.data.nodeList.find(n => n.id === from);
+        const targetNode = this.data.nodeList.find(n => n.id === to);
+        const isFromAgent = sourceNode?.name === 'metaAppAgent' || sourceNode?.type === 'start';
+        const isToAgent = targetNode?.name === 'metaAppAgent' || targetNode?.type === 'start';
+
+        let paintStyle;
+        let label = '';
+
+        if (isFromAgent && !isToAgent) {
+          // 智能体 -> 服务（调用）
+          paintStyle = {
+            strokeWidth: 3,
+            stroke: "#1890ff",
+            outlineStroke: "transparent",
+            outlineWidth: 6,
+            dashstyle: "0"
+          };
+          label = '调用MCP Server';
+        } else if (!isFromAgent && isToAgent) {
+          // 服务 -> 智能体（返回）
+          paintStyle = {
+            strokeWidth: 3,
+            stroke: "#52c41a",
+            outlineStroke: "transparent",
+            outlineWidth: 6,
+            dashstyle: "0"
+          };
+          label = '获取服务调用结果';
+        } else {
+          // 默认样式
+          paintStyle = this.jsplumbSetting.PaintStyle;
+        }
+
         const conn = this.jsPlumb.connect({
           source: from,
           target: to,
-          paintStyle: isAgentConnection ? {
-            strokeWidth: 4,
-            stroke: "#722ed1",
-            outlineStroke: "transparent",
-            outlineWidth: 8,
-            dashstyle: "0"
-          } : this.jsplumbSetting.PaintStyle
+          paintStyle: paintStyle,
+          overlays: [
+            ["Arrow", {
+              location: 1,
+              width: 12,
+              length: 12,
+              foldback: 0.8
+            }]
+          ]
         });
 
-        if (isAgentConnection) {
-          conn.addClass('agent-connection');
+        // 为连线添加悬停事件
+        if (conn) {
+          // 存储标签信息到连线上
+          conn.labelText = label;
+          conn.connectionType = type;
+
+          // 添加鼠标事件
+          conn.canvas.addEventListener('mouseenter', (e) => {
+            this.showConnectionLabel(conn, e);
+          });
+
+          conn.canvas.addEventListener('mouseleave', () => {
+            this.hideConnectionLabel();
+          });
         }
 
-        // 如果不跳过事件，则添加到lineList
-        if (!skipEvent && !this.hasLine(from, to)) {
-          this.data.lineList.push({ from, to });
-        }
+        // 添加到连线列表
+        this.data.lineList.push({
+          from,
+          to,
+          type: type,
+          label: label
+        });
+
+        console.log(`创建${type}连线: ${sourceNode?.name} -> ${targetNode?.name}`)
 
         return conn;
       } catch (error) {
-        console.error('创建连线失败:', from, '->', to, error);
+        console.error('创建自动连线失败:', from, '->', to, error);
         return null;
       }
     },
@@ -660,7 +734,9 @@ export default {
           const agentNode = this.data.nodeList.find(n => n.name === 'metaAppAgent' || n.type === 'start')
           if (agentNode && agentNode.id !== nodeId) {
             this.$nextTick(() => {
-              this.createConnection(agentNode.id, nodeId, false)
+              // 创建双向连线
+              this.createAutoConnection(agentNode.id, nodeId, 'call')  // 智能体 -> 服务
+              this.createAutoConnection(nodeId, agentNode.id, 'return') // 服务 -> 智能体
               this.jsPlumb.repaintEverything()
             })
           }
@@ -786,7 +862,7 @@ export default {
       })
     },
     handleServiceConfirm(selectedItems) {
-      // 修复添加工具功能 - 访问正确的children层级
+      // 修复添加服务功能 - 访问正确的children层级
       console.log('选中的服务项:', selectedItems)
 
       // 检查是否需要访问children.children
@@ -803,7 +879,7 @@ export default {
         })
       }
 
-      console.log('实际要添加的工具:', actualItems)
+      console.log('实际要添加的服务:', actualItems)
 
       // 添加节点
       const addedNodeIds = []
@@ -811,7 +887,7 @@ export default {
         const nodeId = this.getUUID()
         const node = {
           id: nodeId,
-          name: item.name || item.text || item.title || `工具${this.data.nodeList.length + 1}`,
+          name: item.name || item.text || item.title || `服务${this.data.nodeList.length + 1}`,
           type: 'process',
           state: 'success'
         }
@@ -842,9 +918,9 @@ export default {
           const agentNode = this.data.nodeList.find(n => n.name === 'metaAppAgent' || n.type === 'start')
           if (agentNode) {
             addedNodeIds.forEach(nodeId => {
-              if (!this.hasLine(agentNode.id, nodeId)) {
-                this.createConnection(agentNode.id, nodeId, false)
-              }
+              // 创建双向连线
+              this.createAutoConnection(agentNode.id, nodeId, 'call')   // 智能体 -> 服务
+              this.createAutoConnection(nodeId, agentNode.id, 'return') // 服务 -> 智能体
             })
           }
 
@@ -854,7 +930,7 @@ export default {
         })
       })
 
-      this.$message.success(`成功添加${actualItems.length}个工具`)
+      this.$message.success(`成功添加${actualItems.length}个服务`)
     },
     handleServiceClose() {
       this.servicesAdderVisible = false
@@ -901,6 +977,19 @@ export default {
           })
         })
       })
+    },
+    showConnectionLabel(conn, event) {
+      const rect = this.$refs.efContainer.getBoundingClientRect();
+      this.connectionLabel = {
+        visible: true,
+        text: conn.labelText,
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top - 30, // 上移30px
+        type: conn.connectionType
+      };
+    },
+    hideConnectionLabel() {
+      this.connectionLabel.visible = false;
     }
   }
 }
@@ -914,7 +1003,7 @@ export default {
 }
 
 /deep/ .jtk-connector:hover {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
 }
 
 /deep/ .jtk-endpoint {
@@ -926,35 +1015,57 @@ export default {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-/* 智能体连接特效 */
-/deep/ .agent-connection {
-  stroke-dasharray: 8 4;
-  animation: flow-animation 2s linear infinite;
-  filter: drop-shadow(0 2px 6px rgba(114, 46, 209, 0.3));
-}
-
-@keyframes flow-animation {
-  0% {
-    stroke-dashoffset: 0;
-  }
-  100% {
-    stroke-dashoffset: 12;
-  }
-}
-
 /* 连线标签样式增强 */
 /deep/ .jtk-overlay.flowLabel:not(.aLabel) {
-  background: linear-gradient(135deg, #722ed1 0%, #531dab 100%);
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
   color: white;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 500;
-  box-shadow: 0 2px 8px rgba(114, 46, 209, 0.3);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.2);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   position: relative;
+}
+
+/* 连线悬停标签样式 */
+.connection-hover-label {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: labelFadeIn 0.2s ease forwards;
+}
+
+.connection-hover-label.label-call {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.connection-hover-label.label-return {
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes labelFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
 }
 
 // 工具栏样式
