@@ -4,24 +4,26 @@
     ref="node"
     @click="clickNode"
     :class="nodeContainerClass"
+    @mouseenter="showTooltip"
+    @mouseleave="hideTooltip"
   >
     <!-- 智能体节点特殊效果 -->
     <div v-if="isMetaAgent" class="agent-glow"></div>
 
     <!-- 节点主体 -->
     <div class="ef-node-main">
-      <!-- 节点类型图标 -->
-      <div class="ef-node-icon-container">
-        <div class="ef-node-icon-bg" :class="nodeIconBgClass">
-          <i :class="nodeIcoClass"></i>
-        </div>
+      <!-- 节点图标 -->
+      <div class="node-icon">
+        <i v-if="isMetaAgent" class="el-icon-cpu"></i>
+        <!-- todo: 根据状态改颜色-->
+        <i v-else class="el-icon-help"></i>
       </div>
 
       <!-- 节点信息 -->
       <div class="ef-node-content">
         <!-- 节点名称 -->
-        <div class="ef-node-title" :title="node.name">
-          {{ node.name }}
+        <div class="ef-node-title" :title="nodeDisplayName">
+          {{ nodeDisplayName }}
         </div>
 
         <!-- 节点类型标签 -->
@@ -45,6 +47,26 @@
     <div v-if="isMetaAgent" class="agent-decoration">
       <div class="agent-badge">AI</div>
     </div>
+
+    <!-- Tooltip -->
+    <div v-if="tooltipVisible" class="node-tooltip" :class="[tooltipClass, tooltipPositionClass]">
+      <div class="tooltip-title">{{ nodeDisplayName }}</div>
+      <div v-if="!isMetaAgent" class="tooltip-service">微服务: {{ node.serviceName || node.name }}</div>
+      <div v-if="!isMetaAgent" class="tooltip-status">状态: {{ nodeStatusText }}</div>
+      <div v-if="isMetaAgent" class="tooltip-agent-desc">支持独立运行和柔性集成的任务智能体</div>
+
+      <!-- 工具列表 -->
+      <div v-if="!isMetaAgent && node.tools && node.tools.length > 0" class="tooltip-tools">
+        <div class="tools-title">包含工具:</div>
+        <div class="tools-list">
+          <!-- todo: 根据服务状态改颜色-->
+          <div v-for="tool in node.tools" :key="tool.name" class="tool-item">
+            <span class="tool-name">{{ tool.name }}</span>
+            <span class="tool-desc">{{ tool.description }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -52,10 +74,16 @@
 export default {
   props: {
     node: Object,
-    activeElement: Object
+    activeElement: Object,
+    appName: {
+      type: String,
+      default: '元应用智能体'
+    }
   },
   data() {
-    return {}
+    return {
+      tooltipVisible: false
+    }
   },
   computed: {
     // 是否是智能体节点
@@ -72,42 +100,6 @@ export default {
       }
     },
 
-    nodeIcoClass() {
-      // 统一图标显示
-      if (this.isMetaAgent) {
-        return 'el-icon-cpu'
-      } else {
-        return 'el-icon-setting'
-      }
-    },
-
-    nodeIconBgClass() {
-      return {
-        'icon-bg-agent': this.isMetaAgent,
-        'icon-bg-tool': !this.isMetaAgent,
-        [`icon-bg-${this.node.state}`]: true
-      }
-    },
-
-    nodeTypeLabel() {
-      if (this.isMetaAgent) return '元应用智能体'
-      return 'MCP工具'
-    },
-
-    nodeTypeTagClass() {
-      return {
-        'type-tag-agent': this.isMetaAgent,
-        'type-tag-tool': !this.isMetaAgent
-      }
-    },
-
-    nodeStatusTextClass() {
-      return {
-        'status-text-agent': this.isMetaAgent,
-        'status-text-tool': !this.isMetaAgent
-      }
-    },
-
     nodeStatusType() {
       const statusMap = {
         'success': 'success',
@@ -119,6 +111,13 @@ export default {
       return statusMap[this.node.state] || 'default'
     },
 
+    nodeStatusTextClass() {
+      return {
+        'status-text-agent': this.isMetaAgent,
+        'status-text-tool': !this.isMetaAgent
+      }
+    },
+
     nodeStatusText() {
       const textMap = {
         'success': '正常',
@@ -128,6 +127,85 @@ export default {
         'toBuild': '待构建'
       }
       return textMap[this.node.state] || '未知'
+    },
+
+    tooltipClass() {
+      return {
+        'tooltip-agent': this.isMetaAgent,
+        'tooltip-tool': !this.isMetaAgent
+      }
+    },
+
+    nodeTypeLabel() {
+      if (this.isMetaAgent) return '元应用智能体'
+      return 'MCP Server'
+    },
+
+    nodeTypeTagClass() {
+      return {
+        'type-tag-agent': this.isMetaAgent,
+        'type-tag-tool': !this.isMetaAgent
+      }
+    },
+
+    nodeDisplayName() {
+      if (this.isMetaAgent) return this.appName || '元应用智能体'
+      return this.node.name
+    },
+
+    tooltipPositionClass() {
+      // 获取节点的位置信息
+      if (!this.node.left || !this.node.top) {
+        return 'tooltip-position-top' // 默认显示在上方
+      }
+
+      // 解析节点位置（去掉px单位）
+      // const nodeLeft = parseInt(this.node.left.replace('px', ''))
+      const nodeTop = parseInt(this.node.top.replace('px', ''))
+
+      // 获取父容器（画布）信息
+      let containerHeight = 600 // 默认高度
+      // let containerWidth = 800 // 默认宽度
+
+      // 尝试获取真实的画布尺寸
+      try {
+        const container = this.$el?.parentElement?.parentElement
+        if (container) {
+          containerHeight = container.clientHeight || 600
+          // containerWidth = container.clientWidth || 800
+        }
+      } catch (e) {
+        // 如果获取失败，使用默认值
+      }
+
+      // 计算节点相对于画布中心的位置
+      const nodeHeight = 60 // 节点高度
+      const tooltipHeight = 150 // 估算tooltip高度
+      const margin = 20 // 边距
+
+      // 判断节点是否在画布上半部分
+      const isInUpperHalf = nodeTop < (containerHeight / 2)
+
+      // 判断是否接近上边界
+      const isNearTopBorder = nodeTop < tooltipHeight + margin
+
+      // 判断是否接近下边界
+      const isNearBottomBorder = (nodeTop + nodeHeight + tooltipHeight + margin) > containerHeight
+
+      // 智能选择tooltip位置
+      if (isNearTopBorder) {
+        // 接近上边界，强制显示在下方
+        return 'tooltip-position-bottom'
+      } else if (isNearBottomBorder) {
+        // 接近下边界，强制显示在上方
+        return 'tooltip-position-top'
+      } else if (isInUpperHalf) {
+        // 在上半部分，优先显示在下方
+        return 'tooltip-position-bottom'
+      } else {
+        // 在下半部分，优先显示在上方
+        return 'tooltip-position-top'
+      }
     }
   },
 
@@ -138,6 +216,14 @@ export default {
 
     deleteNode() {
       this.$emit('deleteNode', this.node.id)
+    },
+
+    showTooltip() {
+      this.tooltipVisible = true
+    },
+
+    hideTooltip() {
+      this.tooltipVisible = false
     }
   }
 }
@@ -225,60 +311,14 @@ export default {
 
 // 节点主体
 .ef-node-main {
-  display: flex;
-  align-items: flex-start;
+  display: block;
   padding: 12px;
   position: relative;
 }
 
-// 图标容器
-.ef-node-icon-container {
-  margin-right: 8px;
-}
-
-.ef-node-icon-bg {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-
-  &.icon-bg-agent {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-  }
-
-  &.icon-bg-tool {
-    background: #f0f0f0;
-    color: #666;
-  }
-
-  &.icon-bg-success {
-    background: #f6ffed;
-    color: #52c41a;
-  }
-
-  &.icon-bg-error {
-    background: #fff2f0;
-    color: #f5222d;
-  }
-
-  &.icon-bg-warning {
-    background: #fffbe6;
-    color: #fa8c16;
-  }
-
-  &.icon-bg-running {
-    background: #e6f7ff;
-    color: #1890ff;
-  }
-}
-
 // 节点内容
 .ef-node-content {
-  flex: 1;
+  margin-left: 40px;
   min-width: 0;
 }
 
@@ -341,7 +381,7 @@ export default {
 .agent-decoration {
   position: absolute;
   top: -8px;
-  left: -8px;  // 从右上角改为左上角
+  left: -8px;
 }
 
 .agent-badge {
@@ -377,11 +417,305 @@ export default {
   .ef-node-main {
     padding: 8px;
   }
+}
 
-  .ef-node-icon-bg {
-    width: 24px;
-    height: 24px;
-    font-size: 12px;
+// Tooltip样式
+.node-tooltip {
+  position: absolute;
+  left: 50%;
+  background: #ffffff;
+  color: #262626;
+  border: 1px solid #e8e8e8;
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-size: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  max-width: 320px;
+  min-width: 220px;
+
+  // 默认位置（上方显示）
+  &.tooltip-position-top {
+    top: -10px;
+    transform: translateX(-50%) translateY(-100%);
+    animation: tooltipFadeInTop 0.3s ease forwards;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 8px solid transparent;
+      border-top-color: #ffffff;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 9px solid transparent;
+      border-top-color: #e8e8e8;
+      z-index: -1;
+    }
   }
+
+  // 下方显示
+  &.tooltip-position-bottom {
+    bottom: -10px;
+    transform: translateX(-50%) translateY(100%);
+    animation: tooltipFadeInBottom 0.3s ease forwards;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 8px solid transparent;
+      border-bottom-color: #ffffff;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 9px solid transparent;
+      border-bottom-color: #e8e8e8;
+      z-index: -1;
+    }
+  }
+
+  .tooltip-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #1f1f1f;
+  }
+
+  .tooltip-service {
+    font-size: 12px;
+    margin-bottom: 6px;
+    color: #8c8c8c;
+    background: #f6f6f6;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  .tooltip-status {
+    font-size: 12px;
+    margin-bottom: 12px;
+    color: #595959;
+  }
+
+  .tooltip-agent-desc {
+    font-size: 12px;
+    margin-bottom: 8px;
+    color: #595959;
+    font-style: italic;
+    text-align: center;
+    padding: 8px 12px;
+    background: #f6f6f6;
+    border-radius: 6px;
+    border-left: 3px solid #1890ff;
+  }
+
+  .tooltip-tools {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 12px;
+    margin-top: 8px;
+
+    .tools-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #262626;
+      display: flex;
+      align-items: center;
+
+      &::before {
+        content: '🔧';
+        margin-right: 6px;
+        font-size: 14px;
+      }
+    }
+
+    .tools-list {
+      .tool-item {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        background: #fafafa;
+        border-radius: 8px;
+        border-left: 3px solid #52c41a;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .tool-name {
+          font-size: 12px;
+          font-weight: 500;
+          color: #262626;
+          font-family: 'Consolas', 'Monaco', monospace;
+          margin-bottom: 2px;
+        }
+
+        .tool-desc {
+          font-size: 11px;
+          color: #8c8c8c;
+          line-height: 1.4;
+        }
+      }
+    }
+  }
+}
+
+// 智能体tooltip样式
+.tooltip-agent {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &.tooltip-position-top {
+    &::after {
+      border-top-color: #667eea;
+    }
+
+    &::before {
+      border-top-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  &.tooltip-position-bottom {
+    &::after {
+      border-bottom-color: #667eea;
+    }
+
+    &::before {
+      border-bottom-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  .tooltip-title {
+    color: white;
+  }
+
+  .tooltip-service {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .tooltip-status {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .tooltip-agent-desc {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    border-left-color: rgba(255, 255, 255, 0.6);
+  }
+
+  .tooltip-tools {
+    border-top-color: rgba(255, 255, 255, 0.2);
+
+    .tools-title {
+      color: white;
+    }
+
+    .tools-list .tool-item {
+      background: rgba(255, 255, 255, 0.1);
+      border-left-color: rgba(255, 255, 255, 0.6);
+
+      .tool-name {
+        color: white;
+      }
+
+      .tool-desc {
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+  }
+}
+
+// 工具tooltip样式
+.tooltip-tool {
+  // 使用默认的白色主题
+}
+
+// 动画定义
+@keyframes tooltipFadeInTop {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-100%) scale(1);
+  }
+}
+
+@keyframes tooltipFadeInBottom {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(100%) scale(1);
+  }
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-100%) scale(1);
+  }
+}
+
+/* 节点图标 */
+.node-icon {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+/* 智能体图标样式 */
+.ef-node-agent .node-icon {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.ef-node-agent .node-icon i {
+  color: white;
+}
+
+/* MCP Server图标样式 */
+.ef-node-tool .node-icon {
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+}
+
+.ef-node-tool .node-icon i {
+  color: #52c41a;
 }
 </style>

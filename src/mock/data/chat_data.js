@@ -298,25 +298,51 @@ const pj4 = {
 }
 
 const pjNew = {
-  chosenServices: ['基于多智能体协作的金融欺诈检测推理服务', '样例报告生成微服务'],
+  chosenServices: ['基于多智能体协作的金融欺诈检测推理服务', '报告生成服务'],
   serviceNodes: [
     {
       id: '9',
       type: 'group',
-      name: '跨境支付AI监测服务',
+      name: '金融风险AI监测服务',
       open: true,
       children: [
         {
           id: '90',
           type: 'group',
           name: '基于多智能体协作的金融欺诈检测推理服务',
-          open: true,
+          serviceName: 'DataAnalysisService',
+          open: false, // 默认折叠
           children: [
             {
-              id: '9000',
-              type: 'batchAnalyzeTransactions',
+              id: '9001',
+              type: 'tool',
               name: 'batchAnalyzeTransactions',
-              ico: 'el-icon-data-line',
+              description: '批量分析交易数据',
+              ico: 'el-icon-data-analysis',
+              style: {}
+            },
+            {
+              id: '9002',
+              type: 'tool',
+              name: 'detectAnomalies',
+              description: '检测异常交易模式',
+              ico: 'el-icon-warning',
+              style: {}
+            },
+            {
+              id: '9003',
+              type: 'tool',
+              name: 'calculateRiskScore',
+              description: '计算风险评分',
+              ico: 'el-icon-pie-chart',
+              style: {}
+            },
+            {
+              id: '9004',
+              type: 'tool',
+              name: 'extractFeatures',
+              description: '提取交易特征',
+              ico: 'el-icon-folder-opened',
               style: {}
             }
           ]
@@ -324,21 +350,81 @@ const pjNew = {
         {
           id: '91',
           type: 'group',
-          name: '样例报告生成微服务',
-          open: true,
+          name: '报告生成服务',
+          serviceName: 'ReportService',
+          open: false, // 默认折叠
           children: [
             {
               id: '9101',
               name: 'generateReport',
-              type: 'process',
+              description: '生成检测报告',
+              type: 'tool',
               ico: 'el-icon-document-add',
               style: {}
             },
             {
               id: '9102',
+              name: 'formatResults',
+              description: '格式化分析结果',
+              type: 'tool',
+              ico: 'el-icon-edit-outline',
+              style: {}
+            },
+            {
+              id: '9103',
+              name: 'exportToPDF',
+              description: '导出PDF报告',
+              type: 'tool',
+              ico: 'el-icon-download',
+              style: {}
+            },
+            {
+              id: '9104',
+              name: 'sendNotification',
+              description: '发送报告通知',
+              type: 'tool',
+              ico: 'el-icon-message',
+              style: {}
+            }
+          ]
+        },
+        {
+          id: '92',
+          type: 'group',
+          name: '数据管理服务',
+          serviceName: 'DataManagementService',
+          open: false, // 默认折叠
+          children: [
+            {
+              id: '9201',
               name: 'getReportData',
-              type: 'process',
+              description: '获取报告数据',
+              type: 'tool',
               ico: 'el-icon-zoom-in',
+              style: {}
+            },
+            {
+              id: '9202',
+              name: 'storeResults',
+              description: '存储分析结果',
+              type: 'tool',
+              ico: 'el-icon-folder-add',
+              style: {}
+            },
+            {
+              id: '9203',
+              name: 'queryHistoricalData',
+              description: '查询历史数据',
+              type: 'tool',
+              ico: 'el-icon-search',
+              style: {}
+            },
+            {
+              id: '9204',
+              name: 'backupData',
+              description: '备份重要数据',
+              type: 'tool',
+              ico: 'el-icon-upload',
               style: {}
             }
           ]

@@ -101,6 +101,7 @@ import 'codemirror/mode/vue/vue.js'
 /* eslint-disable */
 import draggable from 'vuedraggable'
 import { easyFlowMixin } from '@/components/ef/mixins'
+// todo: 需要适配新的样式
 import flowNode from '@/components/ef/node'
 import nodeMenu from '@/components/ef/node_menu_with_input'
 import FlowInfo from '@/components/ef/info'
