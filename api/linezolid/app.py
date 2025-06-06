@@ -86,7 +86,7 @@ example_response = {
 }
 
 @app.post(
-    "/api/linezolid/calculate", 
+    "/api/calculate", 
     response_model=DoseResult, 
     tags=["linezolid"],
     summary="计算利奈唑胺推荐剂量",
@@ -170,7 +170,7 @@ async def root():
     }
 
 @app.get(
-    "/health", 
+    "/api/health", 
     tags=["system"],
     summary="健康检查",
     description="用于监控和负载均衡器的健康检查端点",
