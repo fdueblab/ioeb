@@ -322,15 +322,17 @@ export default {
         }
         // url地址
         let url
-        switch (process.env.NODE_ENV) {
-          case 'development':
-            url = `https://fdueblab.cn${this.serviceUrl}`
+        switch (process.env.VUE_APP_HOST) {
+          case 'fdueblab.cn':
+            url = `https://fdueblab.cn/api/${this.serviceUrl}`
             break
           case 'ums':
             // todo: 银联使用需要获取本机ipv4地址和服务对应端口
             // eslint-disable-next-line no-fallthrough
+            url = `http://131.252.10.118/api/${this.serviceUrl}`
+            break
           default:
-            url = this.serviceUrl
+            url = `http://${process.env.VUE_APP_HOST}/api/${this.serviceUrl}`
         }
         // 文件类型
         if (this.responseType === 2) {
