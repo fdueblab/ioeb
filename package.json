@@ -11,7 +11,10 @@
     "lint:nofix": "vue-cli-service lint --no-fix",
     "lint:js": "eslint src/**/*.js --fix",
     "lint:css": "stylelint src/**/*.*ss --fix  --custom-syntax postcss-less",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "docs:dev": "vitepress dev docs --host",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
     "@ant-design-vue/pro-layout": "^1.0.12",
@@ -101,6 +104,7 @@
     "stylelint-config-standard": "^25.0.0",
     "stylelint-order": "^5.0.0",
     "svg-sprite-loader": "^6.0.11",
+    "vitepress": "^1.6.3",
     "vue-svg-icon-loader": "^2.1.1",
     "vue-svg-loader": "0.16.0",
     "webpack-theme-color-replacer": "^1.3.26"
