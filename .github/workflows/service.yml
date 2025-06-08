@@ -1,0 +1,146 @@
+# 涉及服务的更新应由service分支或手动触发
+name: Deploy services to Server
+
+on:
+  push:
+    branches:
+      - service
+
+jobs:
+  # Project_1 构建和推送镜像
+  build-project1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push Project_1 Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-project1:latest ./api/Project_1
+          docker push polarsnowleopard/ioeb-project1:latest
+
+  # Project_2 构建和推送镜像
+  build-project2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push Project_1 Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-project2:latest ./api/Project_2
+          docker push polarsnowleopard/ioeb-project2:latest
+
+  # Project-3 构建和推送镜像
+  build-project3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push Project-3 Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-project3:latest ./api/Project-3
+          docker push polarsnowleopard/ioeb-project3:latest
+
+  # Project-4 构建和推送镜像
+  build-project4:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push Project-4 Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-project4:latest ./api/Project-4
+          docker push polarsnowleopard/ioeb-project4:latest
+
+  # linezolid 构建和推送镜像
+  build-linezolid:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push linezolid Docker image
+        run: |
+          docker build -t polarsnowleopard/ioeb-linezolid:latest ./api/linezolid
+          docker push polarsnowleopard/ioeb-linezolid:latest
+
+  # 部署到服务器 (依赖所有构建任务完成)
+  deploy:
+    needs: [build-project1, build-project2, build-project3, build-project4, build-linezolid]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          DOMAIN: ${{ secrets.DOMAIN }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+
+          # 创建部署目录
+          ssh ubuntu@$SERVER_IP "mkdir -p ~/ioeb"
+
+          # 拷贝配置文件到服务器
+          scp docker-compose.yml ubuntu@$SERVER_IP:~/ioeb/
+          # scp nginx.conf ubuntu@$SERVER_IP:~/ioeb/
+          scp -r api ubuntu@$SERVER_IP:~/ioeb/
+
+          # 确保数据目录存在
+          ssh ubuntu@$SERVER_IP << EOF
+            mkdir -p ~/ioeb/api/Project_1/checkpoint
+            mkdir -p ~/ioeb/api/Project_2/checkpoint
+            mkdir -p ~/ioeb/api/Project-3/data
+            mkdir -p ~/ioeb/api/Project-4/eval_config
+            mkdir -p ~/ioeb/api/Project-4/eval_result
+            mkdir -p ~/ioeb/api/Project-4/graph_dataset
+
+            cd ~/ioeb
+            
+            # 拉取最新镜像
+            sudo docker-compose pull
+
+            # 停止并移除现有容器
+            sudo docker-compose down || true
+
+            # 启动所有服务
+            sudo docker-compose up -d
+          EOF
