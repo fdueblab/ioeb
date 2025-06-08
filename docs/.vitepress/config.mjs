@@ -2,6 +2,8 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  base: '/docs/',
+  
   title: "模型智能体平台",
   description: "复旦大学计算与智能创新学院电子商务实验室",
   themeConfig: {
