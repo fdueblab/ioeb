@@ -4,6 +4,10 @@ node_modules
 /deploy
 /aml
 
+# docs
+docs/.vitepress/dist
+docs/.vitepress/cache
+
 # python
 **/__pycache__
 **/.DS_Store
