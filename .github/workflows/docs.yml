@@ -1,33 +1,18 @@
-# 主分支只负责部署前端
-name: Deploy to Server
+# docs分支负责文档部署
+name: Deploy docs to Server
 
 on:
   push:
     branches:
-      - master
-      # - zfy
+      - docs
 
 jobs:
-  # 前端构建和推送镜像
-  build-frontend:
+  # 文档构建和推送镜像
+  build-docs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Install yarn
-        run: npm install -g yarn
-
-      - name: Install dependencies
-        run: yarn install
-
-      - name: Build frontend
-        run: yarn build
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -35,14 +20,14 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Build and push frontend Docker image
+      - name: Build and push docs Docker image
         run: |
-          docker build -t polarsnowleopard/ioeb-frontend:latest .
-          docker push polarsnowleopard/ioeb-frontend:latest
+          docker build -t polarsnowleopard/ioeb-docs:latest ./docs
+          docker push polarsnowleopard/ioeb-docs:latest
 
   # 部署到服务器 (依赖所有构建任务完成)
   deploy:
-    needs: [build-frontend]
+    needs: [build-docs]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -79,7 +64,7 @@ jobs:
             cd ~/ioeb
             
             # 拉取最新镜像
-            sudo docker-compose pull
+            sudo docker-compose pull docs
 
             # 停止并移除现有容器
             sudo docker-compose down || true
