@@ -2,6 +2,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# 安装git，VitePress构建时需要git来获取文件信息
+RUN apk add --no-cache git
+
 # 复制package.json和package-lock.json（如果存在）
 COPY package*.json ./
 
