@@ -38,7 +38,7 @@ export default defineConfig({
 
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
-    logo: '/.vitepress/public/logo.png',
+    logo: '/docs/logo.png',
 
     // 启用本地搜索
     search: {

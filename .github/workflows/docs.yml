@@ -64,7 +64,7 @@ jobs:
             cd ~/ioeb
             
             # 拉取最新镜像
-            sudo docker-compose pull
+            sudo docker-compose pull docs
 
             # 停止并移除现有容器
             sudo docker-compose down || true
