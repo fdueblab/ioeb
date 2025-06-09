@@ -24,7 +24,7 @@ jobs:
 
       - name: Build and push docs Docker image
         run: |
-          docker build -t polarsnowleopard/ioeb-docs:latest ./docs
+          docker build -f docs/Dockerfile -t polarsnowleopard/ioeb-docs:latest .
           docker push polarsnowleopard/ioeb-docs:latest
 
   # 部署到服务器 (依赖所有构建任务完成)

@@ -5,14 +5,17 @@ WORKDIR /app
 # 安装git，VitePress构建时需要git来获取文件信息
 RUN apk add --no-cache git
 
-# 复制package.json和package-lock.json（如果存在）
-COPY package*.json ./
+# 复制docs目录的package.json和package-lock.json（如果存在）
+COPY docs/package*.json ./
 
 # 安装依赖
 RUN npm install
 
-# 复制源代码（包含.git目录用于lastUpdated功能）
+# 复制整个项目（包含.git目录用于lastUpdated功能）
 COPY . .
+
+# 切换到docs目录
+WORKDIR /app/docs
 
 # 配置git用户（用于lastUpdated功能）
 RUN git config --global user.email "ci@example.com" && \
@@ -25,10 +28,10 @@ RUN npm run build
 FROM nginx:alpine
 
 # 复制构建产物到nginx
-COPY --from=0 /app/.vitepress/dist /usr/share/nginx/html
+COPY --from=0 /app/docs/.vitepress/dist /usr/share/nginx/html
 
 # 复制nginx配置
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=0 /app/docs/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8000
 
