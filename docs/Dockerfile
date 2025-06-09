@@ -5,17 +5,14 @@ WORKDIR /app
 # 安装git，VitePress构建时需要git来获取文件信息
 RUN apk add --no-cache git
 
-# 复制docs目录的package.json和package-lock.json（如果存在）
-COPY docs/package*.json ./
-
-# 安装依赖
-RUN npm install
-
-# 复制整个项目（包含.git目录用于lastUpdated功能）
+# 先复制整个项目（包含.git目录用于lastUpdated功能）
 COPY . .
 
 # 切换到docs目录
 WORKDIR /app/docs
+
+# 安装docs目录的依赖
+RUN npm install
 
 # 配置git用户（用于lastUpdated功能）
 RUN git config --global user.email "ci@example.com" && \
