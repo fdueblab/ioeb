@@ -96,6 +96,77 @@ git push origin feature/你的名字-功能描述 --force-with-lease
 3. 指定审查者（通常是项目负责人）
 4. 等待代码审查和合并
 
+### 5. 合并策略（重要！解决merge记录问题）
+
+#### 🎯 推荐：使用Squash Merge
+```bash
+# 在GitHub PR页面选择 "Squash and merge"
+# 这会将你的多个提交合并为一个清晰的提交记录
+```
+
+**优点**：
+- 保持develop分支历史简洁
+- 每个功能对应一个提交记录
+- 易于回滚和代码追踪
+
+#### 🔄 替代方案：Interactive Rebase
+如果需要本地合并提交：
+```bash
+# 在功能分支上，合并最近3个提交
+git rebase -i HEAD~3
+
+# 在编辑器中：
+# pick <commit1>    第一个提交保持不变
+# squash <commit2>  合并到第一个提交
+# squash <commit3>  合并到第一个提交
+
+# 编辑合并后的提交信息
+git commit --amend
+```
+
+#### ❌ 避免使用：常规Merge
+```bash
+# 避免这样做，会产生大量merge记录
+git checkout develop
+git merge feature/your-branch  # 会创建merge commit
+```
+
+### 6. 清理分支
+```bash
+# 功能合并后删除本地分支
+git branch -d feature/你的名字-功能描述
+
+# 删除远程分支
+git push origin --delete feature/你的名字-功能描述
+```
+
+## 📈 进阶：定期同步策略
+
+### 长期功能分支同步
+如果功能开发周期较长，定期同步develop：
+```bash
+# 每周同步一次develop分支
+git checkout feature/your-branch
+git fetch origin
+git rebase origin/develop
+
+# 解决冲突后推送
+git push origin feature/your-branch --force-with-lease
+```
+
+### 协作分支管理
+多人协作同一功能时：
+```bash
+# 创建共享功能分支
+git checkout -b feature/team-shared-feature
+
+# 团队成员创建子分支
+git checkout -b feature/your-name-shared-feature-part
+
+# 完成后先合并到共享分支（使用squash）
+# 最后由负责人将共享分支合并到develop
+```
+
 ## 🔍 代码审查流程
 
 ### 审查者责任
@@ -148,12 +219,44 @@ git push origin feature/myname-new-feature --force-with-lease
 # 查看当前状态
 git status
 
-# 查看提交历史
-git log --oneline --graph
+# 查看提交历史（简洁图形化）
+git log --oneline --graph --decorate
+
+# 查看分支历史（更详细）
+git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
 
 # 查看文件修改
 git diff
 git diff --cached  # 查看暂存区修改
+```
+
+### 清理和优化历史
+```bash
+# 压缩最近的N个提交
+git rebase -i HEAD~N
+
+# 查看哪些分支已经合并（可以安全删除）
+git branch --merged
+
+# 批量删除已合并的本地分支
+git branch --merged | grep -v "\*\|master\|develop" | xargs -n 1 git branch -d
+
+# 清理远程追踪分支
+git remote prune origin
+```
+
+### 解决merge记录过多的紧急方案
+```bash
+# 如果已经有很多merge记录，可以重写历史（谨慎使用！）
+# 只在个人分支或征得团队同意后使用
+
+# 方案1：重置到某个干净的提交点
+git reset --hard <clean-commit-hash>
+git cherry-pick <commit1> <commit2> <commit3>  # 挑选需要的提交
+
+# 方案2：创建新的干净分支
+git checkout -b feature/your-name-clean-version
+git cherry-pick <needed-commits>
 ```
 
 ### 撤销操作
@@ -166,6 +269,9 @@ git reset HEAD <file>
 
 # 修改最后一次提交
 git commit --amend
+
+# 撤销最近的merge（如果还没有推送）
+git reset --hard HEAD~1
 ```
 
 ### 分支操作
@@ -173,11 +279,20 @@ git commit --amend
 # 查看所有分支
 git branch -a
 
+# 查看分支的上游关系
+git branch -vv
+
 # 删除本地分支
 git branch -d feature/old-branch
 
+# 强制删除本地分支
+git branch -D feature/old-branch
+
 # 删除远程分支
 git push origin --delete feature/old-branch
+
+# 重命名当前分支
+git branch -m new-branch-name
 ```
 
 ## 📋 检查清单
