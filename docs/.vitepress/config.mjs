@@ -159,6 +159,11 @@ export default defineConfig({
     server: {
       host: true,
       allowedHosts: ['fdueblab.cn']
+    },
+    css: {
+      postcss: {
+        plugins: []
+      }
     }
   }
 })
