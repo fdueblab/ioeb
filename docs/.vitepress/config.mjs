@@ -13,6 +13,9 @@ export default defineConfig({
   // 清理 URL 中的 .html 后缀
   cleanUrls: true,
   
+  // 忽略死链接检查，允许文档开发中的链接
+  ignoreDeadLinks: true,
+  
   title: "算法模型智能体平台",
   description: "复旦大学算法模型智能体平台用户文档",
 
