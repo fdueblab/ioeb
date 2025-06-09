@@ -22,23 +22,23 @@ export default defineConfig({
   // 设置头部标签
   head: [
     // 设置favicon - 多种格式确保兼容性
-    ['link', { rel: 'icon', type: 'image/png', href: '/docs/favicon.png' }],
-    ['link', { rel: 'shortcut icon', href: '/docs/favicon.png' }],
-    ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/docs/favicon.png' }],
-    ['link', { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/docs/favicon.png' }],
+    ['link', { rel: 'icon', type: 'image/png', href: 'https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/favicon.png' }],
+    ['link', { rel: 'shortcut icon', href: 'https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/favicon.png' }],
+    ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: 'https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/favicon.png' }],
+    ['link', { rel: 'icon', type: 'image/png', sizes: '16x16', href: 'https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/favicon.png' }],
     // 设置Apple Touch图标
-    ['link', { rel: 'apple-touch-icon', sizes: '180x180', href: '/docs/logo.png' }],
+    ['link', { rel: 'apple-touch-icon', sizes: '180x180', href: 'https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/logo.png' }],
     // 设置meta标签
     ['meta', { name: 'theme-color', content: '#646cff' }],
     ['meta', { property: 'og:title', content: '复旦大学算法模型智能体平台' }],
     ['meta', { property: 'og:description', content: '复旦大学算法模型智能体平台用户文档' }],
-    ['meta', { property: 'og:image', content: '/docs/logo.png' }],
+    ['meta', { property: 'og:image', content: 'https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/logo.png' }],
     ['meta', { property: 'og:type', content: 'website' }]
   ],
 
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
-    logo: '/docs/logo.png',
+    logo: 'https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/logo.png',
 
     // 启用本地搜索
     search: {
