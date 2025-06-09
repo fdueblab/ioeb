@@ -11,8 +11,12 @@ COPY package*.json ./
 # 安装依赖
 RUN npm install
 
-# 复制源代码
+# 复制源代码（包含.git目录用于lastUpdated功能）
 COPY . .
+
+# 配置git用户（用于lastUpdated功能）
+RUN git config --global user.email "ci@example.com" && \
+    git config --global user.name "CI Builder"
 
 # 构建应用
 RUN npm run build

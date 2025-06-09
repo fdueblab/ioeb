@@ -16,6 +16,9 @@ export default defineConfig({
   // 忽略死链接检查，允许文档开发中的链接
   ignoreDeadLinks: true,
   
+  // 配置lastUpdated功能
+  lastUpdated: true,
+  
   title: "算法模型智能体平台",
   description: "复旦大学算法模型智能体平台用户文档",
 
