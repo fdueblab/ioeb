@@ -1,0 +1,64 @@
+/* 自定义主页样式 */
+
+/* 修改主页标题(name)的颜色 */
+.VPHero .name {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+/* 也可以使用纯色 */
+/* .VPHero .name {
+  color: #2563eb;
+} */
+
+/* 修改tagline的字体样式 */
+.VPHero .tagline {
+  font-family: 'PingFang SC', 'Microsoft YaHei', '微软雅黑', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: #4b5563;
+  margin-top: 16px;
+  opacity: 0.9;
+}
+
+/* 响应式设计 - 移动端适配 */
+@media (max-width: 768px) {
+  .VPHero .name {
+    font-size: 2.5rem;
+  }
+  
+  .VPHero .tagline {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+}
+
+/* 增强视觉效果 - 可选 */
+.VPHero .name {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.VPHero .tagline {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 鼠标悬停效果 - 可选 */
+.VPHero .name {
+  transition: all 0.3s ease;
+}
+
+.VPHero .name:hover {
+  transform: translateY(-2px);
+}
+
+
+@media (max-width: 480px) {
+  .VPNavBarTitle .title {
+    max-width: 100px;
+    font-size: 12px;
+  }
+} 
