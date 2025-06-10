@@ -19,6 +19,9 @@ hero:
     - theme: alt
       text: 常见问题
       link: /faq
+    - theme: alt
+      text: 问题反馈
+      link: /faq#问题反馈
       
 features:
   - title: 🔌 四级接口体系
