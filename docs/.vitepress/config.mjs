@@ -105,42 +105,62 @@ export default defineConfig({
     sidebar: {
       '/guide/': [
         {
-          text: '用户指南',
+          text: '核心功能',
           items: [
-            { text: '平台介绍', link: '/guide/' },
-            { text: '算法代码提交模板', link: '/guide/code-template' },
+            { text: '垂域AI资源总览', link: '/guide/ai-resources-overview' },
+            { text: '垂域AI资源智能检索', link: '/guide/ai-resources-search' },
+            { text: '原子微服务可视化解析发布', link: '/guide/microservice-publish' },
+            { text: '原子微服务技术评测', link: '/guide/microservice-evaluation' },
+            { text: '原子微服务调用测试', link: '/guide/microservice-testing' },
+            { text: '垂域元应用仿真构建', link: '/guide/meta-app-simulation' },
+            { text: '元应用业务数据验证', link: '/guide/meta-app-validation' },
+            { text: '垂域应用参数化构建', link: '/guide/app-construction' }
           ]
         },
-        
+        {
+          text: '其他功能',
+          items: [
+            { text: '服务及应用运维管理', link: '/guide/operations' },
+            { text: '用户管理', link: '/guide/user-management' },
+            { text: '账户设置', link: '/guide/account-settings' }
+          ]
+        },
+        {
+          text: '相关资料',
+          items: [
+            { text: '平台介绍', link: '/guide/platform-intro' },
+            { text: '算法代码提交要求', link: '/guide/code-template' }
+          ]
+        }
       ],
       '/dev/': [
         {
           text: '团队开发指南',
           items: [
-            { text: '开发指南首页', link: '/dev/' },
-            { text: '环境搭建', link: '/dev/environment-setup' },
+            // { text: '开发指南首页', link: '/dev/' },
+            // { text: '环境搭建', link: '/dev/environment-setup' },
             { text: 'Git 最佳实践', link: '/dev/git-practices' },
-            { text: '代码规范', link: '/dev/code-standards' }
+            // { text: '代码规范', link: '/dev/code-standards' }
           ]
         },
-        {
-          text: '架构与设计',
-          items: [
-            { text: '平台整体架构', link: '/dev/architecture/' },
-            { text: '四级接口体系', link: '/dev/architecture/four-tier-interface' },
-            { text: '三级验证框架', link: '/dev/architecture/three-tier-validation' },
-            { text: 'MCP Server架构', link: '/dev/architecture/mcp-server' }
-          ]
-        },
-        {
-          text: '智能体开发',
-          items: [
-            { text: '智能体框架', link: '/dev/agent-framework/' },
-            { text: '原子微服务', link: '/dev/microservices/' },
-            { text: '元应用智能体', link: '/dev/meta-applications/' },
-            { text: '多智能体强化学习', link: '/dev/multi-agent-rl/' }
-          ]
-        }
+        // {
+        //   text: '架构与设计',
+        //   items: [
+        //     { text: '平台整体架构', link: '/dev/architecture/' },
+        //     { text: '四级接口体系', link: '/dev/architecture/four-tier-interface' },
+        //     { text: '三级验证框架', link: '/dev/architecture/three-tier-validation' },
+        //     { text: 'MCP Server架构', link: '/dev/architecture/mcp-server' }
+        //   ]
+        // },
+        // {
+        //   text: '智能体开发',
+        //   items: [
+        //     { text: '智能体框架', link: '/dev/agent-framework/' },
+        //     { text: '原子微服务', link: '/dev/microservices/' },
+        //     { text: '元应用智能体', link: '/dev/meta-applications/' },
+        //     { text: '多智能体强化学习', link: '/dev/multi-agent-rl/' }
+        //   ]
+        // }
       ]
     },
 

@@ -17,9 +17,10 @@
                   v-show="submitType === 'algorithm'"
                   type="link"
                   icon="file-text"
-                  href="https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/附件2_算法提交模板_250222.pdf"
+                  href="https://fdueblab.cn/docs/guide/code-template"
+                  target="_blank"
                 >
-                  算法程序提交模板文档
+                  算法代码提交要求文档
                 </a-button>
               </div>
             </a-col>

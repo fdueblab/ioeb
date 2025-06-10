@@ -810,27 +810,37 @@ export const asyncRouterMap = [
         component: () => import('@/views/mcp-test')
       },
       // 使用指南
+      // {
+      //   path: '/guide',
+      //   name: 'guide',
+      //   meta: { title: '使用指南', keepAlive: true, icon: 'book', permission: ['admin', 'publisher', 'user'] },
+      //   redirect: '/guide/intro',
+      //   component: RouteView,
+      //   children: [
+      //     {
+      //       path: '/guide/intro',
+      //       name: 'guide_intro',
+      //       component: () => import('@/views/guide/intro'),
+      //       meta: { title: '平台简介', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+      //     },
+      //     {
+      //       path: '/guide/operateGuide',
+      //       name: 'operateGuide',
+      //       component: () => import('@/views/guide/operateGuide'),
+      //       meta: { title: '操作指南', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
+      //     }
+      //     // 动态子路由将在路由初始化时加载
+      //   ]
+      // },
       {
-        path: '/guide',
+        path: 'https://fdueblab.cn/docs',
         name: 'guide',
-        meta: { title: '使用指南', keepAlive: true, icon: 'book', permission: ['admin', 'publisher', 'user'] },
-        redirect: '/guide/intro',
-        component: RouteView,
-        children: [
-          {
-            path: '/guide/intro',
-            name: 'guide_intro',
-            component: () => import('@/views/guide/intro'),
-            meta: { title: '平台简介', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          },
-          {
-            path: '/guide/operateGuide',
-            name: 'operateGuide',
-            component: () => import('@/views/guide/operateGuide'),
-            meta: { title: '操作指南', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-          }
-          // 动态子路由将在路由初始化时加载
-        ]
+        meta: { 
+          title: '使用指南', 
+          icon: 'book', 
+          permission: ['admin', 'publisher', 'user'],
+          target: '_blank'
+        }
       },
       // account
       {
