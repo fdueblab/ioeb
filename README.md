@@ -14,7 +14,7 @@
 
 ## 🌐 平台地址
 
-- **平台访问**: [https://ioeb.fdueblab.cn](https://ioeb.fdueblab.cn) - 在线平台体验地址
+- **平台访问**: [https://fdueblab.cn](https://fdueblab.cn) - 在线平台体验地址
 - **完整文档**: [https://fdueblab.cn/docs](https://fdueblab.cn/docs) - 详细使用文档和开发指南
 
 ## 📦 相关仓库
@@ -61,14 +61,4 @@ yarn build
 
 # 构建预览版本
 yarn build:preview
-```
-
-## 🐳 Docker 部署
-
-```bash
-# 构建前端镜像
-docker build -t algorithm-platform:latest .
-
-# 使用 docker-compose 启动完整服务
-docker-compose up -d
 ```
