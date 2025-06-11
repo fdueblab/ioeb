@@ -165,7 +165,7 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/PolarSnowLeopard/Micro-Agent' }
+      { icon: 'github', link: 'https://github.com/PolarSnowLeopard/ioeb' }
     ],
 
     footer: {
