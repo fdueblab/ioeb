@@ -1,6 +1,6 @@
-# 算法模型智能体平台
-
 <div align="center">
+
+# 算法模型智能体平台
 
 ![GitHub Stars](https://img.shields.io/github/stars/PolarSnowLeopard/ioeb?style=flat&logo=github)
 ![GitHub Forks](https://img.shields.io/github/forks/PolarSnowLeopard/ioeb?style=flat&logo=github)
@@ -72,36 +72,3 @@ docker build -t algorithm-platform:latest .
 # 使用 docker-compose 启动完整服务
 docker-compose up -d
 ```
-
-## 🤝 贡献指南
-
-1. Fork 本项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 创建 Pull Request
-
-## 📄 许可证
-
-本项目基于 MIT 许可证开源。
-
-## 🔗 相关链接
-
-- [在线平台](https://ioeb.fdueblab.cn) - 平台体验地址
-- [项目文档](https://fdueblab.cn/docs) - 完整使用文档和开发指南
-- [算法提交规范](https://fdueblab.cn/docs/guide/code-template) - 算法代码提交要求
-- [Ant Design Vue](https://antdv.com/) - UI 组件库文档
-
-## 💬 技术支持
-
-如有问题，请通过以下方式联系：
-
-- 🐛 Issues: [GitHub Issues](https://github.com/PolarSnowLeopard/ioeb/issues)
-- 📖 文档: [在线文档](https://fdueblab.cn/docs)
-
----
-
-<div align="center">
-  <strong>算法模型智能体平台</strong><br>
-  让AI算法更容易被发现、使用和管理
-</div>
