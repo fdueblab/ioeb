@@ -1,20 +1,20 @@
 <template>
   <div class="flow-menu" ref="tool">
     <div v-for="menu in menuList" :key="menu.id">
-      <span class="ef-node-pmenu" @click="menu.open = !menu.open">
-        <i :class="{'el-icon-caret-bottom': menu.open,'el-icon-caret-right': !menu.open}"></i>
+      <span class="ef-node-pmenu" @click="toggleMenu(menu.id)">
+        <i :class="{'el-icon-caret-bottom': isMenuOpen(menu.id),'el-icon-caret-right': !isMenuOpen(menu.id)}"></i>
         {{ menu.name }}
       </span>
-      <ul v-show="menu.open" class="flow-menu">
+      <ul v-show="isMenuOpen(menu.id)" class="flow-menu">
         <div v-for="(service, index) in menu.children" :key="index">
           <!-- 微服务层级 -->
-          <span class="ef-node-service" @click="service.open = !service.open">
-            <i :class="{'el-icon-caret-bottom': service.open,'el-icon-caret-right': !service.open}"></i>
+          <span class="ef-node-service" @click="toggleService(service.id || service.name)">
+            <i :class="{'el-icon-caret-bottom': isServiceOpen(service.id || service.name),'el-icon-caret-right': !isServiceOpen(service.id || service.name)}"></i>
             <i class="el-icon-help service-icon"></i>
             {{ service.name }}
           </span>
           <!-- 工具列表（默认折叠） -->
-          <ul v-show="service.open" class="f-node-tool-ul">
+          <ul v-show="isServiceOpen(service.id || service.name)" class="f-node-tool-ul">
             <li v-for="tool in service.children"
                 :key="tool.id"
                 class="ef-node-tool-li">
@@ -35,7 +35,7 @@
   import draggable from 'vuedraggable'
   // import { getServiceList } from '@/api/schedule'
 
-  var mousePosition = {
+  const mousePosition = {
     left: -1,
     top: -1
   }
@@ -63,7 +63,10 @@
         },
         // 默认打开的左侧菜单的id
         defaultOpeneds: ['1', '2'],
-        nodeMenu: {}
+        nodeMenu: {},
+        // 菜单和服务的展开状态管理
+        openMenus: new Set(['9']), // 默认展开根菜单
+        openServices: new Set() // 默认所有服务都折叠
       }
     },
     components: {
@@ -86,14 +89,38 @@
     },
     mounted () {},
     methods: {
-      // 根据类型获取左侧菜单对象
-      getMenuByType (type) {
+      // 切换菜单展开状态
+      toggleMenu(menuId) {
+        if (this.openMenus.has(menuId)) {
+          this.openMenus.delete(menuId)
+        } else {
+          this.openMenus.add(menuId)
+        }
+      },
+      // 检查菜单是否展开
+      isMenuOpen(menuId) {
+        return this.openMenus.has(menuId)
+      },
+      // 切换服务展开状态
+      toggleService(serviceId) {
+        if (this.openServices.has(serviceId)) {
+          this.openServices.delete(serviceId)
+        } else {
+          this.openServices.add(serviceId)
+        }
+      },
+      // 检查服务是否展开
+      isServiceOpen(serviceId) {
+        return this.openServices.has(serviceId)
+      },
+      // 根据名称获取左侧菜单对象
+      getMenuByName (name) {
         for (let i = 0; i < this.menuList.length; i++) {
           const children = this.menuList[i].children
           for (let j = 0; j < children.length; j++) {
             const sub = children[j].children
             for (let k = 0; k < sub.length; k++) {
-              if (sub[k].type === type) {
+              if (sub[k].name === name) {
                 return sub[k]
               }
             }
@@ -116,8 +143,8 @@
       },
       // 拖拽开始时触发
       move (evt, a, b, c) {
-        var type = evt.item.attributes.type.nodeValue
-        this.nodeMenu = this.getMenuByType(type)
+        const name = evt.item.textContent.trim()
+        this.nodeMenu = this.getMenuByName(name)
       },
       // 拖拽结束时触发
       end (evt, e) {
@@ -125,7 +152,7 @@
       },
       // 是否是火狐浏览器
       isFirefox () {
-        var userAgent = navigator.userAgent
+        const userAgent = navigator.userAgent
         if (userAgent.indexOf('Firefox') > -1) {
           return true
         }

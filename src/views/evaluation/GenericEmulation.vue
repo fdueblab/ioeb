@@ -68,7 +68,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="数据集">
+                <a-form-item label="数据集类型">
                   <a-select v-model="dataSetType" placeholder="请选择" default-value="0">
                     <a-select-option value="0">平台数据集</a-select-option>
                     <a-select-option value="1">上载数据集</a-select-option>
