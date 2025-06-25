@@ -143,6 +143,12 @@ export default defineConfig({
             // { text: '代码规范', link: '/dev/code-standards' }
           ]
         },
+        {
+          text: '技术文档',
+          items:[
+            { text: '模型上下文协议', link: '/dev/mcp-intro' },
+          ]
+        }
         // {
         //   text: '架构与设计',
         //   items: [
@@ -165,7 +171,7 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/PolarSnowLeopard/Micro-Agent' }
+      { icon: 'github', link: 'https://github.com/PolarSnowLeopard/ioeb' }
     ],
 
     footer: {
