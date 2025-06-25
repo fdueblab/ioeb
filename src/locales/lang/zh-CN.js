@@ -21,7 +21,7 @@ export default {
 
   'layouts.usermenu.dialog.title': '信息',
   'layouts.usermenu.dialog.content': '您确定要注销吗？',
-  'layouts.userLayout.title': '算法模型智能体平台',
+  'layouts.userLayout.title': '无需理解业务 | 高效封装算法 | 柔性集成技术 | 赋能业务人员 | 零代码构建自适应应用 | 为应用系统提供智能化升级解决方案',
   ...components,
   ...global,
   ...menu,
