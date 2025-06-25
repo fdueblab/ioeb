@@ -81,7 +81,6 @@
               position: 'absolute',
               left: node.left,
               top: node.top,
-              zIndex: 5,
               opacity: nodePositionsCalculated ? 1 : 0,
               transition: 'opacity 0.3s ease'
             }"
@@ -124,6 +123,7 @@ import nodeMenu from '@/components/ef/node_menu_enhanced'
 import FlowInfo from '@/components/ef/info'
 import ServicesAdder from '@/components/ef/services_adder'
 import MetaAppBuilder from '@/components/ef/meta_app_builder'
+import { getBaseServiceNodes } from '@/mock/data/meta_apps_data'
 import lodash from 'lodash'
 
 export default {
@@ -279,7 +279,6 @@ export default {
         const agentNode = {
           id: 'metaAppAgent_' + this.getUUID(),
           name: 'metaAppAgent',
-          type: 'start',
           state: 'toBuild'
         }
 
@@ -340,10 +339,10 @@ export default {
 
       // 分离智能体和服务节点
       const agentNodes = this.data.nodeList.filter(node =>
-        node.name === 'metaAppAgent' || node.type === 'start'
+        node.name === 'metaAppAgent'
       )
       const toolNodes = this.data.nodeList.filter(node =>
-        node.name !== 'metaAppAgent' && node.type !== 'start'
+        node.name !== 'metaAppAgent'
       )
 
       console.log('智能体节点:', agentNodes)
@@ -571,12 +570,12 @@ export default {
     createAutoConnections() {
       // 找到智能体节点
       const agentNodes = this.data.nodeList.filter(node =>
-        node.name === 'metaAppAgent' || node.type === 'start'
+        node.name === 'metaAppAgent'
       )
 
       // 找到服务节点
       const toolNodes = this.data.nodeList.filter(node =>
-        node.name !== 'metaAppAgent' && node.type !== 'start'
+        node.name !== 'metaAppAgent'
       )
 
       console.log('创建自动连线 - 智能体节点:', agentNodes.length, '服务节点:', toolNodes.length)
@@ -608,8 +607,8 @@ export default {
 
         const sourceNode = this.data.nodeList.find(n => n.id === from);
         const targetNode = this.data.nodeList.find(n => n.id === to);
-        const isFromAgent = sourceNode?.name === 'metaAppAgent' || sourceNode?.type === 'start';
-        const isToAgent = targetNode?.name === 'metaAppAgent' || targetNode?.type === 'start';
+        const isFromAgent = sourceNode?.name === 'metaAppAgent';
+        const isToAgent = targetNode?.name === 'metaAppAgent';
 
         let paintStyle;
         let label = '';
@@ -749,7 +748,6 @@ export default {
       let node = {
         id: nodeId,
         name: nodeName,
-        type: nodeMenu.type || 'process',
         left: '0px',  // 初始位置，后续会自动计算
         top: '0px',
         state: 'success'
@@ -765,7 +763,7 @@ export default {
           this.jsPlumb.makeTarget(nodeId, this.jsplumbTargetOptions)
 
           // 自动连接到智能体
-          const agentNode = this.data.nodeList.find(n => n.name === 'metaAppAgent' || n.type === 'start')
+          const agentNode = this.data.nodeList.find(n => n.name === 'metaAppAgent')
           if (agentNode && agentNode.id !== nodeId) {
             this.$nextTick(() => {
               // 创建双向连线
@@ -877,7 +875,7 @@ export default {
 
       // 检查新流程是否已包含智能体节点
       const hasAgentNode = newFlow?.nodeList?.some(node =>
-        node.name === 'metaAppAgent' || node.type === 'start'
+        node.name === 'metaAppAgent'
       )
 
       console.log('是否已有智能体节点:', hasAgentNode)
@@ -907,6 +905,9 @@ export default {
       }
     },
     dataReloadClear() {
+      // 重置服务列表为基础状态，根据verticalType决定根节点名称
+      this.setServices(getBaseServiceNodes(this.verticalType))
+      
       // 创建默认数据，包含智能体节点
       const defaultData = {
         preName: '新元应用',
@@ -993,7 +994,7 @@ export default {
           })
 
           // 为新节点创建连线到智能体
-          const agentNode = this.data.nodeList.find(n => n.name === 'metaAppAgent' || n.type === 'start')
+          const agentNode = this.data.nodeList.find(n => n.name === 'metaAppAgent')
           if (agentNode) {
             addedNodeIds.forEach(nodeId => {
               // 创建双向连线
@@ -1040,7 +1041,6 @@ export default {
       const newNode = {
         id: nodeId,
         name: node.name,
-        type: node.type,
         state: 'success'
       }
 
