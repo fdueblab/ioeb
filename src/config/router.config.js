@@ -807,7 +807,8 @@ export const asyncRouterMap = [
           icon: 'api',
           permission: ['admin', 'publisher', 'user']
         },
-        component: () => import('@/views/mcp-test')
+        component: () => import('@/views/mcp-test'),
+        hidden: true
       },
       // 使用指南
       // {
@@ -835,9 +836,9 @@ export const asyncRouterMap = [
       {
         path: 'https://fdueblab.cn/docs',
         name: 'guide',
-        meta: { 
-          title: '使用指南', 
-          icon: 'book', 
+        meta: {
+          title: '使用指南',
+          icon: 'book',
           permission: ['admin', 'publisher', 'user'],
           target: '_blank'
         }

@@ -16,13 +16,15 @@
 import GenericVerticalList from './GenericVerticalList'
 import UseService from './useService'
 import UseMetaApp from './useMetaApp'
+import UseMCP from './useMCP'
 
 export default {
   name: 'GenericVerticalDomain',
   components: {
     GenericVerticalList,
     UseService,
-    UseMetaApp
+    UseMetaApp,
+    UseMCP
   },
   props: {
     // 垂直领域类型
@@ -47,10 +49,18 @@ export default {
       this.apiList = record.apiList
       if (!record.apiList || record.apiList.length === 0) {
         this.$message.error('数据缺失！')
-      } else if (record.type === 'meta') {
-        this.currentComponent = 'UseMetaApp'
       } else {
-        this.currentComponent = 'UseService'
+        switch (record.type) {
+          case 'meta':
+            this.currentComponent = 'UseMetaApp'
+            break
+          case 'atomic_mcp':
+            this.currentComponent = 'UseMCP'
+            break
+          case 'atomic':
+          default:
+            this.currentComponent = 'UseService'
+        }
       }
     }
   },
