@@ -58,8 +58,10 @@ export default {
             this.currentComponent = 'UseMCP'
             break
           case 'atomic':
-          default:
             this.currentComponent = 'UseService'
+            break
+          default:
+            this.$message.error('服务类型异常！')
         }
       }
     }
