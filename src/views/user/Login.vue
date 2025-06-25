@@ -41,7 +41,7 @@
             </a-input-password>
           </a-form-item>
         </a-tab-pane>
-        <a-tab-pane key="tab2" :tab="$t('user.login.tab-login-mobile')">
+        <a-tab-pane key="tab2" :tab="$t('user.login.tab-login-mobile')" disabled>
           <a-form-item>
             <a-input size="large" type="text" :placeholder="$t('user.login.mobile.placeholder')" v-decorator="['mobile', {rules: [{ required: true, pattern: /^1[34578]\d{9}$/, message: $t('user.login.mobile.placeholder') }], validateTrigger: 'change'}]">
               <a-icon slot="prefix" type="mobile" :style="{ color: 'rgba(0,0,0,.25)' }"/>

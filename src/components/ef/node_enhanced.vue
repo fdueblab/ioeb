@@ -4,6 +4,7 @@
     ref="node"
     @click="clickNode"
     :class="nodeContainerClass"
+    :style="{ zIndex: nodeContainerZIndex }"
     @mouseenter="showTooltip"
     @mouseleave="hideTooltip"
   >
@@ -86,7 +87,7 @@ export default {
   computed: {
     // 是否是智能体节点
     isMetaAgent() {
-      return this.node.name === 'metaAppAgent' || this.node.type === 'start'
+      return this.node.name === 'metaAppAgent'
     },
 
     nodeContainerClass() {
@@ -94,8 +95,15 @@ export default {
         'ef-node-enhanced': true,
         'ef-node-agent': this.isMetaAgent,
         'ef-node-tool': !this.isMetaAgent,
-        'ef-node-active': this.activeElement.type === 'node' ? this.activeElement.nodeId === this.node.id : false
+        'ef-node-active': this.activeElement.type === 'node' ? this.activeElement.nodeId === this.node.id : false,
+        'ef-node-tooltip-visible': this.tooltipVisible
       }
+    },
+
+    // 动态控制节点容器的z-index
+    nodeContainerZIndex() {
+      // 当tooltip显示时，提升节点层级到最高
+      return this.tooltipVisible ? 999 : 'inherit'
     },
 
     nodeStatusType() {
@@ -236,6 +244,8 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   overflow: visible;
+  z-index: 5; // 默认层级
+  position: relative; // 确保z-index生效
 
   &:hover {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -249,6 +259,11 @@ export default {
 
   &.ef-node-active {
     box-shadow: 0 0 0 2px #1890ff;
+  }
+
+  // 当tooltip显示时，确保节点在最高层级
+  &.ef-node-tooltip-visible {
+    z-index: 999 !important;
   }
 }
 

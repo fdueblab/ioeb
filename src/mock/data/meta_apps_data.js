@@ -434,6 +434,17 @@ const pj1pj4pj3App = {
   ]
 }
 
+// 服务类型映射表 - 统一管理
+const SERVICE_TEXT_MAP = {
+  'aircraft': '无人飞机AI监控服务',
+  'health': '乡村医疗AI服务',
+  'agriculture': '农业数智AI服务',
+  'evtol': '低空飞行AI应用服务',
+  'ecommerce': '跨境电商AI服务',
+  'homeAI': '家庭机器人AI服务',
+  'aml': '跨境支付AI监测服务'
+}
+
 // 根据流程数据生成服务树结构的工具函数，用于适配现有的输出格式
 // todo: 之后应该优化接收端的格式需求
 function generateServiceNodes(flowData, rootServiceText = '智能服务') {
@@ -449,10 +460,8 @@ function generateServiceNodes(flowData, rootServiceText = '智能服务') {
       chosenServices.push(name)
       groupMap.set(serviceKey, {
         id: serviceKey.toLowerCase().replace(/service$/i, ''),
-        type: 'group',
         name,
         serviceKey,
-        open: false,
         children: []
       })
     }
@@ -461,7 +470,6 @@ function generateServiceNodes(flowData, rootServiceText = '智能服务') {
     tools.forEach((tool, index) => {
       groupMap.get(serviceKey).children.push({
         id: `${node.id}${String(index + 1).padStart(2, '0')}`,
-        type: 'tool',
         name: tool.name,
         description: tool.description
       })
@@ -473,9 +481,7 @@ function generateServiceNodes(flowData, rootServiceText = '智能服务') {
     serviceNodes: [
       {
         id: rootId,
-        type: 'group',
         name: rootServiceText,
-        open: true,
         children: Array.from(groupMap.values())
       }
     ]
@@ -533,21 +539,23 @@ export function getMetaAppNodes(serviceType, userInput) {
 
       if (flowData) {
         // 根据服务类型确定根服务名称
-        const serviceTextMap = {
-          'aircraft': '无人飞机AI监控服务',
-          'health': '乡村医疗AI服务',
-          'agriculture': '农业数智AI服务',
-          'evtol': '低空飞行AI应用服务',
-          'ecommerce': '跨境电商AI服务',
-          'homeAI': '家庭机器人AI服务',
-          'aml': '跨境支付AI监测服务'
-        }
-
-        const rootServiceText = serviceTextMap[serviceType] || '智能服务'
+        const rootServiceText = SERVICE_TEXT_MAP[serviceType] || '智能服务'
         const { chosenServices, serviceNodes } = generateServiceNodes(flowData, rootServiceText)
-
         resolve({ chosenServices, serviceNodes, flowData })
       }
     }, 1600)
   })
+}
+
+// 获取基础服务节点的函数 - 用于重置时恢复初始状态
+export function getBaseServiceNodes(serviceType = 'default') {
+  // 根据服务类型确定根服务名称 - 与getMetaAppNodes保持一致
+  const rootServiceText = SERVICE_TEXT_MAP[serviceType] || '智能服务'
+  return [
+    {
+      id: '9',
+      name: rootServiceText,
+      children: []
+    }
+  ]
 }
