@@ -10,42 +10,40 @@ const fraudDetectionApp = {
   outputType: 1,
   nodeList: [
     {
-      id: '9000',
-      name: '基于多智能体协作的金融欺诈检测推理服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'DataAnalysisService',
+      id: '19000',
+      name: '基于多智能体协作的金融欺诈检测推理MCP服务',
+      url: 'http://fdueblab.cn:8778/sse',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'batchAnalyzeTransactions', description: '批量分析交易数据' },
-        { name: 'detectAnomalies', description: '检测异常交易模式' },
-        { name: 'calculateRiskScore', description: '计算风险评分' },
-        { name: 'extractFeatures', description: '提取交易特征' }
+        { name: 'batchAnalyzeTransactions', des: '批量分析交易数据' },
+        { name: 'detectAnomalies', des: '检测异常交易模式' },
+        { name: 'calculateRiskScore', des: '计算风险评分' },
+        { name: 'extractFeatures', des: '提取交易特征' }
       ]
     },
     {
       id: '9101',
-      name: '报告生成服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'ReportService',
+      name: '样例报告生成微服务',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'generateReport', description: '生成检测报告' },
-        { name: 'formatResults', description: '格式化分析结果' },
-        { name: 'exportToPDF', description: '导出PDF报告' },
-        { name: 'sendNotification', description: '发送报告通知' }
+        { name: 'generateReport', des: '生成检测报告' },
+        { name: 'formatResults', des: '格式化分析结果' },
+        { name: 'exportToPDF', des: '导出PDF报告' },
+        { name: 'sendNotification', des: '发送报告通知' }
       ]
     },
     {
-      id: '9102',
+      id: '19102',
       name: '数据管理服务',
-      type: 'process',
-      state: 'warning',
-      serviceKey: 'DataManagementService',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'getReportData', description: '获取报告数据' },
-        { name: 'storeResults', description: '存储分析结果' },
-        { name: 'queryHistoricalData', description: '查询历史数据' },
-        { name: 'backupData', description: '备份重要数据' }
+        { name: 'getReportData', des: '获取报告数据' },
+        { name: 'storeResults', des: '存储分析结果' },
+        { name: 'queryHistoricalData', des: '查询历史数据' },
+        { name: 'backupData', des: '备份重要数据' }
       ]
     }
   ]
@@ -62,53 +60,49 @@ const medicalDiagnosisApp = {
     {
       id: '8001',
       name: '语音识别服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'SpeechRecognitionService',
+      type: 'atomic_mcp',
+      state: 'released',
       tools: [
-        { name: 'transcribe', description: '语音转文字' },
-        { name: 'detectLanguage', description: '检测语言类型' },
-        { name: 'filterNoise', description: '语音降噪处理' },
-        { name: 'extractKeywords', description: '提取关键词' }
+        { name: 'transcribe', des: '语音转文字' },
+        { name: 'detectLanguage', des: '检测语言类型' },
+        { name: 'filterNoise', des: '语音降噪处理' },
+        { name: 'extractKeywords', des: '提取关键词' }
       ]
     },
     {
       id: '8101',
       name: '医疗诊断服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'MedicalDiagnosisService',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'diagnose', description: '医疗影像诊断' },
-        { name: 'analyzeSymptoms', description: '症状分析' },
-        { name: 'suggestTreatment', description: '治疗建议' },
-        { name: 'riskAssessment', description: '风险评估' }
+        { name: 'diagnose', des: '医疗影像诊断' },
+        { name: 'analyzeSymptoms', des: '症状分析' },
+        { name: 'suggestTreatment', des: '治疗建议' },
+        { name: 'riskAssessment', des: '风险评估' }
       ]
     },
     {
       id: '8201',
       name: '健康监测服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'HealthMonitoringService',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'analyze', description: '健康数据分析' },
-        { name: 'trackVitals', description: '生命体征追踪' },
-        { name: 'predictTrends', description: '健康趋势预测' },
-        { name: 'generateReports', description: '生成健康报告' }
+        { name: 'analyze', des: '健康数据分析' },
+        { name: 'trackVitals', des: '生命体征追踪' },
+        { name: 'predictTrends', des: '健康趋势预测' },
+        { name: 'generateReports', des: '生成健康报告' }
       ]
     },
     {
       id: '8202',
       name: '预警通知服务',
-      type: 'process',
-      state: 'warning',
-      serviceKey: 'AlertNotificationService',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'alert', description: '健康预警' },
-        { name: 'sendNotification', description: '发送通知' },
-        { name: 'escalateUrgent', description: '紧急情况升级' },
-        { name: 'logEvents', description: '记录预警事件' }
+        { name: 'alert', des: '健康预警' },
+        { name: 'sendNotification', des: '发送通知' },
+        { name: 'escalateUrgent', des: '紧急情况升级' },
+        { name: 'logEvents', des: '记录预警事件' }
       ]
     }
   ]
@@ -125,27 +119,25 @@ const agricultureApp = {
     {
       id: '5001',
       name: '图像分析服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'ImageAnalysisService',
+      type: 'atomic_mcp',
+      state: 'released',
       tools: [
-        { name: 'analyzeImage', description: '农作物图像分析' },
-        { name: 'identifyDisease', description: '病虫害识别' },
-        { name: 'assessGrowth', description: '生长状态评估' },
-        { name: 'detectWeeds', description: '杂草检测' }
+        { name: 'analyzeImage', des: '农作物图像分析' },
+        { name: 'identifyDisease', des: '病虫害识别' },
+        { name: 'assessGrowth', des: '生长状态评估' },
+        { name: 'detectWeeds', des: '杂草检测' }
       ]
     },
     {
       id: '5101',
       name: '作物预测服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'CropPredictionService',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'predictYield', description: '产量预测' },
-        { name: 'recommendActions', description: '农事建议' },
-        { name: 'optimizeIrrigation', description: '灌溉优化' },
-        { name: 'fertilizeRecommend', description: '施肥建议' }
+        { name: 'predictYield', des: '产量预测' },
+        { name: 'recommendActions', des: '农事建议' },
+        { name: 'optimizeIrrigation', des: '灌溉优化' },
+        { name: 'fertilizeRecommend', des: '施肥建议' }
       ]
     }
   ]
@@ -160,29 +152,27 @@ const aircraftApp = {
   outputType: 1,
   nodeList: [
     {
-      id: '3001',
+      id: '13001',
       name: '目标识别服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'TargetRecognitionService',
+      type: 'atomic_mcp',
+      state: 'released',
       tools: [
-        { name: 'getTargetLocation', description: '获取目标位置' },
-        { name: 'getTargetInfo', description: '获取目标信息' },
-        { name: 'trackTarget', description: '目标跟踪' },
-        { name: 'classifyTarget', description: '目标分类' }
+        { name: 'getTargetLocation', des: '获取目标位置' },
+        { name: 'getTargetInfo', des: '获取目标信息' },
+        { name: 'trackTarget', des: '目标跟踪' },
+        { name: 'classifyTarget', des: '目标分类' }
       ]
     },
     {
-      id: '3101',
+      id: '13101',
       name: '远程控制服务',
-      type: 'process',
-      state: 'warning',
-      serviceKey: 'RemoteControlService',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'setTargetLocation', description: '设置目标位置' },
-        { name: 'setMotionMode', description: '设置运动模式' },
-        { name: 'adjustAltitude', description: '调整飞行高度' },
-        { name: 'emergencyLanding', description: '紧急降落' }
+        { name: 'setTargetLocation', des: '设置目标位置' },
+        { name: 'setMotionMode', des: '设置运动模式' },
+        { name: 'adjustAltitude', des: '调整飞行高度' },
+        { name: 'emergencyLanding', des: '紧急降落' }
       ]
     }
   ]
@@ -199,27 +189,25 @@ const ecommerceApp = {
     {
       id: '6001',
       name: '多语言内容生成服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'MultilingualContentService',
+      type: 'atomic_mcp',
+      state: 'released',
       tools: [
-        { name: 'translateContent', description: '内容翻译' },
-        { name: 'generateDescription', description: '生成商品描述' },
-        { name: 'localizeContent', description: '内容本地化' },
-        { name: 'optimizeSEO', description: 'SEO优化' }
+        { name: 'translateContent', des: '内容翻译' },
+        { name: 'generateDescription', des: '生成商品描述' },
+        { name: 'localizeContent', des: '内容本地化' },
+        { name: 'optimizeSEO', des: 'SEO优化' }
       ]
     },
     {
       id: '6101',
       name: '市场分析服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'MarketAnalysisService',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'analyzeTrend', description: '趋势分析' },
-        { name: 'predictSales', description: '销量预测' },
-        { name: 'competitorAnalysis', description: '竞品分析' },
-        { name: 'priceOptimization', description: '价格优化' }
+        { name: 'analyzeTrend', des: '趋势分析' },
+        { name: 'predictSales', des: '销量预测' },
+        { name: 'competitorAnalysis', des: '竞品分析' },
+        { name: 'priceOptimization', des: '价格优化' }
       ]
     }
   ]
@@ -236,27 +224,25 @@ const evtolApp = {
     {
       id: '4001',
       name: '飞行控制服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'FlightControlService',
+      type: 'atomic_mcp',
+      state: 'released',
       tools: [
-        { name: 'pathPlanner', description: '路径规划' },
-        { name: 'flightController', description: '飞行控制' },
-        { name: 'stabilityControl', description: '稳定性控制' },
-        { name: 'autoLanding', description: '自动降落' }
+        { name: 'pathPlanner', des: '路径规划' },
+        { name: 'flightController', des: '飞行控制' },
+        { name: 'stabilityControl', des: '稳定性控制' },
+        { name: 'autoLanding', des: '自动降落' }
       ]
     },
     {
       id: '4101',
       name: '环境感知服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'EnvironmentPerceptionService',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'environmentPerception', description: '环境感知' },
-        { name: 'obstacleDetection', description: '障碍物检测' },
-        { name: 'weatherAnalysis', description: '天气分析' },
-        { name: 'safetyAssessment', description: '安全评估' }
+        { name: 'environmentPerception', des: '环境感知' },
+        { name: 'obstacleDetection', des: '障碍物检测' },
+        { name: 'weatherAnalysis', des: '天气分析' },
+        { name: 'safetyAssessment', des: '安全评估' }
       ]
     }
   ]
@@ -273,27 +259,25 @@ const homeAIApp = {
     {
       id: '7001',
       name: '环境感知服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'HomeEnvironmentService',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'objectDetection', description: '物体检测' },
-        { name: 'spatialMapping', description: '空间映射' },
-        { name: 'homeSecurityMonitor', description: '家庭安防监控' },
-        { name: 'environmentControl', description: '环境控制' }
+        { name: 'objectDetection', des: '物体检测' },
+        { name: 'spatialMapping', des: '空间映射' },
+        { name: 'homeSecurityMonitor', des: '家庭安防监控' },
+        { name: 'environmentControl', des: '环境控制' }
       ]
     },
     {
       id: '7101',
       name: '智能对话服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'IntelligentDialogService',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'naturalLanguageUnderstanding', description: '自然语言理解' },
-        { name: 'emotionRecognition', description: '情感识别' },
-        { name: 'voiceInteraction', description: '语音交互' },
-        { name: 'personalAssistant', description: '个人助理' }
+        { name: 'naturalLanguageUnderstanding', des: '自然语言理解' },
+        { name: 'emotionRecognition', des: '情感识别' },
+        { name: 'voiceInteraction', des: '语音交互' },
+        { name: 'personalAssistant', des: '个人助理' }
       ]
     }
   ]
@@ -309,25 +293,23 @@ const pj1App = {
   nodeList: [
     {
       id: '9000',
-      name: '课题一风险识别模型推理服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'Project1ModelService',
+      name: '课题一风险识别模型推理微服务',
+      type: 'atomic_mcp',
+      state: 'released',
       tools: [
-        { name: 'preprocess', description: '数据预处理' },
-        { name: 'predict', description: '风险预测' },
-        { name: 'visualize', description: '可视化分析' }
+        { name: 'preprocess', des: '数据预处理' },
+        { name: 'predict', des: '风险预测' },
+        { name: 'visualize', des: '可视化分析' }
       ]
     },
     {
       id: '9101',
       name: '样例报告生成服务',
-      type: 'process',
-      state: 'warning',
-      serviceKey: 'SampleReportService',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'generateReport', description: '生成样例报告' },
-        { name: 'getReportData', description: '获取报告数据' }
+        { name: 'generateReport', des: '生成样例报告' },
+        { name: 'getReportData', des: '获取报告数据' }
       ]
     }
   ]
@@ -342,26 +324,24 @@ const pj2App = {
   outputType: 1,
   nodeList: [
     {
-      id: '9000',
-      name: '课题二多方安全计算模型推理服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'Project2SecureComputingService',
+      id: '10000',
+      name: '课题二多方安全计算模型推理微服务',
+      type: 'atomic_mcp',
+      state: 'released',
       tools: [
-        { name: 'preprocess', description: '安全数据预处理' },
-        { name: 'predict', description: '多方计算预测' },
-        { name: 'visualize', description: '安全可视化' }
+        { name: 'preprocess', des: '安全数据预处理' },
+        { name: 'predict', des: '多方计算预测' },
+        { name: 'visualize', des: '安全可视化' }
       ]
     },
     {
       id: '9101',
       name: '样例报告生成服务',
-      type: 'process',
-      state: 'warning',
-      serviceKey: 'SampleReportService',
+      type: 'atomic_mcp',
+      state: 'pre_release_unrated',
       tools: [
-        { name: 'generateReport', description: '生成课题二报告' },
-        { name: 'getReportData', description: '获取安全报告数据' }
+        { name: 'generateReport', des: '生成课题二报告' },
+        { name: 'getReportData', des: '获取安全报告数据' }
       ]
     }
   ]
@@ -377,14 +357,13 @@ const pj4App = {
   nodeList: [
     {
       id: '11000',
-      name: '课题四模型评测-安全性指纹服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'Project4SafetyFingerprintService',
+      name: '课题四模型评测-安全性指纹微服务',
+      type: 'atomic_mcp',
+      state: 'released',
       tools: [
-        { name: 'safetyFingerprint', description: '安全性指纹识别' },
-        { name: 'modelEvaluation', description: '模型安全评估' },
-        { name: 'securityAnalysis', description: '安全性分析' }
+        { name: 'safetyFingerprint', des: '安全性指纹识别' },
+        { name: 'modelEvaluation', des: '模型安全评估' },
+        { name: 'securityAnalysis', des: '安全性分析' }
       ]
     }
   ]
@@ -401,34 +380,31 @@ const pj1pj4pj3App = {
     {
       id: '9000',
       name: '课题一风险识别模型推理服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'Project1ModelService',
+      type: 'atomic_mcp',
+      state: 'released',
       tools: [
-        { name: 'preprocess', description: '数据预处理' },
-        { name: 'predict', description: '风险预测' }
+        { name: 'preprocess', des: '数据预处理' },
+        { name: 'predict', des: '风险预测' }
       ]
     },
     {
       id: '11000',
       name: '课题四模型评测-安全性指纹服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'Project4SafetyFingerprintService',
+      type: 'atomic_mcp',
+      state: 'released',
       tools: [
-        { name: 'safetyFingerprint', description: '安全性指纹识别' }
+        { name: 'safetyFingerprint', des: '安全性指纹识别' }
       ]
     },
     {
-      id: '9101',
-      name: '课题三金融风险报告生成服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'Project3ReportGenerationService',
+      id: '3101',
+      name: '课题三金融风险报告生成微服务',
+      type: 'atomic_mcp',
+      state: 'released',
       tools: [
-        { name: 'generateReport', description: '生成综合风险报告' },
-        { name: 'riskAssessment', description: '综合风险评估' },
-        { name: 'reportFormatting', description: '报告格式化' }
+        { name: 'generateReport', des: '生成综合风险报告' },
+        { name: 'riskAssessment', des: '综合风险评估' },
+        { name: 'reportFormatting', des: '报告格式化' }
       ]
     }
   ]
@@ -454,24 +430,23 @@ function generateServiceNodes(flowData, rootServiceText = '智能服务') {
 
   // 按服务分组
   flowData.nodeList.forEach(node => {
-    const { name, serviceKey } = node
+    const { name, id } = node
 
-    if (!groupMap.has(serviceKey)) {
+    if (!groupMap.has(id)) {
       chosenServices.push(name)
-      groupMap.set(serviceKey, {
-        id: serviceKey.toLowerCase().replace(/service$/i, ''),
+      groupMap.set(id, {
+        id,
         name,
-        serviceKey,
         children: []
       })
     }
 
     const tools = node.tools || []
     tools.forEach((tool, index) => {
-      groupMap.get(serviceKey).children.push({
-        id: `${node.id}${String(index + 1).padStart(2, '0')}`,
+      groupMap.get(id).children.push({
+        id: `${id}_tool${index}`,
         name: tool.name,
-        description: tool.description
+        des: tool.des
       })
     })
   })
