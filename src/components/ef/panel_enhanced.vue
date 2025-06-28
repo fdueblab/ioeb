@@ -179,7 +179,8 @@ export default {
           id: node.id,
           name: node.name,
           url: node.url,
-          status: node.status,
+          state: this.statusFilter(node.status),
+          stateStyle: this.statusStyleFilter(node.status),
           apiName: node.apiName,
           tools: node.tools || []
         }))
@@ -958,6 +959,16 @@ export default {
 
       console.log('是否已有智能体节点:', hasAgentNode)
 
+      const nodeList = newFlow?.nodeList.map(node => ({
+        id: node.id,
+        name: node.name,
+        url: node.url || '',
+        apiName: node.apiName || '',
+        tools: node.tools || [],
+        state: this.statusFilter(node.status),
+        stateStyle: this.statusStyleFilter(node.status)
+      }))
+
       if (!hasAgentNode && newFlow?.nodeList) {
         // 如果没有智能体节点，添加一个
         const agentNode = {
@@ -967,15 +978,14 @@ export default {
           state: '待构建',
           stateStyle: 'default'
         }
-
         console.log('添加智能体节点:', agentNode)
 
         // 同步初始节点到左侧服务列表
-        this.syncInitialNodesToServices(newFlow.nodeList)
+        this.syncInitialNodesToServices(nodeList)
 
         const flowWithAgent = {
           ...newFlow,
-          nodeList: [agentNode, ...newFlow.nodeList],
+          nodeList: [agentNode, ...nodeList],
           lineList: [] // 清空连线，后续自动生成
         }
 
@@ -984,8 +994,8 @@ export default {
       } else {
         console.log('使用原始流程数据')
         // 即使已有智能体节点，也需要同步服务节点到左侧列表
-        this.syncInitialNodesToServices(newFlow.nodeList)
-        this.dataReload(newFlow)
+        this.syncInitialNodesToServices(nodeList)
+        this.dataReload({ ...newFlow, nodeList })
       }
     },
     dataReloadClear() {
