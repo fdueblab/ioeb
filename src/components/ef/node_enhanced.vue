@@ -16,7 +16,7 @@
       <!-- 节点图标 -->
       <div class="node-icon">
         <i v-if="isMetaAgent" class="el-icon-cpu"></i>
-        <i v-else class="el-icon-setting"></i>
+        <i v-else class="el-icon-help"></i>
       </div>
 
       <!-- 节点信息 -->
@@ -33,7 +33,7 @@
 
         <!-- 节点状态 -->
         <div style="height: 14px;">
-          <a-badge :status="nodeStatusType" /><span :class="nodeStatusTextClass">{{ nodeStatusText }}</span>
+          <a-badge :status="node.stateStyle" /><span :class="nodeStatusTextClass">{{ node.state }}</span>
         </div>
       </div>
 
@@ -51,9 +51,10 @@
     <!-- Tooltip -->
     <div v-if="tooltipVisible" class="node-tooltip" :class="[tooltipClass, tooltipPositionClass]">
       <div class="tooltip-title">{{ nodeDisplayName }}</div>
-      <div v-if="!isMetaAgent" class="tooltip-service">微服务: {{ node.serviceName || node.name }}</div>
-      <div v-if="!isMetaAgent" class="tooltip-status">状态: {{ nodeStatusText }}</div>
+      <div v-if="!isMetaAgent" class="tooltip-service">地址: {{ node.url }}</div>
       <div v-if="isMetaAgent" class="tooltip-agent-desc">支持独立运行和柔性集成的任务智能体</div>
+      <div v-if="isMetaAgent" class="tooltip-status">状态: 待构建</div>
+      <div v-else class="tooltip-status">状态: {{ node.state }}</div>
 
       <!-- 工具列表 -->
       <div v-if="!isMetaAgent && node.tools && node.tools.length > 0" class="tooltip-tools">
@@ -61,7 +62,7 @@
         <div class="tools-list">
           <div v-for="tool in node.tools" :key="tool.name" class="tool-item">
             <span class="tool-name">{{ tool.name }}</span>
-            <span class="tool-desc">{{ tool.description }}</span>
+            <span class="tool-desc">{{ tool.des }}</span>
           </div>
         </div>
       </div>
@@ -72,8 +73,14 @@
 <script>
 export default {
   props: {
-    node: Object,
-    activeElement: Object,
+    node: {
+      type: Object,
+      default: undefined
+    },
+    activeElement: {
+      type: Object,
+      default: undefined
+    },
     appName: {
       type: String,
       default: '元应用智能体'
@@ -89,7 +96,6 @@ export default {
     isMetaAgent() {
       return this.node.name === 'metaAppAgent'
     },
-
     nodeContainerClass() {
       return {
         'ef-node-enhanced': true,
@@ -99,42 +105,17 @@ export default {
         'ef-node-tooltip-visible': this.tooltipVisible
       }
     },
-
     // 动态控制节点容器的z-index
     nodeContainerZIndex() {
       // 当tooltip显示时，提升节点层级到最高
       return this.tooltipVisible ? 999 : 'inherit'
     },
-
-    nodeStatusType() {
-      const statusMap = {
-        'success': 'success',
-        'error': 'error',
-        'warning': 'warning',
-        'running': 'processing',
-        'toBuild': 'default'
-      }
-      return statusMap[this.node.state] || 'default'
-    },
-
     nodeStatusTextClass() {
       return {
         'status-text-agent': this.isMetaAgent,
         'status-text-tool': !this.isMetaAgent
       }
     },
-
-    nodeStatusText() {
-      const textMap = {
-        'success': '正常',
-        'error': '错误',
-        'warning': '警告',
-        'running': '运行中',
-        'toBuild': '待构建'
-      }
-      return textMap[this.node.state] || '未知'
-    },
-
     tooltipClass() {
       return {
         'tooltip-agent': this.isMetaAgent,
@@ -214,20 +195,16 @@ export default {
       }
     }
   },
-
   methods: {
     clickNode() {
       this.$emit('clickNode', this.node.id)
     },
-
     deleteNode() {
       this.$emit('deleteNode', this.node.id)
     },
-
     showTooltip() {
       this.tooltipVisible = true
     },
-
     hideTooltip() {
       this.tooltipVisible = false
     }
@@ -237,7 +214,7 @@ export default {
 
 <style lang="less" scoped>
 .ef-node-enhanced {
-  width: 160px;
+  width: 165px;
   min-height: 60px;
   border-radius: 12px;
   background: #ffffff;

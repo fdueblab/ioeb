@@ -14,37 +14,46 @@
         @change="handleSearch"
         clearable
       />
-      <!-- todo: 数据库获取，重写节点勾选逻辑和添加方法 -->
       <el-tree
+        ref="serviceTree"
         :data="filterData"
-        empty-text="服务数据正在迁移重构，暂不支持从此处添加工具"
+        empty-text="正在加载服务数据..."
         show-checkbox
         v-loading="loading"
         node-key="id"
-        :default-expand-all="true"
+        :default-expand-all="false"
         :props="defaultProps"
         :default-checked-keys="defaultCheckedKeys"
-        @check-change="handleCheckChange"
+        :check-strictly="true"
+        @check="handleCheck"
         class="service-tree"
       >
-        <!-- <span slot-scope="{ node, data }" class="custom-tree-node">-->
-        <span slot-scope="{ node }" class="custom-tree-node">
-          <!-- <i v-if="data.ico" :class="data.ico" class="node-icon" />-->
-          <span class="node-label">{{ node.label }}</span>
+        <span slot-scope="{ node, data }" class="custom-tree-node">
+          <!-- 如果是工具节点，隐藏复选框 -->
+          <span v-if="data.isTool" class="tool-node">
+            <i class="el-icon-help tool-icon"></i>
+            <span class="node-label">{{ node.label }}</span>
+            <span class="tool-description">{{ data.description }}</span>
+          </span>
+          <!-- 如果是服务节点，正常显示 -->
+          <span v-else class="service-node" :class="{ 'initial-selected': data._isInitialSelected }">
+            <i class="el-icon-help service-icon"></i>
+            <span class="node-label">{{ node.label }}</span>
+          </span>
         </span>
       </el-tree>
     </div>
 
     <span slot="footer" class="dialog-footer">
       <el-button @click="onClose" class="cancel-button">取消</el-button>
-      <el-button type="primary" @click="onConfirm" class="confirm-button" disabled>确定</el-button>
+      <el-button type="primary" @click="onConfirm" class="confirm-button" :disabled="!hasNewlySelectedServices">确定</el-button>
     </span>
   </el-dialog>
 </template>
 
 <script>
-// import { getAllAmlServiceNodes } from '@/mock/data/service_nodes'
 import cloneDeep from 'lodash.clonedeep'
+import { filterServices } from '@/api/service'
 
 export default {
   props: {
@@ -55,13 +64,17 @@ export default {
     title: {
       type: String,
       default: '全部微服务'
+    },
+    verticalType: {
+      type: String,
+      default: ''
     }
   },
   data() {
     return {
       services: [],
       filterData: [],
-      selectedNodes: [],
+      selectedServices: [],
       dialogVisible: false,
       loading: false,
       filterText: '',
@@ -70,77 +83,145 @@ export default {
         label: 'name',
         disabled: 'disabled'
       },
-      defaultCheckedKeys: [],
-      disabledNodes: []
+      defaultCheckedKeys: []
+    }
+  },
+  computed: {
+    // 检查是否有新选择的服务（非初始选中的）
+    hasNewlySelectedServices() {
+      return this.selectedServices.some(service => !service._isInitialSelected)
     }
   },
   methods: {
     init() {
       this.dialogVisible = true
       this.loading = true
-      setTimeout(() => {
-        this.filterText = ''
-        this.fetchServices()
-        this.initSelectedItems()
+      this.filterText = ''
+      this.selectedServices = []
+      this.fetchServices()
+    },
+    async fetchServices() {
+      try {
+        filterServices({ domain: this.verticalType, type: 'atomic_mcp' }).then(res => {
+          console.log('获取到的MCP服务:', res.services)
+          this.services = this.processServicesData(res.services || [])
+          this.filterData = this.services
+          this.initSelectedItems()
+        })
+      } catch (error) {
+        console.error('获取服务失败:', error)
+        this.services = []
+        this.filterData = []
+      } finally {
         this.loading = false
-      }, 500)
-    },
-    fetchServices() {
-      // todo: 从数据库获取
-      // this.services = getAllAmlServiceNodes()
-      this.filterData = this.services
-    },
-    initSelectedItems() {
-      this.defaultCheckedKeys = []
-      this.disabledNodes = []
-      this.initialSelectedItems.forEach(item => {
-        if (item.children) {
-          item.children.forEach(child => {
-            this.defaultCheckedKeys.push(child.id)
-            this.disabledNodes.push(child)
-          })
-        }
-      })
-      this.disableNodes(this.services)
-    },
-    // todo: 下面都要重写
-    disableNodes(nodes) {
-      nodes.forEach(node => {
-        if (node.children) {
-          // 检查子节点是否全部被选中
-          const allChildrenSelected = node.children.every(child =>
-            this.disabledNodes.some(disabled => disabled.id === child.id)
-          )
-          if (allChildrenSelected) {
-            node.disabled = true // 如果所有子节点都被选中，服务本身置灰
-          }
-          this.disableNodes(node.children) // 递归处理子节点
-        } else {
-          // 如果是接口节点，检查是否需要置灰
-          if (this.disabledNodes.some(disabled => disabled.id === node.id)) {
-            node.disabled = true
-          }
-        }
-      })
-    },
-    handleCheckChange(data, checked) {
-      if (checked) {
-        const parentService = this.findParentService(data)
-        if (parentService) {
-          if (!parentService.selectedChildren) {
-            this.$set(parentService, 'selectedChildren', [])
-          }
-          parentService.selectedChildren.push(data)
-        }
-      } else {
-        const parentService = this.findParentService(data)
-        if (parentService && parentService.selectedChildren) {
-          parentService.selectedChildren = parentService.selectedChildren.filter(
-            (node) => node.id !== data.id
-          )
-        }
       }
     },
+
+        processServicesData(rawServices) {
+      return rawServices.map(service => {
+        const apiInfo = service.apiList && service.apiList[0] ? service.apiList[0] : {}
+        const tools = apiInfo.tools || []
+
+        return {
+          id: service.id,
+          name: service.name,
+          // 服务级别的原始数据，用于后续传递
+          _serviceData: {
+            serviceName: service.name,
+            status: service.status,
+            apiName: apiInfo.name,
+            apiUrl: apiInfo.url,
+            tools: tools
+          },
+          children: tools.map((tool, index) => ({
+            id: `${service.name}_tool_${index}`,
+            name: tool.name,
+            description: tool.des || tool.description || '',
+            isTool: true
+          }))
+        }
+      })
+    },
+
+    initSelectedItems() {
+      this.defaultCheckedKeys = []
+      // 如果有初始选中的项目，标记为已选中并禁用
+      console.log('初始选中的项目------', this.initialSelectedItems)
+      this.initialSelectedItems.forEach(item => {
+        if (item.name) {
+          // 找到对应的服务并标记为选中
+          const service = this.services.find(s => s.name === item.name)
+          if (service) {
+            this.defaultCheckedKeys.push(service.id)
+            // 标记为禁用状态，防止取消选中
+            service.disabled = true
+            service._isInitialSelected = true
+            // 注意：不要添加到selectedServices，因为这些是已经存在的服务
+          }
+        }
+      })
+      console.log('默认选中的keys:', this.defaultCheckedKeys)
+      console.log('初始选中的服务（不包含在selectedServices中）')
+    },
+        handleCheck(data, checked) {
+      console.log('节点选择变化:', data, checked)
+
+      // 只处理服务级别的选择，忽略工具级别的选择
+      if (data.isTool) {
+        console.log('忽略工具节点选择:', data.name)
+        return
+      }
+
+      // 检查是否试图取消选中初始选中的项目
+      if (data._isInitialSelected && !checked.checkedKeys.includes(data.id)) {
+        console.log('阻止取消选中初始选中的服务:', data.name)
+        // 强制恢复选中状态
+        this.$nextTick(() => {
+          this.$refs.serviceTree && this.$refs.serviceTree.setChecked(data.id, true)
+        })
+        return
+      }
+
+      // 重新构建选中服务列表，包含初始选中和新选中的服务
+      this.selectedServices = []
+
+      // 首先添加所有初始选中的服务
+      this.services.forEach(service => {
+        if (service._isInitialSelected) {
+          this.selectedServices.push(service)
+        }
+      })
+
+      // 然后添加新选中的服务（排除初始选中的）
+      checked.checkedKeys.forEach(key => {
+        const service = this.findServiceById(key)
+        if (service && !service.isTool && !service._isInitialSelected) {
+          this.selectedServices.push(service)
+        }
+      })
+
+      console.log('当前选中的服务总数:', this.selectedServices.length)
+      console.log('其中初始选中:', this.selectedServices.filter(s => s._isInitialSelected).length)
+      console.log('其中新选中:', this.selectedServices.filter(s => !s._isInitialSelected).length)
+    },
+
+    findServiceById(id) {
+      // 在所有服务中查找指定ID的节点
+      for (const service of this.services) {
+        if (service.id === id) {
+          return service
+        }
+        if (service.children) {
+          for (const child of service.children) {
+            if (child.id === id) {
+              return child
+            }
+          }
+        }
+      }
+      return null
+    },
+
     handleSearch() {
       const keyword = this.filterText.trim().toLowerCase()
       if (keyword) {
@@ -149,60 +230,50 @@ export default {
         this.filterData = this.services
       }
     },
-    filterServices(nodes, keyword) {
-      return cloneDeep(nodes).map(node => {
-        const match = node.name.toLowerCase().includes(keyword)
-        if (node.children) {
-          node.children = this.filterServices(node.children, keyword)
-        } else {
-          node.children = []
-        }
-        if (match || node.children.length > 0) {
-          return node
-        } else {
-          return null
-        }
-      }).filter(node => node !== null)
-    },
-    onConfirm() {
-      const selectedServices = this.services
-        .map((service) => {
-          // 去掉initialSelectedItems里的服务节点
-          if (this.initialSelectedItems.some(item => item.id === service.id)) {
-            return null
-          } else if (service.selectedChildren && service.selectedChildren.length > 0) {
-            return {
-              ...service,
-              children: service.selectedChildren
-            }
-          }
-          return null
-        })
-        .filter((service) => service !== null)
 
-      this.$emit('confirm', selectedServices)
+    filterServices(nodes, keyword) {
+      return cloneDeep(nodes).filter(node => {
+        const serviceMatch = node.name.toLowerCase().includes(keyword)
+
+        // 过滤工具节点
+        if (node.children) {
+          node.children = node.children.filter(tool =>
+            tool.name.toLowerCase().includes(keyword) ||
+            (tool.description && tool.description.toLowerCase().includes(keyword))
+          )
+        }
+
+        // 如果服务名匹配或有匹配的工具，则显示该服务
+        return serviceMatch || (node.children && node.children.length > 0)
+      })
+    },
+
+    onConfirm() {
+      // 只传递新选择的服务（排除初始选中的服务）
+      const newlySelectedServices = this.selectedServices.filter(service =>
+        !service._isInitialSelected
+      )
+
+      const selectedData = newlySelectedServices.map(service => ({
+        id: service.id,
+        name: service._serviceData.serviceName,
+        apiName: service._serviceData.apiName,
+        url: service._serviceData.apiUrl,
+        tools: service._serviceData.tools,
+        status: service._serviceData.status
+      }))
+
+      console.log('所有选中的服务:', this.selectedServices.length)
+      console.log('新选择的服务:', selectedData.length)
+      console.log('确认传递的新服务:', selectedData)
+
+      this.$emit('confirm', selectedData)
       this.onClose()
     },
     onClose() {
-      this.selectedNodes = []
+      this.selectedServices = []
+      this.dialogVisible = false
       this.$emit('close')
-    },
-    findParentService(node) {
-      const findParent = (services) => {
-        for (const service of services) {
-          if (service.children) {
-            if (service.children.some((child) => child.id === node.id)) {
-              return service
-            }
-            const parent = findParent(service.children)
-            if (parent) {
-              return parent
-            }
-          }
-        }
-        return null
-      }
-      return findParent(this.services)
     }
   }
 }
@@ -243,6 +314,87 @@ export default {
 .node-label {
   font-size: 14px;
   color: #333;
+}
+
+/* 工具描述样式 */
+.tool-description {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+}
+
+/* 自定义树节点容器 */
+.custom-tree-node {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* 服务节点样式 */
+.service-node {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.service-icon {
+  margin-right: 8px;
+  color: #1890ff;
+  font-size: 16px;
+}
+
+/* 初始选中（禁用）的服务节点样式 */
+.service-node.initial-selected {
+  background-color: #f0f9ff;
+  border-radius: 4px;
+  padding: 2px 6px;
+  opacity: 0.8;
+}
+
+.service-node.initial-selected .node-label {
+  color: #666;
+  font-style: italic;
+}
+
+.service-node.initial-selected .service-icon {
+  color: #999;
+}
+
+/* 初始选中节点的复选框样式 */
+::v-deep .el-tree-node__content:has(.initial-selected) .el-checkbox .el-checkbox__input.is-checked .el-checkbox__inner {
+  background-color: #d9d9d9 !important;
+  border-color: #d9d9d9 !important;
+}
+
+::v-deep .el-tree-node__content:has(.initial-selected) .el-checkbox .el-checkbox__input.is-checked .el-checkbox__inner::after {
+  border-color: #666 !important;
+}
+
+/* 工具节点样式 */
+.tool-node {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-left: 24px; /* 缩进显示层级关系 */
+}
+
+.tool-icon {
+  margin-right: 6px;
+  color: #52c41a;
+  font-size: 14px;
+}
+
+/* 隐藏子级工具节点的复选框 */
+::v-deep .el-tree-node .el-tree-node .el-tree-node__content .el-checkbox {
+  display: none !important;
+}
+
+/* 确保顶级服务节点的复选框显示 */
+::v-deep .el-tree > .el-tree-node > .el-tree-node__content .el-checkbox {
+  display: inline-block !important;
 }
 
 /* 对话框底部按钮区域 */

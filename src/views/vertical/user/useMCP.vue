@@ -14,18 +14,14 @@
         <a-col :span="24">
           <a-form layout="vertical">
             <a-form-item label="当前服务">
-              <a-row :gutter="8">
-                <a-col :span="8">
-                  <h3><b>{{ apiList[0].name }}</b></h3>
-                </a-col>
-                <a-col v-if="apiList[0].des" :span="8">
-                  <span><b>描述：</b> {{ apiList[0].des }}</span>
-                </a-col>
-                <a-col :span="8">
-                  <span><b>地址: </b> {{ apiList[0].url }}</span>
-                </a-col>
-              </a-row>
+              <div style="display:flex; justify-content: space-between; margin-right: 5px">
+                <span style="font-weight: bold; font-size: larger">{{ apiList[0].name }}</span>
+                <span><b>地址: </b> {{ apiList[0].url }}</span>
+                <span><b>描述：</b> {{ apiList[0].des }}</span>
+              </div>
             </a-form-item>
+
+            <!--  perhaps todo: 展示包括的工具？  -->
 
             <a-form-item label="与智能体交互">
               <div class="chat-container">
@@ -238,7 +234,7 @@ export default {
       const formData = new FormData()
       formData.append('message', message)
       if (this.apiList[0]) {
-        formData.append('server_url', this.apiList[0])
+        formData.append('server_url', this.apiList[0].url)
       }
 
       // 发送请求到MCP Server
