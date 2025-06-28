@@ -55,11 +55,7 @@
                     :class="['message', message.role]"
                   >
                     <div class="message-content">
-                      <div v-if="message.role === 'user'" class="message-header">
-                        <a-avatar icon="user" />
-                        <span>用户</span>
-                      </div>
-                      <div v-else class="message-header">
+                      <div v-if="message.role === 'assistant'" class="message-header">
                         <a-avatar icon="robot" />
                         <span>Agent</span>
                       </div>
@@ -145,7 +141,7 @@
 <script>
 import { streamAgent } from '@/utils/request'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
-import { handleFakeResponse, extractResponseContent } from '@/utils/fakeResponseHandler'
+import { handleFakeResponse, extractResponseContent } from './fakeResponseHandler'
 
 export default {
   name: 'UseMCP',
@@ -441,7 +437,7 @@ export default {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 60vh;
+  height: 80vh;
   border: 1px solid #e8e8e8;
   border-radius: 4px;
   background-color: #f9f9f9;
