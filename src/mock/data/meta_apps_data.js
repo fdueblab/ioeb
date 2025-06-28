@@ -81,7 +81,7 @@ const medicalDiagnosisApp = {
       id: '8001',
       name: '语音识别服务',
       type: 'atomic_mcp',
-      state: 'released',
+      status: 'released',
       tools: [
         { name: 'transcribe', des: '语音转文字' },
         { name: 'detectLanguage', des: '检测语言类型' },
@@ -93,7 +93,7 @@ const medicalDiagnosisApp = {
       id: '8101',
       name: '医疗诊断服务',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'diagnose', des: '医疗影像诊断' },
         { name: 'analyzeSymptoms', des: '症状分析' },
@@ -105,7 +105,7 @@ const medicalDiagnosisApp = {
       id: '8201',
       name: '健康监测服务',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'analyze', des: '健康数据分析' },
         { name: 'trackVitals', des: '生命体征追踪' },
@@ -117,7 +117,7 @@ const medicalDiagnosisApp = {
       id: '8202',
       name: '预警通知服务',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'alert', des: '健康预警' },
         { name: 'sendNotification', des: '发送通知' },
@@ -140,7 +140,7 @@ const agricultureApp = {
       id: '5001',
       name: '图像分析服务',
       type: 'atomic_mcp',
-      state: 'released',
+      status: 'released',
       tools: [
         { name: 'analyzeImage', des: '农作物图像分析' },
         { name: 'identifyDisease', des: '病虫害识别' },
@@ -152,7 +152,7 @@ const agricultureApp = {
       id: '5101',
       name: '作物预测服务',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'predictYield', des: '产量预测' },
         { name: 'recommendActions', des: '农事建议' },
@@ -214,7 +214,7 @@ const ecommerceApp = {
       id: '6001',
       name: '多语言内容生成服务',
       type: 'atomic_mcp',
-      state: 'released',
+      status: 'released',
       tools: [
         { name: 'translateContent', des: '内容翻译' },
         { name: 'generateDescription', des: '生成商品描述' },
@@ -226,7 +226,7 @@ const ecommerceApp = {
       id: '6101',
       name: '市场分析服务',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'analyzeTrend', des: '趋势分析' },
         { name: 'predictSales', des: '销量预测' },
@@ -249,7 +249,7 @@ const evtolApp = {
       id: '4001',
       name: '飞行控制服务',
       type: 'atomic_mcp',
-      state: 'released',
+      status: 'released',
       tools: [
         { name: 'pathPlanner', des: '路径规划' },
         { name: 'flightController', des: '飞行控制' },
@@ -261,7 +261,7 @@ const evtolApp = {
       id: '4101',
       name: '环境感知服务',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'environmentPerception', des: '环境感知' },
         { name: 'obstacleDetection', des: '障碍物检测' },
@@ -284,7 +284,7 @@ const homeAIApp = {
       id: '7001',
       name: '环境感知服务',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'objectDetection', des: '物体检测' },
         { name: 'spatialMapping', des: '空间映射' },
@@ -296,7 +296,7 @@ const homeAIApp = {
       id: '7101',
       name: '智能对话服务',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'naturalLanguageUnderstanding', des: '自然语言理解' },
         { name: 'emotionRecognition', des: '情感识别' },
