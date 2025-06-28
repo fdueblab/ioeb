@@ -140,6 +140,7 @@ export default defineConfig({
             // { text: '开发指南首页', link: '/dev/' },
             // { text: '环境搭建', link: '/dev/environment-setup' },
             { text: 'Git 最佳实践', link: '/dev/git-practices' },
+            { text: '平台项目快速开始', link: '/dev/project-quickstart' },
             // { text: '代码规范', link: '/dev/code-standards' }
           ]
         },
@@ -147,6 +148,7 @@ export default defineConfig({
           text: '技术文档',
           items:[
             { text: '模型上下文协议', link: '/dev/mcp-intro' },
+            { text: '大模型智能体', link: '/dev/ai-agent-intro' },
           ]
         }
         // {
