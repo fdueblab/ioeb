@@ -118,7 +118,7 @@ function getDefaultFakeResponse(serviceInfo) {
       }
     ],
     final_result: {
-      response: `当前服务处于模拟模式，但尚未配置具体的假数据响应。请在数据库中为该服务配置相应的假数据响应内容。服务名称：${serviceInfo.name}`
+      response: `服务${serviceInfo.name}测试出现异常！`
     }
   }
 }
@@ -192,7 +192,7 @@ export function handleFakeResponse(serviceInfo, userMessage, callbacks) {
         } else {
           // 所有步骤完成后，返回最终结果
           setTimeout(() => {
-            onFinalResult && onFinalResult(fakeData.final_result || { response: '假数据响应完成' })
+            onFinalResult && onFinalResult(fakeData.final_result || { response: '响应异常' })
             onComplete && onComplete()
           }, 200)
         }
@@ -203,7 +203,7 @@ export function handleFakeResponse(serviceInfo, userMessage, callbacks) {
     } else {
       // 如果没有步骤，直接返回结果
       setTimeout(() => {
-        onFinalResult && onFinalResult(fakeData.final_result || { response: '假数据测试完成' })
+        onFinalResult && onFinalResult(fakeData.final_result || { response: '测试异常' })
         onComplete && onComplete()
       }, 1000)
     }
@@ -222,6 +222,6 @@ export function extractResponseContent(fakeData) {
   } else if (fakeData.response) {
     return fakeData.response
   } else {
-    return '假数据测试完成'
+    return '测试异常'
   }
 }
