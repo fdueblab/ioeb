@@ -94,9 +94,9 @@
     <services-adder
       v-if="servicesAdderVisible"
       ref="servicesAdder"
-      :title="services[0]?.name"
+      :title="'领域MCP服务'"
       :vertical-type="verticalType"
-      :initialSelectedItems="services[0]?.children"
+      :initialSelectedItems="currentCanvasServices"
       @confirm="handleServiceConfirm"
       @close="handleServiceClose"
     />
@@ -169,6 +169,24 @@ export default {
       return {
         height: this.showToolbar ? 'calc(100% - 65px)' : '100%'
       }
+    },
+    // 从当前画布节点中提取服务信息，用于标记已选中的服务
+    currentCanvasServices() {
+      if (!this.data.nodeList || this.data.nodeList.length === 0) {
+        return []
+      }
+      
+      // 过滤出非智能体节点，并构建服务信息
+      return this.data.nodeList
+        .filter(node => node.name !== 'metaAppAgent')
+        .map(node => ({
+          id: node.originalId || node.serviceId || node.id, // 优先使用原始服务ID
+          name: node.name,
+          url: node.url,
+          apiName: node.apiName,
+          tools: node.tools || []
+        }))
+        .filter(service => service.id) // 确保有有效的ID
     }
   },
   data() {
@@ -288,10 +306,24 @@ export default {
           stateStyle: 'default'
         }
 
+        // 处理服务节点，确保它们有正确的服务ID信息
+        const processedNodeList = parsedData.nodeList.map(node => {
+          // 如果是服务节点且没有originalId，尝试设置服务ID
+          if (node.name !== 'metaAppAgent' && !node.originalId) {
+            return {
+              ...node,
+              // 如果节点有serviceId字段，使用它；否则尝试从节点ID提取或使用节点ID
+              originalId: node.serviceId || node.id,
+              serviceId: node.serviceId || node.id
+            }
+          }
+          return node
+        })
+
         // 清空位置信息和连线，后续自动生成
         const cleanData = {
           ...parsedData,
-          nodeList: [agentNode, ...parsedData.nodeList],
+          nodeList: [agentNode, ...processedNodeList],
           lineList: [] // 清空连线，后续自动生成
         }
 
@@ -303,6 +335,103 @@ export default {
     },
     setServices(serviceList) {
       this.services = serviceList
+    },
+    // 彻底清理节点的 jsPlumb 连线和端点
+    cleanupNodeConnections(nodeId) {
+      try {
+        console.log('开始清理节点连线:', nodeId)
+
+        // 获取所有与该节点相关的连线
+        const connections = this.jsPlumb.getConnections({
+          source: nodeId
+        }).concat(this.jsPlumb.getConnections({
+          target: nodeId
+        }))
+
+        // 逐一删除连线
+        connections.forEach(conn => {
+          console.log('删除连线:', conn.sourceId, '->', conn.targetId)
+          this.jsPlumb.deleteConnection(conn)
+        })
+
+        // 移除节点上的所有端点
+        this.jsPlumb.removeAllEndpoints(nodeId)
+
+        // 强制清理可能残留的DOM元素
+        this.jsPlumb.remove(nodeId)
+
+        console.log('节点连线清理完成:', nodeId)
+      } catch (error) {
+        console.error('清理节点连线时出错:', error)
+      }
+    },
+
+    // 从服务列表中移除指定名称的服务（保留兼容性）
+    removeFromServiceList(nodeName) {
+      if (!this.services || this.services.length === 0) return
+
+      // 递归函数来移除服务
+      const removeFromChildren = (children) => {
+        if (!children || !Array.isArray(children)) return children
+
+        return children.filter(child => {
+          if (child.name === nodeName) {
+            console.log('从服务列表中移除:', nodeName)
+            return false // 移除这个服务
+          }
+
+          // 如果有子节点，递归处理
+          if (child.children) {
+            child.children = removeFromChildren(child.children)
+          }
+
+          return true // 保留这个服务
+        })
+      }
+
+      // 更新服务列表
+      const updatedServices = this.services.map(rootService => ({
+        ...rootService,
+        children: removeFromChildren(rootService.children || [])
+      }))
+
+      this.setServices(updatedServices)
+      console.log('更新后的服务列表:', updatedServices)
+    },
+
+    // 从服务列表中移除指定ID的服务
+    removeFromServiceListById(serviceId) {
+      if (!this.services || this.services.length === 0) return
+
+      console.log('开始从服务列表中移除服务ID:', serviceId)
+
+      // 递归函数来移除服务
+      const removeFromChildren = (children) => {
+        if (!children || !Array.isArray(children)) return children
+
+        return children.filter(child => {
+          if (child.id === serviceId) {
+            console.log('从服务列表中移除服务:', child.name, 'ID:', serviceId)
+            return false // 移除这个服务
+          }
+
+          // 如果有子节点，递归处理
+          if (child.children) {
+            child.children = removeFromChildren(child.children)
+          }
+
+          return true // 保留这个服务
+        })
+      }
+
+      // 更新服务列表
+      const updatedServices = this.services.map(rootService => ({
+        ...rootService,
+        children: removeFromChildren(rootService.children || [])
+      }))
+
+      this.setServices(updatedServices)
+      console.log('更新后的服务列表:', updatedServices)
     },
 
     // 自动布局算法
@@ -729,7 +858,8 @@ export default {
     },
 
     addNode(evt, nodeMenu) {
-      let nodeId = nodeMenu.id
+      // 生成唯一ID，避免重复ID导致的问题
+      let nodeId = `${nodeMenu.id}_${this.getUUID()}`
       let origName = nodeMenu.name
       let nodeName = origName
       let index = 1
@@ -753,6 +883,7 @@ export default {
       let node = {
         id: nodeId,
         name: nodeName,
+        originalId: nodeMenu.id, // 保留原始服务ID用于删除时匹配
         left: '0px',  // 初始位置，后续会自动计算
         top: '0px'
       }
@@ -769,11 +900,16 @@ export default {
           // 自动连接到智能体
           const agentNode = this.data.nodeList.find(n => n.name === 'metaAppAgent')
           if (agentNode && agentNode.id !== nodeId) {
+            // 等待 DOM 更新后再创建连线
             this.$nextTick(() => {
               // 创建双向连线
               this.createAutoConnection(agentNode.id, nodeId, 'call')  // 智能体 -> 服务
               this.createAutoConnection(nodeId, agentNode.id, 'return') // 服务 -> 智能体
-              this.jsPlumb.repaintEverything()
+
+              // 再次等待连线创建完成后重绘
+              this.$nextTick(() => {
+                this.jsPlumb.repaintEverything()
+              })
             })
           }
         })
@@ -790,20 +926,30 @@ export default {
         type: 'warning',
         closeOnClickModal: false
       }).then(() => {
-        this.data.nodeList = this.data.nodeList.filter(function (node) {
-          return node.id !== nodeId
-        })
+        // 先彻底清理 jsPlumb 相关的连线和端点
+        this.cleanupNodeConnections(nodeId)
 
-        // 删除相关连线
+        // 从画布节点列表中删除
+        this.data.nodeList = this.data.nodeList.filter(n => n.id !== nodeId)
+
+        // 删除相关连线数据
         this.data.lineList = this.data.lineList.filter(line =>
           line.from !== nodeId && line.to !== nodeId
         )
 
+        // 同步更新左侧服务列表（排除智能体节点）
+        if (node && node.name !== 'metaAppAgent') {
+          // 使用服务的原始ID或者节点上存储的服务ID
+          const serviceId = node.originalId || node.serviceId || node.id
+          console.log('删除服务，使用ID:', serviceId, '节点信息:', node)
+          this.removeFromServiceListById(serviceId)
+        }
+
         this.$nextTick(() => {
-          this.jsPlumb.removeAllEndpoints(nodeId)
           // 重新计算剩余节点位置
           this.calculateNodePositions()
           this.$nextTick(() => {
+            // 强制重绘所有连线
             this.jsPlumb.repaintEverything()
           })
         })
@@ -983,9 +1129,12 @@ export default {
       // 添加节点
       const addedNodeIds = []
       selectedServices.forEach(service => {
+        // 生成唯一ID，避免重复ID导致的问题
+        const uniqueNodeId = `${service.id}_${this.getUUID()}`
         const node = {
-          id: service.id,
+          id: uniqueNodeId,
           name: service.name,
+          originalId: service.id, // 保留原始服务ID用于删除时匹配
           url: service.url,
           apiName: service.apiName,
           tools: service.tools || [],
@@ -1046,16 +1195,24 @@ export default {
           // 为新节点创建连线到智能体
           const agentNode = this.data.nodeList.find(n => n.name === 'metaAppAgent')
           if (agentNode) {
-            addedNodeIds.forEach(nodeId => {
-              // 创建双向连线
-              this.createAutoConnection(agentNode.id, nodeId, 'call')   // 智能体 -> 服务
-              this.createAutoConnection(nodeId, agentNode.id, 'return') // 服务 -> 智能体
+            // 等待 DOM 更新后再创建连线
+            this.$nextTick(() => {
+              addedNodeIds.forEach(nodeId => {
+                // 创建双向连线
+                this.createAutoConnection(agentNode.id, nodeId, 'call')   // 智能体 -> 服务
+                this.createAutoConnection(nodeId, agentNode.id, 'return') // 服务 -> 智能体
+              })
+
+              // 再次等待连线创建完成后重绘
+              this.$nextTick(() => {
+                this.jsPlumb.repaintEverything()
+              })
+            })
+          } else {
+            this.$nextTick(() => {
+              this.jsPlumb.repaintEverything()
             })
           }
-
-          this.$nextTick(() => {
-            this.jsPlumb.repaintEverything()
-          })
         })
       })
 
