@@ -12,13 +12,13 @@ export default defineConfig({
 
   // 清理 URL 中的 .html 后缀
   cleanUrls: true,
-  
+
   // 忽略死链接检查，允许文档开发中的链接
   ignoreDeadLinks: true,
-  
+
   // 配置lastUpdated功能
   lastUpdated: true,
-  
+
   title: "算法模型智能体平台",
   description: "复旦大学算法模型智能体平台用户文档",
 
@@ -93,13 +93,13 @@ export default defineConfig({
     },
 
     // 设置导航栏
-    nav: [
-      { text: '首页', link: '/' },
-      { text: '快速开始', link: '/quickstart' },
-      { text: '用户指南', link: '/guide/' },
-      { text: '开发指南', link: '/dev/' },
-      { text: '常见问题', link: '/faq' },
-    ],
+    // nav: [
+    //   { text: '首页', link: '/' },
+    //   { text: '快速开始', link: '/quickstart' },
+    //   { text: '用户指南', link: '/guide/' },
+    //   { text: '开发指南', link: '/dev/' },
+    //   { text: '常见问题', link: '/faq' },
+    // ],
 
     // 设置侧边栏
     sidebar: {
@@ -140,6 +140,7 @@ export default defineConfig({
             // { text: '开发指南首页', link: '/dev/' },
             // { text: '环境搭建', link: '/dev/environment-setup' },
             { text: 'Git 最佳实践', link: '/dev/git-practices' },
+            { text: '平台项目快速开始', link: '/dev/project-quickstart' },
             // { text: '代码规范', link: '/dev/code-standards' }
           ]
         },
@@ -147,6 +148,7 @@ export default defineConfig({
           text: '技术文档',
           items:[
             { text: '模型上下文协议', link: '/dev/mcp-intro' },
+            { text: '大模型智能体', link: '/dev/ai-agent-intro' },
           ]
         }
         // {
@@ -179,7 +181,7 @@ export default defineConfig({
       copyright: 'Copyright © 2023-present 复旦大学'
     }
   },
-  
+
   // Vite 配置
   vite: {
     server: {
