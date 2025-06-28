@@ -95,6 +95,7 @@
       v-if="servicesAdderVisible"
       ref="servicesAdder"
       :title="services[0]?.name"
+      :vertical-type="verticalType"
       :initialSelectedItems="services[0]?.children"
       @confirm="handleServiceConfirm"
       @close="handleServiceClose"
@@ -125,6 +126,7 @@ import ServicesAdder from '@/components/ef/services_adder'
 import MetaAppBuilder from '@/components/ef/meta_app_builder'
 import { getBaseServiceNodes } from '@/mock/data/meta_apps_data'
 import lodash from 'lodash'
+import dictionaryCache from '@/utils/dictionaryCache'
 
 export default {
   props: {
@@ -180,6 +182,8 @@ export default {
       loadEasyFlowFinish: false,
       nodePositionsCalculated: false,
       services: [],
+      statusDict: [],
+      statusStyleDict: [],
       data: {
         name: '新元应用',
         preName: '元应用名称',
@@ -250,6 +254,7 @@ export default {
     MetaAppBuilder
   },
   mounted() {
+    this.loadDictionaryData()
     this.jsPlumb = jsPlumb.getInstance()
     this.setServices(this.initialServices)
     this.parseInitialFlowText()
@@ -279,7 +284,8 @@ export default {
         const agentNode = {
           id: 'metaAppAgent_' + this.getUUID(),
           name: 'metaAppAgent',
-          state: 'toBuild'
+          state: '待构建',
+          stateStyle: 'default'
         }
 
         // 清空位置信息和连线，后续自动生成
@@ -500,7 +506,6 @@ export default {
           // 只有在流程加载完成且不存在该连线时才添加
           if (this.loadEasyFlowFinish && !this.hasLine(from, to)) {
             this.data.lineList.push({ from: from, to: to })
-            this.$message.success('连接创建成功')
           }
         })
 
@@ -723,8 +728,8 @@ export default {
       return
     },
 
-    addNode(evt, nodeMenu, mousePosition) {
-      let nodeId = this.getUUID()
+    addNode(evt, nodeMenu) {
+      let nodeId = nodeMenu.id
       let origName = nodeMenu.name
       let nodeName = origName
       let index = 1
@@ -749,8 +754,7 @@ export default {
         id: nodeId,
         name: nodeName,
         left: '0px',  // 初始位置，后续会自动计算
-        top: '0px',
-        state: 'success'
+        top: '0px'
       }
 
       this.data.nodeList.push(node)
@@ -886,7 +890,8 @@ export default {
           id: 'metaAppAgent_' + this.getUUID(),
           name: 'metaAppAgent',
           type: 'start',
-          state: 'toBuild'
+          state: '待构建',
+          stateStyle: 'default'
         }
 
         console.log('添加智能体节点:', agentNode)
@@ -907,7 +912,7 @@ export default {
     dataReloadClear() {
       // 重置服务列表为基础状态，根据verticalType决定根节点名称
       this.setServices(getBaseServiceNodes(this.verticalType))
-      
+
       // 创建默认数据，包含智能体节点
       const defaultData = {
         preName: '新元应用',
@@ -916,7 +921,8 @@ export default {
             id: 'metaAppAgent_' + this.getUUID(),
             name: 'metaAppAgent',
             type: 'start',
-            state: 'toBuild'
+            state: '待构建',
+            stateStyle: 'default'
           }
         ],
         lineList: []
@@ -940,47 +946,91 @@ export default {
       }).catch(() => {
       })
     },
-    handleServiceConfirm(selectedItems) {
-      // 修复添加服务功能 - 访问正确的children层级
-      console.log('选中的服务项:', selectedItems)
-
-      // 检查是否需要访问children.children
-      let actualItems = selectedItems
-      if (selectedItems.length > 0 && selectedItems[0].children) {
-        // 如果第一级有children，展开所有children
-        actualItems = []
-        selectedItems.forEach(category => {
-          if (category.children && Array.isArray(category.children)) {
-            actualItems.push(...category.children)
-          } else {
-            actualItems.push(category)
-          }
-        })
+    async loadDictionaryData() {
+      try {
+        // 加载字典缓存
+        this.statusDict = await dictionaryCache.loadDict('status') || []
+        this.statusStyleDict = await dictionaryCache.loadDict('status_style') || []
+      } catch (error) {
+        console.error('加载字典数据失败:', error)
+        this.$message.error('加载数据字典失败，请刷新重试')
+        // 确保所有数组初始化，防止undefined错误
+        this.statusDict = this.statusDict || []
+        this.statusStyleDict = this.statusStyleDict || []
       }
-
-      console.log('实际要添加的服务:', actualItems)
-
+    },
+    statusFilter(type) {
+      if (type === undefined) {
+        return '未知状态'
+      }
+      if (!this.statusDict || !Array.isArray(this.statusDict)) {
+        return '未知状态'
+      }
+      const statusItem = this.statusDict.find(item => item && item.code === type)
+      return statusItem ? statusItem.text : '未知状态'
+    },
+    statusStyleFilter(type) {
+      if (type === undefined) {
+        return 'default'
+      }
+      if (!this.statusStyleDict || !Array.isArray(this.statusStyleDict)) {
+        return 'default'
+      }
+      const statusItem = this.statusStyleDict.find(item => item && item.code === type)
+      return statusItem ? statusItem.text : 'default'
+    },
+    handleServiceConfirm(selectedServices) {
       // 添加节点
       const addedNodeIds = []
-      actualItems.forEach(item => {
-        const nodeId = this.getUUID()
+      selectedServices.forEach(service => {
         const node = {
-          id: nodeId,
-          name: item.name || item.text || item.title || `服务${this.data.nodeList.length + 1}`,
-          type: 'process',
-          state: 'success'
+          id: service.id,
+          name: service.name,
+          url: service.url,
+          apiName: service.apiName,
+          tools: service.tools || [],
+          state: this.statusFilter(service.status),
+          stateStyle: this.statusStyleFilter(service.status)
         }
         this.data.nodeList.push(node)
-        addedNodeIds.push(nodeId)
-        console.log('添加节点:', node)
+        addedNodeIds.push(node.id)
+        console.log('添加MCP服务节点:', node)
       })
 
-      // 更新服务列表
-      const childrenServices = [...(this.services[0]?.children || []), ...actualItems]
-      this.setServices([{
-        ...this.services[0],
-        children: childrenServices
-      }])
+      // 更新服务列表 - 将新服务添加到现有菜单类别的children中
+      const newServiceItems = selectedServices.map(service => ({
+        id: service.id,
+        name: service.name,
+        url: service.url,
+        apiName: service.apiName,
+        tools: service.tools,
+        state: this.statusFilter(service.status),
+        stateStyle: this.statusStyleFilter(service.status),
+        children: service.tools ? service.tools.map(tool => ({
+          name: tool.name,
+          des: tool.des || tool.description || '',
+          ...tool
+        })) : []
+      }))
+
+      // 确保有默认的菜单结构
+      if (this.services.length === 0) {
+        this.setServices([{
+          id: 'mcp_services',
+          name: '领域MCP服务',
+          children: newServiceItems
+        }])
+      } else {
+        // 添加到第一个菜单类别的children中
+        const updatedServices = [...this.services]
+        if (updatedServices[0]) {
+          updatedServices[0] = {
+            ...updatedServices[0],
+            children: [...(updatedServices[0].children || []), ...newServiceItems]
+          }
+        }
+        this.setServices(updatedServices)
+      }
 
       // 重新布局并创建连线
       this.$nextTick(() => {
@@ -1009,7 +1059,7 @@ export default {
         })
       })
 
-      this.$message.success(`成功添加${actualItems.length}个服务`)
+      this.$message.success(`成功添加${selectedServices.length}个MCP服务`)
     },
     handleServiceClose() {
       this.servicesAdderVisible = false
@@ -1035,26 +1085,6 @@ export default {
       } else {
         this.$message.error('请先创建元应用流程！')
       }
-    },
-    addExternalNode(node) {
-      const nodeId = this.getUUID()
-      const newNode = {
-        id: nodeId,
-        name: node.name,
-        state: 'success'
-      }
-
-      this.data.nodeList.push(newNode)
-      this.$nextTick(() => {
-        this.calculateNodePositions()
-        this.$nextTick(() => {
-          this.jsPlumb.makeSource(nodeId, this.jsplumbSourceOptions)
-          this.jsPlumb.makeTarget(nodeId, this.jsplumbTargetOptions)
-          this.$nextTick(() => {
-            this.jsPlumb.repaintEverything()
-          })
-        })
-      })
     },
     showConnectionLabel(conn, event) {
       const rect = this.$refs.efContainer.getBoundingClientRect();
