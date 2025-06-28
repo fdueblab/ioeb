@@ -1,5 +1,6 @@
 // 统一的元应用数据文件
 // 简化后的数据结构：去除冗余，只保留核心流程数据
+// todo: 从数据库中获取nodeList对应的服务
 
 // 金融欺诈检测推理元应用
 const fraudDetectionApp = {
@@ -555,7 +556,7 @@ const bidRiggingDetectionApp = {
 }
 
 // 服务类型映射表 - 统一管理
-const SERVICE_TEXT_MAP = {
+export const SERVICE_TEXT_MAP = {
   'aircraft': '无人飞机AI监控服务',
   'health': '乡村医疗AI服务',
   'agriculture': '农业数智AI服务',
