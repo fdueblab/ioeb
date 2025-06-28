@@ -148,9 +148,9 @@ export default {
       // 如果有初始选中的项目，标记为已选中并禁用
       console.log('初始选中的项目------', this.initialSelectedItems)
       this.initialSelectedItems.forEach(item => {
-        if (item.name) {
-          // 找到对应的服务并标记为选中
-          const service = this.services.find(s => s.name === item.name)
+        if (item.id) {
+          // 找到对应的服务并标记为选中（基于id匹配）
+          const service = this.services.find(s => s.id === item.id)
           if (service) {
             this.defaultCheckedKeys.push(service.id)
             // 标记为禁用状态，防止取消选中
