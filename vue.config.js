@@ -150,7 +150,7 @@ const vueConfig = {
         pathname: '/ws',
         port: 8000
       }
-    },
+    }
     // 如果需要代理，请去除下面的注释
     // proxy: {
     //   [process.env.VUE_APP_API_BASE_URL]: {

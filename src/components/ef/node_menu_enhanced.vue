@@ -65,8 +65,8 @@
         defaultOpeneds: ['1', '2'],
         nodeMenu: {},
         // 菜单和服务的展开状态管理
-        openMenus: new Set(['9']), // 默认展开根菜单
-        openServices: new Set() // 默认所有服务都折叠
+        openMenus: { '9': true }, // 默认展开根菜单
+        openServices: {} // 默认所有服务都折叠
       }
     },
     components: {
@@ -91,27 +91,23 @@
     methods: {
       // 切换菜单展开状态
       toggleMenu(menuId) {
-        if (this.openMenus.has(menuId)) {
-          this.openMenus.delete(menuId)
-        } else {
-          this.openMenus.add(menuId)
-        }
+        console.log('切换菜单状态:', menuId)
+        this.$set(this.openMenus, menuId, !this.openMenus[menuId])
+        console.log('菜单状态更新后:', this.openMenus)
       },
       // 检查菜单是否展开
       isMenuOpen(menuId) {
-        return this.openMenus.has(menuId)
+        return !!this.openMenus[menuId]
       },
       // 切换服务展开状态
       toggleService(serviceId) {
-        if (this.openServices.has(serviceId)) {
-          this.openServices.delete(serviceId)
-        } else {
-          this.openServices.add(serviceId)
-        }
+        console.log('切换服务状态:', serviceId)
+        this.$set(this.openServices, serviceId, !this.openServices[serviceId])
+        console.log('服务状态更新后:', this.openServices)
       },
       // 检查服务是否展开
       isServiceOpen(serviceId) {
-        return this.openServices.has(serviceId)
+        return !!this.openServices[serviceId]
       },
       // 根据名称获取左侧菜单对象
       getMenuByName (name) {
