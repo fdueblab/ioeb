@@ -14,14 +14,31 @@
         <a-col :span="24">
           <a-form layout="vertical">
             <a-form-item label="当前服务">
-              <div style="display:flex; justify-content: space-between; margin-right: 5px">
-                <span style="font-weight: bold; font-size: larger">{{ apiList[0].name }}</span>
-                <span><b>地址: </b> {{ apiList[0].url }}</span>
-                <span><b>描述：</b> {{ apiList[0].des }}</span>
-              </div>
+              <a-row>
+                <a-col :span="24">
+                  <span style="font-weight: bold; font-size: larger">{{ apiList[0].name }}</span>
+                  <a-popover title="工具信息">
+                    <template slot="content">
+                      <p v-for="tool in apiList[0].tools" :key="tool.name">
+                        {{ tool.name }}: {{ tool.description }}
+                      </p>
+                    </template>
+                    <a-tag color="cyan" style="margin-left: 20px;">工具列表</a-tag>
+                  </a-popover>
+                  <a-popover title="服务地址">
+                    <template slot="content">
+                      <p>{{ apiList[0].url }}</p>
+                    </template>
+                    <a-tag color="blue" style="margin-left: 10px;">服务地址</a-tag>
+                  </a-popover>
+                </a-col>
+              </a-row>
+              <a-row style="margin-top: 10px;">
+                <a-col :span="24">
+                  <span><b>描述：</b> {{ apiList[0].des }}</span>
+                </a-col>
+              </a-row>
             </a-form-item>
-
-            <!--  perhaps todo: 展示包括的工具？  -->
 
             <a-form-item label="与智能体交互">
               <div class="chat-container">
@@ -128,6 +145,7 @@
 <script>
 import { streamAgent } from '@/utils/request'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
+import { handleFakeResponse, extractResponseContent } from '@/utils/fakeResponseHandler'
 
 export default {
   name: 'UseMCP',
@@ -137,7 +155,7 @@ export default {
   props: {
     apiList: {
       type: Array,
-      default: () => []
+      required: true
     }
   },
   data() {
@@ -159,27 +177,57 @@ export default {
       agentWarning: '',
       agentFinalResults: null,
 
-      // 消息示例
-      messageExamples: [
-        {
-          title: 'MCP Server 介绍',
-          content: '请介绍这个MCP Server的功能和用法'
-        }
-      ]
+      // 消息示例 - 根据服务类型动态生成
+      messageExamples: []
     }
   },
   created() {
     // 初始化时添加一条欢迎消息
     this.chatMessages.push(this.initMessage)
+    // 根据服务类型生成消息示例
+    this.generateMessageExamples()
   },
   methods: {
+    // 获取工具名称
+    getTools() {
+      if (this.apiList[0].tools) {
+        return this.apiList[0].tools.map(tool => tool.name).join(' | ')
+      } else {
+        return '暂未获取工具信息'
+      }
+    },
+    // 根据服务配置生成消息示例
+    generateMessageExamples() {
+      // 通用消息示例
+      const commonExamples = [
+        {
+          title: 'MCP Server 介绍',
+          content: '请介绍这个MCP Server的功能和用法'
+        },
+        {
+          title: '服务状态检查',
+          content: '请检查当前MCP服务的运行状态和功能的完整性'
+        }
+      ]
+      // 从数据库获取特定消息示例
+      let specificExamples = []
+      if (this.apiList[0].exampleMsg) {
+        try {
+          specificExamples = this.apiList[0].exampleMsg
+        } catch (error) {
+          console.error('解析消息示例失败:', error)
+          specificExamples = []
+        }
+      }
+      // 合并通用和特定示例
+      this.messageExamples = [...commonExamples, ...specificExamples]
+    },
     // 处理消息示例选择
     handleMessageSelect(index) {
       if (index !== undefined && this.messageExamples[index]) {
         this.userMessage = this.messageExamples[index].content
       }
     },
-
     // 处理按下Enter键
     handleEnterPress(e) {
       // 如果不是按住Shift键的情况下按Enter，则发送消息
@@ -187,7 +235,6 @@ export default {
         this.sendMessage()
       }
     },
-
     // 清空对话历史
     clearChat() {
       this.chatMessages = [this.initMessage]
@@ -230,18 +277,65 @@ export default {
         this.scrollToBottom()
       })
 
-      // 准备FormData
-      const formData = new FormData()
-      formData.append('message', message)
-      if (this.apiList[0]) {
+      // 检查是否使用假数据
+      if (this.apiList[0].isFake) {
+        this.handleFakeResponseCall(message)
+      } else {
+        // 准备FormData
+        const formData = new FormData()
+        formData.append('message', message)
         formData.append('server_url', this.apiList[0].url)
-      }
 
-      // 发送请求到MCP Server
-      this.callMcpServer(formData)
+        // 发送请求到真实的MCP Server
+        this.callMcpServer(formData)
+      }
     },
     handleGoBack() {
       this.$emit('onGoBack')
+    },
+    // 调用假数据处理工具
+    handleFakeResponseCall(userMessage) {
+      handleFakeResponse(this.apiList[0], userMessage, {
+        onStart: () => {
+          console.log('开始假数据模拟')
+          this.agentIsRunning = true
+        },
+        onStep: (stepData) => {
+          this.agentSteps.push(stepData)
+        },
+        onError: (error) => {
+          this.agentError = error
+          this.isWaitingResponse = false
+          this.agentIsRunning = false
+
+          // 添加错误消息到对话
+          this.chatMessages.push({
+            role: 'assistant',
+            content: `错误: ${error}`
+          })
+
+          this.$message.error(`假数据处理失败: ${error}`)
+          this.scrollToBottom()
+        },
+        onFinalResult: (results) => {
+          this.agentFinalResults = results
+          this.isWaitingResponse = false
+          this.agentIsRunning = false
+
+          // 添加响应到对话
+          const responseContent = extractResponseContent({ final_result: results })
+          this.chatMessages.push({
+            role: 'assistant',
+            content: responseContent
+          })
+
+          this.scrollToBottom()
+        },
+        onComplete: () => {
+          this.isWaitingResponse = false
+          this.agentIsRunning = false
+        }
+      })
     },
     callMcpServer(formData) {
       streamAgent('/api/agent/mcp_test', formData, {

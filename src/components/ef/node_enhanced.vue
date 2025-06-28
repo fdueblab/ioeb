@@ -2,7 +2,6 @@
   <div
     :id="node.id"
     ref="node"
-    @click="clickNode"
     :class="nodeContainerClass"
     :style="{ zIndex: nodeContainerZIndex }"
     @mouseenter="showTooltip"
@@ -77,10 +76,6 @@ export default {
       type: Object,
       default: undefined
     },
-    activeElement: {
-      type: Object,
-      default: undefined
-    },
     appName: {
       type: String,
       default: '元应用智能体'
@@ -101,7 +96,6 @@ export default {
         'ef-node-enhanced': true,
         'ef-node-agent': this.isMetaAgent,
         'ef-node-tool': !this.isMetaAgent,
-        'ef-node-active': this.activeElement.type === 'node' ? this.activeElement.nodeId === this.node.id : false,
         'ef-node-tooltip-visible': this.tooltipVisible
       }
     },
@@ -122,12 +116,10 @@ export default {
         'tooltip-tool': !this.isMetaAgent
       }
     },
-
     nodeTypeLabel() {
       if (this.isMetaAgent) return '元应用智能体'
       return 'MCP Server'
     },
-
     nodeTypeTagClass() {
       return {
         'type-tag-agent': this.isMetaAgent,
@@ -196,9 +188,6 @@ export default {
     }
   },
   methods: {
-    clickNode() {
-      this.$emit('clickNode', this.node.id)
-    },
     deleteNode() {
       this.$emit('deleteNode', this.node.id)
     },
@@ -232,10 +221,6 @@ export default {
       opacity: 1;
       visibility: visible;
     }
-  }
-
-  &.ef-node-active {
-    box-shadow: 0 0 0 2px #1890ff;
   }
 
   // 当tooltip显示时，确保节点在最高层级

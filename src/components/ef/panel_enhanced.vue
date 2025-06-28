@@ -72,10 +72,7 @@
             :key="node.id"
             :node="node"
             :app-name="data.preName"
-            :activeElement="activeElement"
-            @changeNodeSite="changeNodeSite"
             @nodeRightMenu="nodeRightMenu"
-            @clickNode="clickNode"
             @deleteNode="deleteNode"
             :style="{
               position: 'absolute',
@@ -94,9 +91,9 @@
     <services-adder
       v-if="servicesAdderVisible"
       ref="servicesAdder"
-      :title="services[0]?.name"
+      :title="service_text_map[verticalType]"
       :vertical-type="verticalType"
-      :initialSelectedItems="services[0]?.children"
+      :initialSelectedItems="currentCanvasServices"
       @confirm="handleServiceConfirm"
       @close="handleServiceClose"
     />
@@ -124,7 +121,7 @@ import nodeMenu from '@/components/ef/node_menu_enhanced'
 import FlowInfo from '@/components/ef/info'
 import ServicesAdder from '@/components/ef/services_adder'
 import MetaAppBuilder from '@/components/ef/meta_app_builder'
-import { getBaseServiceNodes } from '@/mock/data/meta_apps_data'
+import { getBaseServiceNodes, SERVICE_TEXT_MAP } from '@/mock/data/meta_apps_data'
 import lodash from 'lodash'
 import dictionaryCache from '@/utils/dictionaryCache'
 
@@ -169,6 +166,24 @@ export default {
       return {
         height: this.showToolbar ? 'calc(100% - 65px)' : '100%'
       }
+    },
+    // 从当前画布节点中提取服务信息，用于标记已选中的服务
+    currentCanvasServices() {
+      if (!this.data.nodeList || this.data.nodeList.length === 0) {
+        return []
+      }
+      // 过滤出非智能体节点，并构建服务信息
+      return this.data.nodeList
+        .filter(node => node.name !== 'metaAppAgent')
+        .map(node => ({
+          id: node.id,
+          name: node.name,
+          url: node.url,
+          status: node.status,
+          apiName: node.apiName,
+          tools: node.tools || []
+        }))
+        .filter(service => service.id) // 确保有有效的ID
     }
   },
   data() {
@@ -184,6 +199,7 @@ export default {
       services: [],
       statusDict: [],
       statusStyleDict: [],
+      service_text_map: SERVICE_TEXT_MAP,
       data: {
         name: '新元应用',
         preName: '元应用名称',
@@ -193,12 +209,6 @@ export default {
         outputType: 0,
         nodeList: [],
         lineList: []
-      },
-      activeElement: {
-        type: undefined,
-        nodeId: undefined,
-        sourceId: undefined,
-        targetId: undefined
       },
       connectionLabel: {
         visible: false,
@@ -278,8 +288,6 @@ export default {
       }
 
       try {
-        const parsedData = this.initialFlow
-
         // 自动添加智能体节点
         const agentNode = {
           id: 'metaAppAgent_' + this.getUUID(),
@@ -288,14 +296,24 @@ export default {
           stateStyle: 'default'
         }
 
-        // 清空位置信息和连线，后续自动生成
-        const cleanData = {
-          ...parsedData,
-          nodeList: [agentNode, ...parsedData.nodeList],
-          lineList: [] // 清空连线，后续自动生成
-        }
+        const initNodes = this.initialFlow.nodeList.map(node => ({
+          id: node.id,
+          name: node.name,
+          url: node.url || '',
+          apiName: node.apiName || '',
+          tools: node.tools || [],
+          state: this.statusFilter(node.status),
+          stateStyle: this.statusStyleFilter(node.status)
+        }))
 
-        this.dataReload(cleanData);
+        // 同步初始节点到左侧服务列表
+        this.syncInitialNodesToServices(initNodes)
+
+        this.dataReload({
+          ...this.initialFlow,
+          nodeList: [agentNode, ...initNodes],
+          lineList: []
+        });
       } catch (error) {
         console.error('Failed to get initial flow', error)
         this.dataReloadClear()
@@ -303,6 +321,91 @@ export default {
     },
     setServices(serviceList) {
       this.services = serviceList
+    },
+    // 同步初始节点到左侧服务列表
+    syncInitialNodesToServices(initialNodes) {
+      if (!initialNodes || initialNodes.length === 0) {
+        return
+      }
+
+      // 过滤出非智能体节点，转换为服务列表格式
+      const serviceNodes = initialNodes
+        .filter(node => node.name !== 'metaAppAgent')
+        .map(node => ({
+          ...node,
+          children: node.tools || [],
+        }))
+      if (serviceNodes.length === 0) {
+        return
+      }
+      // 强制清空并重建服务列表，避免ID冲突
+      const newServices = [{
+        id: '9',
+        name: this.service_text_map[this.verticalType],
+        children: [...serviceNodes]
+      }]
+
+      this.setServices(newServices)
+    },
+    // 彻底清理节点的 jsPlumb 连线和端点
+    cleanupNodeConnections(nodeId) {
+      try {
+        console.log('开始清理节点连线:', nodeId)
+
+        // 获取所有与该节点相关的连线
+        const connections = this.jsPlumb.getConnections({
+          source: nodeId
+        }).concat(this.jsPlumb.getConnections({
+          target: nodeId
+        }))
+
+        // 逐一删除连线
+        connections.forEach(conn => {
+          console.log('删除连线:', conn.sourceId, '->', conn.targetId)
+          this.jsPlumb.deleteConnection(conn)
+        })
+
+        // 移除节点上的所有端点
+        this.jsPlumb.removeAllEndpoints(nodeId)
+
+        // 强制清理可能残留的DOM元素
+        this.jsPlumb.remove(nodeId)
+
+        console.log('节点连线清理完成:', nodeId)
+      } catch (error) {
+        console.error('清理节点连线时出错:', error)
+      }
+    },
+    // 从服务列表中移除指定ID的服务
+    removeFromServiceListById(serviceId) {
+      if (!this.services || this.services.length === 0) return
+
+      // 递归函数来移除服务
+      const removeFromChildren = (children) => {
+        if (!children || !Array.isArray(children)) return children
+
+        return children.filter(child => {
+          if (child.id === serviceId) {
+            console.log('从服务列表中移除服务:', child.name, 'ID:', serviceId)
+            return false // 移除这个服务
+          }
+
+          // 如果有子节点，递归处理
+          if (child.children) {
+            child.children = removeFromChildren(child.children)
+          }
+
+          return true // 保留这个服务
+        })
+      }
+
+      // 更新服务列表
+      const updatedServices = this.services.map(rootService => ({
+        ...rootService,
+        children: removeFromChildren(rootService.children || [])
+      }))
+
+      this.setServices(updatedServices)
     },
 
     // 自动布局算法
@@ -491,14 +594,6 @@ export default {
             this.loadEasyFlow()
           }, 200)
         })
-
-        // 点击连线事件
-        this.jsPlumb.bind('click', (conn, originalEvent) => {
-          this.activeElement.type = 'line'
-          this.activeElement.sourceId = conn.sourceId
-          this.activeElement.targetId = conn.targetId
-        })
-
         // 连线创建事件 - 只在用户手动创建连线时触发
         this.jsPlumb.bind('connection', (evt) => {
           const from = evt.source.id
@@ -723,42 +818,15 @@ export default {
     changeLine(oldFrom, oldTo) {
       this.deleteLine(oldFrom, oldTo)
     },
-    changeNodeSite(data) {
-      // 不再支持手动拖拽改变位置
-      return
-    },
-
     addNode(evt, nodeMenu) {
-      let nodeId = nodeMenu.id
-      let origName = nodeMenu.name
-      let nodeName = origName
-      let index = 1
-
-      while (index < 10000) {
-        let repeat = false
-        for (let i = 0; i < this.data.nodeList.length; i++) {
-          const node = this.data.nodeList[i]
-          if (node.name === nodeName) {
-            nodeName = origName + index
-            repeat = true
-          }
-        }
-        if (repeat) {
-          index++
-          continue
-        }
-        break
-      }
-
+      const nodeId = nodeMenu.id
       let node = {
-        id: nodeId,
-        name: nodeName,
+        id: nodeMenu.id,
+        name: nodeMenu.name,
         left: '0px',  // 初始位置，后续会自动计算
         top: '0px'
       }
-
       this.data.nodeList.push(node)
-
       // 重新计算所有节点位置
       this.$nextTick(() => {
         this.calculateNodePositions()
@@ -769,17 +837,20 @@ export default {
           // 自动连接到智能体
           const agentNode = this.data.nodeList.find(n => n.name === 'metaAppAgent')
           if (agentNode && agentNode.id !== nodeId) {
+            // 等待 DOM 更新后再创建连线
             this.$nextTick(() => {
               // 创建双向连线
-              this.createAutoConnection(agentNode.id, nodeId, 'call')  // 智能体 -> 服务
-              this.createAutoConnection(nodeId, agentNode.id, 'return') // 服务 -> 智能体
-              this.jsPlumb.repaintEverything()
+              this.createAutoConnection(agentNode.id, node.id, 'call')  // 智能体 -> 服务
+              this.createAutoConnection(node.id, agentNode.id, 'return') // 服务 -> 智能体
+              // 再次等待连线创建完成后重绘
+              this.$nextTick(() => {
+                this.jsPlumb.repaintEverything()
+              })
             })
           }
         })
       })
-
-      this.$message.success(`已添加节点：${nodeName}`)
+      this.$message.success(`添加${node.name}成功`)
     },
 
     deleteNode(nodeId) {
@@ -790,20 +861,28 @@ export default {
         type: 'warning',
         closeOnClickModal: false
       }).then(() => {
-        this.data.nodeList = this.data.nodeList.filter(function (node) {
-          return node.id !== nodeId
-        })
+        // 先彻底清理 jsPlumb 相关的连线和端点
+        this.cleanupNodeConnections(nodeId)
 
-        // 删除相关连线
+        // 从画布节点列表中删除
+        this.data.nodeList = this.data.nodeList.filter(n => n.id !== nodeId)
+
+        // 删除相关连线数据
         this.data.lineList = this.data.lineList.filter(line =>
           line.from !== nodeId && line.to !== nodeId
         )
 
+        // 同步更新左侧服务列表（排除智能体节点）
+        if (node && node.name !== 'metaAppAgent') {
+          console.log('删除服务节点，ID:', node.id, '名称:', node.name, '节点信息:', node)
+          this.removeFromServiceListById(node.id)
+        }
+
         this.$nextTick(() => {
-          this.jsPlumb.removeAllEndpoints(nodeId)
           // 重新计算剩余节点位置
           this.calculateNodePositions()
           this.$nextTick(() => {
+            // 强制重绘所有连线
             this.jsPlumb.repaintEverything()
           })
         })
@@ -811,11 +890,6 @@ export default {
       }).catch(() => {
       })
       return true
-    },
-
-    clickNode(nodeId) {
-      this.activeElement.type = 'node'
-      this.activeElement.nodeId = nodeId
     },
     hasLine(from, to) {
       for (let i = 0; i < this.data.lineList.length; i++) {
@@ -896,6 +970,9 @@ export default {
 
         console.log('添加智能体节点:', agentNode)
 
+        // 同步初始节点到左侧服务列表
+        this.syncInitialNodesToServices(newFlow.nodeList)
+
         const flowWithAgent = {
           ...newFlow,
           nodeList: [agentNode, ...newFlow.nodeList],
@@ -906,6 +983,8 @@ export default {
         this.dataReload(flowWithAgent)
       } else {
         console.log('使用原始流程数据')
+        // 即使已有智能体节点，也需要同步服务节点到左侧列表
+        this.syncInitialNodesToServices(newFlow.nodeList)
         this.dataReload(newFlow)
       }
     },
@@ -1006,18 +1085,14 @@ export default {
         tools: service.tools,
         state: this.statusFilter(service.status),
         stateStyle: this.statusStyleFilter(service.status),
-        children: service.tools ? service.tools.map(tool => ({
-          name: tool.name,
-          des: tool.des || tool.description || '',
-          ...tool
-        })) : []
+        children: service.tools || []
       }))
 
       // 确保有默认的菜单结构
       if (this.services.length === 0) {
         this.setServices([{
           id: 'mcp_services',
-          name: '领域MCP服务',
+          name: this.service_text_map[this.verticalType],
           children: newServiceItems
         }])
       } else {
@@ -1046,16 +1121,24 @@ export default {
           // 为新节点创建连线到智能体
           const agentNode = this.data.nodeList.find(n => n.name === 'metaAppAgent')
           if (agentNode) {
-            addedNodeIds.forEach(nodeId => {
-              // 创建双向连线
-              this.createAutoConnection(agentNode.id, nodeId, 'call')   // 智能体 -> 服务
-              this.createAutoConnection(nodeId, agentNode.id, 'return') // 服务 -> 智能体
+            // 等待 DOM 更新后再创建连线
+            this.$nextTick(() => {
+              addedNodeIds.forEach(nodeId => {
+                // 创建双向连线
+                this.createAutoConnection(agentNode.id, nodeId, 'call')   // 智能体 -> 服务
+                this.createAutoConnection(nodeId, agentNode.id, 'return') // 服务 -> 智能体
+              })
+
+              // 再次等待连线创建完成后重绘
+              this.$nextTick(() => {
+                this.jsPlumb.repaintEverything()
+              })
+            })
+          } else {
+            this.$nextTick(() => {
+              this.jsPlumb.repaintEverything()
             })
           }
-
-          this.$nextTick(() => {
-            this.jsPlumb.repaintEverything()
-          })
         })
       })
 

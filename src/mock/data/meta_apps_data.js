@@ -1,5 +1,6 @@
 // 统一的元应用数据文件
 // 简化后的数据结构：去除冗余，只保留核心流程数据
+// todo: 从数据库中获取nodeList对应的服务
 
 // 金融欺诈检测推理元应用
 const fraudDetectionApp = {
@@ -10,40 +11,59 @@ const fraudDetectionApp = {
   outputType: 1,
   nodeList: [
     {
-      id: '19000',
+      id: 'c48aad98-4a7b-4498-a4d5-ac2f991d1c0d',
       name: '基于多智能体协作的金融欺诈检测推理MCP服务',
       url: 'http://fdueblab.cn:8778/sse',
+      attribute: 'custom',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      domain: 'aml',
+      industry: '1',
+      scenario: '2',
+      technology: '1',
+      status: 'pre_release_unrated',
+      number: 67,
+      deleted: 0,
       tools: [
-        { name: 'batchAnalyzeTransactions', des: '批量分析交易数据' },
-        { name: 'detectAnomalies', des: '检测异常交易模式' },
-        { name: 'calculateRiskScore', des: '计算风险评分' },
-        { name: 'extractFeatures', des: '提取交易特征' }
+        { id: 'tool-001-health-check-mcp1', name: 'healthCheck', des: '判断微服务状态是否正常可用' },
+        { id: 'tool-002-analyze-transaction', name: 'analyzeTransaction', des: '单笔交易风险分析' },
+        { id: 'tool-003-batch-analyze-transactions', name: 'batchAnalyzeTransactions', des: '批量交易风险分析' },
+        { id: 'tool-004-get-agents-status', name: 'getAgentsStatus', des: '获取各智能体状态' },
+        { id: 'tool-005-get-model-info', name: 'getModelInfo', des: '获取模型信息' }
       ]
     },
     {
-      id: '9101',
-      name: '样例报告生成微服务',
+      id: '02a951d1-09b1-4d65-9f6c-cf048e5f620f',
+      name: '样例报告生成MCP服务',
+      attribute: 'non_intelligent',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      domain: 'aml',
+      industry: '2',
+      scenario: '3',
+      technology: '3',
+      status: 'pre_release_unrated',
+      number: 45,
+      deleted: 0,
       tools: [
-        { name: 'generateReport', des: '生成检测报告' },
-        { name: 'formatResults', des: '格式化分析结果' },
-        { name: 'exportToPDF', des: '导出PDF报告' },
-        { name: 'sendNotification', des: '发送报告通知' }
+        { id: 'tool-011-report-generation-health', name: 'healthCheck', des: '判断样例报告生成MCP服务状态是否正常可用' },
+        { id: 'tool-012-generate-report', name: 'generateReport', des: '基于输入数据生成分析报告' }
       ]
     },
     {
-      id: '19102',
-      name: '数据管理服务',
+      id: 'c582ad98-4a7b-4498-a4d5-a52f991d1c0e',
+      name: '课题四模型评测-安全性指纹MCP服务',
+      attribute: 'paid',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      domain: 'aml',
+      industry: '3',
+      scenario: '4',
+      technology: '4',
+      status: 'released',
+      number: 134,
+      deleted: 0,
       tools: [
-        { name: 'getReportData', des: '获取报告数据' },
-        { name: 'storeResults', des: '存储分析结果' },
-        { name: 'queryHistoricalData', des: '查询历史数据' },
-        { name: 'backupData', des: '备份重要数据' }
+        { id: 'tool-019-security-fingerprint-health', name: 'healthCheck', des: '判断课题四模型评测-安全性指纹MCP服务状态是否正常可用' },
+        { id: 'tool-020-security-fingerprint-detect', name: 'securityFingerprintDetect', des: '对机器学习模型进行安全性指纹检测' },
+        { id: 'tool-021-evaluate-model-security', name: 'evaluateModelSecurity', des: '评估模型抗攻击能力和安全风险等级' }
       ]
     }
   ]
@@ -152,27 +172,31 @@ const aircraftApp = {
   outputType: 1,
   nodeList: [
     {
-      id: '13001',
-      name: '目标识别服务',
+      id: '75e5ff68-23a9-4109-967d-a5a76f29ba6b',
+      name: '无人机目标识别MCP服务',
+      url: 'https://myMcpServer.com/aircraft-detection/sse',
+      method: 'sse',
       type: 'atomic_mcp',
-      state: 'released',
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'getTargetLocation', des: '获取目标位置' },
-        { name: 'getTargetInfo', des: '获取目标信息' },
-        { name: 'trackTarget', des: '目标跟踪' },
-        { name: 'classifyTarget', des: '目标分类' }
+        { id: 'tool-028-aircraft-detection-health', name: 'healthCheck', des: '判断无人机目标识别MCP服务状态是否正常可用' },
+        { id: 'tool-029-detect-targets', name: 'detectTargets', des: '检测和识别空中或地面目标' },
+        { id: 'tool-030-analyze-objects', name: 'analyzeObjects', des: '分析识别到的目标对象特征' }
       ]
     },
     {
-      id: '13101',
-      name: '远程控制服务',
+      id: 'db43a293-fb67-4efb-b65b-ec22d9cca5af',
+      name: '无人机远程控制MCP服务',
+      url: 'https://myMcpServer.com/aircraft-control/sse',
+      method: 'sse',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'setTargetLocation', des: '设置目标位置' },
-        { name: 'setMotionMode', des: '设置运动模式' },
-        { name: 'adjustAltitude', des: '调整飞行高度' },
-        { name: 'emergencyLanding', des: '紧急降落' }
+        { id: 'tool-031-aircraft-control-health', name: 'healthCheck', des: '判断无人机远程控制MCP服务状态是否正常可用' },
+        { id: 'tool-032-remote-control', name: 'remoteControl', des: '远程控制无人机飞行和操作' },
+        { id: 'tool-033-flight-monitoring', name: 'flightMonitoring', des: '实时监控无人机飞行状态和参数' }
       ]
     }
   ]
@@ -292,24 +316,42 @@ const pj1App = {
   outputType: 1,
   nodeList: [
     {
-      id: '9000',
-      name: '课题一风险识别模型推理微服务',
+      id: '3c3d4e4d-36e4-4436-bea1-63af2117d0cd',
+      name: '课题一风险识别模型推理MCP服务',
+      url: 'https://myMcpServer.com/risk-identification/sse',
+      method: 'sse',
+      attribute: 'open_source',
       type: 'atomic_mcp',
-      state: 'released',
+      domain: 'aml',
+      industry: '0',
+      scenario: '1',
+      technology: '1',
+      status: 'released',
+      number: 89,
+      deleted: 0,
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'preprocess', des: '数据预处理' },
-        { name: 'predict', des: '风险预测' },
-        { name: 'visualize', des: '可视化分析' }
+        { id: 'tool-013-risk-identification-health', name: 'healthCheck', des: '判断课题一风险识别模型推理MCP服务状态是否正常可用' },
+        { id: 'tool-014-risk-predict', name: 'predict', des: '对客户信息进行风险识别和模型推理分析' },
+        { id: 'tool-015-risk-evaluate', name: 'evaluate', des: '评估风险等级和给出风控建议' }
       ]
     },
     {
-      id: '9101',
-      name: '样例报告生成服务',
+      id: '02a951d1-09b1-4d65-9f6c-cf048e5f620f',
+      name: '样例报告生成MCP服务',
+      attribute: 'non_intelligent',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      domain: 'aml',
+      industry: '2',
+      scenario: '3',
+      technology: '3',
+      status: 'pre_release_unrated',
+      number: 45,
+      deleted: 0,
       tools: [
-        { name: 'generateReport', des: '生成样例报告' },
-        { name: 'getReportData', des: '获取报告数据' }
+        { id: 'tool-011-report-generation-health', name: 'healthCheck', des: '判断样例报告生成MCP服务状态是否正常可用' },
+        { id: 'tool-012-generate-report', name: 'generateReport', des: '基于输入数据生成分析报告' }
       ]
     }
   ]
@@ -324,24 +366,48 @@ const pj2App = {
   outputType: 1,
   nodeList: [
     {
-      id: '10000',
-      name: '课题二多方安全计算模型推理微服务',
+      id: '5fda9469-dcd7-4032-affb-9c9df0cd2cc7',
+      name: '课题二多方安全计算模型推理MCP服务',
+      url: 'https://myMcpServer.com/multi-party-computation/sse',
+      method: 'sse',
+      attribute: 'open_source',
       type: 'atomic_mcp',
-      state: 'released',
+      domain: 'aml',
+      industry: '0',
+      scenario: '1',
+      technology: '1',
+      network: 'ioeb_app-network',
+      port: '8770/tcp → 0.0.0.0:8770 :::8770',
+      volume: '/home/ubuntu/ioeb/api/Project_2/mcp -> /app/mcp',
+      status: 'pre_release_unrated',
+      number: 112,
+      deleted: 0,
+      create_time: 1744635999632,
+      creator_id: '',
+      parameter_type: 1,
+      response_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'preprocess', des: '安全数据预处理' },
-        { name: 'predict', des: '多方计算预测' },
-        { name: 'visualize', des: '安全可视化' }
+        { id: 'tool-037-mpc-health-check', name: 'healthCheck', des: '判断课题二多方安全计算MCP服务状态是否正常可用' },
+        { id: 'tool-038-mpc-compute', name: 'multiPartyCompute', des: '启动多方安全计算协议，联合分析多机构数据而不泄露隐私' },
+        { id: 'tool-039-mpc-analyze', name: 'jointAnalyze', des: '执行跨机构联合反洗钱分析和洗钱网络识别' }
       ]
     },
     {
-      id: '9101',
-      name: '样例报告生成服务',
+      id: '02a951d1-09b1-4d65-9f6c-cf048e5f620f',
+      name: '样例报告生成MCP服务',
+      attribute: 'non_intelligent',
       type: 'atomic_mcp',
-      state: 'pre_release_unrated',
+      domain: 'aml',
+      industry: '2',
+      scenario: '3',
+      technology: '3',
+      status: 'pre_release_unrated',
+      number: 45,
+      deleted: 0,
       tools: [
-        { name: 'generateReport', des: '生成课题二报告' },
-        { name: 'getReportData', des: '获取安全报告数据' }
+        { id: 'tool-011-report-generation-health', name: 'healthCheck', des: '判断样例报告生成MCP服务状态是否正常可用' },
+        { id: 'tool-012-generate-report', name: 'generateReport', des: '基于输入数据生成分析报告' }
       ]
     }
   ]
@@ -356,14 +422,25 @@ const pj4App = {
   outputType: 1,
   nodeList: [
     {
-      id: '11000',
-      name: '课题四模型评测-安全性指纹微服务',
+      id: 'c582ad98-4a7b-4498-a4d5-a52f991d1c0e',
+      name: '课题四模型评测-安全性指纹MCP服务',
+      url: 'https://myMcpServer.com/model-security-fingerprint/sse',
+      method: 'sse',
+      attribute: 'paid',
       type: 'atomic_mcp',
-      state: 'released',
+      domain: 'aml',
+      industry: '3',
+      scenario: '4',
+      technology: '4',
+      status: 'released',
+      number: 134,
+      deleted: 0,
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'safetyFingerprint', des: '安全性指纹识别' },
-        { name: 'modelEvaluation', des: '模型安全评估' },
-        { name: 'securityAnalysis', des: '安全性分析' }
+        { id: 'tool-019-security-fingerprint-health', name: 'healthCheck', des: '判断课题四模型评测-安全性指纹MCP服务状态是否正常可用' },
+        { id: 'tool-020-security-fingerprint-detect', name: 'securityFingerprintDetect', des: '对机器学习模型进行安全性指纹检测' },
+        { id: 'tool-021-evaluate-model-security', name: 'evaluateModelSecurity', des: '评估模型抗攻击能力和安全风险等级' }
       ]
     }
   ]
@@ -378,40 +455,108 @@ const pj1pj4pj3App = {
   outputType: 1,
   nodeList: [
     {
-      id: '9000',
-      name: '课题一风险识别模型推理服务',
+      id: '3c3d4e4d-36e4-4436-bea1-63af2117d0cd',
+      name: '课题一风险识别模型推理MCP服务',
+      url: 'https://myMcpServer.com/risk-identification/sse',
+      method: 'sse',
+      attribute: 'open_source',
       type: 'atomic_mcp',
-      state: 'released',
+      domain: 'aml',
+      industry: '0',
+      scenario: '1',
+      technology: '1',
+      status: 'released',
+      number: 89,
+      deleted: 0,
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'preprocess', des: '数据预处理' },
-        { name: 'predict', des: '风险预测' }
+        { id: 'tool-013-risk-identification-health', name: 'healthCheck', des: '判断课题一风险识别模型推理MCP服务状态是否正常可用' },
+        { id: 'tool-014-risk-predict', name: 'predict', des: '对客户信息进行风险识别和模型推理分析' },
+        { id: 'tool-015-risk-evaluate', name: 'evaluate', des: '评估风险等级和给出风控建议' }
       ]
     },
     {
-      id: '11000',
-      name: '课题四模型评测-安全性指纹服务',
+      id: 'c582ad98-4a7b-4498-a4d5-a52f991d1c0e',
+      name: '课题四模型评测-安全性指纹MCP服务',
+      url: 'https://myMcpServer.com/model-security-fingerprint/sse',
+      method: 'sse',
+      attribute: 'paid',
       type: 'atomic_mcp',
-      state: 'released',
+      domain: 'aml',
+      industry: '3',
+      scenario: '4',
+      technology: '4',
+      status: 'released',
+      number: 134,
+      deleted: 0,
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'safetyFingerprint', des: '安全性指纹识别' }
+        { id: 'tool-019-security-fingerprint-health', name: 'healthCheck', des: '判断课题四模型评测-安全性指纹MCP服务状态是否正常可用' },
+        { id: 'tool-020-security-fingerprint-detect', name: 'securityFingerprintDetect', des: '对机器学习模型进行安全性指纹检测' },
+        { id: 'tool-021-evaluate-model-security', name: 'evaluateModelSecurity', des: '评估模型抗攻击能力和安全风险等级' }
       ]
     },
     {
-      id: '3101',
-      name: '课题三金融风险报告生成微服务',
+      id: 'b452ae47-92db-4281-8faf-9491ab6baea4',
+      name: '课题三金融风险报告生成MCP服务',
+      method: 'sse',
+      attribute: 'paid',
       type: 'atomic_mcp',
-      state: 'released',
+      domain: 'aml',
+      industry: '3',
+      scenario: '4',
+      technology: '4',
+      status: 'released',
+      number: 26,
+      deleted: 0,
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'generateReport', des: '生成综合风险报告' },
-        { name: 'riskAssessment', des: '综合风险评估' },
-        { name: 'reportFormatting', des: '报告格式化' }
+        { id: 'tool-016-financial-risk-health', name: 'healthCheck', des: '判断课题三金融风险报告生成MCP服务状态是否正常可用' },
+        { name: 'generateReport', des: '生成金融风险报告，包含信用风险、市场风险和操作风险分析' },
+        { id: 'tool-018-analyze-risk-data', name: 'analyzeRiskData', des: '分析多维度风险数据和指标' }
+      ]
+    }
+  ]
+}
+
+// 围标检测元应用
+const bidRiggingDetectionApp = {
+  preName: '围标检测元应用',
+  preInputName: '投标数据与招标信息',
+  preOutputName: '围标风险评估报告',
+  inputType: 2,
+  outputType: 1,
+  nodeList: [
+    {
+      id: 'ad43a293-fb67-4efb-b65b-ec22d9cca5ae',
+      name: '围标检测MCP服务',
+      url: 'http://fdueblab.cn:26023/sse',
+      method: 'sse',
+      attribute: 'custom',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '1',
+      scenario: '2',
+      technology: '4',
+      status: 'pre_release_unrated',
+      number: 7,
+      deleted: 0,
+      parameter_type: 1,
+      response_type: 1,
+      is_fake: 0,
+      tools: [
+        { id: 'tool-008-health-check-mcp3', name: 'healthCheck', des: '判断微服务状态是否正常可用' },
+        { id: 'tool-009-flask-predict', name: 'flask_predict', des: '传入特征数组，获取模型预测结果和解释' }
       ]
     }
   ]
 }
 
 // 服务类型映射表 - 统一管理
-const SERVICE_TEXT_MAP = {
+export const SERVICE_TEXT_MAP = {
   'aircraft': '无人飞机AI监控服务',
   'health': '乡村医疗AI服务',
   'agriculture': '农业数智AI服务',
@@ -442,9 +587,9 @@ function generateServiceNodes(flowData, rootServiceText = '智能服务') {
     }
 
     const tools = node.tools || []
-    tools.forEach((tool, index) => {
+    tools.forEach((tool) => {
       groupMap.get(id).children.push({
-        id: `${id}_tool${index}`,
+        id: tool.id,
         name: tool.name,
         des: tool.des
       })
@@ -502,6 +647,8 @@ export function getMetaAppNodes(serviceType, userInput) {
             flowData = pj1pj4pj3App
           } else if (userInput.includes('欺诈')) {
             flowData = fraudDetectionApp
+          } else if (userInput.includes('围标')) {
+            flowData = bidRiggingDetectionApp
           } else {
             reject(new Error('未找到对应的元应用'))
             return
