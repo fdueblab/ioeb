@@ -102,8 +102,6 @@
       v-if="metaAppBuilderVisible"
       ref="metaAppBuilder"
       :vertical-type="verticalType"
-      :input-type="data.inputType"
-      :output-type="data.outputType"
       :pre-name="data.preName"
       :pre-input-name="data.preInputName"
       :pre-output-name="data.preOutputName"
