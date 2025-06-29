@@ -41,6 +41,7 @@
 
 <script>
 import { getMetaAppNodes } from '@/mock/data/meta_apps_data'
+import { ChatMessageManager } from './chat_messages'
 
 export default {
   name: 'FakeChat',
@@ -51,7 +52,6 @@ export default {
     }
   },
   mounted() {
-    this.init()
     // 添加键盘事件监听
     document.addEventListener('keydown', this.handleKeyDown)
   },
@@ -62,30 +62,26 @@ export default {
   data() {
     return {
       userInput: '',
-      placeholder: '请输入您对应用的需求',
+      placeholder: '',
       messages: [],
       currentIndex: 0,
       isInputEnabled: true,
       isInputLoading: false,
       isGenerated: false,
       showSuggestions: false,
-      suggestions: [
-        { value: '我想基于课题一的算法生成一个跨境支付报告生成应用' },
-        { value: '我想基于课题二的算法生成一个跨境支付报告生成应用' },
-        { value: '我想基于课题三的算法构建一个智能分析系统' },
-        { value: '我想基于课题四的算法开发一个数据处理应用' },
-        { value: '我需要使用课题一和课题三的技术开发一个金融风控系统' },
-        { value: '请帮我实现一个简单的金融欺诈检测应用' }
-      ],
-      defaultSuggestions: [
-        { value: '我想基于课题一的算法生成一个跨境支付报告生成应用' },
-        { value: '我想基于课题二的算法生成一个跨境支付报告生成应用' },
-        { value: '我想基于课题三的算法构建一个智能分析系统' },
-        { value: '我想基于课题四的算法开发一个数据处理应用' },
-        { value: '我需要使用课题一和课题三的技术开发一个金融风控系统' },
-        { value: '请帮我实现一个简单的金融欺诈检测应用' }
-      ],
+      messageManager: null,
       filteredSuggestions: []
+    }
+  },
+  watch: {
+    verticalType: {
+      handler(newVal) {
+        if (newVal) {
+          this.messageManager = new ChatMessageManager(newVal)
+          this.init()
+        }
+      },
+      immediate: true
     }
   },
   methods: {
@@ -95,14 +91,10 @@ export default {
       }
     },
     onInputChange() {
-      if (!this.userInput) {
-        this.filteredSuggestions = [...this.defaultSuggestions]
-      } else {
-        this.filteredSuggestions = this.defaultSuggestions.filter(item =>
-          item.value.toLowerCase().includes(this.userInput.toLowerCase())
-        )
+      if (this.messageManager) {
+        this.filteredSuggestions = this.messageManager.filterSuggestions(this.userInput)
+        this.showSuggestions = true
       }
-      this.showSuggestions = true
     },
     activateSuggestions() {
       this.showSuggestions = true
@@ -128,14 +120,14 @@ export default {
       this.userInput = ''
       getMetaAppNodes(this.verticalType, input).then((res) => {
         const { chosenServices, serviceNodes, flowData } = res
-        const outputMessage = `按照您的需求，我选取了<b>${chosenServices.join('</b>, <b>')}</b>作为可供任务智能体调用的服务。您可以通过右上角的添加服务按钮来增加智能体可调用的服务或在右侧删除不必要的服务。`
+        const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
         this.typeWriter(outputMessage)
         this.$emit('update-services', serviceNodes)
         this.$emit('update-flow', flowData)
-        this.placeholder = '已智能生成工作流'
+        this.placeholder = '已智能生成元应用'
         this.isGenerated = true
       }).catch(() => {
-        const outputMessage = '非常抱歉，未能理解您的需求。本系统目前仅支持基于课题一、课题二、课题三、课题四或课题组内的金融欺诈检测相关算法构建简单的元应用。'
+        const outputMessage = this.messageManager.getErrorReply()
         this.typeWriter(outputMessage)
         this.isInputEnabled = true
       })
@@ -161,15 +153,15 @@ export default {
     },
     init() {
       this.userInput = ''
-      this.placeholder = '请输入您对应用的需求'
+      this.placeholder = this.messageManager ? this.messageManager.getPlaceholder() : '请输入您对应用的需求'
       this.messages = []
       this.isInputEnabled = true
       this.isInputLoading = false
       this.isGenerated = false
       this.showSuggestions = false
-      this.suggestions = [...this.defaultSuggestions]
-      this.filteredSuggestions = [...this.defaultSuggestions]
-      this.messages.push({ text: '请告诉我您对应用的需求，我将根据您的需求尝试生成元应用', isUser: false })
+      this.filteredSuggestions = this.messageManager ? this.messageManager.getSuggestions() : []
+      const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '请告诉我您对应用的需求，我将根据您的需求尝试生成元应用'
+      this.messages.push({ text: initialMessage, isUser: false })
     },
     refresh() {
       this.init()
