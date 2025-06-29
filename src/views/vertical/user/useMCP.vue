@@ -184,14 +184,6 @@ export default {
     this.generateMessageExamples()
   },
   methods: {
-    // 获取工具名称
-    getTools() {
-      if (this.apiList[0].tools) {
-        return this.apiList[0].tools.map(tool => tool.name).join(' | ')
-      } else {
-        return '暂未获取工具信息'
-      }
-    },
     // 根据服务配置生成消息示例
     generateMessageExamples() {
       // 通用消息示例

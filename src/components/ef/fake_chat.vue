@@ -42,6 +42,7 @@
 <script>
 import { getMetaAppNodes } from '@/mock/data/meta_apps_data'
 import { ChatMessageManager } from './chat_messages'
+import { generateServiceNodes } from './utils'
 
 export default {
   name: 'FakeChat',
@@ -118,8 +119,9 @@ export default {
       this.scrollToBottom()
       const input = this.userInput
       this.userInput = ''
-      getMetaAppNodes(this.verticalType, input).then((res) => {
-        const { chosenServices, serviceNodes, flowData } = res
+      getMetaAppNodes(this.verticalType, input).then((flowData) => {
+        // 使用utils中的方法生成服务节点
+        const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
         const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
         this.typeWriter(outputMessage)
         this.$emit('update-services', serviceNodes)

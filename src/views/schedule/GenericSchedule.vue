@@ -1,8 +1,10 @@
 <template>
   <div class="schedule-with-input">
-    <fake-chat
-      ref="fakeChat"
+    <smart-chat
+      ref="smartChat"
       style="height: calc(100vh - 100px)"
+      @start-loading="startLoading"
+      @stop-loading="stopLoading"
       @update-services="updateServices"
       @update-flow="updateFlow"
       @clear-flow="clearFlow"
@@ -22,14 +24,14 @@
 
 <script>
 import FlowPanel from '@/components/ef/panel_enhanced'
-import FakeChat from '@/components/ef/fake_chat'
-import dictionaryCache from '@/utils/dictionaryCache'
+import SmartChat from '@/components/ef/smart_chat'
+import { SERVICE_TEXT_MAP } from '@/components/ef/utils'
 
 export default {
   name: 'GenericSchedule',
   components: {
     FlowPanel,
-    FakeChat
+    SmartChat
   },
   props: {
     // 垂直领域类型，从路由解析
@@ -40,7 +42,7 @@ export default {
   },
   data() {
     return {
-      serviceName: '通用智能服务',
+      service_text_map: SERVICE_TEXT_MAP,
       initFlow: {},
       initServices: [],
       loadingServices: false,
@@ -63,27 +65,28 @@ export default {
     }
   },
   methods: {
-    // 从字典获取服务名称
-    async loadServiceNameFromDict() {
-      try {
-        if (!this.verticalType) return
-        // 从字典缓存中获取服务名称
-        const domains = await dictionaryCache.loadDict(`domain`)
-        this.serviceName = domains.find(item => item.code === this.verticalType)?.text + '服务' || '通用智能服务'
-      } catch (error) {
-        console.error('加载服务名称失败:', error)
-      }
+    init() {
+      this.$refs.smartChat.init()
+      this.clearFlow()
     },
 
-    init() {
-      this.$refs.fakeChat.init()
-      this.loadServiceNameFromDict().then(() => {
-        this.clearFlow()
-      })
+    // 开始loading状态（连接智能体和思考过程中）
+    startLoading() {
+      this.loadingServices = true
+      this.loadingFlow = true
+    },
+
+    // 停止loading状态（出现错误时）
+    stopLoading() {
+      this.loadingServices = false
+      this.loadingFlow = false
     },
 
     updateServices(newServices) {
-      this.loadingServices = true
+      // 如果还没有loading，则设置loading（防止重复设置）
+      if (!this.loadingServices) {
+        this.loadingServices = true
+      }
       setTimeout(() => {
         this.initServices = newServices
         this.loadingServices = false
@@ -91,7 +94,10 @@ export default {
     },
 
     updateFlow(newFlow) {
-      this.loadingFlow = true
+      // 如果还没有loading，则设置loading（防止重复设置）
+      if (!this.loadingFlow) {
+        this.loadingFlow = true
+      }
       setTimeout(() => {
         this.$refs.flowPanel.updateInitialFlow(newFlow)
         this.loadingFlow = false
@@ -104,9 +110,8 @@ export default {
       if (!this.initServices || this.initServices.length === 0) {
       this.$refs.flowPanel.setServices([
         {
-          id: '9',
-          type: 'group',
-          name: this.serviceName,
+          id: 'rootNode',
+          name: this.service_text_map[this.verticalType],
           open: true,
           children: []
         }
