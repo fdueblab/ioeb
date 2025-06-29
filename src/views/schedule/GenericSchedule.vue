@@ -1,7 +1,7 @@
 <template>
   <div class="schedule-with-input">
     <smart-chat
-      ref="fakeChat"
+      ref="smartChat"
       style="height: calc(100vh - 100px)"
       @update-services="updateServices"
       @update-flow="updateFlow"
@@ -23,7 +23,7 @@
 <script>
 import FlowPanel from '@/components/ef/panel_enhanced'
 import SmartChat from '@/components/ef/smart_chat'
-import dictionaryCache from '@/utils/dictionaryCache'
+import { SERVICE_TEXT_MAP } from '@/components/ef/utils'
 
 export default {
   name: 'GenericSchedule',
@@ -40,7 +40,7 @@ export default {
   },
   data() {
     return {
-      serviceName: '通用智能服务',
+      service_text_map: SERVICE_TEXT_MAP,
       initFlow: {},
       initServices: [],
       loadingServices: false,
@@ -63,23 +63,9 @@ export default {
     }
   },
   methods: {
-    // 从字典获取服务名称
-    async loadServiceNameFromDict() {
-      try {
-        if (!this.verticalType) return
-        // 从字典缓存中获取服务名称
-        const domains = await dictionaryCache.loadDict(`domain`)
-        this.serviceName = domains.find(item => item.code === this.verticalType)?.text + '服务' || '通用智能服务'
-      } catch (error) {
-        console.error('加载服务名称失败:', error)
-      }
-    },
-
     init() {
-      this.$refs.fakeChat.init()
-      this.loadServiceNameFromDict().then(() => {
-        this.clearFlow()
-      })
+      this.$refs.smartChat.init()
+      this.clearFlow()
     },
 
     updateServices(newServices) {
@@ -105,7 +91,7 @@ export default {
       this.$refs.flowPanel.setServices([
         {
           id: 'rootNode',
-          name: this.serviceName,
+          name: this.service_text_map[this.verticalType],
           open: true,
           children: []
         }
