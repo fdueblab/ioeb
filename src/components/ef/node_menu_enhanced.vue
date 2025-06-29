@@ -59,11 +59,9 @@
           // 拖拽的时候样式
           // fallbackClass: 'flow-node-draggable'
         },
-        // 默认打开的左侧菜单的id
-        defaultOpeneds: ['1', '2'],
         nodeMenu: {},
         // 菜单和服务的展开状态管理
-        openMenus: { '9': true }, // 默认展开根菜单
+        openMenus: { rootNode: true }, // 默认展开根菜单
         openServices: {} // 默认所有服务都折叠
       }
     },

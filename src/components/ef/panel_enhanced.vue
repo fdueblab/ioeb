@@ -343,7 +343,7 @@ export default {
       }
       // 强制清空并重建服务列表，避免ID冲突
       const newServices = [{
-        id: '9',
+        id: 'rootNode',
         name: this.service_text_map[this.verticalType],
         children: [...serviceNodes]
       }]
@@ -1128,7 +1128,7 @@ export default {
       // 确保有默认的菜单结构
       if (this.services.length === 0) {
         this.setServices([{
-          id: 'mcp_services',
+          id: 'rootNode',
           name: this.service_text_map[this.verticalType],
           children: newServiceItems
         }])
