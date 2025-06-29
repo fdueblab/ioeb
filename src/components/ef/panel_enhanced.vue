@@ -40,7 +40,7 @@
       <!-- 左侧工具栏 - 可选显示 -->
       <div v-if="showSidebar" class="ef-sidebar">
         <div v-if="loadingServices" class="loading-overlay">
-          <a-spin size="large" />
+          <a-spin size="large" tip="正在选择服务"/>
         </div>
         <node-menu @addNode="addNode" ref="nodeMenu" :menu-list="services" />
       </div>
@@ -48,7 +48,7 @@
       <!-- 主画布区域 -->
       <div id="efContainer" ref="efContainer" class="ef-canvas">
         <div v-if="loadingFlow" class="loading-overlay">
-          <a-spin size="large" tip="正在加载流程...">
+          <a-spin size="large" tip="正在生成元应用">
             <div style="height: 200px;"></div>
           </a-spin>
         </div>

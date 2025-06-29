@@ -3,6 +3,8 @@
     <smart-chat
       ref="smartChat"
       style="height: calc(100vh - 100px)"
+      @start-loading="startLoading"
+      @stop-loading="stopLoading"
       @update-services="updateServices"
       @update-flow="updateFlow"
       @clear-flow="clearFlow"
@@ -68,8 +70,23 @@ export default {
       this.clearFlow()
     },
 
-    updateServices(newServices) {
+    // 开始loading状态（连接智能体和思考过程中）
+    startLoading() {
       this.loadingServices = true
+      this.loadingFlow = true
+    },
+
+    // 停止loading状态（出现错误时）
+    stopLoading() {
+      this.loadingServices = false
+      this.loadingFlow = false
+    },
+
+    updateServices(newServices) {
+      // 如果还没有loading，则设置loading（防止重复设置）
+      if (!this.loadingServices) {
+        this.loadingServices = true
+      }
       setTimeout(() => {
         this.initServices = newServices
         this.loadingServices = false
@@ -77,7 +94,10 @@ export default {
     },
 
     updateFlow(newFlow) {
-      this.loadingFlow = true
+      // 如果还没有loading，则设置loading（防止重复设置）
+      if (!this.loadingFlow) {
+        this.loadingFlow = true
+      }
       setTimeout(() => {
         this.$refs.flowPanel.updateInitialFlow(newFlow)
         this.loadingFlow = false
