@@ -1,8 +1,42 @@
 <template>
   <div class="chat-container">
     <div class="chat-output" ref="chatOutput">
-      <div v-for="(message, index) in messages" :key="index" :class="['chat-message', message.isUser ? 'user-message' : 'bot-message']">
-        <a-icon v-if="message.text === 'agentLoading'" type="loading" />
+      <div v-for="(message, index) in messages" :key="index" :class="['chat-message', message.isUser ? 'user-message' : 'bot-message', message.type === 'agent' ? 'agent-message-wrapper' : '', message.text === 'agentLoading' ? 'loading-text-wrapper' : '']">
+        <!-- 智能体连接状态 -->
+        <div v-if="message.text === 'agentLoading'" class="agent-connecting">
+          <a-icon type="global" style="margin-right: 8px" />正在连接智能体
+          <div class="connecting-indicator">
+            <div class="connecting-dot"></div>
+            <div class="connecting-dot"></div>
+            <div class="connecting-dot"></div>
+          </div>
+        </div>
+        <!-- 智能体消息（包含思考过程和结果） -->
+        <div v-else-if="message.type === 'agent'" class="agent-message-container">
+          <!-- 思考过程部分 -->
+          <div v-if="message.thinking" class="thinking-section">
+            <div class="thinking-header" @click="toggleThinking(index)">
+              <a-icon :type="message.thinking.collapsed ? 'down' : 'up'" class="thinking-toggle" />
+              <span class="thinking-title">
+                <a-icon v-if="message.thinking.finished" type="bulb" style="color: #faad14; margin-right: 6px;" />
+                {{ getThinkingTitle(message.thinking) }}
+              </span>
+              <div v-if="!message.thinking.finished" class="thinking-indicator">
+                <div class="thinking-dot"></div>
+                <div class="thinking-dot"></div>
+                <div class="thinking-dot"></div>
+              </div>
+            </div>
+            <div v-if="!message.thinking.collapsed" class="thinking-content">
+              <div class="thinking-text">{{ message.thinking.thought }}</div>
+            </div>
+          </div>
+          <!-- 结果部分 -->
+          <div v-if="message.result" class="result-section">
+            <div class="message-content" v-html="message.result" />
+          </div>
+        </div>
+        <!-- 普通消息 -->
         <div v-else class="message-content" v-html="message.text" />
       </div>
     </div>
@@ -72,7 +106,8 @@ export default {
       isGenerated: false,
       showSuggestions: false,
       messageManager: null,
-      filteredSuggestions: []
+      filteredSuggestions: [],
+      thinkingMessageIndex: -1 // 追踪思考消息的索引
     }
   },
   watch: {
@@ -121,6 +156,9 @@ export default {
       const input = this.userInput
       this.userInput = ''
 
+      // 发出开始loading事件，让其他界面进入loading状态
+      this.$emit('start-loading')
+
       // 根据领域类型选择数据源
       if (this.verticalType === 'aml') {
         this.callAgentForRecommendation(input)
@@ -128,7 +166,64 @@ export default {
         this.useFakeData(input)
       }
     },
-
+    // 获取思考过程标题
+    getThinkingTitle(thinking) {
+      if (!thinking) return ''
+      // 如果有自定义标题，优先使用
+      if (thinking.title) {
+        return thinking.title
+      }
+      // 根据状态显示相应标题
+      if (thinking.finished) {
+        return `思考完成 (共${thinking.step}步)`
+      } else {
+        return `正在思考... (第${thinking.step}步)`
+      }
+    },
+    // 切换思考过程的展示状态
+    toggleThinking(index) {
+      if (this.messages[index] && this.messages[index].type === 'agent' && this.messages[index].thinking) {
+        this.$set(this.messages[index].thinking, 'collapsed', !this.messages[index].thinking.collapsed)
+      }
+    },
+    // 添加或更新思考过程消息
+    updateThinkingMessage(thought, step) {
+      if (this.thinkingMessageIndex === -1) {
+        // 创建新的智能体消息，替换loading消息
+        const loadingIndex = this.messages.findIndex(msg => msg.text === 'agentLoading')
+        if (loadingIndex !== -1) {
+          this.$set(this.messages, loadingIndex, {
+            type: 'agent',
+            thinking: {
+              thought: thought,
+              step: step,
+              collapsed: false,
+              finished: false
+            },
+            result: null,
+            isUser: false
+          })
+          this.thinkingMessageIndex = loadingIndex
+        }
+      } else {
+        // 更新现有的思考消息
+        this.$set(this.messages[this.thinkingMessageIndex].thinking, 'thought', thought)
+        this.$set(this.messages[this.thinkingMessageIndex].thinking, 'step', step)
+      }
+      this.scrollToBottom()
+    },
+    // 完成思考过程，自动收起
+    finishThinking() {
+      if (this.thinkingMessageIndex !== -1) {
+        const agentMessage = this.messages[this.thinkingMessageIndex]
+        if (agentMessage.thinking) {
+          this.$set(agentMessage.thinking, 'collapsed', true)
+          this.$set(agentMessage.thinking, 'finished', true)
+          // 标题由getThinkingTitle方法动态计算，不需要手动设置
+        }
+      }
+      // 注意：不重置 thinkingMessageIndex，因为后续还需要在同一消息中添加结果
+    },
     // 调用智能体获取推荐服务
     callAgentForRecommendation(input) {
       const formData = new FormData()
@@ -141,17 +236,25 @@ export default {
         },
         onStep: (data) => {
           console.log('智能体执行步骤:', data)
+          // 更新思考过程展示
+          if (data.thought && data.step) {
+            this.updateThinkingMessage(data.thought, data.step)
+          }
         },
         onError: (error) => {
           console.error('智能体推荐失败:', error)
+          this.finishThinking() // 结束思考过程
+          this.$emit('stop-loading') // 停止loading状态
           const outputMessage = this.messageManager.getErrorReply()
-          this.typeWriter(outputMessage)
+          this.agentTypeWriter(outputMessage)
           this.isInputEnabled = true
         },
         onWarning: (warning) => {
           console.warn('智能体推荐警告:', warning)
+          this.finishThinking() // 结束思考过程
+          this.$emit('stop-loading') // 停止loading状态
           const outputMessage = this.messageManager.getErrorReply()
-          this.typeWriter(outputMessage)
+          this.agentTypeWriter(outputMessage)
           this.isInputEnabled = true
         },
         onFinalResult: (results) => {
@@ -163,8 +266,10 @@ export default {
         },
         onDataProcessError: (error) => {
           console.error('智能体数据处理错误:', error)
+          this.finishThinking() // 结束思考过程
+          this.$emit('stop-loading') // 停止loading状态
           const outputMessage = this.messageManager.getErrorReply()
-          this.typeWriter(outputMessage)
+          this.agentTypeWriter(outputMessage)
           this.isInputEnabled = true
         }
       })
@@ -172,6 +277,8 @@ export default {
     // 处理智能体返回的数据
     handleAgentResponse(results) {
       try {
+        // 完成思考过程
+        this.finishThinking()
         // eslint-disable-next-line camelcase
         const { recommendation_result } = results
         // 检查返回数据格式
@@ -194,17 +301,19 @@ export default {
           this.$emit('update-flow', flowData)
           this.placeholder = '已智能生成元应用'
           this.isGenerated = true
-          // 使用typeWriter显示消息（会在完成后自动恢复输入状态）
-          this.typeWriter(outputMessage)
+          // 使用agentTypeWriter在智能体消息中显示结果
+          this.agentTypeWriter(outputMessage)
         } else {
+          this.$emit('stop-loading') // 停止loading状态
           const outputMessage = this.messageManager.getErrorReply()
-          this.typeWriter(outputMessage)
+          this.agentTypeWriter(outputMessage)
           this.isInputEnabled = true
         }
       } catch (error) {
         console.error('处理智能体返回数据失败:', error)
+        this.$emit('stop-loading') // 停止loading状态
         const outputMessage = this.messageManager.getErrorReply(true)
-        this.typeWriter(outputMessage)
+        this.agentTypeWriter(outputMessage)
         this.isInputEnabled = true
       }
     },
@@ -220,12 +329,12 @@ export default {
         this.placeholder = '已智能生成元应用'
         this.isGenerated = true
       }).catch(() => {
+        this.$emit('stop-loading') // 停止loading状态
         const outputMessage = this.messageManager.getErrorReply()
         this.typeWriter(outputMessage)
         this.isInputEnabled = true
       })
     },
-
     typeWriter(text) {
       if (this.currentIndex < text.length) {
         this.messages[this.messages.length - 1].text = text.substring(0, this.currentIndex + 1)
@@ -236,6 +345,42 @@ export default {
         this.isInputLoading = false
         this.currentIndex = 0
         this.scrollToBottom()
+      }
+    },
+    // 智能体消息的打字机效果
+    agentTypeWriter(text) {
+      if (this.thinkingMessageIndex !== -1) {
+        const agentMessage = this.messages[this.thinkingMessageIndex]
+        if (this.currentIndex < text.length) {
+          this.$set(agentMessage, 'result', text.substring(0, this.currentIndex + 1))
+          this.currentIndex++
+          setTimeout(() => this.agentTypeWriter(text), 20)
+        } else {
+          this.userInput = ''
+          this.isInputLoading = false
+          this.currentIndex = 0
+          this.thinkingMessageIndex = -1 // 完成后重置索引
+          this.scrollToBottom()
+        }
+      } else {
+        // 如果没有思考过程，则创建一个纯结果的智能体消息
+        const loadingIndex = this.messages.findIndex(msg => msg.text === 'agentLoading')
+        if (loadingIndex !== -1) {
+          this.$set(this.messages, loadingIndex, {
+            type: 'agent',
+            thinking: null,
+            result: text,
+            isUser: false
+          })
+          this.userInput = ''
+          this.isInputLoading = false
+          this.currentIndex = 0
+          this.scrollToBottom()
+        } else {
+          // 回退到普通消息处理
+          this.messages.push({ text: '', isUser: false })
+          this.typeWriter(text)
+        }
       }
     },
     scrollToBottom() {
@@ -254,6 +399,7 @@ export default {
       this.isGenerated = false
       this.showSuggestions = false
       this.filteredSuggestions = this.messageManager ? this.messageManager.getSuggestions() : []
+      this.thinkingMessageIndex = -1 // 重置思考消息索引
       const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '请告诉我您对应用的需求，我将根据您的需求尝试生成元应用'
       this.messages.push({ text: initialMessage, isUser: false })
     },
@@ -296,13 +442,15 @@ export default {
   padding: 8px 12px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  max-width: 70%;
+  width: 230px;
 }
 
 .user-message {
   align-self: flex-end;
   background-color: #4a90e2;
   color: #fff;
+  width: auto;
+  max-width: 230px;
 }
 
 .bot-message {
@@ -360,6 +508,11 @@ export default {
   z-index: 2;
 }
 
+.loading-text-wrapper {
+  padding-right: 15px;
+  width: auto;
+}
+
 .retry-button {
   position: absolute;
   bottom: 75px;
@@ -368,5 +521,189 @@ export default {
   border: none;
   border-radius: 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 智能体消息容器样式 */
+.agent-message-container {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 230px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 思考过程部分样式 */
+.thinking-section {
+  background-color: #f8f9fa;
+}
+
+.thinking-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: #f1f3f4;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.thinking-header:hover {
+  background-color: #e8eaed;
+}
+
+.thinking-toggle {
+  color: #5f6368;
+  font-size: 12px;
+  margin-right: 8px;
+  transition: transform 0.2s ease;
+}
+
+.thinking-title {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  font-weight: 400;
+  color: #5f6368;
+  font-size: 12px;
+}
+
+.thinking-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.thinking-dot {
+  width: 4px;
+  height: 4px;
+  background-color: #faad14;
+  border-radius: 50%;
+  animation: thinking-pulse 1.5s ease-in-out infinite;
+}
+
+.thinking-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.thinking-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes thinking-pulse {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.thinking-content {
+  padding: 16px;
+  background-color: #ffffff;
+  border-top: 1px solid #e9ecef;
+  animation: thinking-expand 0.3s ease-out;
+}
+
+@keyframes thinking-expand {
+  from {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 300px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+}
+
+.thinking-text {
+  color: #9aa0a6;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+/* 结果部分样式 */
+.result-section {
+  background-color: #ffffff;
+  border-top: 1px solid #e9ecef;
+  padding: 16px;
+}
+
+.result-section .message-content {
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  background: transparent;
+  color: #333;
+}
+
+/* 智能体消息外层容器样式 */
+.agent-message-wrapper {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* 智能体连接状态样式 */
+.agent-connecting {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  color: #5f6368;
+  font-size: 14px;
+}
+
+.connecting-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+}
+
+.connecting-dot {
+  width: 4px;
+  height: 4px;
+  background-color: #9aa0a6;
+  border-radius: 50%;
+  animation: connecting-pulse 1.5s ease-in-out infinite;
+}
+
+.connecting-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.connecting-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes connecting-pulse {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* 智能体消息特殊的样式 */
+.chat-message .agent-message-container {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 </style>

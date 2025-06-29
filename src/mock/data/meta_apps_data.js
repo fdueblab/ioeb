@@ -665,6 +665,6 @@ export function getMetaAppNodes(serviceType, userInput) {
       if (flowData) {
         resolve(flowData)
       }
-    }, 1600)
+    }, 2400)
   })
 }
