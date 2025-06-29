@@ -15,9 +15,7 @@
           </span>
           <!-- 工具列表（默认折叠） -->
           <ul v-show="isServiceOpen(service.id || service.name)" class="f-node-tool-ul">
-            <li v-for="tool in service.children"
-                :key="tool.id"
-                class="ef-node-tool-li">
+            <li v-for="(tool, t_index) in service.children" :key="t_index" class="ef-node-tool-li">
               <div class="tool-info">
                 <div class="tool-header">
                   <span class="tool-name">{{ tool.name }}</span>

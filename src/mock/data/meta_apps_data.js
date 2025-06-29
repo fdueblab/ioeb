@@ -432,7 +432,7 @@ const pj2App = {
 
 // 课题四模型评测-安全性指纹元应用
 const pj4App = {
-  preName: '课题四模型评测-安全性指纹',
+  preName: '课题四模型评测-安全性指纹元应用',
   preInputName: '课题四模型数据',
   preOutputName: '课题四安全性指纹报告',
   inputType: 2,
@@ -466,7 +466,7 @@ const pj4App = {
 
 // 金融风险报告生成（课题一+课题四+课题三）
 const pj1pj4pj3App = {
-  preName: '金融风险报告生成',
+  preName: '金融风险报告生成元应用',
   preInputName: '跨境贸易数据',
   preOutputName: '金融风险报告',
   inputType: 2,
@@ -521,6 +521,7 @@ const pj1pj4pj3App = {
     {
       id: 'b452ae47-92db-4281-8faf-9491ab6baea4',
       name: '课题三金融风险报告生成MCP服务',
+      url: 'https://myMcpServer.com/financial-risk-report/sse',
       des: '供智能体调用的基于课题三算法的mcp服务，可用于金融风险报告自动化生成',
       method: 'sse',
       attribute: 'paid',
@@ -631,7 +632,6 @@ function generateServiceNodes(flowData, rootServiceText = '智能服务') {
     const tools = node.tools || []
     tools.forEach((tool) => {
       groupMap.get(id).children.push({
-        id: tool.id,
         name: tool.name,
         des: tool.des
       })

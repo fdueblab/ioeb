@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    title="任务编排信息"
+    title="元应用智能体及服务数据"
     :visible.sync="dialogVisible"
     width="70%"
   >
@@ -20,9 +20,6 @@
   require('codemirror/mode/javascript/javascript.js')
 
   export default {
-    props: {
-      data: Object
-    },
     data() {
       return {
         dialogVisible: false,
@@ -37,9 +34,9 @@
       codemirror
     },
     methods: {
-      init() {
+      init(data) {
         this.dialogVisible = true
-        this.flowJsonData = JSON.stringify(this.data, null, 4).toString()
+        this.flowJsonData = JSON.stringify(data, null, 4).toString()
       }
     }
   }
