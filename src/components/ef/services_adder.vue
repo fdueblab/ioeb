@@ -16,10 +16,9 @@
       />
       <el-tree
         ref="serviceTree"
-        :data="filterData"
-        empty-text="正在加载服务数据..."
-        show-checkbox
         v-loading="loading"
+        :data="filterData"
+        show-checkbox
         node-key="id"
         :default-expand-all="false"
         :props="defaultProps"
@@ -31,14 +30,18 @@
         <span slot-scope="{ node, data }" class="custom-tree-node">
           <!-- 如果是工具节点，隐藏复选框 -->
           <span v-if="data.isTool" class="tool-node">
-            <i class="el-icon-help tool-icon"></i>
             <span class="node-label">{{ node.label }}</span>
-            <span class="tool-description">{{ data.description }}</span>
+            <el-tooltip :content="data.des">
+              <i class="el-icon-question tooltip-icon"></i>
+            </el-tooltip>
           </span>
           <!-- 如果是服务节点，正常显示 -->
           <span v-else class="service-node" :class="{ 'initial-selected': data._isInitialSelected }">
             <i class="el-icon-help service-icon"></i>
             <span class="node-label">{{ node.label }}</span>
+            <el-tooltip :content="data.des">
+              <i class="el-icon-question tooltip-icon"></i>
+            </el-tooltip>
           </span>
         </span>
       </el-tree>
@@ -125,9 +128,9 @@ export default {
         return {
           id: service.id,
           name: service.name,
+          des: apiInfo.des,
           // 服务级别的原始数据，用于后续传递
           _serviceData: {
-            serviceName: service.name,
             status: service.status,
             apiName: apiInfo.name,
             apiUrl: apiInfo.url,
@@ -136,7 +139,7 @@ export default {
           children: tools.map((tool, index) => ({
             id: `${service.name}_tool_${index}`,
             name: tool.name,
-            description: tool.des || tool.description || '',
+            des: tool.des || '',
             isTool: true
           }))
         }
@@ -239,7 +242,7 @@ export default {
         if (node.children) {
           node.children = node.children.filter(tool =>
             tool.name.toLowerCase().includes(keyword) ||
-            (tool.description && tool.description.toLowerCase().includes(keyword))
+            (tool.des && tool.des.toLowerCase().includes(keyword))
           )
         }
 
@@ -256,7 +259,8 @@ export default {
 
       const selectedData = newlySelectedServices.map(service => ({
         id: service.id,
-        name: service._serviceData.serviceName,
+        name: service.name,
+        des: service.des,
         apiName: service._serviceData.apiName,
         url: service._serviceData.apiUrl,
         tools: service._serviceData.tools,
@@ -304,12 +308,6 @@ export default {
   padding: 4px 0;
 }
 
-/* 树节点图标样式 */
-.node-icon {
-  margin-right: 8px;
-  color: #409EFF;
-}
-
 /* 树节点标签样式 */
 .node-label {
   font-size: 14px;
@@ -344,6 +342,12 @@ export default {
   margin-right: 8px;
   color: #1890ff;
   font-size: 16px;
+}
+
+.tooltip-icon {
+  margin-left: 8px;
+  color: #1890ff;
+  font-size: 14px;
 }
 
 /* 初始选中（禁用）的服务节点样式 */

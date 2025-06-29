@@ -301,6 +301,7 @@ export default {
           id: node.id,
           name: node.name,
           url: node.url || '',
+          des: node.des || '',
           apiName: node.apiName || '',
           tools: node.tools || [],
           state: this.statusFilter(node.status),
@@ -963,6 +964,7 @@ export default {
         id: node.id,
         name: node.name,
         url: node.url || '',
+        des: node.des || '',
         apiName: node.apiName || '',
         tools: node.tools || [],
         state: this.statusFilter(node.status),
@@ -976,7 +978,8 @@ export default {
           name: 'metaAppAgent',
           type: 'start',
           state: '待构建',
-          stateStyle: 'default'
+          stateStyle: 'default',
+          des: '支持独立运行和柔性集成的任务智能体',
         }
         console.log('添加智能体节点:', agentNode)
 
@@ -1011,7 +1014,8 @@ export default {
             name: 'metaAppAgent',
             type: 'start',
             state: '待构建',
-            stateStyle: 'default'
+            stateStyle: 'default',
+            des: '支持独立运行和柔性集成的任务智能体',
           }
         ],
         lineList: []
@@ -1076,6 +1080,7 @@ export default {
           id: service.id,
           name: service.name,
           url: service.url,
+          des: service.des || '',
           apiName: service.apiName,
           tools: service.tools || [],
           state: this.statusFilter(service.status),
@@ -1091,6 +1096,7 @@ export default {
         id: service.id,
         name: service.name,
         url: service.url,
+        des: service.des || '',
         apiName: service.apiName,
         tools: service.tools,
         state: this.statusFilter(service.status),

@@ -50,10 +50,9 @@
     <!-- Tooltip -->
     <div v-if="tooltipVisible" class="node-tooltip" :class="[tooltipClass, tooltipPositionClass]">
       <div class="tooltip-title">{{ nodeDisplayName }}</div>
-      <div v-if="!isMetaAgent" class="tooltip-service">地址: {{ node.url }}</div>
       <div v-if="isMetaAgent" class="tooltip-agent-desc">支持独立运行和柔性集成的任务智能体</div>
-      <div v-if="isMetaAgent" class="tooltip-status">状态: 待构建</div>
-      <div v-else class="tooltip-status">状态: {{ node.state }}</div>
+      <div v-else class="tooltip-service">{{ node.des }}</div>
+      <div class="tooltip-status">状态: {{ node.state }}</div>
 
       <!-- 工具列表 -->
       <div v-if="!isMetaAgent && node.tools && node.tools.length > 0" class="tooltip-tools">
