@@ -1,6 +1,6 @@
 <template>
   <div class="schedule-with-input">
-    <fake-chat
+    <smart-chat
       ref="fakeChat"
       style="height: calc(100vh - 100px)"
       @update-services="updateServices"
@@ -22,14 +22,14 @@
 
 <script>
 import FlowPanel from '@/components/ef/panel_enhanced'
-import FakeChat from '@/components/ef/fake_chat'
+import SmartChat from '@/components/ef/smart_chat'
 import dictionaryCache from '@/utils/dictionaryCache'
 
 export default {
   name: 'GenericSchedule',
   components: {
     FlowPanel,
-    FakeChat
+    SmartChat
   },
   props: {
     // 垂直领域类型，从路由解析

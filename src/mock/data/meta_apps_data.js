@@ -1,6 +1,5 @@
 // 统一的元应用数据文件
 // 简化后的数据结构：去除冗余，只保留核心流程数据
-// todo: 智能体按“是否生成元应用+下面元应用格式”返回数据
 
 // 金融欺诈检测推理元应用
 const fraudDetectionApp = {
@@ -598,58 +597,14 @@ const bidRiggingDetectionApp = {
   ]
 }
 
-// 服务类型映射表 - 统一管理
-export const SERVICE_TEXT_MAP = {
-  'aircraft': '无人飞机AI监控服务',
-  'health': '乡村医疗AI应用服务',
-  'agriculture': '农业数智AI应用服务',
-  'evtol': '低空飞行AI应用服务',
-  'ecommerce': '跨境电商AI应用服务',
-  'homeAI': '家庭陪伴AI应用服务',
-  'aml': '跨境支付AI监测服务'
-}
+// 模拟数据获取相关的工具函数
 
-// 根据流程数据生成服务树结构的工具函数，用于适配现有的输出格式
-// todo: 之后应该优化接收端的格式需求
-function generateServiceNodes(flowData, rootServiceText = '智能服务') {
-  const groupMap = new Map()
-  const chosenServices = []
-
-  // 按服务分组
-  flowData.nodeList.forEach(node => {
-    const { name, id } = node
-
-    if (!groupMap.has(id)) {
-      chosenServices.push(name)
-      groupMap.set(id, {
-        id,
-        name,
-        children: []
-      })
-    }
-
-    const tools = node.tools || []
-    tools.forEach((tool) => {
-      groupMap.get(id).children.push({
-        name: tool.name,
-        des: tool.description
-      })
-    })
-  })
-
-  return {
-    chosenServices,
-    serviceNodes: [
-      {
-        id: 'rootNode',
-        name: rootServiceText,
-        children: Array.from(groupMap.values())
-      }
-    ]
-  }
-}
-
-// 导出函数
+/**
+ * 获取模拟的元应用数据
+ * @param {string} serviceType - 服务类型
+ * @param {string} userInput - 用户输入
+ * @returns {Promise<Object>} - 返回flowData对象
+ */
 export function getMetaAppNodes(serviceType, userInput) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -706,24 +661,8 @@ export function getMetaAppNodes(serviceType, userInput) {
       }
 
       if (flowData) {
-        // 根据服务类型确定根服务名称
-        const rootServiceText = SERVICE_TEXT_MAP[serviceType] || '智能服务'
-        const { chosenServices, serviceNodes } = generateServiceNodes(flowData, rootServiceText)
-        resolve({ chosenServices, serviceNodes, flowData })
+        resolve(flowData)
       }
     }, 1600)
   })
-}
-
-// 获取基础服务节点的函数 - 用于重置时恢复初始状态
-export function getBaseServiceNodes(serviceType = 'default') {
-  // 根据服务类型确定根服务名称
-  const rootServiceText = SERVICE_TEXT_MAP[serviceType] || '智能服务'
-  return [
-    {
-      id: 'rootNode',
-      name: rootServiceText,
-      children: []
-    }
-  ]
 }

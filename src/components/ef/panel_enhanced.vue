@@ -120,7 +120,7 @@ import nodeMenu from '@/components/ef/node_menu_enhanced'
 import FlowInfo from '@/components/ef/info'
 import ServicesAdder from '@/components/ef/services_adder'
 import MetaAppBuilder from '@/components/ef/meta_app_builder'
-import { getBaseServiceNodes, SERVICE_TEXT_MAP } from '@/mock/data/meta_apps_data'
+import { uuid, getBaseServiceNodes, SERVICE_TEXT_MAP } from './utils'
 import lodash from 'lodash'
 import dictionaryCache from '@/utils/dictionaryCache'
 
@@ -278,19 +278,16 @@ export default {
     },
   },
   methods: {
-    getUUID() {
-      return Math.random().toString(36).substr(3, 10)
-    },
+    // todo: 整合其中的数据节点结构化部分并重构代码
     parseInitialFlowText() {
       if (!this.initialFlow || !this.initialFlow.nodeList) {
         this.dataReloadClear()
         return
       }
-
       try {
         // 自动添加智能体节点
         const agentNode = {
-          id: 'metaAppAgent_' + this.getUUID(),
+          id: 'metaAppAgent_' + uuid(),
           name: 'metaAppAgent',
           state: '待构建',
           stateStyle: 'default'
@@ -993,7 +990,7 @@ export default {
       if (!hasAgentNode && newFlow?.nodeList) {
         // 如果没有智能体节点，添加一个
         const agentNode = {
-          id: 'metaAppAgent_' + this.getUUID(),
+          id: 'metaAppAgent_' + uuid(),
           name: 'metaAppAgent',
           type: 'start',
           state: '待构建',
@@ -1029,7 +1026,7 @@ export default {
         preName: '新元应用',
         nodeList: [
           {
-            id: 'metaAppAgent_' + this.getUUID(),
+            id: 'metaAppAgent_' + uuid(),
             name: 'metaAppAgent',
             type: 'start',
             state: '待构建',
