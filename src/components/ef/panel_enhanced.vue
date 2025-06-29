@@ -20,7 +20,8 @@
               <!--              <a-tooltip title="导出流程数据">-->
               <!--                <a-button shape="circle" icon="download" @click="downloadData" />-->
               <!--              </a-tooltip>-->
-              <a-tooltip title="查看元应用数据">
+              <!-- perhaps todo: 推荐理由？ -->
+              <a-tooltip title="查看节点详情">
                 <a-button shape="circle" icon="file-text" @click="showDataInfo" />
               </a-tooltip>
               <a-tooltip title="重置元应用">

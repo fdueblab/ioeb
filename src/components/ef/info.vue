@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    title="元应用智能体及服务数据"
+    title="元应用智能体及服务详情"
     :visible.sync="dialogVisible"
     width="70%"
   >
