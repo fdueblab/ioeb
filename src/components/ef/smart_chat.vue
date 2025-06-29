@@ -43,7 +43,7 @@
 import { getMetaAppNodes } from '@/mock/data/meta_apps_data'
 import { ChatMessageManager } from './chat_messages'
 import { streamAgent } from '@/utils/request'
-import { processAgentResponse, generateServiceNodes } from './utils'
+import { generateServiceNodes } from './utils'
 
 export default {
   name: 'SmartChat',
@@ -169,31 +169,46 @@ export default {
         }
       })
     },
-
     // 处理智能体返回的数据
     handleAgentResponse(results) {
-      const processedData = processAgentResponse(results, this.verticalType)
-      if (processedData.success) {
-        // 生成成功回复消息
-        const outputMessage = this.messageManager.generateSuccessReply(processedData.chosenServices)
-        // 向父组件发送数据
-        this.$emit('update-services', processedData.serviceNodes)
-        this.$emit('update-flow', processedData.flowData)
-        this.placeholder = '已智能生成元应用'
-        this.isGenerated = true
-
-        // 使用typeWriter显示消息（会在完成后自动恢复输入状态）
-        this.typeWriter(outputMessage)
-      } else {
-        // 处理失败
-        console.error('处理智能体数据失败:', processedData.error)
-        const outputMessage = this.messageManager.getErrorReply()
+      try {
+        // eslint-disable-next-line camelcase
+        const { recommendation_result } = results
+        // 检查返回数据格式
+        if (recommendation_result.success) {
+          // eslint-disable-next-line camelcase
+          const { result } = recommendation_result
+          // 转换数据格式以适配现有系统
+          const flowData = {
+            preName: result.preName,
+            preInputName: result.preInputName,
+            preOutputName: result.preOutputName,
+            nodeList: result.nodeList
+          }
+          // 生成服务节点和选中服务列表
+          const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
+          // 生成成功回复消息
+          const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
+          // 向父组件发送数据
+          this.$emit('update-services', serviceNodes)
+          this.$emit('update-flow', flowData)
+          this.placeholder = '已智能生成元应用'
+          this.isGenerated = true
+          // 使用typeWriter显示消息（会在完成后自动恢复输入状态）
+          this.typeWriter(outputMessage)
+        } else {
+          const outputMessage = this.messageManager.getErrorReply()
+          this.typeWriter(outputMessage)
+          this.isInputEnabled = true
+        }
+      } catch (error) {
+        console.error('处理智能体返回数据失败:', error)
+        const outputMessage = this.messageManager.getErrorReply(true)
         this.typeWriter(outputMessage)
         this.isInputEnabled = true
       }
     },
-
-    // 使用假数据
+    // 使用假数据的逻辑
     useFakeData(input) {
       getMetaAppNodes(this.verticalType, input).then((flowData) => {
         // 使用utils中的方法生成服务节点

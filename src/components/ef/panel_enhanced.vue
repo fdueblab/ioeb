@@ -120,8 +120,24 @@ import nodeMenu from '@/components/ef/node_menu_enhanced'
 import FlowInfo from '@/components/ef/info'
 import ServicesAdder from '@/components/ef/services_adder'
 import MetaAppBuilder from '@/components/ef/meta_app_builder'
-import { uuid, getBaseServiceNodes, SERVICE_TEXT_MAP } from './utils'
-import lodash from 'lodash'
+import {
+  hasLine,
+  hashOppositeLine,
+  statusFilter,
+  statusStyleFilter,
+  parseInitialFlow,
+  syncNodesToServices,
+  createDefaultFlowData,
+  prepareDataForReload,
+  transformNodesForDisplay,
+  removeServiceById,
+  transformServicesToNodes,
+  transformServicesToServiceItems,
+  extractCanvasServices,
+  createAgentNode,
+  getBaseServiceNodes,
+  SERVICE_TEXT_MAP
+} from './utils'
 import dictionaryCache from '@/utils/dictionaryCache'
 
 export default {
@@ -168,22 +184,11 @@ export default {
     },
     // 从当前画布节点中提取服务信息，用于标记已选中的服务
     currentCanvasServices() {
-      if (!this.data.nodeList || this.data.nodeList.length === 0) {
-        return []
-      }
-      // 过滤出非智能体节点，并构建服务信息
-      return this.data.nodeList
-        .filter(node => node.name !== 'metaAppAgent')
-        .map(node => ({
-          id: node.id,
-          name: node.name,
-          url: node.url,
-          state: this.statusFilter(node.status),
-          stateStyle: this.statusStyleFilter(node.status),
-          apiName: node.apiName,
-          tools: node.tools || []
-        }))
-        .filter(service => service.id) // 确保有有效的ID
+      return extractCanvasServices(
+        this.data.nodeList,
+        (status) => statusFilter(status, this.statusDict),
+        (status) => statusStyleFilter(status, this.statusStyleDict)
+      )
     }
   },
   data() {
@@ -278,42 +283,15 @@ export default {
     },
   },
   methods: {
-    // todo: 整合其中的数据节点结构化部分并重构代码
+    // 解析初始流程数据
     parseInitialFlowText() {
-      if (!this.initialFlow || !this.initialFlow.nodeList) {
-        this.dataReloadClear()
-        return
-      }
-      try {
-        // 自动添加智能体节点
-        const agentNode = {
-          id: 'metaAppAgent_' + uuid(),
-          name: 'metaAppAgent',
-          state: '待构建',
-          stateStyle: 'default'
-        }
-
-        const initNodes = this.initialFlow.nodeList.map(node => ({
-          id: node.id,
-          name: node.name,
-          url: node.url || '',
-          des: node.des || '',
-          apiName: node.apiName || '',
-          tools: node.tools || [],
-          state: this.statusFilter(node.status),
-          stateStyle: this.statusStyleFilter(node.status)
-        }))
-
+      const parsedFlow = parseInitialFlow(this.initialFlow, this.statusDict, this.statusStyleDict)
+      if (parsedFlow) {
         // 同步初始节点到左侧服务列表
+        const initNodes = parsedFlow.nodeList.filter(node => node.name !== 'metaAppAgent')
         this.syncInitialNodesToServices(initNodes)
-
-        this.dataReload({
-          ...this.initialFlow,
-          nodeList: [agentNode, ...initNodes],
-          lineList: []
-        });
-      } catch (error) {
-        console.error('Failed to get initial flow', error)
+        this.dataReload(parsedFlow)
+      } else {
         this.dataReloadClear()
       }
     },
@@ -322,28 +300,10 @@ export default {
     },
     // 同步初始节点到左侧服务列表
     syncInitialNodesToServices(initialNodes) {
-      if (!initialNodes || initialNodes.length === 0) {
-        return
+      const servicesList = syncNodesToServices(initialNodes, this.verticalType)
+      if (servicesList.length > 0) {
+        this.setServices(servicesList)
       }
-
-      // 过滤出非智能体节点，转换为服务列表格式
-      const serviceNodes = initialNodes
-        .filter(node => node.name !== 'metaAppAgent')
-        .map(node => ({
-          ...node,
-          children: node.tools || [],
-        }))
-      if (serviceNodes.length === 0) {
-        return
-      }
-      // 强制清空并重建服务列表，避免ID冲突
-      const newServices = [{
-        id: 'rootNode',
-        name: this.service_text_map[this.verticalType],
-        children: [...serviceNodes]
-      }]
-
-      this.setServices(newServices)
     },
     // 彻底清理节点的 jsPlumb 连线和端点
     cleanupNodeConnections(nodeId) {
@@ -365,7 +325,6 @@ export default {
 
         // 移除节点上的所有端点
         this.jsPlumb.removeAllEndpoints(nodeId)
-
         // 强制清理可能残留的DOM元素
         this.jsPlumb.remove(nodeId)
 
@@ -376,33 +335,7 @@ export default {
     },
     // 从服务列表中移除指定ID的服务
     removeFromServiceListById(serviceId) {
-      if (!this.services || this.services.length === 0) return
-
-      // 递归函数来移除服务
-      const removeFromChildren = (children) => {
-        if (!children || !Array.isArray(children)) return children
-
-        return children.filter(child => {
-          if (child.id === serviceId) {
-            console.log('从服务列表中移除服务:', child.name, 'ID:', serviceId)
-            return false // 移除这个服务
-          }
-
-          // 如果有子节点，递归处理
-          if (child.children) {
-            child.children = removeFromChildren(child.children)
-          }
-
-          return true // 保留这个服务
-        })
-      }
-
-      // 更新服务列表
-      const updatedServices = this.services.map(rootService => ({
-        ...rootService,
-        children: removeFromChildren(rootService.children || [])
-      }))
-
+      const updatedServices = removeServiceById(this.services, serviceId)
       this.setServices(updatedServices)
     },
 
@@ -410,7 +343,6 @@ export default {
     calculateNodePositions() {
       console.log('=== calculateNodePositions 开始 ===')
       console.log('当前 data.nodeList:', JSON.stringify(this.data.nodeList, null, 2))
-
       // 确保容器存在并有正确尺寸
       if (!this.$refs.efContainer) {
         console.warn('画布容器未准备好，延迟执行布局')
@@ -419,10 +351,8 @@ export default {
         })
         return
       }
-
       const containerWidth = this.$refs.efContainer?.clientWidth || 800
       const containerHeight = this.$refs.efContainer?.clientHeight || 600
-
       // 如果容器尺寸为0，说明还没渲染完成
       if (containerWidth <= 0 || containerHeight <= 0) {
         console.warn('画布容器尺寸未准备好，延迟执行布局', containerWidth, containerHeight)
@@ -597,7 +527,7 @@ export default {
           const from = evt.source.id
           const to = evt.target.id
           // 只有在流程加载完成且不存在该连线时才添加
-          if (this.loadEasyFlowFinish && !this.hasLine(from, to)) {
+          if (this.loadEasyFlowFinish && !hasLine(this.data, from, to)) {
             this.data.lineList.push({ from: from, to: to })
           }
         })
@@ -618,11 +548,11 @@ export default {
             this.$message.error('节点不能连接到自己')
             return false
           }
-          if (this.hasLine(from, to)) {
+          if (hasLine(this.data, from, to)) {
             this.$message.error('该连接已存在')
             return false
           }
-          if (this.hashOppositeLine(from, to)) {
+          if (hashOppositeLine(this.data, from, to)) {
             this.$message.warning('检测到反向连接，请确认流程逻辑')
             return true
           }
@@ -889,18 +819,7 @@ export default {
       })
       return true
     },
-    hasLine(from, to) {
-      for (let i = 0; i < this.data.lineList.length; i++) {
-        let line = this.data.lineList[i]
-        if (line.from === from && line.to === to) {
-          return true
-        }
-      }
-      return false
-    },
-    hashOppositeLine(from, to) {
-      return this.hasLine(to, from)
-    },
+
     nodeRightMenu(nodeId, evt) {
       this.menu.show = true
       this.menu.curNodeId = nodeId
@@ -914,22 +833,7 @@ export default {
       if (this.data.nodeList.length > 1) {
         this.flowInfoVisible = true
         this.$nextTick(function () {
-          const filteredInfo = this.data.nodeList.map(node => {
-            if(node.name === 'metaAppAgent') {
-              return {
-                name: this.data.preName,
-                des: '支持独立运行和柔性集成的任务智能体'
-              }
-            } else {
-              return {
-                name: node.name,
-                url: node.url || '',
-                des: node.des || '',
-                status: node.state,
-                tools: node.tools || [],
-              }
-            }
-          })
+          const filteredInfo = transformNodesForDisplay(this.data.nodeList, this.data.preName)
           this.$refs.flowInfo.init(filteredInfo)
         })
       } else {
@@ -939,25 +843,11 @@ export default {
     dataReload(data) {
       this.easyFlowVisible = false
       this.nodePositionsCalculated = false  // 重置节点位置计算状态
-      this.data = {
-        name: '新元应用',
-        preName: '元应用名称',
-        preInputName: '输入内容',
-        preOutputName: '输出内容',
-        nodeList: [],
-        lineList: []
-      }
+      this.data = createDefaultFlowData()
       this.$nextTick(() => {
-        data = lodash.cloneDeep(data)
-        // 清除输入数据中的位置信息
-        if (data.nodeList) {
-          data.nodeList.forEach(node => {
-            delete node.left
-            delete node.top
-          })
-        }
+        const preparedData = prepareDataForReload(data)
         this.easyFlowVisible = true
-        this.data = data
+        this.data = preparedData
         this.$nextTick(() => {
           this.jsPlumb = jsPlumb.getInstance()
           this.$nextTick(() => {
@@ -968,53 +858,15 @@ export default {
     },
     updateInitialFlow(newFlow) {
       console.log('updateInitialFlow 被调用，newFlow:', newFlow)
-
-      // 检查新流程是否已包含智能体节点
-      const hasAgentNode = newFlow?.nodeList?.some(node =>
-        node.name === 'metaAppAgent'
-      )
-
-      console.log('是否已有智能体节点:', hasAgentNode)
-
-      const nodeList = newFlow?.nodeList.map(node => ({
-        id: node.id,
-        name: node.name,
-        url: node.url || '',
-        des: node.des || '',
-        apiName: node.apiName || '',
-        tools: node.tools || [],
-        state: this.statusFilter(node.status),
-        stateStyle: this.statusStyleFilter(node.status)
-      }))
-
-      if (!hasAgentNode && newFlow?.nodeList) {
-        // 如果没有智能体节点，添加一个
-        const agentNode = {
-          id: 'metaAppAgent_' + uuid(),
-          name: 'metaAppAgent',
-          type: 'start',
-          state: '待构建',
-          stateStyle: 'default',
-          des: '支持独立运行和柔性集成的任务智能体',
-        }
-        console.log('添加智能体节点:', agentNode)
-
+      const parsedFlow = parseInitialFlow(newFlow, this.statusDict, this.statusStyleDict)
+      if (parsedFlow) {
         // 同步初始节点到左侧服务列表
-        this.syncInitialNodesToServices(nodeList)
-
-        const flowWithAgent = {
-          ...newFlow,
-          nodeList: [agentNode, ...nodeList],
-          lineList: [] // 清空连线，后续自动生成
-        }
-
-        console.log('带智能体的流程数据:', flowWithAgent)
-        this.dataReload(flowWithAgent)
+        const initNodes = parsedFlow.nodeList.filter(node => node.name !== 'metaAppAgent')
+        this.syncInitialNodesToServices(initNodes)
+        this.dataReload(parsedFlow)
       } else {
-        console.log('使用原始流程数据')
-        // 即使已有智能体节点，也需要同步服务节点到左侧列表
-        this.syncInitialNodesToServices(nodeList)
-        this.dataReload({ ...newFlow, nodeList })
+        console.log('解析流程失败，使用默认数据')
+        this.dataReloadClear()
       }
     },
     dataReloadClear() {
@@ -1022,20 +874,7 @@ export default {
       this.setServices(getBaseServiceNodes(this.verticalType))
 
       // 创建默认数据，包含智能体节点
-      const defaultData = {
-        preName: '新元应用',
-        nodeList: [
-          {
-            id: 'metaAppAgent_' + uuid(),
-            name: 'metaAppAgent',
-            type: 'start',
-            state: '待构建',
-            stateStyle: 'default',
-            des: '支持独立运行和柔性集成的任务智能体',
-          }
-        ],
-        lineList: []
-      }
+      const defaultData = createDefaultFlowData()
       this.dataReload(defaultData)
     },
     downloadData() {
@@ -1068,57 +907,20 @@ export default {
         this.statusStyleDict = this.statusStyleDict || []
       }
     },
-    statusFilter(type) {
-      if (type === undefined) {
-        return '未知状态'
-      }
-      if (!this.statusDict || !Array.isArray(this.statusDict)) {
-        return '未知状态'
-      }
-      const statusItem = this.statusDict.find(item => item && item.code === type)
-      return statusItem ? statusItem.text : '未知状态'
-    },
-    statusStyleFilter(type) {
-      if (type === undefined) {
-        return 'default'
-      }
-      if (!this.statusStyleDict || !Array.isArray(this.statusStyleDict)) {
-        return 'default'
-      }
-      const statusItem = this.statusStyleDict.find(item => item && item.code === type)
-      return statusItem ? statusItem.text : 'default'
-    },
+
     handleServiceConfirm(selectedServices) {
       // 添加节点
+      const addedNodes = transformServicesToNodes(selectedServices, this.statusDict, this.statusStyleDict)
       const addedNodeIds = []
-      selectedServices.forEach(service => {
-        const node = {
-          id: service.id,
-          name: service.name,
-          url: service.url,
-          des: service.des || '',
-          apiName: service.apiName,
-          tools: service.tools || [],
-          state: this.statusFilter(service.status),
-          stateStyle: this.statusStyleFilter(service.status)
-        }
+
+      addedNodes.forEach(node => {
         this.data.nodeList.push(node)
         addedNodeIds.push(node.id)
         console.log('添加MCP服务节点:', node)
       })
 
       // 更新服务列表 - 将新服务添加到现有菜单类别的children中
-      const newServiceItems = selectedServices.map(service => ({
-        id: service.id,
-        name: service.name,
-        url: service.url,
-        des: service.des || '',
-        apiName: service.apiName,
-        tools: service.tools,
-        state: this.statusFilter(service.status),
-        stateStyle: this.statusStyleFilter(service.status),
-        children: service.tools || []
-      }))
+      const newServiceItems = transformServicesToServiceItems(selectedServices, this.statusDict, this.statusStyleDict)
 
       // 确保有默认的菜单结构
       if (this.services.length === 0) {
