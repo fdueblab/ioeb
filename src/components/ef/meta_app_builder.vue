@@ -25,8 +25,8 @@
                 :auto-size="{ minRows: 4, maxRows: 6 }"
                 class="input-box"
               />
-              <div style="width: 100%; display: flex; justify-content: center">
-                <a-button v-show="inputType === 2"> <a-icon type="upload" /> 选择数据文件 </a-button>
+              <div style="width: 100%; display: flex; justify-content: center; margin-top: 10px">
+                <a-button v-show="inputType === 2 || inputType === 3"> <a-icon type="upload" /> 选择数据文件 </a-button>
               </div>
               <div style="width: 100%">
                 <a-button class="submit-button" type="primary" @click="handleSubmit">
@@ -37,8 +37,11 @@
             <!-- 输出区域 -->
             <div>
               <span class="section-title">{{ form.getFieldValue('outputName') || preOutputName }}</span>
-              <div class="output-box">
+              <div v-show="outputType === 1 || outputType === 3" class="output-box">
                 预发布后即可验证此元应用
+              </div>
+              <div style="width: 100%; display: flex; justify-content: center; margin-top: 10px">
+                <a-button v-show="outputType === 2 || outputType === 3"> <a-icon type="download" /> 下载结果文件 </a-button>
               </div>
               <div v-show="form.getFieldValue('visualization')" class="image-box">
                 {{ form.getFieldValue('outputName') || preOutputName }}可视化区域
@@ -59,16 +62,29 @@
                 <a-input v-decorator="['name', { rules: [{ required: true, message: '请填写元应用名称!' }], initialValue: preName }]" placeholder="请输入元应用名称" />
               </a-form-item>
             </a-col>
-            <!--            <a-col :span="18">-->
-            <!--              <a-form-item label="输入类型" required>-->
-            <!--                <a-radio-group v-model="parameterType">-->
-            <!--                  <a-radio v-for="(item, index) in ioTypeOptions" :key="index" :value="index">{{ item }}</a-radio>-->
-            <!--                </a-radio-group>-->
-            <!--              </a-form-item>-->
-            <!--            </a-col>-->
+            <a-col :span="18">
+              <a-form-item label="输入类型" required>
+                <a-radio-group v-model="inputType">
+                  <a-radio :value="0">无</a-radio>
+                  <a-radio :value="1">文本</a-radio>
+                  <a-radio :value="2">文件</a-radio>
+                  <a-radio :value="3">文本 + 文件</a-radio>
+                </a-radio-group>
+              </a-form-item>
+            </a-col>
             <a-col v-if="inputType !== 0" :span="12">
               <a-form-item label="输入数据名称">
                 <a-input v-decorator="['inputName', { rules: [{ required: true, message: '请填写输入数据名称!' }], initialValue: preInputName }]"/>
+              </a-form-item>
+            </a-col>
+            <a-col :span="18">
+              <a-form-item label="输出类型" required>
+                <a-radio-group v-model="outputType">
+                  <a-radio :value="0">无</a-radio>
+                  <a-radio :value="1">文本</a-radio>
+                  <a-radio :value="2">文件</a-radio>
+                  <a-radio :value="3">文本 + 文件</a-radio>
+                </a-radio-group>
               </a-form-item>
             </a-col>
             <a-col v-if="outputType !== 0" :span="12">
@@ -162,14 +178,6 @@ export default {
       type: String,
       required: true
     },
-    inputType: {
-      type: Number,
-      default: 0
-    },
-    outputType: {
-      type: Number,
-      default: 0
-    },
     preName: {
       type: String,
       default: '元应用名称'
@@ -186,6 +194,8 @@ export default {
   data() {
     return {
       visible: false,
+      inputType: 1,
+      outputType: 1,
       attributeOptions: [],
       industryOptions: [],
       scenarioOptions: [],
@@ -352,7 +362,7 @@ export default {
 
 .submit-button {
   width: 50%;
-  margin: 8px 0;
+  margin: 10px 0;
   left: 25%;
 }
 

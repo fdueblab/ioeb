@@ -5,10 +5,10 @@
 const DOMAIN_SUGGESTIONS = {
   aml: [
     { value: '我想基于课题一的算法生成一个跨境支付报告生成应用' },
-    { value: '我想基于课题二的算法生成一个跨境支付报告生成应用' },
-    { value: '我想基于课题三的算法构建一个智能分析系统' },
+    { value: '我想基于课题二的算法生成一个经过检测的跨境支付报告生成应用' },
+    { value: '我想基于课题三的算法构建一个智能分析系统，并用课题四的算法对其进行检测' },
     { value: '我想基于课题四的算法开发一个数据处理应用' },
-    { value: '我需要使用课题一和课题三的技术开发一个金融风控系统' },
+    { value: '我需要基于各课题组的算法开发一个金融风控系统' },
     { value: '请帮我实现一个简单的金融欺诈检测应用' },
     { value: '我需要一个围标检测应用' }
   ],
@@ -45,6 +45,7 @@ const SUCCESS_REPLY_TEMPLATES = {
 
 // 各领域的错误回复
 const ERROR_REPLIES = {
+  error: '服务器异常，请稍后再试',
   aml: '非常抱歉，未能理解您的需求。本系统目前仅支持基于课题一、课题二、课题三、课题四或课题组内的金融欺诈检测相关算法构建简单的跨境支付元应用。',
   aircraft: '非常抱歉，未能理解您的需求。本系统目前仅支持基于无人机控制和目标识别相关技术构建简单的无人飞机元应用。',
   health: '非常抱歉，未能理解您的需求。本系统目前仅支持基于医疗AI诊断和健康监测相关技术构建简单的乡村医疗元应用。',
@@ -88,21 +89,21 @@ export class ChatMessageManager {
    * 获取当前领域的建议输入
    */
   getSuggestions() {
-    return DOMAIN_SUGGESTIONS[this.verticalType] || DOMAIN_SUGGESTIONS.aml
+    return DOMAIN_SUGGESTIONS[this.verticalType] || []
   }
 
   /**
    * 获取当前领域的占位符文本
    */
   getPlaceholder() {
-    return PLACEHOLDERS[this.verticalType] || PLACEHOLDERS.aml
+    return PLACEHOLDERS[this.verticalType] || ''
   }
 
   /**
    * 获取当前领域的初始消息
    */
   getInitialMessage() {
-    return INITIAL_MESSAGES[this.verticalType] || INITIAL_MESSAGES.aml
+    return INITIAL_MESSAGES[this.verticalType] || ''
   }
 
   /**
@@ -118,8 +119,11 @@ export class ChatMessageManager {
   /**
    * 获取当前领域的错误回复
    */
-  getErrorReply() {
-    return ERROR_REPLIES[this.verticalType] || ERROR_REPLIES.aml
+  getErrorReply(error = false) {
+    if (error) {
+      return ERROR_REPLIES.error
+    }
+    return ERROR_REPLIES[this.verticalType] || ERROR_REPLIES.error
   }
 
   /**
