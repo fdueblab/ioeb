@@ -14,6 +14,7 @@ const fraudDetectionApp = {
       id: 'c48aad98-4a7b-4498-a4d5-ac2f991d1c0d',
       name: '基于多智能体协作的金融欺诈检测推理MCP服务',
       url: 'http://fdueblab.cn:8778/sse',
+      des: '供智能体调用的基于多智能体协作的金融欺诈检测推理服务，基于多个金融欺诈检测模型的协作，可以对交易进行多维度的风险评估和欺诈预警',
       attribute: 'custom',
       type: 'atomic_mcp',
       domain: 'aml',
@@ -34,6 +35,9 @@ const fraudDetectionApp = {
     {
       id: '02a951d1-09b1-4d65-9f6c-cf048e5f620f',
       name: '样例报告生成MCP服务',
+      url: 'https://myMcpServer.com/report-generation/sse',
+      method: 'sse',
+      des: '供智能体调用的课题五mcp样例服务，用于功能演示',
       attribute: 'non_intelligent',
       type: 'atomic_mcp',
       domain: 'aml',
@@ -51,6 +55,9 @@ const fraudDetectionApp = {
     {
       id: 'c582ad98-4a7b-4498-a4d5-a52f991d1c0e',
       name: '课题四模型评测-安全性指纹MCP服务',
+      des: '供智能体调用的基于课题四算法的mcp服务，可用于模型安全性评测和指纹识别',
+      url: 'https://myMcpServer.com/model-security-fingerprint/sse',
+      method: 'sse',
       attribute: 'paid',
       type: 'atomic_mcp',
       domain: 'aml',
@@ -174,6 +181,7 @@ const aircraftApp = {
     {
       id: '75e5ff68-23a9-4109-967d-a5a76f29ba6b',
       name: '无人机目标识别MCP服务',
+      des: '供智能体调用的无人机目标识别mcp服务，可用于空中目标检测和识别任务',
       url: 'https://myMcpServer.com/aircraft-detection/sse',
       method: 'sse',
       type: 'atomic_mcp',
@@ -188,6 +196,7 @@ const aircraftApp = {
     {
       id: 'db43a293-fb67-4efb-b65b-ec22d9cca5af',
       name: '无人机远程控制MCP服务',
+      des: '供智能体调用的无人机远程控制mcp服务，可用于无人机远程操控和飞行管理',
       url: 'https://myMcpServer.com/aircraft-control/sse',
       method: 'sse',
       type: 'atomic_mcp',
@@ -318,6 +327,7 @@ const pj1App = {
     {
       id: '3c3d4e4d-36e4-4436-bea1-63af2117d0cd',
       name: '课题一风险识别模型推理MCP服务',
+      des: '供智能体调用的基于课题一算法的mcp服务，可用于金融风险识别和模型推理',
       url: 'https://myMcpServer.com/risk-identification/sse',
       method: 'sse',
       attribute: 'open_source',
@@ -340,6 +350,9 @@ const pj1App = {
     {
       id: '02a951d1-09b1-4d65-9f6c-cf048e5f620f',
       name: '样例报告生成MCP服务',
+      url: 'https://myMcpServer.com/report-generation/sse',
+      method: 'sse',
+      des: '供智能体调用的课题五mcp样例服务，用于功能演示',
       attribute: 'non_intelligent',
       type: 'atomic_mcp',
       domain: 'aml',
@@ -368,6 +381,7 @@ const pj2App = {
     {
       id: '5fda9469-dcd7-4032-affb-9c9df0cd2cc7',
       name: '课题二多方安全计算模型推理MCP服务',
+      des: '供智能体调用的基于课题二多方安全计算算法的mcp服务，可用于多机构联合反洗钱分析而无需共享敏感数据',
       url: 'https://myMcpServer.com/multi-party-computation/sse',
       method: 'sse',
       attribute: 'open_source',
@@ -396,6 +410,9 @@ const pj2App = {
     {
       id: '02a951d1-09b1-4d65-9f6c-cf048e5f620f',
       name: '样例报告生成MCP服务',
+      url: 'https://myMcpServer.com/report-generation/sse',
+      method: 'sse',
+      des: '供智能体调用的课题五mcp样例服务，用于功能演示',
       attribute: 'non_intelligent',
       type: 'atomic_mcp',
       domain: 'aml',
@@ -424,6 +441,7 @@ const pj4App = {
     {
       id: 'c582ad98-4a7b-4498-a4d5-a52f991d1c0e',
       name: '课题四模型评测-安全性指纹MCP服务',
+      des: '供智能体调用的基于课题四算法的mcp服务，可用于模型安全性评测和指纹识别',
       url: 'https://myMcpServer.com/model-security-fingerprint/sse',
       method: 'sse',
       attribute: 'paid',
@@ -457,6 +475,7 @@ const pj1pj4pj3App = {
     {
       id: '3c3d4e4d-36e4-4436-bea1-63af2117d0cd',
       name: '课题一风险识别模型推理MCP服务',
+      des: '供智能体调用的基于课题一算法的mcp服务，可用于金融风险识别和模型推理',
       url: 'https://myMcpServer.com/risk-identification/sse',
       method: 'sse',
       attribute: 'open_source',
@@ -479,6 +498,7 @@ const pj1pj4pj3App = {
     {
       id: 'c582ad98-4a7b-4498-a4d5-a52f991d1c0e',
       name: '课题四模型评测-安全性指纹MCP服务',
+      des: '供智能体调用的基于课题四算法的mcp服务，可用于模型安全性评测和指纹识别',
       url: 'https://myMcpServer.com/model-security-fingerprint/sse',
       method: 'sse',
       attribute: 'paid',
@@ -501,6 +521,7 @@ const pj1pj4pj3App = {
     {
       id: 'b452ae47-92db-4281-8faf-9491ab6baea4',
       name: '课题三金融风险报告生成MCP服务',
+      des: '供智能体调用的基于课题三算法的mcp服务，可用于金融风险报告自动化生成',
       method: 'sse',
       attribute: 'paid',
       type: 'atomic_mcp',
@@ -533,6 +554,7 @@ const bidRiggingDetectionApp = {
     {
       id: 'ad43a293-fb67-4efb-b65b-ec22d9cca5ae',
       name: '围标检测MCP服务',
+      des: '提供机器学习模型预测和风险调整功能的MCP服务',
       url: 'http://fdueblab.cn:26023/sse',
       method: 'sse',
       attribute: 'custom',
@@ -551,6 +573,26 @@ const bidRiggingDetectionApp = {
         { id: 'tool-008-health-check-mcp3', name: 'healthCheck', des: '判断微服务状态是否正常可用' },
         { id: 'tool-009-flask-predict', name: 'flask_predict', des: '传入特征数组，获取模型预测结果和解释' }
       ]
+    },
+    {
+      id: '02a951d1-09b1-4d65-9f6c-cf048e5f620f',
+      name: '样例报告生成MCP服务',
+      url: 'https://myMcpServer.com/report-generation/sse',
+      method: 'sse',
+      des: '供智能体调用的课题五mcp样例服务，用于功能演示',
+      attribute: 'non_intelligent',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '2',
+      scenario: '3',
+      technology: '3',
+      status: 'pre_release_unrated',
+      number: 45,
+      deleted: 0,
+      tools: [
+        { id: 'tool-011-report-generation-health', name: 'healthCheck', des: '判断样例报告生成MCP服务状态是否正常可用' },
+        { id: 'tool-012-generate-report', name: 'generateReport', des: '基于输入数据生成分析报告' }
+      ]
     }
   ]
 }
@@ -558,11 +600,11 @@ const bidRiggingDetectionApp = {
 // 服务类型映射表 - 统一管理
 export const SERVICE_TEXT_MAP = {
   'aircraft': '无人飞机AI监控服务',
-  'health': '乡村医疗AI服务',
-  'agriculture': '农业数智AI服务',
+  'health': '乡村医疗AI应用服务',
+  'agriculture': '农业数智AI应用服务',
   'evtol': '低空飞行AI应用服务',
-  'ecommerce': '跨境电商AI服务',
-  'homeAI': '家庭机器人AI服务',
+  'ecommerce': '跨境电商AI应用服务',
+  'homeAI': '家庭陪伴AI应用服务',
   'aml': '跨境支付AI监测服务'
 }
 
