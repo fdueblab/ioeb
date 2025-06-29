@@ -17,11 +17,12 @@
           </div>
           <div class="toolbar-right">
             <a-space>
-              <a-tooltip title="导出流程数据">
-                <a-button shape="circle" icon="download" @click="downloadData" />
-              </a-tooltip>
-              <a-tooltip title="智能体数据">
-                <a-button shape="circle" icon="file-text" @click="dataInfo" />
+              <!--              <a-tooltip title="导出流程数据">-->
+              <!--                <a-button shape="circle" icon="download" @click="downloadData" />-->
+              <!--              </a-tooltip>-->
+              <!-- perhaps todo: 推荐理由？ -->
+              <a-tooltip title="查看节点详情">
+                <a-button shape="circle" icon="file-text" @click="showDataInfo" />
               </a-tooltip>
               <a-tooltip title="重置元应用">
                 <a-button shape="circle" icon="reload" @click="dataReloadClear" />
@@ -87,7 +88,7 @@
     </div>
 
     <!-- 对话框和弹窗 -->
-    <flow-info v-if="flowInfoVisible" ref="flowInfo" :data="data" />
+    <flow-info v-if="flowInfoVisible" ref="flowInfo" />
     <services-adder
       v-if="servicesAdderVisible"
       ref="servicesAdder"
@@ -301,6 +302,7 @@ export default {
           id: node.id,
           name: node.name,
           url: node.url || '',
+          des: node.des || '',
           apiName: node.apiName || '',
           tools: node.tools || [],
           state: this.statusFilter(node.status),
@@ -913,11 +915,31 @@ export default {
     repaintEverything() {
       this.jsPlumb.repaint()
     },
-    dataInfo() {
-      this.flowInfoVisible = true
-      this.$nextTick(function () {
-        this.$refs.flowInfo.init()
-      })
+    showDataInfo() {
+      if (this.data.nodeList.length > 1) {
+        this.flowInfoVisible = true
+        this.$nextTick(function () {
+          const filteredInfo = this.data.nodeList.map(node => {
+            if(node.name === 'metaAppAgent') {
+              return {
+                name: this.data.preName,
+                des: '支持独立运行和柔性集成的任务智能体'
+              }
+            } else {
+              return {
+                name: node.name,
+                url: node.url || '',
+                des: node.des || '',
+                status: node.state,
+                tools: node.tools || [],
+              }
+            }
+          })
+          this.$refs.flowInfo.init(filteredInfo)
+        })
+      } else {
+        this.$message.error('请先智能生成应用或添加服务！')
+      }
     },
     dataReload(data) {
       this.easyFlowVisible = false
@@ -963,6 +985,7 @@ export default {
         id: node.id,
         name: node.name,
         url: node.url || '',
+        des: node.des || '',
         apiName: node.apiName || '',
         tools: node.tools || [],
         state: this.statusFilter(node.status),
@@ -976,7 +999,8 @@ export default {
           name: 'metaAppAgent',
           type: 'start',
           state: '待构建',
-          stateStyle: 'default'
+          stateStyle: 'default',
+          des: '支持独立运行和柔性集成的任务智能体',
         }
         console.log('添加智能体节点:', agentNode)
 
@@ -1011,7 +1035,8 @@ export default {
             name: 'metaAppAgent',
             type: 'start',
             state: '待构建',
-            stateStyle: 'default'
+            stateStyle: 'default',
+            des: '支持独立运行和柔性集成的任务智能体',
           }
         ],
         lineList: []
@@ -1076,6 +1101,7 @@ export default {
           id: service.id,
           name: service.name,
           url: service.url,
+          des: service.des || '',
           apiName: service.apiName,
           tools: service.tools || [],
           state: this.statusFilter(service.status),
@@ -1091,6 +1117,7 @@ export default {
         id: service.id,
         name: service.name,
         url: service.url,
+        des: service.des || '',
         apiName: service.apiName,
         tools: service.tools,
         state: this.statusFilter(service.status),
@@ -1176,7 +1203,7 @@ export default {
           })
         }, 2000)
       } else {
-        this.$message.error('请先创建元应用流程！')
+        this.$message.error('请先智能生成应用或添加服务！')
       }
     },
     showConnectionLabel(conn, event) {
