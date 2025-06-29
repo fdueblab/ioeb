@@ -42,10 +42,11 @@
 <script>
 import { getMetaAppNodes } from '@/mock/data/meta_apps_data'
 import { ChatMessageManager } from './chat_messages'
-import { generateServiceNodes } from './utils'
+import { streamAgent } from '@/utils/request'
+import { processAgentResponse, generateServiceNodes } from './utils'
 
 export default {
-  name: 'FakeChat',
+  name: 'SmartChat',
   props: {
     verticalType: {
       type: String,
@@ -119,6 +120,81 @@ export default {
       this.scrollToBottom()
       const input = this.userInput
       this.userInput = ''
+
+      // 根据领域类型选择数据源
+      if (this.verticalType === 'aml') {
+        this.callAgentForRecommendation(input)
+      } else {
+        this.useFakeData(input)
+      }
+    },
+
+    // 调用智能体获取推荐服务
+    callAgentForRecommendation(input) {
+      const formData = new FormData()
+      formData.append('message', input)
+      formData.append('service_type', this.verticalType)
+
+      streamAgent('/api/agent/mcp_service_recommendation', formData, {
+        onStart: () => {
+          console.log('开始智能体服务推荐')
+        },
+        onStep: (data) => {
+          console.log('智能体执行步骤:', data)
+        },
+        onError: (error) => {
+          console.error('智能体推荐失败:', error)
+          const outputMessage = this.messageManager.getErrorReply()
+          this.typeWriter(outputMessage)
+          this.isInputEnabled = true
+        },
+        onWarning: (warning) => {
+          console.warn('智能体推荐警告:', warning)
+          const outputMessage = this.messageManager.getErrorReply()
+          this.typeWriter(outputMessage)
+          this.isInputEnabled = true
+        },
+        onFinalResult: (results) => {
+          console.log('智能体推荐结果:', results)
+          this.handleAgentResponse(results)
+        },
+        onComplete: () => {
+          console.log('智能体推荐完成')
+        },
+        onDataProcessError: (error) => {
+          console.error('智能体数据处理错误:', error)
+          const outputMessage = this.messageManager.getErrorReply()
+          this.typeWriter(outputMessage)
+          this.isInputEnabled = true
+        }
+      })
+    },
+
+    // 处理智能体返回的数据
+    handleAgentResponse(results) {
+      const processedData = processAgentResponse(results, this.verticalType)
+      if (processedData.success) {
+        // 生成成功回复消息
+        const outputMessage = this.messageManager.generateSuccessReply(processedData.chosenServices)
+        // 向父组件发送数据
+        this.$emit('update-services', processedData.serviceNodes)
+        this.$emit('update-flow', processedData.flowData)
+        this.placeholder = '已智能生成元应用'
+        this.isGenerated = true
+
+        // 使用typeWriter显示消息（会在完成后自动恢复输入状态）
+        this.typeWriter(outputMessage)
+      } else {
+        // 处理失败
+        console.error('处理智能体数据失败:', processedData.error)
+        const outputMessage = this.messageManager.getErrorReply()
+        this.typeWriter(outputMessage)
+        this.isInputEnabled = true
+      }
+    },
+
+    // 使用假数据
+    useFakeData(input) {
       getMetaAppNodes(this.verticalType, input).then((flowData) => {
         // 使用utils中的方法生成服务节点
         const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
@@ -134,6 +210,7 @@ export default {
         this.isInputEnabled = true
       })
     },
+
     typeWriter(text) {
       if (this.currentIndex < text.length) {
         this.messages[this.messages.length - 1].text = text.substring(0, this.currentIndex + 1)
