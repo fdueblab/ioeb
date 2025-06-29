@@ -655,50 +655,55 @@ export function getMetaAppNodes(serviceType, userInput) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       let flowData
-
-      switch (serviceType) {
-        case 'aircraft':
-          flowData = aircraftApp
-          break
-        case 'health':
-          flowData = medicalDiagnosisApp
-          break
-        case 'agriculture':
-          flowData = agricultureApp
-          break
-        case 'evtol':
-          flowData = evtolApp
-          break
-        case 'ecommerce':
-          flowData = ecommerceApp
-          break
-        case 'homeAI':
-          flowData = homeAIApp
-          break
-        case 'aml':
-          // 对于金融领域，根据用户输入选择不同的应用
-          if (userInput.includes('课题三')) {
-            flowData = pj1pj4pj3App
-          } else if (userInput.includes('课题四')) {
-            flowData = pj4App
-          } else if (userInput.includes('课题一')) {
-            flowData = pj1App
-          } else if (userInput.includes('课题二')) {
-            flowData = pj2App
-          } else if (userInput.includes('课题一和课题三') || userInput.includes('综合')) {
-            flowData = pj1pj4pj3App
-          } else if (userInput.includes('欺诈')) {
-            flowData = fraudDetectionApp
-          } else if (userInput.includes('围标')) {
-            flowData = bidRiggingDetectionApp
-          } else {
-            reject(new Error('未找到对应的元应用'))
-            return
-          }
-          break
-        default:
+      // 对于金融领域，根据用户输入选择不同的应用
+      if (serviceType === 'aml') {
+        if (userInput.includes('课题三')) {
+          flowData = pj1pj4pj3App
+        } else if (userInput.includes('课题四')) {
+          flowData = pj4App
+        } else if (userInput.includes('课题一')) {
+          flowData = pj1App
+        } else if (userInput.includes('课题二')) {
+          flowData = pj2App
+        } else if (userInput.includes('课题一和课题三') || userInput.includes('综合')) {
+          flowData = pj1pj4pj3App
+        } else if (userInput.includes('欺诈')) {
+          flowData = fraudDetectionApp
+        } else if (userInput.includes('围标')) {
+          flowData = bidRiggingDetectionApp
+        } else {
           reject(new Error('未找到对应的元应用'))
           return
+        }
+      } else {
+        if (userInput.includes('应用') || userInput.includes('系统')) {
+          switch (serviceType) {
+            case 'aircraft':
+              flowData = aircraftApp
+              break
+            case 'health':
+              flowData = medicalDiagnosisApp
+              break
+            case 'agriculture':
+              flowData = agricultureApp
+              break
+            case 'evtol':
+              flowData = evtolApp
+              break
+            case 'ecommerce':
+              flowData = ecommerceApp
+              break
+            case 'homeAI':
+              flowData = homeAIApp
+              break
+            default:
+              reject(new Error('未找到对应的元应用'))
+              return
+          }
+        } else {
+          reject(new Error('未找到对应的元应用'))
+          return
+        }
       }
 
       if (flowData) {
@@ -713,7 +718,7 @@ export function getMetaAppNodes(serviceType, userInput) {
 
 // 获取基础服务节点的函数 - 用于重置时恢复初始状态
 export function getBaseServiceNodes(serviceType = 'default') {
-  // 根据服务类型确定根服务名称 - 与getMetaAppNodes保持一致
+  // 根据服务类型确定根服务名称
   const rootServiceText = SERVICE_TEXT_MAP[serviceType] || '智能服务'
   return [
     {
