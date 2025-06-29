@@ -104,8 +104,7 @@ export default {
       if (!this.initServices || this.initServices.length === 0) {
       this.$refs.flowPanel.setServices([
         {
-          id: '9',
-          type: 'group',
+          id: 'rootNode',
           name: this.serviceName,
           open: true,
           children: []

@@ -25,11 +25,11 @@ const fraudDetectionApp = {
       number: 67,
       deleted: 0,
       tools: [
-        { id: 'tool-001-health-check-mcp1', name: 'healthCheck', des: '判断微服务状态是否正常可用' },
-        { id: 'tool-002-analyze-transaction', name: 'analyzeTransaction', des: '单笔交易风险分析' },
-        { id: 'tool-003-batch-analyze-transactions', name: 'batchAnalyzeTransactions', des: '批量交易风险分析' },
-        { id: 'tool-004-get-agents-status', name: 'getAgentsStatus', des: '获取各智能体状态' },
-        { id: 'tool-005-get-model-info', name: 'getModelInfo', des: '获取模型信息' }
+        { id: 'tool-001-health-check-mcp1', name: 'healthCheck', description: '判断微服务状态是否正常可用' },
+        { id: 'tool-002-analyze-transaction', name: 'analyzeTransaction', description: '单笔交易风险分析' },
+        { id: 'tool-003-batch-analyze-transactions', name: 'batchAnalyzeTransactions', description: '批量交易风险分析' },
+        { id: 'tool-004-get-agents-status', name: 'getAgentsStatus', description: '获取各智能体状态' },
+        { id: 'tool-005-get-model-info', name: 'getModelInfo', description: '获取模型信息' }
       ]
     },
     {
@@ -48,8 +48,8 @@ const fraudDetectionApp = {
       number: 45,
       deleted: 0,
       tools: [
-        { id: 'tool-011-report-generation-health', name: 'healthCheck', des: '判断样例报告生成MCP服务状态是否正常可用' },
-        { id: 'tool-012-generate-report', name: 'generateReport', des: '基于输入数据生成分析报告' }
+        { id: 'tool-011-report-generation-health', name: 'healthCheck', description: '判断样例报告生成MCP服务状态是否正常可用' },
+        { id: 'tool-012-generate-report', name: 'generateReport', description: '基于输入数据生成分析报告' }
       ]
     },
     {
@@ -68,9 +68,9 @@ const fraudDetectionApp = {
       number: 134,
       deleted: 0,
       tools: [
-        { id: 'tool-019-security-fingerprint-health', name: 'healthCheck', des: '判断课题四模型评测-安全性指纹MCP服务状态是否正常可用' },
-        { id: 'tool-020-security-fingerprint-detect', name: 'securityFingerprintDetect', des: '对机器学习模型进行安全性指纹检测' },
-        { id: 'tool-021-evaluate-model-security', name: 'evaluateModelSecurity', des: '评估模型抗攻击能力和安全风险等级' }
+        { id: 'tool-019-security-fingerprint-health', name: 'healthCheck', description: '判断课题四模型评测-安全性指纹MCP服务状态是否正常可用' },
+        { id: 'tool-020-security-fingerprint-detect', name: 'securityFingerprintDetect', description: '对机器学习模型进行安全性指纹检测' },
+        { id: 'tool-021-evaluate-model-security', name: 'evaluateModelSecurity', description: '评估模型抗攻击能力和安全风险等级' }
       ]
     }
   ]
@@ -90,10 +90,10 @@ const medicalDiagnosisApp = {
       type: 'atomic_mcp',
       status: 'released',
       tools: [
-        { name: 'transcribe', des: '语音转文字' },
-        { name: 'detectLanguage', des: '检测语言类型' },
-        { name: 'filterNoise', des: '语音降噪处理' },
-        { name: 'extractKeywords', des: '提取关键词' }
+        { name: 'transcribe', description: '语音转文字' },
+        { name: 'detectLanguage', description: '检测语言类型' },
+        { name: 'filterNoise', description: '语音降噪处理' },
+        { name: 'extractKeywords', description: '提取关键词' }
       ]
     },
     {
@@ -102,10 +102,10 @@ const medicalDiagnosisApp = {
       type: 'atomic_mcp',
       status: 'pre_release_unrated',
       tools: [
-        { name: 'diagnose', des: '医疗影像诊断' },
-        { name: 'analyzeSymptoms', des: '症状分析' },
-        { name: 'suggestTreatment', des: '治疗建议' },
-        { name: 'riskAssessment', des: '风险评估' }
+        { name: 'diagnose', description: '医疗影像诊断' },
+        { name: 'analyzeSymptoms', description: '症状分析' },
+        { name: 'suggestTreatment', description: '治疗建议' },
+        { name: 'riskAssessment', description: '风险评估' }
       ]
     },
     {
@@ -114,10 +114,10 @@ const medicalDiagnosisApp = {
       type: 'atomic_mcp',
       status: 'pre_release_unrated',
       tools: [
-        { name: 'analyze', des: '健康数据分析' },
-        { name: 'trackVitals', des: '生命体征追踪' },
-        { name: 'predictTrends', des: '健康趋势预测' },
-        { name: 'generateReports', des: '生成健康报告' }
+        { name: 'analyze', description: '健康数据分析' },
+        { name: 'trackVitals', description: '生命体征追踪' },
+        { name: 'predictTrends', description: '健康趋势预测' },
+        { name: 'generateReports', description: '生成健康报告' }
       ]
     },
     {
@@ -126,10 +126,10 @@ const medicalDiagnosisApp = {
       type: 'atomic_mcp',
       status: 'pre_release_unrated',
       tools: [
-        { name: 'alert', des: '健康预警' },
-        { name: 'sendNotification', des: '发送通知' },
-        { name: 'escalateUrgent', des: '紧急情况升级' },
-        { name: 'logEvents', des: '记录预警事件' }
+        { name: 'alert', description: '健康预警' },
+        { name: 'sendNotification', description: '发送通知' },
+        { name: 'escalateUrgent', description: '紧急情况升级' },
+        { name: 'logEvents', description: '记录预警事件' }
       ]
     }
   ]
@@ -149,10 +149,10 @@ const agricultureApp = {
       type: 'atomic_mcp',
       status: 'released',
       tools: [
-        { name: 'analyzeImage', des: '农作物图像分析' },
-        { name: 'identifyDisease', des: '病虫害识别' },
-        { name: 'assessGrowth', des: '生长状态评估' },
-        { name: 'detectWeeds', des: '杂草检测' }
+        { name: 'analyzeImage', description: '农作物图像分析' },
+        { name: 'identifyDisease', description: '病虫害识别' },
+        { name: 'assessGrowth', description: '生长状态评估' },
+        { name: 'detectWeeds', description: '杂草检测' }
       ]
     },
     {
@@ -161,10 +161,10 @@ const agricultureApp = {
       type: 'atomic_mcp',
       status: 'pre_release_unrated',
       tools: [
-        { name: 'predictYield', des: '产量预测' },
-        { name: 'recommendActions', des: '农事建议' },
-        { name: 'optimizeIrrigation', des: '灌溉优化' },
-        { name: 'fertilizeRecommend', des: '施肥建议' }
+        { name: 'predictYield', description: '产量预测' },
+        { name: 'recommendActions', description: '农事建议' },
+        { name: 'optimizeIrrigation', description: '灌溉优化' },
+        { name: 'fertilizeRecommend', description: '施肥建议' }
       ]
     }
   ]
@@ -188,9 +188,9 @@ const aircraftApp = {
       parameter_type: 1,
       is_fake: 1,
       tools: [
-        { id: 'tool-028-aircraft-detection-health', name: 'healthCheck', des: '判断无人机目标识别MCP服务状态是否正常可用' },
-        { id: 'tool-029-detect-targets', name: 'detectTargets', des: '检测和识别空中或地面目标' },
-        { id: 'tool-030-analyze-objects', name: 'analyzeObjects', des: '分析识别到的目标对象特征' }
+        { id: 'tool-028-aircraft-detection-health', name: 'healthCheck', description: '判断无人机目标识别MCP服务状态是否正常可用' },
+        { id: 'tool-029-detect-targets', name: 'detectTargets', description: '检测和识别空中或地面目标' },
+        { id: 'tool-030-analyze-objects', name: 'analyzeObjects', description: '分析识别到的目标对象特征' }
       ]
     },
     {
@@ -203,9 +203,9 @@ const aircraftApp = {
       parameter_type: 1,
       is_fake: 1,
       tools: [
-        { id: 'tool-031-aircraft-control-health', name: 'healthCheck', des: '判断无人机远程控制MCP服务状态是否正常可用' },
-        { id: 'tool-032-remote-control', name: 'remoteControl', des: '远程控制无人机飞行和操作' },
-        { id: 'tool-033-flight-monitoring', name: 'flightMonitoring', des: '实时监控无人机飞行状态和参数' }
+        { id: 'tool-031-aircraft-control-health', name: 'healthCheck', description: '判断无人机远程控制MCP服务状态是否正常可用' },
+        { id: 'tool-032-remote-control', name: 'remoteControl', description: '远程控制无人机飞行和操作' },
+        { id: 'tool-033-flight-monitoring', name: 'flightMonitoring', description: '实时监控无人机飞行状态和参数' }
       ]
     }
   ]
@@ -225,10 +225,10 @@ const ecommerceApp = {
       type: 'atomic_mcp',
       status: 'released',
       tools: [
-        { name: 'translateContent', des: '内容翻译' },
-        { name: 'generateDescription', des: '生成商品描述' },
-        { name: 'localizeContent', des: '内容本地化' },
-        { name: 'optimizeSEO', des: 'SEO优化' }
+        { name: 'translateContent', description: '内容翻译' },
+        { name: 'generateDescription', description: '生成商品描述' },
+        { name: 'localizeContent', description: '内容本地化' },
+        { name: 'optimizeSEO', description: 'SEO优化' }
       ]
     },
     {
@@ -237,10 +237,10 @@ const ecommerceApp = {
       type: 'atomic_mcp',
       status: 'pre_release_unrated',
       tools: [
-        { name: 'analyzeTrend', des: '趋势分析' },
-        { name: 'predictSales', des: '销量预测' },
-        { name: 'competitorAnalysis', des: '竞品分析' },
-        { name: 'priceOptimization', des: '价格优化' }
+        { name: 'analyzeTrend', description: '趋势分析' },
+        { name: 'predictSales', description: '销量预测' },
+        { name: 'competitorAnalysis', description: '竞品分析' },
+        { name: 'priceOptimization', description: '价格优化' }
       ]
     }
   ]
@@ -260,10 +260,10 @@ const evtolApp = {
       type: 'atomic_mcp',
       status: 'released',
       tools: [
-        { name: 'pathPlanner', des: '路径规划' },
-        { name: 'flightController', des: '飞行控制' },
-        { name: 'stabilityControl', des: '稳定性控制' },
-        { name: 'autoLanding', des: '自动降落' }
+        { name: 'pathPlanner', description: '路径规划' },
+        { name: 'flightController', description: '飞行控制' },
+        { name: 'stabilityControl', description: '稳定性控制' },
+        { name: 'autoLanding', description: '自动降落' }
       ]
     },
     {
@@ -272,10 +272,10 @@ const evtolApp = {
       type: 'atomic_mcp',
       status: 'pre_release_unrated',
       tools: [
-        { name: 'environmentPerception', des: '环境感知' },
-        { name: 'obstacleDetection', des: '障碍物检测' },
-        { name: 'weatherAnalysis', des: '天气分析' },
-        { name: 'safetyAssessment', des: '安全评估' }
+        { name: 'environmentPerception', description: '环境感知' },
+        { name: 'obstacleDetection', description: '障碍物检测' },
+        { name: 'weatherAnalysis', description: '天气分析' },
+        { name: 'safetyAssessment', description: '安全评估' }
       ]
     }
   ]
@@ -295,10 +295,10 @@ const homeAIApp = {
       type: 'atomic_mcp',
       status: 'pre_release_unrated',
       tools: [
-        { name: 'objectDetection', des: '物体检测' },
-        { name: 'spatialMapping', des: '空间映射' },
-        { name: 'homeSecurityMonitor', des: '家庭安防监控' },
-        { name: 'environmentControl', des: '环境控制' }
+        { name: 'objectDetection', description: '物体检测' },
+        { name: 'spatialMapping', description: '空间映射' },
+        { name: 'homeSecurityMonitor', description: '家庭安防监控' },
+        { name: 'environmentControl', description: '环境控制' }
       ]
     },
     {
@@ -307,10 +307,10 @@ const homeAIApp = {
       type: 'atomic_mcp',
       status: 'pre_release_unrated',
       tools: [
-        { name: 'naturalLanguageUnderstanding', des: '自然语言理解' },
-        { name: 'emotionRecognition', des: '情感识别' },
-        { name: 'voiceInteraction', des: '语音交互' },
-        { name: 'personalAssistant', des: '个人助理' }
+        { name: 'naturalLanguageUnderstanding', description: '自然语言理解' },
+        { name: 'emotionRecognition', description: '情感识别' },
+        { name: 'voiceInteraction', description: '语音交互' },
+        { name: 'personalAssistant', description: '个人助理' }
       ]
     }
   ]
@@ -342,9 +342,9 @@ const pj1App = {
       parameter_type: 1,
       is_fake: 1,
       tools: [
-        { id: 'tool-013-risk-identification-health', name: 'healthCheck', des: '判断课题一风险识别模型推理MCP服务状态是否正常可用' },
-        { id: 'tool-014-risk-predict', name: 'predict', des: '对客户信息进行风险识别和模型推理分析' },
-        { id: 'tool-015-risk-evaluate', name: 'evaluate', des: '评估风险等级和给出风控建议' }
+        { id: 'tool-013-risk-identification-health', name: 'healthCheck', description: '判断课题一风险识别模型推理MCP服务状态是否正常可用' },
+        { id: 'tool-014-risk-predict', name: 'predict', description: '对客户信息进行风险识别和模型推理分析' },
+        { id: 'tool-015-risk-evaluate', name: 'evaluate', description: '评估风险等级和给出风控建议' }
       ]
     },
     {
@@ -363,8 +363,8 @@ const pj1App = {
       number: 45,
       deleted: 0,
       tools: [
-        { id: 'tool-011-report-generation-health', name: 'healthCheck', des: '判断样例报告生成MCP服务状态是否正常可用' },
-        { id: 'tool-012-generate-report', name: 'generateReport', des: '基于输入数据生成分析报告' }
+        { id: 'tool-011-report-generation-health', name: 'healthCheck', description: '判断样例报告生成MCP服务状态是否正常可用' },
+        { id: 'tool-012-generate-report', name: 'generateReport', description: '基于输入数据生成分析报告' }
       ]
     }
   ]
@@ -402,9 +402,9 @@ const pj2App = {
       response_type: 1,
       is_fake: 1,
       tools: [
-        { id: 'tool-037-mpc-health-check', name: 'healthCheck', des: '判断课题二多方安全计算MCP服务状态是否正常可用' },
-        { id: 'tool-038-mpc-compute', name: 'multiPartyCompute', des: '启动多方安全计算协议，联合分析多机构数据而不泄露隐私' },
-        { id: 'tool-039-mpc-analyze', name: 'jointAnalyze', des: '执行跨机构联合反洗钱分析和洗钱网络识别' }
+        { id: 'tool-037-mpc-health-check', name: 'healthCheck', description: '判断课题二多方安全计算MCP服务状态是否正常可用' },
+        { id: 'tool-038-mpc-compute', name: 'multiPartyCompute', description: '启动多方安全计算协议，联合分析多机构数据而不泄露隐私' },
+        { id: 'tool-039-mpc-analyze', name: 'jointAnalyze', description: '执行跨机构联合反洗钱分析和洗钱网络识别' }
       ]
     },
     {
@@ -423,8 +423,8 @@ const pj2App = {
       number: 45,
       deleted: 0,
       tools: [
-        { id: 'tool-011-report-generation-health', name: 'healthCheck', des: '判断样例报告生成MCP服务状态是否正常可用' },
-        { id: 'tool-012-generate-report', name: 'generateReport', des: '基于输入数据生成分析报告' }
+        { id: 'tool-011-report-generation-health', name: 'healthCheck', description: '判断样例报告生成MCP服务状态是否正常可用' },
+        { id: 'tool-012-generate-report', name: 'generateReport', description: '基于输入数据生成分析报告' }
       ]
     }
   ]
@@ -456,9 +456,9 @@ const pj4App = {
       parameter_type: 1,
       is_fake: 1,
       tools: [
-        { id: 'tool-019-security-fingerprint-health', name: 'healthCheck', des: '判断课题四模型评测-安全性指纹MCP服务状态是否正常可用' },
-        { id: 'tool-020-security-fingerprint-detect', name: 'securityFingerprintDetect', des: '对机器学习模型进行安全性指纹检测' },
-        { id: 'tool-021-evaluate-model-security', name: 'evaluateModelSecurity', des: '评估模型抗攻击能力和安全风险等级' }
+        { id: 'tool-019-security-fingerprint-health', name: 'healthCheck', description: '判断课题四模型评测-安全性指纹MCP服务状态是否正常可用' },
+        { id: 'tool-020-security-fingerprint-detect', name: 'securityFingerprintDetect', description: '对机器学习模型进行安全性指纹检测' },
+        { id: 'tool-021-evaluate-model-security', name: 'evaluateModelSecurity', description: '评估模型抗攻击能力和安全风险等级' }
       ]
     }
   ]
@@ -490,9 +490,9 @@ const pj1pj4pj3App = {
       parameter_type: 1,
       is_fake: 1,
       tools: [
-        { id: 'tool-013-risk-identification-health', name: 'healthCheck', des: '判断课题一风险识别模型推理MCP服务状态是否正常可用' },
-        { id: 'tool-014-risk-predict', name: 'predict', des: '对客户信息进行风险识别和模型推理分析' },
-        { id: 'tool-015-risk-evaluate', name: 'evaluate', des: '评估风险等级和给出风控建议' }
+        { id: 'tool-013-risk-identification-health', name: 'healthCheck', description: '判断课题一风险识别模型推理MCP服务状态是否正常可用' },
+        { id: 'tool-014-risk-predict', name: 'predict', description: '对客户信息进行风险识别和模型推理分析' },
+        { id: 'tool-015-risk-evaluate', name: 'evaluate', description: '评估风险等级和给出风控建议' }
       ]
     },
     {
@@ -513,9 +513,9 @@ const pj1pj4pj3App = {
       parameter_type: 1,
       is_fake: 1,
       tools: [
-        { id: 'tool-019-security-fingerprint-health', name: 'healthCheck', des: '判断课题四模型评测-安全性指纹MCP服务状态是否正常可用' },
-        { id: 'tool-020-security-fingerprint-detect', name: 'securityFingerprintDetect', des: '对机器学习模型进行安全性指纹检测' },
-        { id: 'tool-021-evaluate-model-security', name: 'evaluateModelSecurity', des: '评估模型抗攻击能力和安全风险等级' }
+        { id: 'tool-019-security-fingerprint-health', name: 'healthCheck', description: '判断课题四模型评测-安全性指纹MCP服务状态是否正常可用' },
+        { id: 'tool-020-security-fingerprint-detect', name: 'securityFingerprintDetect', description: '对机器学习模型进行安全性指纹检测' },
+        { id: 'tool-021-evaluate-model-security', name: 'evaluateModelSecurity', description: '评估模型抗攻击能力和安全风险等级' }
       ]
     },
     {
@@ -536,9 +536,9 @@ const pj1pj4pj3App = {
       parameter_type: 1,
       is_fake: 1,
       tools: [
-        { id: 'tool-016-financial-risk-health', name: 'healthCheck', des: '判断课题三金融风险报告生成MCP服务状态是否正常可用' },
-        { name: 'generateReport', des: '生成金融风险报告，包含信用风险、市场风险和操作风险分析' },
-        { id: 'tool-018-analyze-risk-data', name: 'analyzeRiskData', des: '分析多维度风险数据和指标' }
+        { id: 'tool-016-financial-risk-health', name: 'healthCheck', description: '判断课题三金融风险报告生成MCP服务状态是否正常可用' },
+        { name: 'generateReport', description: '生成金融风险报告，包含信用风险、市场风险和操作风险分析' },
+        { id: 'tool-018-analyze-risk-data', name: 'analyzeRiskData', description: '分析多维度风险数据和指标' }
       ]
     }
   ]
@@ -571,8 +571,8 @@ const bidRiggingDetectionApp = {
       response_type: 1,
       is_fake: 0,
       tools: [
-        { id: 'tool-008-health-check-mcp3', name: 'healthCheck', des: '判断微服务状态是否正常可用' },
-        { id: 'tool-009-flask-predict', name: 'flask_predict', des: '传入特征数组，获取模型预测结果和解释' }
+        { id: 'tool-008-health-check-mcp3', name: 'healthCheck', description: '判断微服务状态是否正常可用' },
+        { id: 'tool-009-flask-predict', name: 'flask_predict', description: '传入特征数组，获取模型预测结果和解释' }
       ]
     },
     {
@@ -591,8 +591,8 @@ const bidRiggingDetectionApp = {
       number: 45,
       deleted: 0,
       tools: [
-        { id: 'tool-011-report-generation-health', name: 'healthCheck', des: '判断样例报告生成MCP服务状态是否正常可用' },
-        { id: 'tool-012-generate-report', name: 'generateReport', des: '基于输入数据生成分析报告' }
+        { id: 'tool-011-report-generation-health', name: 'healthCheck', description: '判断样例报告生成MCP服务状态是否正常可用' },
+        { id: 'tool-012-generate-report', name: 'generateReport', description: '基于输入数据生成分析报告' }
       ]
     }
   ]
@@ -612,7 +612,6 @@ export const SERVICE_TEXT_MAP = {
 // 根据流程数据生成服务树结构的工具函数，用于适配现有的输出格式
 // todo: 之后应该优化接收端的格式需求
 function generateServiceNodes(flowData, rootServiceText = '智能服务') {
-  const rootId = '9'
   const groupMap = new Map()
   const chosenServices = []
 
@@ -633,7 +632,7 @@ function generateServiceNodes(flowData, rootServiceText = '智能服务') {
     tools.forEach((tool) => {
       groupMap.get(id).children.push({
         name: tool.name,
-        des: tool.des
+        des: tool.description
       })
     })
   })
@@ -642,7 +641,7 @@ function generateServiceNodes(flowData, rootServiceText = '智能服务') {
     chosenServices,
     serviceNodes: [
       {
-        id: rootId,
+        id: 'rootNode',
         name: rootServiceText,
         children: Array.from(groupMap.values())
       }
@@ -722,7 +721,7 @@ export function getBaseServiceNodes(serviceType = 'default') {
   const rootServiceText = SERVICE_TEXT_MAP[serviceType] || '智能服务'
   return [
     {
-      id: '9',
+      id: 'rootNode',
       name: rootServiceText,
       children: []
     }
