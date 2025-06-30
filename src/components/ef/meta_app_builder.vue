@@ -12,7 +12,7 @@
     <div style="display: flex; justify-content: space-around">
       <!-- 应用预览区域 -->
       <div style="width: 35%">
-        <span class="title">元应用预览</span>
+        <span class="title">元应用界面预览</span>
         <div class="app-preview">
           <span class="app-title">{{ form.getFieldValue('name') || preName }}</span>
           <div class="input-output-container">
@@ -108,6 +108,13 @@
             </a-col>
           </a-row>
           <a-divider>应用信息</a-divider>
+          <a-row>
+            <a-col :span="24">
+              <a-form-item label="通用描述">
+                <a-textarea v-decorator="['des', { initialValue: preDes }]" placeholder="请输入描述"/>
+              </a-form-item>
+            </a-col>
+          </a-row>
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="属性">
@@ -148,20 +155,20 @@
               </a-form-item>
             </a-col>
           </a-row>
-          <a-row :gutter="16">
-            <a-col :span="24">
-              <a-form-item label="条件（environment）">
-                <a-input v-decorator="['environment']" placeholder="请输入Environment"/>
-              </a-form-item>
-            </a-col>
-          </a-row>
-          <a-row :gutter="16">
-            <a-col :span="24">
-              <a-form-item label="处理（process）">
-                <a-input v-decorator="['process']" placeholder="请输入Process"/>
-              </a-form-item>
-            </a-col>
-          </a-row>
+          <!--          <a-row :gutter="16">-->
+          <!--            <a-col :span="24">-->
+          <!--              <a-form-item label="条件（environment）">-->
+          <!--                <a-input v-decorator="['environment']" placeholder="请输入Environment"/>-->
+          <!--              </a-form-item>-->
+          <!--            </a-col>-->
+          <!--          </a-row>-->
+          <!--          <a-row :gutter="16">-->
+          <!--            <a-col :span="24">-->
+          <!--              <a-form-item label="处理（process）">-->
+          <!--                <a-input v-decorator="['process']" placeholder="请输入Process"/>-->
+          <!--              </a-form-item>-->
+          <!--            </a-col>-->
+          <!--          </a-row>-->
         </a-form>
       </div>
     </div>
@@ -171,6 +178,7 @@
 <script>
 import { createService } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
+import store from '@/store'
 
 export default {
   props: {
@@ -181,6 +189,10 @@ export default {
     preName: {
       type: String,
       default: '元应用名称'
+    },
+    preDes: {
+      type: String,
+      default: '以支持独立运行和柔性集成的大模型智能体为软件载体的最小粒度应用'
     },
     preInputName: {
       type: String,
@@ -219,8 +231,8 @@ export default {
       this.visible = true
       validateFields(async (errors, values) => {
           if (!errors) {
-            const { name, inputName, outputName, outputVisualization, submitButtonText } = values
-            let url = 'http://myApiServer.com/agent'
+            const { name, des, inputName, outputName, outputVisualization, submitButtonText } = values
+            let url = 'https://myMcpServer.com/metaApp/agent_ak7jq'
             let method = 'post'
             let response = {
               code: 200,
@@ -254,13 +266,14 @@ export default {
                 companyAddress: '上海市杨浦区邯郸路220号',
                 companyContact: '021-65642222',
                 companyIntroduce: '课题五',
-                msIntroduce: !(values.environment || values.process) ? 'publisher构建的元应用' : `条件：${values.environment || ''}   处理：${values.process || ''}`,
+                msIntroduce: `${store.getters.nickname}构建的元应用。${des ? '应用描述：' + des : ''}`,
                 companyScore: 5,
                 msScore: 5
               },
               apiList: [
                 {
                   name,
+                  des,
                   inputName,
                   outputName,
                   outputVisualization,

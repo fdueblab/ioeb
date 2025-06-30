@@ -103,7 +103,7 @@ export class ChatMessageManager {
    * 获取当前领域的初始消息
    */
   getInitialMessage() {
-    return INITIAL_MESSAGES[this.verticalType] || ''
+    return INITIAL_MESSAGES[this.verticalType] || '智能体未获取到必要信息，请刷新后重试'
   }
 
   /**

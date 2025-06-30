@@ -18,7 +18,6 @@
             <div class="thinking-header" @click="toggleThinking(index)">
               <a-icon :type="message.thinking.collapsed ? 'down' : 'up'" class="thinking-toggle" />
               <span class="thinking-title">
-                <a-icon v-if="message.thinking.finished" type="bulb" style="color: #faad14; margin-right: 6px;" />
                 {{ getThinkingTitle(message.thinking) }}
               </span>
               <div v-if="!message.thinking.finished" class="thinking-indicator">
@@ -26,6 +25,7 @@
                 <div class="thinking-dot"></div>
                 <div class="thinking-dot"></div>
               </div>
+              <a-icon v-else type="check" style="color: green; margin-right: 6px;" />
             </div>
             <div v-if="!message.thinking.collapsed" class="thinking-content">
               <div class="thinking-text">{{ message.thinking.thought }}</div>
@@ -175,9 +175,9 @@ export default {
       }
       // 根据状态显示相应标题
       if (thinking.finished) {
-        return `思考完成 (共${thinking.step}步)`
+        return `已生成元应用 (共用${thinking.step}步)`
       } else {
-        return `正在思考... (第${thinking.step}步)`
+        return `智能体决策中 (第${thinking.step}步)`
       }
     },
     // 切换思考过程的展示状态
@@ -392,7 +392,7 @@ export default {
     },
     init() {
       this.userInput = ''
-      this.placeholder = this.messageManager ? this.messageManager.getPlaceholder() : '请输入您对应用的需求'
+      this.placeholder = this.messageManager ? this.messageManager.getPlaceholder() : ''
       this.messages = []
       this.isInputEnabled = true
       this.isInputLoading = false
@@ -400,7 +400,7 @@ export default {
       this.showSuggestions = false
       this.filteredSuggestions = this.messageManager ? this.messageManager.getSuggestions() : []
       this.thinkingMessageIndex = -1 // 重置思考消息索引
-      const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '请告诉我您对应用的需求，我将根据您的需求尝试生成元应用'
+      const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '智能体未获取到必要信息，请刷新后重试'
       this.messages.push({ text: initialMessage, isUser: false })
     },
     refresh() {
@@ -578,7 +578,7 @@ export default {
 .thinking-dot {
   width: 4px;
   height: 4px;
-  background-color: #faad14;
+  background-color: #4a90e2;
   border-radius: 50%;
   animation: thinking-pulse 1.5s ease-in-out infinite;
 }
