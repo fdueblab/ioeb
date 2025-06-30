@@ -343,10 +343,11 @@ export function getBaseServiceNodes(serviceType = 'default') {
 /**
  * 生成默认数据结构（包含智能体节点）
  */
-export function createDefaultFlowData(appName = '新元应用') {
+export function createDefaultFlowData() {
   return {
-    name: appName,
-    preName: appName,
+    name: '新元应用',
+    preName: '新元应用',
+    preDes: '以支持独立运行和柔性集成的大模型智能体为软件载体的最小粒度应用',
     preInputName: '输入内容',
     preOutputName: '输出内容',
     inputType: 0,
@@ -376,7 +377,7 @@ export function prepareDataForReload(data) {
 /**
  * 转换节点信息用于显示
  */
-export function transformNodesForDisplay(nodeList, preName = '新元应用') {
+export function transformNodesForDisplay(nodeList, preName, preDes) {
   if (!Array.isArray(nodeList)) {
     return []
   }
@@ -385,14 +386,15 @@ export function transformNodesForDisplay(nodeList, preName = '新元应用') {
     if (node.name === 'metaAppAgent') {
       return {
         name: preName,
-        des: '支持独立运行和柔性集成的任务智能体'
+        des: preDes
       }
     } else {
       return {
         name: node.name,
         url: node.url || '',
         des: node.des || '',
-        status: node.state,
+        state: node.state,
+        stateStyle: node.stateStyle,
         tools: node.tools || []
       }
     }
