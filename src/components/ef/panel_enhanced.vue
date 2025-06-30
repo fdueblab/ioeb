@@ -20,15 +20,14 @@
               <!--              <a-tooltip title="导出流程数据">-->
               <!--                <a-button shape="circle" icon="download" @click="downloadData" />-->
               <!--              </a-tooltip>-->
-              <!-- perhaps todo: 推荐理由？ -->
-              <a-tooltip title="查看节点详情">
-                <a-button shape="circle" icon="file-text" @click="showDataInfo" />
+              <a-tooltip title="元应用详情">
+                <a-button shape="circle" :disabled="loadingFlow" icon="file-text" @click="showDataInfo" />
               </a-tooltip>
               <a-tooltip title="重置元应用">
-                <a-button shape="circle" icon="reload" @click="dataReloadClear" />
+                <a-button shape="circle" :disabled="loadingFlow" icon="reload" @click="dataReloadClear" />
               </a-tooltip>
               <a-tooltip title="添加服务">
-                <a-button type="primary" ghost shape="circle" icon="plus" @click="addServices" />
+                <a-button type="primary" :disabled="loadingFlow" ghost shape="circle" icon="plus" @click="addServices" />
               </a-tooltip>
             </a-space>
           </div>
@@ -87,8 +86,12 @@
       </div>
     </div>
 
-    <!-- 对话框和弹窗 -->
-    <flow-info v-if="flowInfoVisible" ref="flowInfo" />
+    <!-- 弹窗部分 -->
+    <info-display-enhanced
+      v-if="flowInfoVisible"
+      ref="flowInfo"
+      @app-data-updated="handleAppDataUpdate"
+    />
     <services-adder
       v-if="servicesAdderVisible"
       ref="servicesAdder"
@@ -103,6 +106,7 @@
       ref="metaAppBuilder"
       :vertical-type="verticalType"
       :pre-name="data.preName"
+      :pre-des="data.preDes"
       :pre-input-name="data.preInputName"
       :pre-output-name="data.preOutputName"
       @close="metaAppBuilderVisible = false"
@@ -117,7 +121,7 @@ import draggable from 'vuedraggable'
 import { easyFlowMixin } from '@/components/ef/mixins'
 import flowNodeEnhanced from '@/components/ef/node_enhanced'
 import nodeMenu from '@/components/ef/node_menu_enhanced'
-import FlowInfo from '@/components/ef/info'
+import InfoDisplayEnhanced from '@/components/ef/info_display_enhanced'
 import ServicesAdder from '@/components/ef/services_adder'
 import MetaAppBuilder from '@/components/ef/meta_app_builder'
 import {
@@ -208,6 +212,7 @@ export default {
       data: {
         name: '新元应用',
         preName: '元应用名称',
+        preDes: '以支持独立运行和柔性集成的大模型智能体为软件载体的最小粒度应用',
         preInputName: '输入内容',
         preOutputName: '输出内容',
         inputType: 0,
@@ -264,7 +269,7 @@ export default {
     draggable,
     flowNodeEnhanced,
     nodeMenu,
-    FlowInfo,
+    InfoDisplayEnhanced,
     ServicesAdder,
     MetaAppBuilder
   },
@@ -833,7 +838,7 @@ export default {
       if (this.data.nodeList.length > 1) {
         this.flowInfoVisible = true
         this.$nextTick(function () {
-          const filteredInfo = transformNodesForDisplay(this.data.nodeList, this.data.preName)
+          const filteredInfo = transformNodesForDisplay(this.data.nodeList, this.data.preName, this.data.preDes)
           this.$refs.flowInfo.init(filteredInfo)
         })
       } else {
@@ -1015,6 +1020,17 @@ export default {
     },
     hideConnectionLabel() {
       this.connectionLabel.visible = false;
+    },
+    // 处理元应用数据更新
+    handleAppDataUpdate(newData) {
+      // 更新画布数据
+      this.data.preName = newData.name
+      this.data.preDes = newData.des
+
+      // 强制更新Vue响应式数据
+      this.$forceUpdate()
+
+      this.$message.success('元应用信息已更新')
     }
   }
 }

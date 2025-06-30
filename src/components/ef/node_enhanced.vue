@@ -50,7 +50,7 @@
     <!-- Tooltip -->
     <div v-if="tooltipVisible" class="node-tooltip" :class="[tooltipClass, tooltipPositionClass]">
       <div class="tooltip-title">{{ nodeDisplayName }}</div>
-      <div v-if="isMetaAgent" class="tooltip-agent-desc">支持独立运行和柔性集成的任务智能体</div>
+      <div v-if="isMetaAgent" class="tooltip-agent-desc">{{ node.des }}</div>
       <div v-else class="tooltip-service">{{ node.des }}</div>
       <div class="tooltip-status">状态: {{ node.state }}</div>
 
@@ -77,7 +77,7 @@ export default {
     },
     appName: {
       type: String,
-      default: '元应用智能体'
+      default: '新元应用'
     }
   },
   data() {
@@ -127,7 +127,7 @@ export default {
     },
 
     nodeDisplayName() {
-      if (this.isMetaAgent) return this.appName || '元应用智能体'
+      if (this.isMetaAgent) return this.appName + '智能体'
       return this.node.name
     },
 

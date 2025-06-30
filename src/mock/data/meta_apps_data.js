@@ -4,6 +4,7 @@
 // 金融欺诈检测推理元应用
 const fraudDetectionApp = {
   preName: '金融欺诈检测推理元应用',
+  preDes: '基于大模型智能体的元应用，用于在跨境支付场景下实现金融欺诈检测',
   preInputName: '金融交易数据',
   preOutputName: '欺诈检测评估报告',
   inputType: 2,
@@ -78,6 +79,7 @@ const fraudDetectionApp = {
 // 乡村医疗AI辅助诊断元应用
 const medicalDiagnosisApp = {
   preName: '乡村医疗AI辅助诊断元应用',
+  preDes: '基于大模型智能体的元应用，用于在乡村医疗场景下辅助诊断',
   preInputName: '患者医疗数据',
   preOutputName: '诊断与健康管理方案',
   inputType: 2,
@@ -137,6 +139,7 @@ const medicalDiagnosisApp = {
 // 农业数智AI元应用
 const agricultureApp = {
   preName: '农业数智AI元应用',
+  preDes: '基于大模型智能体的元应用，用于在农业场景下进行作物分析和预测',
   preInputName: '农业数据输入',
   preOutputName: '农业智能分析报告',
   inputType: 2,
@@ -172,6 +175,7 @@ const agricultureApp = {
 // 智能飞行控制元应用
 const aircraftApp = {
   preName: '智能飞行控制元应用',
+  preDes: '基于大模型智能体的元应用，用于在低空飞行场景下辅助无人机控制',
   preInputName: '智能飞行器参数',
   preOutputName: '智能飞行器任务结果',
   inputType: 1,
@@ -215,6 +219,7 @@ const aircraftApp = {
 // 跨境电商智能营销元应用
 const ecommerceApp = {
   preName: '跨境电商智能营销元应用',
+  preDes: '基于大模型智能体的元应用，用于在跨境电商场景下辅助市场分析',
   preInputName: '产品信息与市场需求',
   preOutputName: '多语言营销方案',
   inputType: 2,
@@ -250,6 +255,7 @@ const ecommerceApp = {
 // 低空飞行AI应用元应用
 const evtolApp = {
   preName: 'eVTOL智能飞行控制元应用',
+  preDes: '基于大模型智能体的元应用，用于在eVTOL场景下辅助飞行控制',
   preInputName: '飞行任务参数',
   preOutputName: '飞行控制结果',
   inputType: 2,
@@ -285,6 +291,7 @@ const evtolApp = {
 // 家庭智能助手元应用
 const homeAIApp = {
   preName: '家庭智能助手元应用',
+  preDes: '基于大模型智能体的元应用，用于在家庭陪伴场景下实现智能家居陪伴',
   preInputName: '家庭环境数据与指令',
   preOutputName: '智能家庭管理方案',
   inputType: 2,
@@ -320,6 +327,7 @@ const homeAIApp = {
 // 课题一风险识别报告生成元应用
 const pj1App = {
   preName: '课题一风险识别报告生成元应用',
+  preDes: '基于大模型智能体的元应用，用于在跨境支付场景下实现风险识别并生成报告',
   preInputName: '课题一跨境支付数据',
   preOutputName: '课题一风险评估报告',
   inputType: 2,
@@ -374,6 +382,7 @@ const pj1App = {
 // 课题二风险识别报告生成元应用
 const pj2App = {
   preName: '课题二风险识别报告生成元应用',
+  preDes: '基于大模型智能体的元应用，用于在跨境支付场景下基于联邦学习实现风险识别报告生成',
   preInputName: '跨境支付数据',
   preOutputName: '课题二风险评估报告',
   inputType: 2,
@@ -434,6 +443,7 @@ const pj2App = {
 // 课题四模型评测-安全性指纹元应用
 const pj4App = {
   preName: '课题四模型评测-安全性指纹元应用',
+  preDes: '基于大模型智能体的元应用，用于在跨境支付场景下实现模型的安全性指纹评测',
   preInputName: '课题四模型数据',
   preOutputName: '课题四安全性指纹报告',
   inputType: 2,
@@ -468,6 +478,7 @@ const pj4App = {
 // 金融风险报告生成（课题一+课题四+课题三）
 const pj1pj4pj3App = {
   preName: '金融风险报告生成元应用',
+  preDes: '基于大模型智能体的元应用，用于在跨境支付场景下实现金融风险报告生成',
   preInputName: '跨境贸易数据',
   preOutputName: '金融风险报告',
   inputType: 2,
@@ -548,6 +559,7 @@ const pj1pj4pj3App = {
 // 围标检测元应用
 const bidRiggingDetectionApp = {
   preName: '围标检测元应用',
+  preDes: '基于大模型智能体的元应用，用于在金融场景下实现围标检测',
   preInputName: '投标数据与招标信息',
   preOutputName: '围标风险评估报告',
   inputType: 2,
