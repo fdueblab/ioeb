@@ -1054,7 +1054,7 @@ export default {
         return
       }
 
-      this.$confirm('确定要下载元应用配置数据吗？此配置可用于在系统中导入相同配置的元应用', '下载确认', {
+      this.$confirm('下载的配置可用于在本系统中导入相同配置的元应用。是否确认下载？', '下载确认', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'info'
