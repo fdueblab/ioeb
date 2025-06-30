@@ -343,10 +343,11 @@ export function getBaseServiceNodes(serviceType = 'default') {
 /**
  * 生成默认数据结构（包含智能体节点）
  */
-export function createDefaultFlowData(appName = '新元应用') {
+export function createDefaultFlowData() {
   return {
-    name: appName,
-    preName: appName,
+    name: '新元应用',
+    preName: '新元应用',
+    preDes: '以支持独立运行和柔性集成的大模型智能体为软件载体的最小粒度应用',
     preInputName: '输入内容',
     preOutputName: '输出内容',
     inputType: 0,
@@ -376,7 +377,7 @@ export function prepareDataForReload(data) {
 /**
  * 转换节点信息用于显示
  */
-export function transformNodesForDisplay(nodeList, preName = '新元应用') {
+export function transformNodesForDisplay(nodeList, preName, preDes) {
   if (!Array.isArray(nodeList)) {
     return []
   }
@@ -385,14 +386,15 @@ export function transformNodesForDisplay(nodeList, preName = '新元应用') {
     if (node.name === 'metaAppAgent') {
       return {
         name: preName,
-        des: '支持独立运行和柔性集成的任务智能体'
+        des: preDes
       }
     } else {
       return {
         name: node.name,
         url: node.url || '',
         des: node.des || '',
-        status: node.state,
+        state: node.state,
+        stateStyle: node.stateStyle,
         tools: node.tools || []
       }
     }
@@ -468,4 +470,234 @@ export function extractCanvasServices(nodeList, statusFilterFn, statusStyleFilte
       tools: node.tools || []
     }))
     .filter(service => service.id) // 确保有有效的ID
+}
+
+/**
+ * 导出和导入相关的工具函数
+ */
+
+/**
+ * 验证导出数据的完整性
+ */
+export function validateExportData(data) {
+  if (!data || typeof data !== 'object') return false
+  // 验证必要的元应用信息
+  if (!data.metaApp || !data.metaApp.preName || !data.metaApp.preDes) {
+    return false
+  }
+  // 验证服务列表
+  if (!data.services || !Array.isArray(data.services)) {
+    return false
+  }
+  // 验证服务引用格式
+  const isValidServices = data.services.every(service =>
+    service && typeof service === 'object' && service.serviceRef
+  )
+  if (!isValidServices) {
+    return false
+  }
+  // 验证版本信息
+  return !!data.version
+}
+
+/**
+ * 构建标准化的导出数据格式
+ */
+export function buildMetaAppExportData(flowData, verticalType, encodingFn) {
+  // 提取服务节点（排除智能体节点）
+  const serviceNodes = (flowData.nodeList || []).filter(node => node.name !== 'metaAppAgent')
+  // 构建轻量化的服务引用列表 - 只保留加密的服务引用
+  const services = serviceNodes.map(node => ({
+    serviceRef: encodingFn ? encodingFn(node.id) : node.id
+  }))
+
+  return {
+    metaApp: {
+      preName: flowData.preName || '未命名元应用',
+      preDes: flowData.preDes || '元应用描述',
+      preInputName: flowData.preInputName || '输入内容',
+      preOutputName: flowData.preOutputName || '输出内容',
+      inputType: flowData.inputType || 0,
+      outputType: flowData.outputType || 0
+    },
+    services: services,
+    version: '1.0',
+    exportTime: new Date().toISOString(),
+    verticalType: verticalType,
+    checksum: generateChecksum(services) // 数据完整性校验
+  }
+}
+
+/**
+ * 生成数据校验和
+ */
+export function generateChecksum(services) {
+  const serviceIds = services.map(s => s.serviceRef).sort().join('|')
+  return btoa(serviceIds).substring(0, 8)
+}
+
+/**
+ * 验证数据校验和
+ */
+export function validateChecksum(importData) {
+  if (!importData.checksum || !importData.services) return false
+  const expectedChecksum = generateChecksum(importData.services)
+  return importData.checksum === expectedChecksum
+}
+
+/**
+ * 解析导入数据并进行格式转换
+ */
+export function parseImportData(importData, decodingFn) {
+  if (!validateExportData(importData)) {
+    throw new Error('导入数据格式不正确')
+  }
+  // 验证数据完整性
+  if (!validateChecksum(importData)) {
+    console.warn('数据校验和不匹配，可能存在数据损坏')
+  }
+  // 解码服务引用
+  const serviceIds = []
+  const failedServices = []
+  for (const [index, service] of importData.services.entries()) {
+    const decodedId = decodingFn ? decodingFn(service.serviceRef) : service.serviceRef
+    if (decodedId) {
+      serviceIds.push({
+        id: decodedId,
+        index: index // 保留索引用于错误追踪
+      })
+    } else {
+      failedServices.push(`服务引用${index + 1}`)
+    }
+  }
+  if (failedServices.length > 0) {
+    console.warn('以下服务无法解析:', failedServices)
+  }
+  return {
+    metaAppInfo: importData.metaApp,
+    serviceIds: serviceIds,
+    metadata: {
+      version: importData.version,
+      exportTime: importData.exportTime,
+      verticalType: importData.verticalType,
+      failedServices: failedServices
+    }
+  }
+}
+
+/**
+ * 转换API服务数据为NODE_SCHEMA格式
+ */
+export function transformApiServiceToNodeFormat(apiService) {
+  if (!apiService || !apiService.apiList) return null
+  const serverInfo = apiService.apiList[0]
+  return {
+    id: apiService.id,
+    name: apiService.name || '',
+    url: serverInfo ? serverInfo.url : '',
+    des: serverInfo ? serverInfo.des : '',
+    apiName: serverInfo ? serverInfo.name : '',
+    tools: serverInfo && serverInfo.tools ? serverInfo.tools : [],
+    status: apiService.status,
+    // 这些字段会在parseInitialFlow中被statusFilter和statusStyleFilter处理
+    state: '未知状态',
+    stateStyle: 'default'
+  }
+}
+
+/**
+ * 构建导入后的完整流程数据
+ */
+export function buildImportedFlowData(importData, fullServices) {
+  const metaApp = importData.metaApp || {}
+
+  // 转换API服务数据为标准NODE格式
+  const transformedServices = (fullServices || []).map(apiService => {
+    return transformApiServiceToNodeFormat(apiService)
+  }).filter(service => service !== null) // 过滤掉转换失败的服务
+
+  return {
+    preName: metaApp.preName || '未命名元应用',
+    preDes: metaApp.preDes || '',
+    preInputName: metaApp.preInputName || '输入内容',
+    preOutputName: metaApp.preOutputName || '输出内容',
+    inputType: metaApp.inputType || 0,
+    outputType: metaApp.outputType || 0,
+    nodeList: transformedServices
+  }
+}
+
+/**
+ * 服务ID编码器工厂
+ */
+export function createServiceIdEncoder() {
+  return function(id) {
+    if (!id) return null
+    const timestamp = Date.now().toString(36)
+    const encoded = btoa(id + '_' + timestamp)
+    return 'ref_' + encoded
+  }
+}
+
+/**
+ * 服务ID解码器工厂
+ */
+export function createServiceIdDecoder() {
+  return function(encodedId) {
+    try {
+      if (!encodedId || !encodedId.startsWith('ref_')) {
+        return null
+      }
+      const encoded = encodedId.substring(4)
+      const decoded = atob(encoded)
+      return decoded.split('_')[0]
+    } catch (error) {
+      console.error('解码服务ID失败:', error)
+      return null
+    }
+  }
+}
+
+/**
+ * 数据安全处理：移除敏感信息
+ */
+export function sanitizeExportData(data) {
+  const sanitized = JSON.parse(JSON.stringify(data))
+  // 移除可能的敏感字段（当前导出数据已经是最小化的，但保留此函数以防将来扩展）
+  if (sanitized.services) {
+    sanitized.services.forEach(service => {
+      // 确保只保留serviceRef字段
+      Object.keys(service).forEach(key => {
+        if (key !== 'serviceRef') {
+          delete service[key]
+        }
+      })
+    })
+  }
+
+  return sanitized
+}
+
+/**
+ * 兼容性检查：检查导入数据与当前系统的兼容性
+ */
+export function checkCompatibility(importData, currentVerticalType) {
+  const issues = []
+  // 检查版本兼容性
+  if (importData.version && importData.version !== '1.0') {
+    issues.push(`版本不兼容: 期望 1.0，实际 ${importData.version}`)
+  }
+  // 检查垂直领域兼容性
+  if (importData.verticalType && importData.verticalType !== currentVerticalType) {
+    issues.push(`领域类型不匹配: 当前 ${currentVerticalType}，导入 ${importData.verticalType}`)
+  }
+  // 检查服务数量
+  if (importData.services && importData.services.length === 0) {
+    issues.push('导入文件中没有服务数据')
+  }
+  return {
+    isCompatible: issues.length === 0,
+    issues: issues,
+    warnings: issues.filter(issue => issue.includes('不匹配'))
+  }
 }

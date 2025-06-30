@@ -6,7 +6,7 @@
         <div class="ef-tooltar-enhanced">
           <div class="toolbar-left">
             <h4 class="toolbar-title">
-              <a-icon type="robot" style="color: #1890ff; margin-right: 8px;" />
+              <a-icon type="appstore" style="color: #1890ff; margin-right: 8px;" />
               {{ data.preName || '新元应用' }}
             </h4>
           </div>
@@ -17,18 +17,20 @@
           </div>
           <div class="toolbar-right">
             <a-space>
-              <!--              <a-tooltip title="导出流程数据">-->
-              <!--                <a-button shape="circle" icon="download" @click="downloadData" />-->
-              <!--              </a-tooltip>-->
-              <!-- perhaps todo: 推荐理由？ -->
-              <a-tooltip title="查看节点详情">
-                <a-button shape="circle" icon="file-text" @click="showDataInfo" />
+              <a-tooltip title="下载元应用配置">
+                <a-button shape="circle" icon="download" @click="exportMetaApp" :disabled="loadingFlow" />
+              </a-tooltip>
+              <a-tooltip title="导入元应用配置">
+                <a-button shape="circle" icon="import" @click="importMetaApp" :disabled="loadingFlow" :loading="importLoading" />
+              </a-tooltip>
+              <a-tooltip title="元应用详情">
+                <a-button shape="circle" :disabled="loadingFlow" icon="file-text" @click="showDataInfo" />
               </a-tooltip>
               <a-tooltip title="重置元应用">
-                <a-button shape="circle" icon="reload" @click="dataReloadClear" />
+                <a-button shape="circle" :disabled="loadingFlow" icon="reload" @click="dataReloadClear" />
               </a-tooltip>
               <a-tooltip title="添加服务">
-                <a-button type="primary" ghost shape="circle" icon="plus" @click="addServices" />
+                <a-button type="primary" :disabled="loadingFlow" shape="circle" icon="plus" @click="addServices" />
               </a-tooltip>
             </a-space>
           </div>
@@ -87,8 +89,21 @@
       </div>
     </div>
 
-    <!-- 对话框和弹窗 -->
-    <flow-info v-if="flowInfoVisible" ref="flowInfo" />
+    <!-- 隐藏的文件输入 -->
+    <input
+      ref="fileInput"
+      type="file"
+      accept=".json"
+      style="display: none"
+      @change="handleFileImport"
+    />
+
+    <!-- 弹窗部分 -->
+    <info-display-enhanced
+      v-if="flowInfoVisible"
+      ref="flowInfo"
+      @app-data-updated="handleAppDataUpdate"
+    />
     <services-adder
       v-if="servicesAdderVisible"
       ref="servicesAdder"
@@ -103,6 +118,7 @@
       ref="metaAppBuilder"
       :vertical-type="verticalType"
       :pre-name="data.preName"
+      :pre-des="data.preDes"
       :pre-input-name="data.preInputName"
       :pre-output-name="data.preOutputName"
       @close="metaAppBuilderVisible = false"
@@ -117,7 +133,7 @@ import draggable from 'vuedraggable'
 import { easyFlowMixin } from '@/components/ef/mixins'
 import flowNodeEnhanced from '@/components/ef/node_enhanced'
 import nodeMenu from '@/components/ef/node_menu_enhanced'
-import FlowInfo from '@/components/ef/info'
+import InfoDisplayEnhanced from '@/components/ef/info_display_enhanced'
 import ServicesAdder from '@/components/ef/services_adder'
 import MetaAppBuilder from '@/components/ef/meta_app_builder'
 import {
@@ -134,9 +150,12 @@ import {
   transformServicesToNodes,
   transformServicesToServiceItems,
   extractCanvasServices,
-  createAgentNode,
   getBaseServiceNodes,
-  SERVICE_TEXT_MAP
+  SERVICE_TEXT_MAP,
+  buildMetaAppExportData,
+  createServiceIdEncoder,
+  sanitizeExportData,
+  validateExportData
 } from './utils'
 import dictionaryCache from '@/utils/dictionaryCache'
 
@@ -200,6 +219,8 @@ export default {
       metaAppBuilderVisible: false,
       buildingMetaApp: false,
       loadEasyFlowFinish: false,
+      importLoading: false,
+      fileSelectionInProgress: false,
       nodePositionsCalculated: false,
       services: [],
       statusDict: [],
@@ -208,6 +229,7 @@ export default {
       data: {
         name: '新元应用',
         preName: '元应用名称',
+        preDes: '以支持独立运行和柔性集成的大模型智能体为软件载体的最小粒度应用',
         preInputName: '输入内容',
         preOutputName: '输出内容',
         inputType: 0,
@@ -264,7 +286,7 @@ export default {
     draggable,
     flowNodeEnhanced,
     nodeMenu,
-    FlowInfo,
+    InfoDisplayEnhanced,
     ServicesAdder,
     MetaAppBuilder
   },
@@ -833,7 +855,7 @@ export default {
       if (this.data.nodeList.length > 1) {
         this.flowInfoVisible = true
         this.$nextTick(function () {
-          const filteredInfo = transformNodesForDisplay(this.data.nodeList, this.data.preName)
+          const filteredInfo = transformNodesForDisplay(this.data.nodeList, this.data.preName, this.data.preDes)
           this.$refs.flowInfo.init(filteredInfo)
         })
       } else {
@@ -1015,6 +1037,177 @@ export default {
     },
     hideConnectionLabel() {
       this.connectionLabel.visible = false;
+    },
+    // 处理元应用数据更新
+    handleAppDataUpdate(newData) {
+      // 更新画布数据
+      this.data.preName = newData.name
+      this.data.preDes = newData.des
+      // 强制更新Vue响应式数据
+      this.$forceUpdate()
+      this.$message.success('元应用信息已更新')
+    },
+    // 导出元应用数据
+    exportMetaApp() {
+      if (this.data.nodeList.length <= 1) {
+        this.$message.error('请先智能生成应用或添加服务！')
+        return
+      }
+
+      this.$confirm('下载的配置可用于在本系统中导入相同配置的元应用。是否确认下载？', '下载确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }).then(() => {
+        try {
+          // 构建导出数据结构
+          const exportData = this.buildExportData()
+          // 生成文件名
+          const fileName = `${this.data.preName || '元应用'}_${new Date().toISOString().split('T')[0]}.json`
+          // 下载文件
+          this.downloadJsonFile(exportData, fileName)
+
+          this.$message.success('元应用配置下载成功！')
+        } catch (error) {
+          console.error('导出失败:', error)
+          this.$message.error('下载失败，请重试')
+        }
+      }).catch(() => {})
+    },
+
+    // 构建导出数据结构
+    buildExportData() {
+      const encoder = createServiceIdEncoder()
+      const exportData = buildMetaAppExportData(this.data, this.verticalType, encoder)
+
+      // 应用安全处理，移除敏感信息
+      return sanitizeExportData(exportData)
+    },
+
+    // 下载JSON文件
+    downloadJsonFile(data, fileName) {
+      const jsonStr = JSON.stringify(data, null, 2)
+      const dataUrl = 'data:text/json;charset=utf-8,' + encodeURIComponent(jsonStr)
+
+      const downloadLink = document.createElement('a')
+      downloadLink.setAttribute('href', dataUrl)
+      downloadLink.setAttribute('download', fileName)
+      downloadLink.click()
+      downloadLink.remove()
+    },
+
+    // 导入元应用数据
+    importMetaApp() {
+      this.importLoading = true
+      this.$confirm('导入将会替换当前的元应用，确定要继续吗？', '导入确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 设置文件选择取消检测
+        this.setupFileSelectionCancelDetection()
+        // 触发文件选择
+        this.$refs.fileInput.click()
+      }).catch(() => {
+        this.importLoading = false
+      })
+    },
+
+    // 设置文件选择取消检测
+    setupFileSelectionCancelDetection() {
+      // 设置一个标志位表示文件选择正在进行
+      this.fileSelectionInProgress = true
+
+      // 监听窗口焦点事件，当用户从文件选择器返回时触发
+      const handleWindowFocus = () => {
+        // 延迟检查，确保change事件有机会触发
+        setTimeout(() => {
+          if (this.fileSelectionInProgress) {
+            // 如果文件选择仍在进行中，说明用户取消了选择
+            this.importLoading = false
+            this.fileSelectionInProgress = false
+            console.log('文件选择被取消，重置loading状态')
+          }
+        }, 100)
+        // 移除事件监听器
+        window.removeEventListener('focus', handleWindowFocus)
+      }
+      // 添加窗口焦点事件监听器
+      window.addEventListener('focus', handleWindowFocus)
+    },
+
+    // 处理文件导入
+    handleFileImport(event) {
+      // 标记文件选择完成
+      this.fileSelectionInProgress = false
+
+      const file = event.target.files[0]
+
+      // 如果没有选择文件（用户点击取消），重置loading状态
+      if (!file) {
+        this.importLoading = false
+        event.target.value = ''
+        return
+      }
+
+      // 验证文件类型
+      if (!file.name.endsWith('.json')) {
+        this.$message.error('请选择JSON格式的文件')
+        this.importLoading = false
+        event.target.value = ''
+        return
+      }
+
+      try {
+        this.readFileContent(file).then((fileContent) => {
+          const importData = JSON.parse(fileContent)
+          // 验证导入数据格式
+          if (!this.validateImportData(importData)) {
+            this.$message.error('文件格式不正确，请选择有效的元应用导出文件')
+            this.importLoading = false
+            return
+          }
+          this.$message.info('开始导入元应用数据...')
+          // 处理导入数据
+          this.processImportData(importData)
+        }).catch((error) => {
+          console.error('文件读取失败:', error)
+          this.$message.error('文件读取失败，请重试')
+          this.importLoading = false
+        })
+
+      } catch (error) {
+        console.error('导入失败:', error)
+        this.$message.error('文件解析失败，请检查文件格式')
+        this.importLoading = false
+      } finally {
+        // 清空文件输入
+        event.target.value = ''
+      }
+    },
+
+    // 读取文件内容
+    readFileContent(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = e => resolve(e.target.result)
+        reader.onerror = e => reject(e)
+        reader.readAsText(file)
+      })
+    },
+
+    // 验证导入数据格式（基础验证）
+    validateImportData(data) {
+      // 使用工具函数进行基础验证
+      return validateExportData(data)
+    },
+
+    // 处理导入数据
+    processImportData(importData) {
+      // 将导入请求发送给父组件处理
+      this.$emit('import-request', importData)
+      // 重置按钮loading状态（父组件会处理具体的loading状态）
+      this.importLoading = false
     }
   }
 }
