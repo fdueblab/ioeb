@@ -115,7 +115,8 @@ import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
 /* eslint-disable */
 import PanelEnhanced from '@/components/ef/panel_enhanced'
-import { getMetaAppNodes } from '@/mock/data/meta_apps_data'
+import { batchGetServices } from '@/api/service'
+import { generateServiceNodes, buildImportedFlowData } from '@/components/ef/utils'
 
 export default {
   name: 'UseMetaApp',
@@ -172,7 +173,7 @@ export default {
         lineHeight: '120%',
         borderRadius: '8px'
       },
-      // 工作流初始化数据
+      // 初始化数据
       loadingFlow: false,
       loadingServices: false,
       flowData: {},
@@ -305,31 +306,98 @@ export default {
       link.click()
       document.body.removeChild(link)
     },
-    // 加载工作流数据
     async loadFlowData() {
       this.loadingFlow = true
-      // todo: 暂时根据元应用名称加载工作流，后续要存储对应数据并且后端获取
-      let metaAppData;
-      switch (this.apiList[0]?.name) {
-        case '技术评测元应用':
-          metaAppData = await getMetaAppNodes(this.verticalType, '课题四')
-          this.$refs.flowPanel.updateInitialFlow(metaAppData.flowData)
-          break
-        case '无人机智能投递':
-        case '乡村医疗AI辅助诊断元应用':
-        case '智慧农业综合管理元应用':
-        case 'eVTOL智能飞行控制元应用':
-        case '跨境电商智能营销元应用':
-        case '家庭智能助手元应用':
-          metaAppData = await getMetaAppNodes(this.verticalType, '')
-          this.$refs.flowPanel.updateInitialFlow(metaAppData.flowData)
-          break
-        default:
-          metaAppData = await getMetaAppNodes(this.verticalType, '课题一')
-          this.$refs.flowPanel.updateInitialFlow(metaAppData.flowData)
-          break
+      try {
+        // 从apiList[0]中提取元应用配置信息
+        const metaAppConfig = this.apiList[0]
+        if (!metaAppConfig) {
+          throw new Error('元应用配置信息缺失')
+        }
+        // 检查服务列表是否存在
+        if (!metaAppConfig.services || metaAppConfig.services.length === 0) {
+          throw new Error('元应用服务列表加载失败')
+        }
+        // 构建节点数据
+        await this.loadFlowFromServices(metaAppConfig)
+      } catch (error) {
+        this.$message.error(error.message)
+        // 清空面板数据
+        this.$refs.flowPanel.dataReloadClear()
+      } finally {
+        this.loadingFlow = false
       }
-      this.loadingFlow = false
+    },
+
+    // 从服务列表构建节点数据
+    async loadFlowFromServices(metaAppConfig) {
+      try {
+        // 提取服务ID列表
+        const serviceIds = metaAppConfig.services || []
+        console.log('提取到的服务ID列表:', serviceIds)
+
+                 if (serviceIds.length === 0) {
+           throw new Error('服务ID列表为空')
+         }
+        // 通过API查询完整的服务信息
+        const fullServices = await this.fetchServicesByIds(serviceIds)
+        if (!fullServices || fullServices.length === 0) {
+          throw new Error('获取服务信息失败')
+        }
+        // 按照导入数据的格式构建数据
+        const importData = {
+          metaApp: {
+            preName: metaAppConfig.name,
+            preDes: metaAppConfig.des,
+            preInputName: metaAppConfig.inputName,
+            preOutputName: metaAppConfig.outputName,
+            inputType: metaAppConfig.inputType,
+            outputType: metaAppConfig.outputType
+          }
+        }
+        // 构建完整的流程数据
+        const flowData = buildImportedFlowData(importData, fullServices)
+        console.log('构建的流程数据:', flowData)
+
+        // 生成服务节点结构
+        const { serviceNodes } = generateServiceNodes(flowData, this.verticalType)
+
+        // 更新面板数据
+        this.$refs.flowPanel.updateInitialFlow(flowData)
+
+        console.log('成功加载元应用:', metaAppConfig.name, '包含', fullServices.length, '个服务')
+      } catch (error) {
+        console.error('从服务列表构建节点数据失败:', error)
+        throw error
+      }
+         },
+
+    // 通过服务ID列表查询完整服务信息
+    async fetchServicesByIds(serviceIds) {
+      try {
+        console.log('查询服务信息，ID列表:', serviceIds)
+        // 调用批量获取服务API
+        const response = await batchGetServices(serviceIds)
+        if (response && response.status === 'success') {
+          // 处理成功的响应
+          const services = response.services || []
+          const notFoundIds = response.notFound || []
+          // 如果有未找到的服务，显示警告信息
+          if (notFoundIds.length > 0) {
+            console.warn('以下服务在数据库中不存在:', notFoundIds)
+          }
+          // 显示获取结果统计
+          if (response.message) {
+            console.info('批量获取服务结果:', response.message)
+          }
+          return services
+        } else {
+          throw new Error(response?.message || '查询服务信息失败')
+        }
+      } catch (error) {
+         console.error('API调用失败:', error.message)
+         throw new Error('API调用失败: ' + error.message)
+      }
     }
   }
 }

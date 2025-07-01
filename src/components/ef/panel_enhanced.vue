@@ -1012,13 +1012,17 @@ export default {
     buildMetaApp() {
       if (this.data.nodeList.length > 1) {
         this.buildingMetaApp = true
-        this.$message.info('正在构建元应用...', 2)
+        this.$message.info('正在构建元应用...')
+        // 提取服务ID列表（排除智能体节点）
+        const serviceIds = this.data.nodeList
+          .filter(node => node.name !== 'metaAppAgent')
+          .map(node => node.id)
         setTimeout(() => {
           this.buildingMetaApp = false
           this.metaAppBuilderVisible = true
           this.$message.success('构建完成！')
           this.$nextTick(() => {
-            this.$refs.metaAppBuilder.init()
+            this.$refs.metaAppBuilder.init(serviceIds)
           })
         }, 2000)
       } else {
