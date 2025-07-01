@@ -48,7 +48,7 @@
               </div>
               <div v-show="outputType === 1 || outputType === 3" class="output-box">
                 <div class="result-placeholder">
-                  <a-icon type="loading" style="margin-right: 8px; color: #1890ff;" />
+                  <a-icon type="cloud-upload-o" style="margin-right: 8px; color: #1890ff;" />
                   预发布后即可验证此元应用
                 </div>
               </div>
