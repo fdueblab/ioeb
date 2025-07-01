@@ -98,8 +98,6 @@
                   <i class="el-icon-link" />
                   <span class="info-label">地址:</span>
                   <el-link
-                    :href="service.url"
-                    target="_blank"
                     type="primary"
                     class="service-url"
                   >

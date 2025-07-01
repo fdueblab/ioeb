@@ -28,7 +28,20 @@
               <a-icon v-else type="check" style="color: green; margin-right: 6px;" />
             </div>
             <div v-if="!message.thinking.collapsed" class="thinking-content">
-              <div class="thinking-text">{{ message.thinking.thought }}</div>
+              <!-- 步骤列表 -->
+              <div v-for="(step, stepIndex) in message.thinking.steps" :key="stepIndex" class="thinking-step">
+                <!-- 步骤标题（只有在有summaryText时显示） -->
+                <div v-if="step.summaryText" class="step-summary" @click="toggleStep(index, stepIndex)">
+                  <a-icon :type="step.collapsed ? 'down' : 'up'" class="step-expand-icon" />
+                  {{ step.summaryText }}
+                </div>
+                <!-- 步骤内容（当没有summaryText或展开时显示） -->
+                <div v-if="!step.summaryText || !step.collapsed" class="step-content">
+                  <div class="thinking-text" :class="{ 'step-completed': step.completed }">
+                    {{ step.currentText }}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <!-- 结果部分 -->
@@ -94,6 +107,13 @@ export default {
   beforeDestroy() {
     // 移除键盘事件监听
     document.removeEventListener('keydown', this.handleKeyDown)
+    // 清理定时器
+    if (this.stepTypewriterTimer) {
+      clearTimeout(this.stepTypewriterTimer)
+    }
+    if (this.finalCollapseTimer) {
+      clearTimeout(this.finalCollapseTimer)
+    }
   },
   data() {
     return {
@@ -107,7 +127,10 @@ export default {
       showSuggestions: false,
       messageManager: null,
       filteredSuggestions: [],
-      thinkingMessageIndex: -1 // 追踪思考消息的索引
+      thinkingMessageIndex: -1, // 追踪思考消息的索引
+      stepTypewriterTimer: null, // 步骤打字机定时器
+      finalCollapseTimer: null, // 最终收起定时器
+      isTaskFinishing: false // 标记任务是否正在结束
     }
   },
   watch: {
@@ -175,15 +198,21 @@ export default {
       }
       // 根据状态显示相应标题
       if (thinking.finished) {
-        return `已生成元应用 (共用${thinking.step}步)`
+        return `已生成元应用`
       } else {
-        return `智能体决策中 (第${thinking.step}步)`
+        return `智能体决策中`
       }
     },
     // 切换思考过程的展示状态
     toggleThinking(index) {
       if (this.messages[index] && this.messages[index].type === 'agent' && this.messages[index].thinking) {
         this.$set(this.messages[index].thinking, 'collapsed', !this.messages[index].thinking.collapsed)
+      }
+    },
+    // 切换步骤的展示状态
+    toggleStep(index, stepIndex) {
+      if (this.messages[index] && this.messages[index].type === 'agent' && this.messages[index].thinking) {
+        this.$set(this.messages[index].thinking.steps[stepIndex], 'collapsed', !this.messages[index].thinking.steps[stepIndex].collapsed)
       }
     },
     // 添加或更新思考过程消息
@@ -195,8 +224,8 @@ export default {
           this.$set(this.messages, loadingIndex, {
             type: 'agent',
             thinking: {
-              thought: thought,
-              step: step,
+              steps: [],
+              currentStep: step,
               collapsed: false,
               finished: false
             },
@@ -205,24 +234,113 @@ export default {
           })
           this.thinkingMessageIndex = loadingIndex
         }
-      } else {
-        // 更新现有的思考消息
-        this.$set(this.messages[this.thinkingMessageIndex].thinking, 'thought', thought)
-        this.$set(this.messages[this.thinkingMessageIndex].thinking, 'step', step)
+      }
+      if (this.thinkingMessageIndex !== -1) {
+        const thinking = this.messages[this.thinkingMessageIndex].thinking
+
+        // 检查是否是新步骤
+        const existingStepIndex = thinking.steps.findIndex(s => s.step === step)
+
+        if (existingStepIndex === -1) {
+          // 新步骤：先处理前一步（如果存在且不是第一步）
+          if (thinking.steps.length > 0) {
+            const prevStep = thinking.steps[thinking.steps.length - 1]
+            // 停止当前打字机
+            if (this.stepTypewriterTimer) {
+              clearTimeout(this.stepTypewriterTimer)
+              this.stepTypewriterTimer = null
+            }
+            // 完全展示前一步的内容
+            this.$set(prevStep, 'currentText', prevStep.thought)
+            this.$set(prevStep, 'completed', true)
+            // 收缩前一步（只有当有新步骤时才收缩）
+            this.$set(prevStep, 'collapsed', true)
+            this.$set(prevStep, 'summaryText', `第${prevStep.step}步执行完成`)
+          }
+
+          // 添加新步骤
+          thinking.steps.push({
+            step: step,
+            thought: thought,
+            completed: false,
+            collapsed: false,
+            currentText: '',
+            summaryText: '' // 初始时不设置summaryText
+          })
+
+          // 更新当前步骤
+          this.$set(thinking, 'currentStep', step)
+
+          // 开始新步骤的打字机效果
+          this.startStepTypewriter(thinking.steps.length - 1, thought)
+        } else {
+          // 更新现有步骤
+          const stepObj = thinking.steps[existingStepIndex]
+          if (stepObj.thought !== thought) {
+            this.$set(stepObj, 'thought', thought)
+            // 重新开始打字机效果
+            this.startStepTypewriter(existingStepIndex, thought)
+          }
+        }
       }
       this.scrollToBottom()
     },
-    // 完成思考过程，自动收起
-    finishThinking() {
-      if (this.thinkingMessageIndex !== -1) {
-        const agentMessage = this.messages[this.thinkingMessageIndex]
-        if (agentMessage.thinking) {
-          this.$set(agentMessage.thinking, 'collapsed', true)
-          this.$set(agentMessage.thinking, 'finished', true)
-          // 标题由getThinkingTitle方法动态计算，不需要手动设置
+    // 步骤打字机效果
+    startStepTypewriter(stepIndex, fullText) {
+      if (this.stepTypewriterTimer) {
+        clearTimeout(this.stepTypewriterTimer)
+      }
+      const thinking = this.messages[this.thinkingMessageIndex].thinking
+      const stepObj = thinking.steps[stepIndex]
+      let currentIndex = 0
+
+      const typeNextChar = () => {
+        if (currentIndex < fullText.length) {
+          this.$set(stepObj, 'currentText', fullText.substring(0, currentIndex + 1))
+          currentIndex++
+          this.stepTypewriterTimer = setTimeout(typeNextChar, 15) // 快速打字机效果
+          this.scrollToBottom()
+        } else {
+          // 打字完成，标记步骤完成
+          this.$set(stepObj, 'completed', true)
+          this.$set(stepObj, 'currentText', fullText)
         }
       }
-      // 注意：不重置 thinkingMessageIndex，因为后续还需要在同一消息中添加结果
+      // 重置当前文本并开始打字
+      this.$set(stepObj, 'currentText', '')
+      this.$set(stepObj, 'completed', false)
+      typeNextChar()
+    },
+    // 处理最后一步（任务结束时调用）
+    handleFinalStep() {
+      if (this.thinkingMessageIndex !== -1) {
+        const thinking = this.messages[this.thinkingMessageIndex].thinking
+        if (thinking.steps.length > 0) {
+          const lastStep = thinking.steps[thinking.steps.length - 1]
+          // 停止打字机
+          if (this.stepTypewriterTimer) {
+            clearTimeout(this.stepTypewriterTimer)
+            this.stepTypewriterTimer = null
+          }
+          // 完全展示最后一步的内容，不使用打字机效果
+          this.$set(lastStep, 'currentText', lastStep.thought)
+          this.$set(lastStep, 'completed', true)
+          // 最后一步不收缩，保持collapsed为false
+
+          // 标记思考过程完成
+          this.$set(thinking, 'finished', true)
+
+          // 收起所有步骤到大标题内
+          this.$set(thinking, 'collapsed', true)
+        }
+      }
+    },
+    // 完成思考过程，延时收起
+    finishThinking() {
+      return new Promise((resolve) => {
+        // 不再需要延时，直接resolve
+        resolve()
+      })
     },
     // 调用智能体获取推荐服务
     callAgentForRecommendation(input) {
@@ -243,22 +361,27 @@ export default {
         },
         onError: (error) => {
           console.error('智能体推荐失败:', error)
-          this.finishThinking() // 结束思考过程
-          this.$emit('stop-loading') // 停止loading状态
-          const outputMessage = this.messageManager.getErrorReply()
-          this.agentTypeWriter(outputMessage)
-          this.isInputEnabled = true
+          this.finishThinking().then(() => {
+            this.$emit('stop-loading') // 停止loading状态
+            const outputMessage = this.messageManager.getErrorReply()
+            this.agentTypeWriter(outputMessage)
+            this.isInputEnabled = true
+          })
         },
         onWarning: (warning) => {
           console.warn('智能体推荐警告:', warning)
-          this.finishThinking() // 结束思考过程
-          this.$emit('stop-loading') // 停止loading状态
-          const outputMessage = this.messageManager.getErrorReply()
-          this.agentTypeWriter(outputMessage)
-          this.isInputEnabled = true
+          this.finishThinking().then(() => {
+            this.$emit('stop-loading') // 停止loading状态
+            const outputMessage = this.messageManager.getErrorReply()
+            this.agentTypeWriter(outputMessage)
+            this.isInputEnabled = true
+          })
         },
         onFinalResult: (results) => {
           console.log('智能体推荐结果:', results)
+          // 标记任务结束并处理最后一步
+          this.isTaskFinishing = true
+          this.handleFinalStep()
           this.handleAgentResponse(results)
         },
         onComplete: () => {
@@ -266,55 +389,59 @@ export default {
         },
         onDataProcessError: (error) => {
           console.error('智能体数据处理错误:', error)
-          this.finishThinking() // 结束思考过程
-          this.$emit('stop-loading') // 停止loading状态
-          const outputMessage = this.messageManager.getErrorReply()
-          this.agentTypeWriter(outputMessage)
-          this.isInputEnabled = true
+          this.finishThinking().then(() => {
+            this.$emit('stop-loading') // 停止loading状态
+            const outputMessage = this.messageManager.getErrorReply()
+            this.agentTypeWriter(outputMessage)
+            this.isInputEnabled = true
+          })
         }
       })
     },
     // 处理智能体返回的数据
     handleAgentResponse(results) {
       try {
-        // 完成思考过程
-        this.finishThinking()
-        // eslint-disable-next-line camelcase
-        const { recommendation_result } = results
-        // 检查返回数据格式
-        if (recommendation_result.success) {
+        // 完成思考过程并等待延时结束
+        this.finishThinking().then(() => {
           // eslint-disable-next-line camelcase
-          const { result } = recommendation_result
-          // 转换数据格式以适配现有系统
-          const flowData = {
-            preName: result.preName,
-            preInputName: result.preInputName,
-            preOutputName: result.preOutputName,
-            nodeList: result.nodeList
+          const { recommendation_result } = results
+          // 检查返回数据格式
+          if (recommendation_result.success) {
+            // eslint-disable-next-line camelcase
+            const { result } = recommendation_result
+            // 转换数据格式以适配现有系统
+            const flowData = {
+              preName: result.preName,
+              preInputName: result.preInputName,
+              preOutputName: result.preOutputName,
+              nodeList: result.nodeList
+            }
+            // 生成服务节点和选中服务列表
+            const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
+            // 生成成功回复消息
+            const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
+            // 向父组件发送数据
+            this.$emit('update-services', serviceNodes)
+            this.$emit('update-flow', flowData)
+            this.placeholder = '已智能生成元应用'
+            this.isGenerated = true
+            // 使用agentTypeWriter在智能体消息中显示结果
+            this.agentTypeWriter(outputMessage)
+          } else {
+            this.$emit('stop-loading') // 停止loading状态
+            const outputMessage = this.messageManager.getErrorReply()
+            this.agentTypeWriter(outputMessage)
+            this.isInputEnabled = true
           }
-          // 生成服务节点和选中服务列表
-          const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
-          // 生成成功回复消息
-          const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
-          // 向父组件发送数据
-          this.$emit('update-services', serviceNodes)
-          this.$emit('update-flow', flowData)
-          this.placeholder = '已智能生成元应用'
-          this.isGenerated = true
-          // 使用agentTypeWriter在智能体消息中显示结果
-          this.agentTypeWriter(outputMessage)
-        } else {
-          this.$emit('stop-loading') // 停止loading状态
-          const outputMessage = this.messageManager.getErrorReply()
-          this.agentTypeWriter(outputMessage)
-          this.isInputEnabled = true
-        }
+        })
       } catch (error) {
         console.error('处理智能体返回数据失败:', error)
-        this.$emit('stop-loading') // 停止loading状态
-        const outputMessage = this.messageManager.getErrorReply(true)
-        this.agentTypeWriter(outputMessage)
-        this.isInputEnabled = true
+        this.finishThinking().then(() => {
+          this.$emit('stop-loading') // 停止loading状态
+          const outputMessage = this.messageManager.getErrorReply(true)
+          this.agentTypeWriter(outputMessage)
+          this.isInputEnabled = true
+        })
       }
     },
     // 使用假数据的逻辑
@@ -391,6 +518,16 @@ export default {
       })
     },
     init() {
+      // 清理定时器
+      if (this.stepTypewriterTimer) {
+        clearTimeout(this.stepTypewriterTimer)
+        this.stepTypewriterTimer = null
+      }
+      if (this.finalCollapseTimer) {
+        clearTimeout(this.finalCollapseTimer)
+        this.finalCollapseTimer = null
+      }
+
       this.userInput = ''
       this.placeholder = this.messageManager ? this.messageManager.getPlaceholder() : ''
       this.messages = []
@@ -400,6 +537,7 @@ export default {
       this.showSuggestions = false
       this.filteredSuggestions = this.messageManager ? this.messageManager.getSuggestions() : []
       this.thinkingMessageIndex = -1 // 重置思考消息索引
+      this.isTaskFinishing = false // 重置任务结束标志
       const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '智能体未获取到必要信息，请刷新后重试'
       this.messages.push({ text: initialMessage, isUser: false })
     },
@@ -566,7 +704,7 @@ export default {
   flex: 1;
   font-weight: 400;
   color: #5f6368;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .thinking-indicator {
@@ -603,7 +741,6 @@ export default {
 }
 
 .thinking-content {
-  padding: 16px;
   background-color: #ffffff;
   border-top: 1px solid #e9ecef;
   animation: thinking-expand 0.3s ease-out;
@@ -626,11 +763,33 @@ export default {
 
 .thinking-text {
   color: #9aa0a6;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  position: relative;
+}
+
+/* 打字机光标效果 */
+.thinking-text::after {
+  content: '|';
+  color: #4a90e2;
+  animation: cursor-blink 1s infinite;
+  margin-left: 1px;
+}
+
+@keyframes cursor-blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+/* 当步骤完成时隐藏光标 */
+.thinking-text.step-completed::after {
+  display: none;
 }
 
 /* 结果部分样式 */
@@ -706,4 +865,48 @@ export default {
   padding: 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
+
+/* 步骤相关样式 */
+.thinking-step {
+  margin-bottom: 0;
+}
+
+.step-summary {
+  font-size: 13px;
+  color: #9aa0a6;
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.step-expand-icon {
+  font-size: 10px;
+  color: #9aa0a6;
+  transition: transform 0.2s ease;
+  margin-right: 8px;
+}
+
+.step-content {
+  animation: step-appear 0.3s ease-out;
+  border-bottom: 1px solid #f5f5f5;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+@keyframes step-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 </style>
