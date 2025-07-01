@@ -234,12 +234,14 @@ export default {
       industryOptions: [],
       scenarioOptions: [],
       technologyOptions: [],
+      serviceIds: [],
       form: this.$form.createForm(this)
     }
   },
   methods: {
-    async init() {
+    async init(serviceIds) {
       this.visible = true
+      this.serviceIds = serviceIds
       this.attributeOptions = await dictionaryCache.loadDict('attribute') || []
       this.industryOptions = await dictionaryCache.loadDict(`${this.verticalType}_industry`) || []
       this.scenarioOptions = await dictionaryCache.loadDict(`${this.verticalType}_scenario`) || []
@@ -258,10 +260,8 @@ export default {
             let method = 'post'
             let response = {
               code: 200,
-              message: '微服务正在部署！',
-              data: {
-                deployingStatus: 'pending'
-              }
+              message: '计算资源不足！',
+              success: false
             }
             if (name.includes('课题一')) {
               url = '/api/pj1_report_app'
@@ -304,6 +304,7 @@ export default {
                   isFake: true,
                   url,
                   method,
+                  services: this.serviceIds,
                   parameterType: this.inputType,
                   responseType: this.outputType,
                   response
