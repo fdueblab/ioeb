@@ -31,8 +31,7 @@ import {
   parseImportData,
   buildImportedFlowData,
   createServiceIdDecoder,
-  validateExportData,
-  checkCompatibility, generateServiceNodes
+  generateServiceNodes
 } from '@/components/ef/utils'
 import { batchGetServices } from '@/api/service'
 
@@ -169,26 +168,6 @@ export default {
         this.$message.error('导入异常，请检查文件内数据是否正确！')
       }
     },
-
-    // 验证导入数据格式
-    validateImportData(data) {
-      // 使用工具函数进行基础验证
-      if (!validateExportData(data)) {
-        return false
-      }
-      // 检查兼容性
-      const compatibility = checkCompatibility(data, this.verticalType)
-      if (!compatibility.isCompatible) {
-        console.warn('兼容性问题:', compatibility.issues)
-        // 显示对应警告
-        if (compatibility.warnings.length > 0) {
-          this.$message.warning(`检测到兼容性问题: ${compatibility.warnings.join(', ')}`)
-        }
-        return false
-      }
-      return true
-    },
-
     // 通过服务ID列表查询完整服务信息
     async fetchServicesByIds(serviceIds) {
       try {
