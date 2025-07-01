@@ -137,6 +137,7 @@ import InfoDisplayEnhanced from '@/components/ef/info_display_enhanced'
 import ServicesAdder from '@/components/ef/services_adder'
 import MetaAppBuilder from '@/components/ef/meta_app_builder'
 import {
+  SERVICE_TEXT_MAP,
   hasLine,
   hashOppositeLine,
   statusFilter,
@@ -151,11 +152,10 @@ import {
   transformServicesToServiceItems,
   extractCanvasServices,
   getBaseServiceNodes,
-  SERVICE_TEXT_MAP,
   buildMetaAppExportData,
   createServiceIdEncoder,
   sanitizeExportData,
-  validateExportData
+  checkCompatibility
 } from './utils'
 import dictionaryCache from '@/utils/dictionaryCache'
 
@@ -1012,13 +1012,17 @@ export default {
     buildMetaApp() {
       if (this.data.nodeList.length > 1) {
         this.buildingMetaApp = true
-        this.$message.info('正在构建元应用...', 2)
+        this.$message.info('正在构建元应用...')
+        // 提取服务ID列表（排除智能体节点）
+        const serviceIds = this.data.nodeList
+          .filter(node => node.name !== 'metaAppAgent')
+          .map(node => node.id)
         setTimeout(() => {
           this.buildingMetaApp = false
           this.metaAppBuilderVisible = true
           this.$message.success('构建完成！')
           this.$nextTick(() => {
-            this.$refs.metaAppBuilder.init()
+            this.$refs.metaAppBuilder.init(serviceIds)
           })
         }, 2000)
       } else {
@@ -1161,11 +1165,29 @@ export default {
       try {
         this.readFileContent(file).then((fileContent) => {
           const importData = JSON.parse(fileContent)
-          // 验证导入数据格式
-          if (!this.validateImportData(importData)) {
-            this.$message.error('文件格式不正确，请选择有效的元应用导出文件')
+          // 数据完整性和兼容性检查
+          const compatibility = checkCompatibility(importData, this.verticalType)
+          if (compatibility.errors.length > 0) {
+            this.$notification.error({
+              message: '数据存在问题，导入失败',
+              description: `${compatibility.errors.join('\n')}`,
+              // 支持换行
+              style: {
+                whiteSpace: 'pre-wrap'
+              }
+            })
             this.importLoading = false
             return
+          }
+          if (compatibility.warnings.length > 0) {
+            this.$notification.warning({
+              message: '数据存在问题，将尝试继续导入',
+              description: `${compatibility.warnings.join('\n')}`,
+              // 支持换行
+              style: {
+                whiteSpace: 'pre-wrap',
+              }
+            })
           }
           this.$message.info('开始导入元应用数据...')
           // 处理导入数据
@@ -1175,7 +1197,6 @@ export default {
           this.$message.error('文件读取失败，请重试')
           this.importLoading = false
         })
-
       } catch (error) {
         console.error('导入失败:', error)
         this.$message.error('文件解析失败，请检查文件格式')
@@ -1185,7 +1206,6 @@ export default {
         event.target.value = ''
       }
     },
-
     // 读取文件内容
     readFileContent(file) {
       return new Promise((resolve, reject) => {
@@ -1195,13 +1215,6 @@ export default {
         reader.readAsText(file)
       })
     },
-
-    // 验证导入数据格式（基础验证）
-    validateImportData(data) {
-      // 使用工具函数进行基础验证
-      return validateExportData(data)
-    },
-
     // 处理导入数据
     processImportData(importData) {
       // 将导入请求发送给父组件处理
