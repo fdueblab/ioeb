@@ -482,7 +482,7 @@ export function extractCanvasServices(nodeList, statusFilterFn, statusStyleFilte
 export function validateExportData(data) {
   if (!data || typeof data !== 'object') return false
   // 验证必要的元应用信息
-  if (!data.metaApp || !data.metaApp.preName || !data.metaApp.preDes) {
+  if (!data.metaApp || !data.metaApp.preName) {
     return false
   }
   // 验证服务列表
@@ -490,14 +490,9 @@ export function validateExportData(data) {
     return false
   }
   // 验证服务引用格式
-  const isValidServices = data.services.every(service =>
+  return data.services.every(service =>
     service && typeof service === 'object' && service.serviceRef
   )
-  if (!isValidServices) {
-    return false
-  }
-  // 验证版本信息
-  return !!data.version
 }
 
 /**
@@ -537,25 +532,9 @@ export function generateChecksum(services) {
 }
 
 /**
- * 验证数据校验和
- */
-export function validateChecksum(importData) {
-  if (!importData.checksum || !importData.services) return false
-  const expectedChecksum = generateChecksum(importData.services)
-  return importData.checksum === expectedChecksum
-}
-
-/**
  * 解析导入数据并进行格式转换
  */
 export function parseImportData(importData, decodingFn) {
-  if (!validateExportData(importData)) {
-    throw new Error('导入数据格式不正确')
-  }
-  // 验证数据完整性
-  if (!validateChecksum(importData)) {
-    console.warn('数据校验和不匹配，可能存在数据损坏')
-  }
   // 解码服务引用
   const serviceIds = []
   const failedServices = []
@@ -679,25 +658,43 @@ export function sanitizeExportData(data) {
 }
 
 /**
- * 兼容性检查：检查导入数据与当前系统的兼容性
+ * 数据完整性和兼容性检查
  */
 export function checkCompatibility(importData, currentVerticalType) {
-  const issues = []
-  // 检查版本兼容性
-  if (importData.version && importData.version !== '1.0') {
-    issues.push(`版本不兼容: 期望 1.0，实际 ${importData.version}`)
+  const warnings = []
+  const errors = []
+  // 验证必要的元应用信息
+  if (!importData.metaApp || !(typeof (importData.metaApp) === 'object') || !importData.metaApp.preName) {
+    errors.push(`元应用信息缺失`)
+  }
+  // 验证服务列表和服务引用格式
+  if (!importData.services || !Array.isArray(importData.services)) {
+    errors.push(`服务列表缺失`)
+  } else if (!importData.services.every(service =>
+    service && typeof service === 'object' && service.serviceRef
+  )) {
+    errors.push(`服务信息缺失`)
   }
   // 检查垂直领域兼容性
   if (importData.verticalType && importData.verticalType !== currentVerticalType) {
-    issues.push(`领域类型不匹配: 当前 ${currentVerticalType}，导入 ${importData.verticalType}`)
+    errors.push(`垂直领域类型与当前不匹配`)
+  }
+  // 检查版本兼容性
+  if (!importData.version) {
+    warnings.push(`未获取到版本号`)
+  } else if (importData.version !== '1.0') {
+    warnings.push(`系统版本为1.0，导入的版本为${importData.version}`)
   }
   // 检查服务数量
   if (importData.services && importData.services.length === 0) {
-    issues.push('导入文件中没有服务数据')
+    warnings.push('导入文件中没有服务数据')
+  }
+  // 验证数据校验和
+  if (importData.checksum !== generateChecksum(importData.services)) {
+    warnings.push('数据校验不匹配，可能存在数据损坏')
   }
   return {
-    isCompatible: issues.length === 0,
-    issues: issues,
-    warnings: issues.filter(issue => issue.includes('不匹配'))
+    errors,
+    warnings
   }
 }
