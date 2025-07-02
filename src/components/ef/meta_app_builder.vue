@@ -12,36 +12,56 @@
     <div style="display: flex; justify-content: space-around">
       <!-- 应用预览区域 -->
       <div style="width: 35%">
-        <span class="title">元应用预览</span>
+        <span class="title">元应用界面预览</span>
         <div class="app-preview">
-          <span class="app-title">{{ form.getFieldValue('name') || preName }}</span>
+          <div class="app-header">
+            <span class="app-title">{{ form.getFieldValue('name') || preName }}</span>
+            <span v-if="form.getFieldValue('subtitle')" class="app-subtitle">{{ form.getFieldValue('subtitle') }}</span>
+          </div>
           <div class="input-output-container">
             <!-- 输入区域 -->
-            <div>
-              <span class="section-title">{{ form.getFieldValue('inputName') || preInputName }}</span>
+            <div class="section-container">
+              <div class="section-header">
+                <span class="section-title">{{ form.getFieldValue('inputName') || preInputName }}</span>
+              </div>
               <a-textarea
                 v-show="inputType === 1 || inputType === 3"
                 placeholder="欢迎使用AI中台为您构建的元应用!"
                 :auto-size="{ minRows: 4, maxRows: 6 }"
                 class="input-box"
               />
-              <div style="width: 100%; display: flex; justify-content: center">
-                <a-button v-show="inputType === 2"> <a-icon type="upload" /> 选择数据文件 </a-button>
+              <div v-show="inputType === 2 || inputType === 3" class="file-upload-section">
+                <a-button class="file-button">
+                  <a-icon type="upload" /> 选择数据文件
+                </a-button>
               </div>
-              <div style="width: 100%">
+              <div class="submit-section">
                 <a-button class="submit-button" type="primary" @click="handleSubmit">
                   {{ form.getFieldValue('submitButtonText') || '获取结果' }}
                 </a-button>
               </div>
             </div>
             <!-- 输出区域 -->
-            <div>
-              <span class="section-title">{{ form.getFieldValue('outputName') || preOutputName }}</span>
-              <div class="output-box">
-                预发布后即可验证此元应用
+            <div class="section-container">
+              <div class="section-header">
+                <span class="section-title">{{ form.getFieldValue('outputName') || preOutputName }}</span>
               </div>
-              <div v-show="form.getFieldValue('visualization')" class="image-box">
-                {{ form.getFieldValue('outputName') || preOutputName }}可视化区域
+              <div v-show="outputType === 1 || outputType === 3" class="output-box">
+                <div class="result-placeholder">
+                  <a-icon type="cloud-upload-o" style="margin-right: 8px; color: #1890ff;" />
+                  预发布后即可验证此元应用
+                </div>
+              </div>
+              <div v-show="outputType === 2 || outputType === 3" class="file-download-section">
+                <a-button class="file-button">
+                  <a-icon type="download" /> 下载结果文件
+                </a-button>
+              </div>
+              <div v-show="form.getFieldValue('visualization')" class="visualization-box">
+                <div class="viz-placeholder">
+                  <a-icon type="bar-chart" style="font-size: 24px; color: #409eff; margin-bottom: 8px;" />
+                  <div>{{ form.getFieldValue('outputName') || preOutputName }}可视化区域</div>
+                </div>
               </div>
             </div>
           </div>
@@ -55,20 +75,38 @@
           <a-divider>视觉配置</a-divider>
           <a-row :gutter="16">
             <a-col :span="24">
-              <a-form-item label="名称">
+              <a-form-item label="应用名称">
                 <a-input v-decorator="['name', { rules: [{ required: true, message: '请填写元应用名称!' }], initialValue: preName }]" placeholder="请输入元应用名称" />
               </a-form-item>
             </a-col>
-            <!--            <a-col :span="18">-->
-            <!--              <a-form-item label="输入类型" required>-->
-            <!--                <a-radio-group v-model="parameterType">-->
-            <!--                  <a-radio v-for="(item, index) in ioTypeOptions" :key="index" :value="index">{{ item }}</a-radio>-->
-            <!--                </a-radio-group>-->
-            <!--              </a-form-item>-->
-            <!--            </a-col>-->
+            <a-col :span="24">
+              <a-form-item label="应用副标题">
+                <a-input v-decorator="['subtitle']" placeholder="请输入副标题（可选）" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="18">
+              <a-form-item label="输入类型" required>
+                <a-radio-group v-model="inputType">
+                  <a-radio :value="0">无</a-radio>
+                  <a-radio :value="1">文本</a-radio>
+                  <a-radio :value="2">文件</a-radio>
+                  <a-radio :value="3">文本 + 文件</a-radio>
+                </a-radio-group>
+              </a-form-item>
+            </a-col>
             <a-col v-if="inputType !== 0" :span="12">
               <a-form-item label="输入数据名称">
                 <a-input v-decorator="['inputName', { rules: [{ required: true, message: '请填写输入数据名称!' }], initialValue: preInputName }]"/>
+              </a-form-item>
+            </a-col>
+            <a-col :span="18">
+              <a-form-item label="输出类型" required>
+                <a-radio-group v-model="outputType">
+                  <a-radio :value="0">无</a-radio>
+                  <a-radio :value="1">文本</a-radio>
+                  <a-radio :value="2">文件</a-radio>
+                  <a-radio :value="3">文本 + 文件</a-radio>
+                </a-radio-group>
               </a-form-item>
             </a-col>
             <a-col v-if="outputType !== 0" :span="12">
@@ -84,14 +122,21 @@
             <a-col :span="12">
               <a-form-item label="结果可视化">
                 <div style="height:32px; display: flex; justify-content: space-between; align-items: center">
-                  <a-checkbox v-decorator="['visualization']">
+                  <a-switch v-decorator="['visualization']">
                     结果可视化展示
-                  </a-checkbox>
+                  </a-switch>
                 </div>
               </a-form-item>
             </a-col>
           </a-row>
           <a-divider>应用信息</a-divider>
+          <a-row>
+            <a-col :span="24">
+              <a-form-item label="通用描述">
+                <a-textarea v-decorator="['des', { initialValue: preDes }]" placeholder="请输入描述"/>
+              </a-form-item>
+            </a-col>
+          </a-row>
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="属性">
@@ -132,20 +177,20 @@
               </a-form-item>
             </a-col>
           </a-row>
-          <a-row :gutter="16">
-            <a-col :span="24">
-              <a-form-item label="条件（environment）">
-                <a-input v-decorator="['environment']" placeholder="请输入Environment"/>
-              </a-form-item>
-            </a-col>
-          </a-row>
-          <a-row :gutter="16">
-            <a-col :span="24">
-              <a-form-item label="处理（process）">
-                <a-input v-decorator="['process']" placeholder="请输入Process"/>
-              </a-form-item>
-            </a-col>
-          </a-row>
+          <!--          <a-row :gutter="16">-->
+          <!--            <a-col :span="24">-->
+          <!--              <a-form-item label="条件（environment）">-->
+          <!--                <a-input v-decorator="['environment']" placeholder="请输入Environment"/>-->
+          <!--              </a-form-item>-->
+          <!--            </a-col>-->
+          <!--          </a-row>-->
+          <!--          <a-row :gutter="16">-->
+          <!--            <a-col :span="24">-->
+          <!--              <a-form-item label="处理（process）">-->
+          <!--                <a-input v-decorator="['process']" placeholder="请输入Process"/>-->
+          <!--              </a-form-item>-->
+          <!--            </a-col>-->
+          <!--          </a-row>-->
         </a-form>
       </div>
     </div>
@@ -155,6 +200,7 @@
 <script>
 import { createService } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
+import store from '@/store'
 
 export default {
   props: {
@@ -162,17 +208,13 @@ export default {
       type: String,
       required: true
     },
-    inputType: {
-      type: Number,
-      default: 0
-    },
-    outputType: {
-      type: Number,
-      default: 0
-    },
     preName: {
       type: String,
       default: '元应用名称'
+    },
+    preDes: {
+      type: String,
+      default: '以支持独立运行和柔性集成的大模型智能体为软件载体的最小粒度应用'
     },
     preInputName: {
       type: String,
@@ -186,16 +228,20 @@ export default {
   data() {
     return {
       visible: false,
+      inputType: 1,
+      outputType: 1,
       attributeOptions: [],
       industryOptions: [],
       scenarioOptions: [],
       technologyOptions: [],
+      serviceIds: [],
       form: this.$form.createForm(this)
     }
   },
   methods: {
-    async init() {
+    async init(serviceIds) {
       this.visible = true
+      this.serviceIds = serviceIds
       this.attributeOptions = await dictionaryCache.loadDict('attribute') || []
       this.industryOptions = await dictionaryCache.loadDict(`${this.verticalType}_industry`) || []
       this.scenarioOptions = await dictionaryCache.loadDict(`${this.verticalType}_scenario`) || []
@@ -209,15 +255,13 @@ export default {
       this.visible = true
       validateFields(async (errors, values) => {
           if (!errors) {
-            const { name, inputName, outputName, outputVisualization, submitButtonText } = values
-            let url = 'http://myApiServer.com/agent'
+            const { name, subtitle, des, inputName, outputName, outputVisualization, submitButtonText } = values
+            let url = 'https://myMcpServer.com/metaApp/agent_ak7jq'
             let method = 'post'
             let response = {
               code: 200,
-              message: '微服务正在部署！',
-              data: {
-                deployingStatus: 'pending'
-              }
+              message: '计算资源不足！',
+              success: false
             }
             if (name.includes('课题一')) {
               url = '/api/pj1_report_app'
@@ -244,13 +288,15 @@ export default {
                 companyAddress: '上海市杨浦区邯郸路220号',
                 companyContact: '021-65642222',
                 companyIntroduce: '课题五',
-                msIntroduce: !(values.environment || values.process) ? 'publisher构建的元应用' : `条件：${values.environment || ''}   处理：${values.process || ''}`,
+                msIntroduce: `${store.getters.nickname}构建的元应用。${des ? '应用描述：' + des : ''}`,
                 companyScore: 5,
                 msScore: 5
               },
               apiList: [
                 {
                   name,
+                  subtitle,
+                  des,
                   inputName,
                   outputName,
                   outputVisualization,
@@ -258,6 +304,7 @@ export default {
                   isFake: true,
                   url,
                   method,
+                  services: this.serviceIds,
                   parameterType: this.inputType,
                   responseType: this.outputType,
                   response
@@ -310,78 +357,198 @@ export default {
   width: 100%;
   aspect-ratio: 9 / 19; /* 设置宽高比 */
   overflow-y: auto; /* 使高度限制生效 */
-  background-color: #f9f9f9;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.app-preview::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(64, 169, 255, 0.05) 0%, rgba(22, 101, 192, 0.05) 100%);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.app-header {
+  background: linear-gradient(135deg, #40a9ff 0%, #1665c0 100%);
+  border-radius: 10px 10px 0 0;
+  padding: 16px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
 }
 
 .app-title {
-  font-size: 16px;
-  font-weight: bold;
-  background-color: #1890ff;
+  font-size: 18px;
+  font-weight: 600;
   color: #fff;
-  text-align: center;
   display: block;
-  line-height: 35px;
-  border-radius: 6px 6px 0 0;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.app-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  display: block;
+  line-height: 1.3;
+  font-weight: 400;
 }
 
 /* 输入输出容器 */
 .input-output-container {
-  margin: 16px;
+  padding: 20px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+}
+
+.section-container {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.section-header {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f0f0f0;
 }
 
 /* 输入输出标题 */
 .section-title {
   font-size: 14px;
-  font-weight: bold;
-  color: #333;
-  margin: 8px;
-  line-height: 30px;
+  font-weight: 600;
+  color: #1890ff;
+  display: flex;
+  align-items: center;
+}
+
+.section-title::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: linear-gradient(135deg, #40a9ff, #1665c0);
+  border-radius: 2px;
+  margin-right: 8px;
 }
 
 /* 输入框 */
 .input-box {
   width: 100%;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.input-box:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.file-upload-section, .file-download-section {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}
+
+.file-button {
+  border-radius: 6px;
+  border: 1px dashed #1890ff;
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.file-button:hover {
+  background: rgba(24, 144, 255, 0.1);
+  border-color: #40a9ff;
+}
+
+.submit-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
 }
 
 .submit-button {
-  width: 50%;
-  margin: 8px 0;
-  left: 25%;
+  min-width: 120px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #40a9ff 0%, #1665c0 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(24, 144, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.submit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(24, 144, 255, 0.4);
 }
 
 /* 输出框 */
 .output-box {
   width: 100%;
   min-height: 100px;
-  padding: 8px;
-  background-color: #fff;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  font-size: 14px;
-  color: #333;
-}
-
-/* 图片框 */
-.image-box {
-  width: 100%;
-  min-height: 150px;
-  margin-top: 16px;
   padding: 16px;
-  background-color: #e8e8e8;
-  border: 1px dashed #d9d9d9;
-  border-radius: 4px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f5ff 100%);
+  border: 1px solid #e6f7ff;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+}
+
+.result-placeholder {
   color: #666;
-  font-style: italic;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* 可视化区域 */
+.visualization-box {
+  width: 100%;
+  min-height: 120px;
+  margin-top: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  border: 2px dashed #91d5ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.viz-placeholder {
+  text-align: center;
+  color: #40a9ff;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.visualization-box:hover {
+  border-color: #40a9ff;
+  background: linear-gradient(135deg, #ffffff 0%, #e6f7ff 100%);
 }
 </style>

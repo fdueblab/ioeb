@@ -1,8 +1,10 @@
 <template>
   <div class="schedule-with-input">
-    <fake-chat
-      ref="fakeChat"
+    <smart-chat
+      ref="smartChat"
       style="height: calc(100vh - 100px)"
+      @start-loading="startLoading"
+      @stop-loading="stopLoading"
       @update-services="updateServices"
       @update-flow="updateFlow"
       @clear-flow="clearFlow"
@@ -16,20 +18,28 @@
       :loading-services="loadingServices"
       :loading-flow="loadingFlow"
       :vertical-type="verticalType"
+      @import-request="handleImportRequest"
     />
   </div>
 </template>
 
 <script>
 import FlowPanel from '@/components/ef/panel_enhanced'
-import FakeChat from '@/components/ef/fake_chat'
-import dictionaryCache from '@/utils/dictionaryCache'
+import SmartChat from '@/components/ef/smart_chat'
+import {
+  SERVICE_TEXT_MAP,
+  parseImportData,
+  buildImportedFlowData,
+  createServiceIdDecoder,
+  generateServiceNodes
+} from '@/components/ef/utils'
+import { batchGetServices } from '@/api/service'
 
 export default {
   name: 'GenericSchedule',
   components: {
     FlowPanel,
-    FakeChat
+    SmartChat
   },
   props: {
     // 垂直领域类型，从路由解析
@@ -40,7 +50,7 @@ export default {
   },
   data() {
     return {
-      serviceName: '通用智能服务',
+      service_text_map: SERVICE_TEXT_MAP,
       initFlow: {},
       initServices: [],
       loadingServices: false,
@@ -63,27 +73,28 @@ export default {
     }
   },
   methods: {
-    // 从字典获取服务名称
-    async loadServiceNameFromDict() {
-      try {
-        if (!this.verticalType) return
-        // 从字典缓存中获取服务名称
-        const domains = await dictionaryCache.loadDict(`domain`)
-        this.serviceName = domains.find(item => item.code === this.verticalType)?.text + '服务' || '通用智能服务'
-      } catch (error) {
-        console.error('加载服务名称失败:', error)
-      }
+    init() {
+      this.$refs.smartChat.init()
+      this.clearFlow()
     },
 
-    init() {
-      this.$refs.fakeChat.init()
-      this.loadServiceNameFromDict().then(() => {
-        this.clearFlow()
-      })
+    // 开始loading状态（连接智能体和思考过程中）
+    startLoading() {
+      this.loadingServices = true
+      this.loadingFlow = true
+    },
+
+    // 停止loading状态（出现错误时）
+    stopLoading() {
+      this.loadingServices = false
+      this.loadingFlow = false
     },
 
     updateServices(newServices) {
-      this.loadingServices = true
+      // 如果还没有loading，则设置loading（防止重复设置）
+      if (!this.loadingServices) {
+        this.loadingServices = true
+      }
       setTimeout(() => {
         this.initServices = newServices
         this.loadingServices = false
@@ -91,7 +102,10 @@ export default {
     },
 
     updateFlow(newFlow) {
-      this.loadingFlow = true
+      // 如果还没有loading，则设置loading（防止重复设置）
+      if (!this.loadingFlow) {
+        this.loadingFlow = true
+      }
       setTimeout(() => {
         this.$refs.flowPanel.updateInitialFlow(newFlow)
         this.loadingFlow = false
@@ -104,13 +118,81 @@ export default {
       if (!this.initServices || this.initServices.length === 0) {
       this.$refs.flowPanel.setServices([
         {
-          id: '9',
-          type: 'group',
-          name: this.serviceName,
+          id: 'rootNode',
+          name: this.service_text_map[this.verticalType],
           open: true,
           children: []
         }
       ])
+      }
+    },
+    // 处理导入请求
+    async handleImportRequest(importData) {
+      try {
+        // 解析导入数据
+        const decoder = createServiceIdDecoder()
+        const parsedData = parseImportData(importData, decoder)
+        if (parsedData.metadata.failedServices.length > 0) {
+          this.$message.warning(`以下服务无法解析: ${parsedData.metadata.failedServices.join(', ')}`)
+        }
+        if (parsedData.serviceIds.length === 0) {
+          this.$message.error('导入的服务列表为空或格式错误')
+          return
+        }
+        // 提取服务ID列表
+        const serviceIds = parsedData.serviceIds.map(s => s.id)
+        // 通过API查询完整的服务信息
+        const fullServices = await this.fetchServicesByIds(serviceIds)
+        if (!fullServices || fullServices.length === 0) {
+          this.$message.error('获取服务信息失败，请检查文件内数据是否正确')
+          return
+        }
+        // 构建完整的流程数据
+        const flowData = buildImportedFlowData(importData, fullServices)
+        const { serviceNodes } = generateServiceNodes(flowData, this.verticalType)
+        // 更新流程数据（updateFlow内部会处理loading状态）
+        this.updateServices(serviceNodes)
+        this.updateFlow(flowData)
+        // 显示导入统计信息
+        const successCount = fullServices.length
+        const totalCount = importData.services.length
+        const message = totalCount === successCount
+          ? `成功导入元应用"${importData.metaApp.preName}"，包含${successCount}个服务`
+          : `导入元应用"${importData.metaApp.preName}"，成功${successCount}/${totalCount}个服务`
+        // 和updateFlow同步
+        setTimeout(() => {
+          this.$message.success(message)
+        }, 1600)
+      } catch (error) {
+        console.error('处理导入数据失败:', error)
+        this.$message.error('导入异常，请检查文件内数据是否正确！')
+      }
+    },
+    // 通过服务ID列表查询完整服务信息
+    async fetchServicesByIds(serviceIds) {
+      try {
+        // 调用批量获取服务API
+        const response = await batchGetServices(serviceIds)
+
+        if (response && response.status === 'success') {
+          // 处理成功的响应
+          const services = response.services || []
+          const notFoundIds = response.notFound || []
+          // 如果有未找到的服务，显示警告信息
+          if (notFoundIds.length > 0) {
+            console.warn('以下服务在数据库中不存在:', notFoundIds)
+          }
+          // 显示获取结果统计
+          if (response.message) {
+            console.info('批量获取服务结果:', response.message)
+          }
+          return services
+        } else {
+          throw new Error(response?.message || '查询服务信息失败')
+        }
+      } catch (error) {
+        console.warn('API调用失败', error.message)
+        return []
       }
     }
   }

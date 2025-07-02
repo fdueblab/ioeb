@@ -68,8 +68,8 @@
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="数据集">
-                  <a-select v-model="dataSetType" placeholder="请选择" default-value="0">
+                <a-form-item label="数据集类型">
+                  <a-select v-model="dataSetType" placeholder="请选择类型" default-value="0">
                     <a-select-option value="0">平台数据集</a-select-option>
                     <a-select-option value="1">上载数据集</a-select-option>
                   </a-select>
@@ -427,16 +427,15 @@ export default {
       agentFinalResults: null
     }
   },
-  created () {
-    this.loadDictionaryData()
-    this.initData()
+  async created() {
+    await this.loadDictionaryData()
+    await this.initData()
   },
   watch: {
     // 监听domain属性变化，当切换领域时重新加载数据
-    verticalType(newDomain, oldDomain) {
+    async verticalType(newDomain, oldDomain) {
       if (newDomain !== oldDomain) {
-        this.initData()
-        this.loadDictionaryData()
+        await this.initData()
       }
     }
   },
@@ -492,7 +491,7 @@ export default {
           { code: 'robustness', text: '鲁棒性' },
           { code: 'explainability', text: '可解释性' }
         ]
-        this.statusDict = []
+        this.statusDict = ['pre_release_unrated', 'pre_release_pending', 'released']
         this.statusStyleDict = []
       }
     },
@@ -507,9 +506,7 @@ export default {
 
         if (response && response.status === 'success') {
           console.log(`成功从API获取到${response.services.length}条服务数据`)
-          // 筛选出运行中的服务
-          const runningStatus = this.statusDict.map(item => item.code)
-          this.dataSource = response.services.filter(item => runningStatus.includes(item.status))
+          this.dataSource = response.services
         } else {
           console.log('API获取失败，回退到静态数据')
           // 如果API调用失败，回退到静态数据
@@ -535,7 +532,9 @@ export default {
     },
     async fetchServicesFromAPI() {
       try {
-        return await filterServices({ domain: this.verticalType, type: 'atomic' })
+        // 筛选出运行中的服务
+        const runningStatus = this.statusDict.map(item => item.code)
+        return await filterServices({ domain: this.verticalType, type: 'atomic,atomic_mcp', status: runningStatus.join(',') })
       } catch (error) {
         console.error('获取服务数据失败:', error)
         return undefined
