@@ -4,43 +4,61 @@
       <div style="display: flex; justify-content: space-between">
         <div style="width: 30%">
           <div class="app-preview" v-if="apiList[0]">
-            <span class="app-title">{{ apiList[0].name }}</span>
+            <div class="app-header">
+              <span class="app-title">{{ apiList[0].name }}</span>
+              <span v-if="apiList[0].subtitle" class="app-subtitle">{{ apiList[0].subtitle }}</span>
+            </div>
             <div class="input-output-container">
               <!-- 输入区域 -->
-              <div>
-                <span v-show="apiList[0].parameterType !== 0" class="section-title">{{ apiList[0].inputName }}</span>
-                <div style="width: 100%; display: flex; justify-content: center">
+              <div class="section-container">
+                <div v-show="apiList[0].parameterType !== 0" class="section-header">
+                  <span class="section-title">{{ apiList[0].inputName }}</span>
+                </div>
+                <div v-show="apiList[0].parameterType === 2" class="file-upload-section">
                   <a-upload
-                    v-show="apiList[0].parameterType === 2"
                     :file-list="fileList"
                     :remove="removeFile"
                     :customRequest="customFileChose"
                     :multiple="false">
-                    <a-button> <a-icon type="upload" /> 选择数据文件 </a-button>
+                    <a-button class="file-button"> <a-icon type="upload" /> 选择数据文件 </a-button>
                   </a-upload>
                 </div>
-                <a-textarea v-show="apiList[0].parameterType === 1 || apiList[0].parameterType === 3" v-model="code" class="input-box" placeholder="" :rows="4" />
-                <div style="width: 100%">
-                  <a-button class="submit-button" type="primary" @click="onRequestSend">
+                <a-textarea
+                  v-show="apiList[0].parameterType === 1 || apiList[0].parameterType === 3"
+                  v-model="code"
+                  class="input-box"
+                  placeholder="请输入内容"
+                  :rows="4"
+                />
+                <div class="submit-section">
+                  <a-button class="submit-button" type="primary" @click="onRequestSend" :loading="sending">
                     {{ apiList[0].submitButtonText }}
                   </a-button>
                 </div>
               </div>
               <!-- 输出区域 -->
-              <div>
-                <span class="section-title">{{ apiList[0].outputName }}</span>
-                <div v-if="apiList[0].responseType === 2">
-                  <a-button :disabled="!fileUrl" icon="download" @click="downloadFile">下载结果文件</a-button>
+              <div class="section-container">
+                <div class="section-header">
+                  <span class="section-title">{{ apiList[0].outputName }}</span>
                 </div>
-                <codemirror v-else v-model="response" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions" />
-                <div v-show="apiList[0].outputVisualization" class="image-box">
-                  {{ apiList[0].outputName }}可视化区域
+                <div v-if="apiList[0].responseType === 2" class="file-download-section">
+                  <a-button class="file-button" :disabled="!fileUrl" icon="download" @click="downloadFile">下载结果文件</a-button>
+                </div>
+                <div v-else class="output-box">
+                  <codemirror v-model="response" @ready="onCmReady" :style="codemirrorStyle" :options="cmOptions" />
+                </div>
+                <div v-show="apiList[0].outputVisualization" class="visualization-box">
+                  <div class="viz-placeholder">
+                    <a-icon type="bar-chart" style="font-size: 24px; color: #409eff; margin-bottom: 8px;" />
+                    <div>{{ apiList[0].outputName }}可视化区域</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="image-box" v-else>
-            数据缺失
+          <div class="error-box" v-else>
+            <a-icon type="exclamation-circle" style="font-size: 24px; margin-bottom: 8px; color: #ff4d4f;" />
+            <div>数据缺失</div>
           </div>
         </div>
         <div style="width: 65%">
@@ -97,7 +115,8 @@ import 'codemirror/mode/css/css.js'
 import 'codemirror/mode/vue/vue.js'
 /* eslint-disable */
 import PanelEnhanced from '@/components/ef/panel_enhanced'
-import { getMetaAppNodes } from '@/mock/data/meta_apps_data'
+import { batchGetServices } from '@/api/service'
+import { generateServiceNodes, buildImportedFlowData } from '@/components/ef/utils'
 
 export default {
   name: 'UseMetaApp',
@@ -149,11 +168,12 @@ export default {
       },
       codemirrorStyle: {
         width: '100%',
-        border: '1px solid #d9d9d9',
+        border: 'none',
         fontSize: '14px',
-        lineHeight: '120%'
+        lineHeight: '120%',
+        borderRadius: '8px'
       },
-      // 工作流初始化数据
+      // 初始化数据
       loadingFlow: false,
       loadingServices: false,
       flowData: {},
@@ -286,31 +306,98 @@ export default {
       link.click()
       document.body.removeChild(link)
     },
-    // 加载工作流数据
     async loadFlowData() {
       this.loadingFlow = true
-      // todo: 暂时根据元应用名称加载工作流，后续要存储对应数据并且后端获取
-      let metaAppData;
-      switch (this.apiList[0]?.name) {
-        case '技术评测元应用':
-          metaAppData = await getMetaAppNodes(this.verticalType, '课题四')
-          this.$refs.flowPanel.updateInitialFlow(metaAppData.flowData)
-          break
-        case '无人机智能投递':
-        case '乡村医疗AI辅助诊断元应用':
-        case '智慧农业综合管理元应用':
-        case 'eVTOL智能飞行控制元应用':
-        case '跨境电商智能营销元应用':
-        case '家庭智能助手元应用':
-          metaAppData = await getMetaAppNodes(this.verticalType, '')
-          this.$refs.flowPanel.updateInitialFlow(metaAppData.flowData)
-          break
-        default:
-          metaAppData = await getMetaAppNodes(this.verticalType, '课题一')
-          this.$refs.flowPanel.updateInitialFlow(metaAppData.flowData)
-          break
+      try {
+        // 从apiList[0]中提取元应用配置信息
+        const metaAppConfig = this.apiList[0]
+        if (!metaAppConfig) {
+          throw new Error('元应用配置信息缺失')
+        }
+        // 检查服务列表是否存在
+        if (!metaAppConfig.services || metaAppConfig.services.length === 0) {
+          throw new Error('元应用服务列表加载失败')
+        }
+        // 构建节点数据
+        await this.loadFlowFromServices(metaAppConfig)
+      } catch (error) {
+        this.$message.error(error.message)
+        // 清空面板数据
+        this.$refs.flowPanel.dataReloadClear()
+      } finally {
+        this.loadingFlow = false
       }
-      this.loadingFlow = false
+    },
+
+    // 从服务列表构建节点数据
+    async loadFlowFromServices(metaAppConfig) {
+      try {
+        // 提取服务ID列表
+        const serviceIds = metaAppConfig.services || []
+        console.log('提取到的服务ID列表:', serviceIds)
+
+                 if (serviceIds.length === 0) {
+           throw new Error('服务ID列表为空')
+         }
+        // 通过API查询完整的服务信息
+        const fullServices = await this.fetchServicesByIds(serviceIds)
+        if (!fullServices || fullServices.length === 0) {
+          throw new Error('获取服务信息失败')
+        }
+        // 按照导入数据的格式构建数据
+        const importData = {
+          metaApp: {
+            preName: metaAppConfig.name,
+            preDes: metaAppConfig.des,
+            preInputName: metaAppConfig.inputName,
+            preOutputName: metaAppConfig.outputName,
+            inputType: metaAppConfig.inputType,
+            outputType: metaAppConfig.outputType
+          }
+        }
+        // 构建完整的流程数据
+        const flowData = buildImportedFlowData(importData, fullServices)
+        console.log('构建的流程数据:', flowData)
+
+        // 生成服务节点结构
+        const { serviceNodes } = generateServiceNodes(flowData, this.verticalType)
+
+        // 更新面板数据
+        this.$refs.flowPanel.updateInitialFlow(flowData)
+
+        console.log('成功加载元应用:', metaAppConfig.name, '包含', fullServices.length, '个服务')
+      } catch (error) {
+        console.error('从服务列表构建节点数据失败:', error)
+        throw error
+      }
+         },
+
+    // 通过服务ID列表查询完整服务信息
+    async fetchServicesByIds(serviceIds) {
+      try {
+        console.log('查询服务信息，ID列表:', serviceIds)
+        // 调用批量获取服务API
+        const response = await batchGetServices(serviceIds)
+        if (response && response.status === 'success') {
+          // 处理成功的响应
+          const services = response.services || []
+          const notFoundIds = response.notFound || []
+          // 如果有未找到的服务，显示警告信息
+          if (notFoundIds.length > 0) {
+            console.warn('以下服务在数据库中不存在:', notFoundIds)
+          }
+          // 显示获取结果统计
+          if (response.message) {
+            console.info('批量获取服务结果:', response.message)
+          }
+          return services
+        } else {
+          throw new Error(response?.message || '查询服务信息失败')
+        }
+      } catch (error) {
+         console.error('API调用失败:', error.message)
+         throw new Error('API调用失败: ' + error.message)
+      }
     }
   }
 }
@@ -321,76 +408,214 @@ export default {
 }
 /deep/ .CodeMirror{
   height: 120px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f5ff 100%);
 }
 
+/* 应用预览区域 */
 .app-preview {
   width: 100%;
   aspect-ratio: 9 / 19; /* 设置宽高比 */
   overflow-y: auto; /* 使高度限制生效 */
-  background-color: #f9f9f9;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.app-preview::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(64, 169, 255, 0.05) 0%, rgba(22, 101, 192, 0.05) 100%);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.app-header {
+  background: linear-gradient(135deg, #40a9ff 0%, #1665c0 100%);
+  border-radius: 10px 10px 0 0;
+  padding: 16px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
 }
 
 .app-title {
-  font-size: 16px;
-  font-weight: bold;
-  background-color: #1890ff;
+  font-size: 18px;
+  font-weight: 600;
   color: #fff;
-  text-align: center;
   display: block;
-  line-height: 35px;
-  border-radius: 6px 6px 0 0;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.app-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  display: block;
+  line-height: 1.3;
+  font-weight: 400;
 }
 
 /* 输入输出容器 */
 .input-output-container {
-  margin: 16px;
+  padding: 20px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+}
+
+.section-container {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.section-header {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f0f0f0;
 }
 
 /* 输入输出标题 */
 .section-title {
   font-size: 14px;
-  font-weight: bold;
-  color: #333;
-  margin: 8px;
-  line-height: 30px;
+  font-weight: 600;
+  color: #1890ff;
+  display: flex;
+  align-items: center;
+}
+
+.section-title::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: linear-gradient(135deg, #40a9ff, #1665c0);
+  border-radius: 2px;
+  margin-right: 8px;
+}
+
+.file-upload-section, .file-download-section {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}
+
+.file-button {
+  border-radius: 6px;
+  border: 1px dashed #1890ff;
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.file-button:hover {
+  background: rgba(24, 144, 255, 0.1);
+  border-color: #40a9ff;
+}
+
+.submit-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
 }
 
 .submit-button {
-  width: 50%;
-  margin: 8px 0;
-  left: 25%;
+  min-width: 120px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #40a9ff 0%, #1665c0 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(24, 144, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.submit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(24, 144, 255, 0.4);
 }
 
 .input-box {
   width: 100%;
-  min-height: 100px;
-  padding: 8px;
-  background-color: #fff;
+  border-radius: 8px;
   border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  transition: all 0.3s ease;
+  padding: 12px;
   font-size: 14px;
-  color: #333;
 }
 
-/* 图片框 */
-.image-box {
+.input-box:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* 输出框 */
+.output-box {
   width: 100%;
-  min-height: 150px;
+  min-height: 120px;
+  padding: 0;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f5ff 100%);
+  border: 1px solid #e6f7ff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 可视化区域 */
+.visualization-box {
+  width: 100%;
+  min-height: 120px;
   margin-top: 16px;
-  padding: 16px;
-  background-color: #e8e8e8;
-  border: 1px dashed #d9d9d9;
-  border-radius: 4px;
+  padding: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  border: 2px dashed #91d5ff;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.viz-placeholder {
+  text-align: center;
+  color: #40a9ff;
   font-size: 14px;
-  color: #666;
-  font-style: italic;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.visualization-box:hover {
+  border-color: #40a9ff;
+  background: linear-gradient(135deg, #ffffff 0%, #e6f7ff 100%);
+}
+
+/* 错误状态 */
+.error-box {
+  width: 100%;
+  aspect-ratio: 9 / 19;
+  background: linear-gradient(135deg, #fff2f0 0%, #fff1f0 100%);
+  border: 1px solid #ffccc7;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ff4d4f;
+  font-size: 14px;
+  font-weight: 500;
 }
 </style>

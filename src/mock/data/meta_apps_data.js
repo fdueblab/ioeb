@@ -4,48 +4,73 @@
 // 金融欺诈检测推理元应用
 const fraudDetectionApp = {
   preName: '金融欺诈检测推理元应用',
+  preDes: '基于大模型智能体的元应用，用于在跨境支付场景下实现金融欺诈检测',
   preInputName: '金融交易数据',
   preOutputName: '欺诈检测评估报告',
   inputType: 2,
   outputType: 1,
   nodeList: [
     {
-      id: '9000',
-      name: '基于多智能体协作的金融欺诈检测推理服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'DataAnalysisService',
+      id: 'c48aad98-4a7b-4498-a4d5-ac2f991d1c0d',
+      name: '基于多智能体协作的金融欺诈检测推理MCP服务',
+      url: 'http://fdueblab.cn:8778/sse',
+      des: '供智能体调用的基于多智能体协作的金融欺诈检测推理服务，基于多个金融欺诈检测模型的协作，可以对交易进行多维度的风险评估和欺诈预警',
+      attribute: 'custom',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '1',
+      scenario: '2',
+      technology: '1',
+      status: 'pre_release_unrated',
+      number: 67,
+      deleted: 0,
       tools: [
-        { name: 'batchAnalyzeTransactions', description: '批量分析交易数据' },
-        { name: 'detectAnomalies', description: '检测异常交易模式' },
-        { name: 'calculateRiskScore', description: '计算风险评分' },
-        { name: 'extractFeatures', description: '提取交易特征' }
+        { id: 'tool-001-health-check-mcp1', name: 'healthCheck', description: '判断微服务状态是否正常可用' },
+        { id: 'tool-002-analyze-transaction', name: 'analyzeTransaction', description: '单笔交易风险分析' },
+        { id: 'tool-003-batch-analyze-transactions', name: 'batchAnalyzeTransactions', description: '批量交易风险分析' },
+        { id: 'tool-004-get-agents-status', name: 'getAgentsStatus', description: '获取各智能体状态' },
+        { id: 'tool-005-get-model-info', name: 'getModelInfo', description: '获取模型信息' }
       ]
     },
     {
-      id: '9101',
-      name: '报告生成服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'ReportService',
+      id: '02a951d1-09b1-4d65-9f6c-cf048e5f620f',
+      name: '样例报告生成MCP服务',
+      url: 'https://myMcpServer.com/report-generation/sse',
+      method: 'sse',
+      des: '供智能体调用的课题五mcp样例服务，用于功能演示',
+      attribute: 'non_intelligent',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '2',
+      scenario: '3',
+      technology: '3',
+      status: 'pre_release_unrated',
+      number: 45,
+      deleted: 0,
       tools: [
-        { name: 'generateReport', description: '生成检测报告' },
-        { name: 'formatResults', description: '格式化分析结果' },
-        { name: 'exportToPDF', description: '导出PDF报告' },
-        { name: 'sendNotification', description: '发送报告通知' }
+        { id: 'tool-011-report-generation-health', name: 'healthCheck', description: '判断样例报告生成MCP服务状态是否正常可用' },
+        { id: 'tool-012-generate-report', name: 'generateReport', description: '基于输入数据生成分析报告' }
       ]
     },
     {
-      id: '9102',
-      name: '数据管理服务',
-      type: 'process',
-      state: 'warning',
-      serviceKey: 'DataManagementService',
+      id: 'c582ad98-4a7b-4498-a4d5-a52f991d1c0e',
+      name: '课题四模型评测-安全性指纹MCP服务',
+      des: '供智能体调用的基于课题四算法的mcp服务，可用于模型安全性评测和指纹识别',
+      url: 'https://myMcpServer.com/model-security-fingerprint/sse',
+      method: 'sse',
+      attribute: 'paid',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '3',
+      scenario: '4',
+      technology: '4',
+      status: 'released',
+      number: 134,
+      deleted: 0,
       tools: [
-        { name: 'getReportData', description: '获取报告数据' },
-        { name: 'storeResults', description: '存储分析结果' },
-        { name: 'queryHistoricalData', description: '查询历史数据' },
-        { name: 'backupData', description: '备份重要数据' }
+        { id: 'tool-019-security-fingerprint-health', name: 'healthCheck', description: '判断课题四模型评测-安全性指纹MCP服务状态是否正常可用' },
+        { id: 'tool-020-security-fingerprint-detect', name: 'securityFingerprintDetect', description: '对机器学习模型进行安全性指纹检测' },
+        { id: 'tool-021-evaluate-model-security', name: 'evaluateModelSecurity', description: '评估模型抗攻击能力和安全风险等级' }
       ]
     }
   ]
@@ -54,6 +79,7 @@ const fraudDetectionApp = {
 // 乡村医疗AI辅助诊断元应用
 const medicalDiagnosisApp = {
   preName: '乡村医疗AI辅助诊断元应用',
+  preDes: '基于大模型智能体的元应用，用于在乡村医疗场景下辅助诊断',
   preInputName: '患者医疗数据',
   preOutputName: '诊断与健康管理方案',
   inputType: 2,
@@ -62,9 +88,8 @@ const medicalDiagnosisApp = {
     {
       id: '8001',
       name: '语音识别服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'SpeechRecognitionService',
+      type: 'atomic_mcp',
+      status: 'released',
       tools: [
         { name: 'transcribe', description: '语音转文字' },
         { name: 'detectLanguage', description: '检测语言类型' },
@@ -75,9 +100,8 @@ const medicalDiagnosisApp = {
     {
       id: '8101',
       name: '医疗诊断服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'MedicalDiagnosisService',
+      type: 'atomic_mcp',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'diagnose', description: '医疗影像诊断' },
         { name: 'analyzeSymptoms', description: '症状分析' },
@@ -88,9 +112,8 @@ const medicalDiagnosisApp = {
     {
       id: '8201',
       name: '健康监测服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'HealthMonitoringService',
+      type: 'atomic_mcp',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'analyze', description: '健康数据分析' },
         { name: 'trackVitals', description: '生命体征追踪' },
@@ -101,9 +124,8 @@ const medicalDiagnosisApp = {
     {
       id: '8202',
       name: '预警通知服务',
-      type: 'process',
-      state: 'warning',
-      serviceKey: 'AlertNotificationService',
+      type: 'atomic_mcp',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'alert', description: '健康预警' },
         { name: 'sendNotification', description: '发送通知' },
@@ -117,6 +139,7 @@ const medicalDiagnosisApp = {
 // 农业数智AI元应用
 const agricultureApp = {
   preName: '农业数智AI元应用',
+  preDes: '基于大模型智能体的元应用，用于在农业场景下进行作物分析和预测',
   preInputName: '农业数据输入',
   preOutputName: '农业智能分析报告',
   inputType: 2,
@@ -125,9 +148,8 @@ const agricultureApp = {
     {
       id: '5001',
       name: '图像分析服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'ImageAnalysisService',
+      type: 'atomic_mcp',
+      status: 'released',
       tools: [
         { name: 'analyzeImage', description: '农作物图像分析' },
         { name: 'identifyDisease', description: '病虫害识别' },
@@ -138,9 +160,8 @@ const agricultureApp = {
     {
       id: '5101',
       name: '作物预测服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'CropPredictionService',
+      type: 'atomic_mcp',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'predictYield', description: '产量预测' },
         { name: 'recommendActions', description: '农事建议' },
@@ -154,35 +175,42 @@ const agricultureApp = {
 // 智能飞行控制元应用
 const aircraftApp = {
   preName: '智能飞行控制元应用',
+  preDes: '基于大模型智能体的元应用，用于在低空飞行场景下辅助无人机控制',
   preInputName: '智能飞行器参数',
   preOutputName: '智能飞行器任务结果',
   inputType: 1,
   outputType: 1,
   nodeList: [
     {
-      id: '3001',
-      name: '目标识别服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'TargetRecognitionService',
+      id: '75e5ff68-23a9-4109-967d-a5a76f29ba6b',
+      name: '无人机目标识别MCP服务',
+      des: '供智能体调用的无人机目标识别mcp服务，可用于空中目标检测和识别任务',
+      url: 'https://myMcpServer.com/aircraft-detection/sse',
+      status: 'pre_release_unrated',
+      method: 'sse',
+      type: 'atomic_mcp',
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'getTargetLocation', description: '获取目标位置' },
-        { name: 'getTargetInfo', description: '获取目标信息' },
-        { name: 'trackTarget', description: '目标跟踪' },
-        { name: 'classifyTarget', description: '目标分类' }
+        { id: 'tool-028-aircraft-detection-health', name: 'healthCheck', description: '判断无人机目标识别MCP服务状态是否正常可用' },
+        { id: 'tool-029-detect-targets', name: 'detectTargets', description: '检测和识别空中或地面目标' },
+        { id: 'tool-030-analyze-objects', name: 'analyzeObjects', description: '分析识别到的目标对象特征' }
       ]
     },
     {
-      id: '3101',
-      name: '远程控制服务',
-      type: 'process',
-      state: 'warning',
-      serviceKey: 'RemoteControlService',
+      id: 'db43a293-fb67-4efb-b65b-ec22d9cca5af',
+      name: '无人机远程控制MCP服务',
+      des: '供智能体调用的无人机远程控制mcp服务，可用于无人机远程操控和飞行管理',
+      url: 'https://myMcpServer.com/aircraft-control/sse',
+      status: 'pre_release_unrated',
+      method: 'sse',
+      type: 'atomic_mcp',
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'setTargetLocation', description: '设置目标位置' },
-        { name: 'setMotionMode', description: '设置运动模式' },
-        { name: 'adjustAltitude', description: '调整飞行高度' },
-        { name: 'emergencyLanding', description: '紧急降落' }
+        { id: 'tool-031-aircraft-control-health', name: 'healthCheck', description: '判断无人机远程控制MCP服务状态是否正常可用' },
+        { id: 'tool-032-remote-control', name: 'remoteControl', description: '远程控制无人机飞行和操作' },
+        { id: 'tool-033-flight-monitoring', name: 'flightMonitoring', description: '实时监控无人机飞行状态和参数' }
       ]
     }
   ]
@@ -191,6 +219,7 @@ const aircraftApp = {
 // 跨境电商智能营销元应用
 const ecommerceApp = {
   preName: '跨境电商智能营销元应用',
+  preDes: '基于大模型智能体的元应用，用于在跨境电商场景下辅助市场分析',
   preInputName: '产品信息与市场需求',
   preOutputName: '多语言营销方案',
   inputType: 2,
@@ -199,9 +228,8 @@ const ecommerceApp = {
     {
       id: '6001',
       name: '多语言内容生成服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'MultilingualContentService',
+      type: 'atomic_mcp',
+      status: 'released',
       tools: [
         { name: 'translateContent', description: '内容翻译' },
         { name: 'generateDescription', description: '生成商品描述' },
@@ -212,9 +240,8 @@ const ecommerceApp = {
     {
       id: '6101',
       name: '市场分析服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'MarketAnalysisService',
+      type: 'atomic_mcp',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'analyzeTrend', description: '趋势分析' },
         { name: 'predictSales', description: '销量预测' },
@@ -228,6 +255,7 @@ const ecommerceApp = {
 // 低空飞行AI应用元应用
 const evtolApp = {
   preName: 'eVTOL智能飞行控制元应用',
+  preDes: '基于大模型智能体的元应用，用于在eVTOL场景下辅助飞行控制',
   preInputName: '飞行任务参数',
   preOutputName: '飞行控制结果',
   inputType: 2,
@@ -236,9 +264,8 @@ const evtolApp = {
     {
       id: '4001',
       name: '飞行控制服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'FlightControlService',
+      type: 'atomic_mcp',
+      status: 'released',
       tools: [
         { name: 'pathPlanner', description: '路径规划' },
         { name: 'flightController', description: '飞行控制' },
@@ -249,9 +276,8 @@ const evtolApp = {
     {
       id: '4101',
       name: '环境感知服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'EnvironmentPerceptionService',
+      type: 'atomic_mcp',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'environmentPerception', description: '环境感知' },
         { name: 'obstacleDetection', description: '障碍物检测' },
@@ -265,6 +291,7 @@ const evtolApp = {
 // 家庭智能助手元应用
 const homeAIApp = {
   preName: '家庭智能助手元应用',
+  preDes: '基于大模型智能体的元应用，用于在家庭陪伴场景下实现智能家居陪伴',
   preInputName: '家庭环境数据与指令',
   preOutputName: '智能家庭管理方案',
   inputType: 2,
@@ -273,9 +300,8 @@ const homeAIApp = {
     {
       id: '7001',
       name: '环境感知服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'HomeEnvironmentService',
+      type: 'atomic_mcp',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'objectDetection', description: '物体检测' },
         { name: 'spatialMapping', description: '空间映射' },
@@ -286,9 +312,8 @@ const homeAIApp = {
     {
       id: '7101',
       name: '智能对话服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'IntelligentDialogService',
+      type: 'atomic_mcp',
+      status: 'pre_release_unrated',
       tools: [
         { name: 'naturalLanguageUnderstanding', description: '自然语言理解' },
         { name: 'emotionRecognition', description: '情感识别' },
@@ -302,32 +327,53 @@ const homeAIApp = {
 // 课题一风险识别报告生成元应用
 const pj1App = {
   preName: '课题一风险识别报告生成元应用',
+  preDes: '基于大模型智能体的元应用，用于在跨境支付场景下实现风险识别并生成报告',
   preInputName: '课题一跨境支付数据',
   preOutputName: '课题一风险评估报告',
   inputType: 2,
   outputType: 1,
   nodeList: [
     {
-      id: '9000',
-      name: '课题一风险识别模型推理服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'Project1ModelService',
+      id: '3c3d4e4d-36e4-4436-bea1-63af2117d0cd',
+      name: '课题一风险识别模型推理MCP服务',
+      des: '供智能体调用的基于课题一算法的mcp服务，可用于金融风险识别和模型推理',
+      url: 'https://myMcpServer.com/risk-identification/sse',
+      method: 'sse',
+      attribute: 'open_source',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '0',
+      scenario: '1',
+      technology: '1',
+      status: 'released',
+      number: 89,
+      deleted: 0,
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'preprocess', description: '数据预处理' },
-        { name: 'predict', description: '风险预测' },
-        { name: 'visualize', description: '可视化分析' }
+        { id: 'tool-013-risk-identification-health', name: 'healthCheck', description: '判断课题一风险识别模型推理MCP服务状态是否正常可用' },
+        { id: 'tool-014-risk-predict', name: 'predict', description: '对客户信息进行风险识别和模型推理分析' },
+        { id: 'tool-015-risk-evaluate', name: 'evaluate', description: '评估风险等级和给出风控建议' }
       ]
     },
     {
-      id: '9101',
-      name: '样例报告生成服务',
-      type: 'process',
-      state: 'warning',
-      serviceKey: 'SampleReportService',
+      id: '02a951d1-09b1-4d65-9f6c-cf048e5f620f',
+      name: '样例报告生成MCP服务',
+      url: 'https://myMcpServer.com/report-generation/sse',
+      method: 'sse',
+      des: '供智能体调用的课题五mcp样例服务，用于功能演示',
+      attribute: 'non_intelligent',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '2',
+      scenario: '3',
+      technology: '3',
+      status: 'pre_release_unrated',
+      number: 45,
+      deleted: 0,
       tools: [
-        { name: 'generateReport', description: '生成样例报告' },
-        { name: 'getReportData', description: '获取报告数据' }
+        { id: 'tool-011-report-generation-health', name: 'healthCheck', description: '判断样例报告生成MCP服务状态是否正常可用' },
+        { id: 'tool-012-generate-report', name: 'generateReport', description: '基于输入数据生成分析报告' }
       ]
     }
   ]
@@ -336,32 +382,59 @@ const pj1App = {
 // 课题二风险识别报告生成元应用
 const pj2App = {
   preName: '课题二风险识别报告生成元应用',
+  preDes: '基于大模型智能体的元应用，用于在跨境支付场景下基于联邦学习实现风险识别报告生成',
   preInputName: '跨境支付数据',
   preOutputName: '课题二风险评估报告',
   inputType: 2,
   outputType: 1,
   nodeList: [
     {
-      id: '9000',
-      name: '课题二多方安全计算模型推理服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'Project2SecureComputingService',
+      id: '5fda9469-dcd7-4032-affb-9c9df0cd2cc7',
+      name: '课题二多方安全计算模型推理MCP服务',
+      des: '供智能体调用的基于课题二多方安全计算算法的mcp服务，可用于多机构联合反洗钱分析而无需共享敏感数据',
+      url: 'https://myMcpServer.com/multi-party-computation/sse',
+      method: 'sse',
+      attribute: 'open_source',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '0',
+      scenario: '1',
+      technology: '1',
+      network: 'ioeb_app-network',
+      port: '8770/tcp → 0.0.0.0:8770 :::8770',
+      volume: '/home/ubuntu/ioeb/api/Project_2/mcp -> /app/mcp',
+      status: 'pre_release_unrated',
+      number: 112,
+      deleted: 0,
+      create_time: 1744635999632,
+      creator_id: '',
+      parameter_type: 1,
+      response_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'preprocess', description: '安全数据预处理' },
-        { name: 'predict', description: '多方计算预测' },
-        { name: 'visualize', description: '安全可视化' }
+        { id: 'tool-037-mpc-health-check', name: 'healthCheck', description: '判断课题二多方安全计算MCP服务状态是否正常可用' },
+        { id: 'tool-038-mpc-compute', name: 'multiPartyCompute', description: '启动多方安全计算协议，联合分析多机构数据而不泄露隐私' },
+        { id: 'tool-039-mpc-analyze', name: 'jointAnalyze', description: '执行跨机构联合反洗钱分析和洗钱网络识别' }
       ]
     },
     {
-      id: '9101',
-      name: '样例报告生成服务',
-      type: 'process',
-      state: 'warning',
-      serviceKey: 'SampleReportService',
+      id: '02a951d1-09b1-4d65-9f6c-cf048e5f620f',
+      name: '样例报告生成MCP服务',
+      url: 'https://myMcpServer.com/report-generation/sse',
+      method: 'sse',
+      des: '供智能体调用的课题五mcp样例服务，用于功能演示',
+      attribute: 'non_intelligent',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '2',
+      scenario: '3',
+      technology: '3',
+      status: 'pre_release_unrated',
+      number: 45,
+      deleted: 0,
       tools: [
-        { name: 'generateReport', description: '生成课题二报告' },
-        { name: 'getReportData', description: '获取安全报告数据' }
+        { id: 'tool-011-report-generation-health', name: 'healthCheck', description: '判断样例报告生成MCP服务状态是否正常可用' },
+        { id: 'tool-012-generate-report', name: 'generateReport', description: '基于输入数据生成分析报告' }
       ]
     }
   ]
@@ -369,22 +442,34 @@ const pj2App = {
 
 // 课题四模型评测-安全性指纹元应用
 const pj4App = {
-  preName: '课题四模型评测-安全性指纹',
+  preName: '课题四模型评测-安全性指纹元应用',
+  preDes: '基于大模型智能体的元应用，用于在跨境支付场景下实现模型的安全性指纹评测',
   preInputName: '课题四模型数据',
   preOutputName: '课题四安全性指纹报告',
   inputType: 2,
   outputType: 1,
   nodeList: [
     {
-      id: '11000',
-      name: '课题四模型评测-安全性指纹服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'Project4SafetyFingerprintService',
+      id: 'c582ad98-4a7b-4498-a4d5-a52f991d1c0e',
+      name: '课题四模型评测-安全性指纹MCP服务',
+      des: '供智能体调用的基于课题四算法的mcp服务，可用于模型安全性评测和指纹识别',
+      url: 'https://myMcpServer.com/model-security-fingerprint/sse',
+      method: 'sse',
+      attribute: 'paid',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '3',
+      scenario: '4',
+      technology: '4',
+      status: 'released',
+      number: 134,
+      deleted: 0,
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'safetyFingerprint', description: '安全性指纹识别' },
-        { name: 'modelEvaluation', description: '模型安全评估' },
-        { name: 'securityAnalysis', description: '安全性分析' }
+        { id: 'tool-019-security-fingerprint-health', name: 'healthCheck', description: '判断课题四模型评测-安全性指纹MCP服务状态是否正常可用' },
+        { id: 'tool-020-security-fingerprint-detect', name: 'securityFingerprintDetect', description: '对机器学习模型进行安全性指纹检测' },
+        { id: 'tool-021-evaluate-model-security', name: 'evaluateModelSecurity', description: '评估模型抗攻击能力和安全风险等级' }
       ]
     }
   ]
@@ -392,162 +477,206 @@ const pj4App = {
 
 // 金融风险报告生成（课题一+课题四+课题三）
 const pj1pj4pj3App = {
-  preName: '金融风险报告生成',
+  preName: '金融风险报告生成元应用',
+  preDes: '基于大模型智能体的元应用，用于在跨境支付场景下实现金融风险报告生成',
   preInputName: '跨境贸易数据',
   preOutputName: '金融风险报告',
   inputType: 2,
   outputType: 1,
   nodeList: [
     {
-      id: '9000',
-      name: '课题一风险识别模型推理服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'Project1ModelService',
+      id: '3c3d4e4d-36e4-4436-bea1-63af2117d0cd',
+      name: '课题一风险识别模型推理MCP服务',
+      des: '供智能体调用的基于课题一算法的mcp服务，可用于金融风险识别和模型推理',
+      url: 'https://myMcpServer.com/risk-identification/sse',
+      method: 'sse',
+      attribute: 'open_source',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '0',
+      scenario: '1',
+      technology: '1',
+      status: 'released',
+      number: 89,
+      deleted: 0,
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'preprocess', description: '数据预处理' },
-        { name: 'predict', description: '风险预测' }
+        { id: 'tool-013-risk-identification-health', name: 'healthCheck', description: '判断课题一风险识别模型推理MCP服务状态是否正常可用' },
+        { id: 'tool-014-risk-predict', name: 'predict', description: '对客户信息进行风险识别和模型推理分析' },
+        { id: 'tool-015-risk-evaluate', name: 'evaluate', description: '评估风险等级和给出风控建议' }
       ]
     },
     {
-      id: '11000',
-      name: '课题四模型评测-安全性指纹服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'Project4SafetyFingerprintService',
+      id: 'c582ad98-4a7b-4498-a4d5-a52f991d1c0e',
+      name: '课题四模型评测-安全性指纹MCP服务',
+      des: '供智能体调用的基于课题四算法的mcp服务，可用于模型安全性评测和指纹识别',
+      url: 'https://myMcpServer.com/model-security-fingerprint/sse',
+      method: 'sse',
+      attribute: 'paid',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '3',
+      scenario: '4',
+      technology: '4',
+      status: 'released',
+      number: 134,
+      deleted: 0,
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'safetyFingerprint', description: '安全性指纹识别' }
+        { id: 'tool-019-security-fingerprint-health', name: 'healthCheck', description: '判断课题四模型评测-安全性指纹MCP服务状态是否正常可用' },
+        { id: 'tool-020-security-fingerprint-detect', name: 'securityFingerprintDetect', description: '对机器学习模型进行安全性指纹检测' },
+        { id: 'tool-021-evaluate-model-security', name: 'evaluateModelSecurity', description: '评估模型抗攻击能力和安全风险等级' }
       ]
     },
     {
-      id: '9101',
-      name: '课题三金融风险报告生成服务',
-      type: 'process',
-      state: 'success',
-      serviceKey: 'Project3ReportGenerationService',
+      id: 'b452ae47-92db-4281-8faf-9491ab6baea4',
+      name: '课题三金融风险报告生成MCP服务',
+      url: 'https://myMcpServer.com/financial-risk-report/sse',
+      des: '供智能体调用的基于课题三算法的mcp服务，可用于金融风险报告自动化生成',
+      method: 'sse',
+      attribute: 'paid',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '3',
+      scenario: '4',
+      technology: '4',
+      status: 'released',
+      number: 26,
+      deleted: 0,
+      parameter_type: 1,
+      is_fake: 1,
       tools: [
-        { name: 'generateReport', description: '生成综合风险报告' },
-        { name: 'riskAssessment', description: '综合风险评估' },
-        { name: 'reportFormatting', description: '报告格式化' }
+        { id: 'tool-016-financial-risk-health', name: 'healthCheck', description: '判断课题三金融风险报告生成MCP服务状态是否正常可用' },
+        { name: 'generateReport', description: '生成金融风险报告，包含信用风险、市场风险和操作风险分析' },
+        { id: 'tool-018-analyze-risk-data', name: 'analyzeRiskData', description: '分析多维度风险数据和指标' }
       ]
     }
   ]
 }
 
-// 根据流程数据生成服务树结构的工具函数，用于适配现有的输出格式
-// todo: 之后应该优化接收端的格式需求
-function generateServiceNodes(flowData, rootServiceText = '智能服务') {
-  const rootId = '9'
-  const groupMap = new Map()
-  const chosenServices = []
-
-  // 按服务分组
-  flowData.nodeList.forEach(node => {
-    const { name, serviceKey } = node
-
-    if (!groupMap.has(serviceKey)) {
-      chosenServices.push(name)
-      groupMap.set(serviceKey, {
-        id: serviceKey.toLowerCase().replace(/service$/i, ''),
-        type: 'group',
-        name,
-        serviceKey,
-        open: false,
-        children: []
-      })
+// 围标检测元应用
+const bidRiggingDetectionApp = {
+  preName: '围标检测元应用',
+  preDes: '基于大模型智能体的元应用，用于在金融场景下实现围标检测',
+  preInputName: '投标数据与招标信息',
+  preOutputName: '围标风险评估报告',
+  inputType: 2,
+  outputType: 1,
+  nodeList: [
+    {
+      id: 'ad43a293-fb67-4efb-b65b-ec22d9cca5ae',
+      name: '围标检测MCP服务',
+      des: '提供机器学习模型预测和风险调整功能的MCP服务',
+      url: 'http://fdueblab.cn:26023/sse',
+      method: 'sse',
+      attribute: 'custom',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '1',
+      scenario: '2',
+      technology: '4',
+      status: 'pre_release_unrated',
+      number: 7,
+      deleted: 0,
+      parameter_type: 1,
+      response_type: 1,
+      is_fake: 0,
+      tools: [
+        { id: 'tool-008-health-check-mcp3', name: 'healthCheck', description: '判断微服务状态是否正常可用' },
+        { id: 'tool-009-flask-predict', name: 'flask_predict', description: '传入特征数组，获取模型预测结果和解释' }
+      ]
+    },
+    {
+      id: '02a951d1-09b1-4d65-9f6c-cf048e5f620f',
+      name: '样例报告生成MCP服务',
+      url: 'https://myMcpServer.com/report-generation/sse',
+      method: 'sse',
+      des: '供智能体调用的课题五mcp样例服务，用于功能演示',
+      attribute: 'non_intelligent',
+      type: 'atomic_mcp',
+      domain: 'aml',
+      industry: '2',
+      scenario: '3',
+      technology: '3',
+      status: 'pre_release_unrated',
+      number: 45,
+      deleted: 0,
+      tools: [
+        { id: 'tool-011-report-generation-health', name: 'healthCheck', description: '判断样例报告生成MCP服务状态是否正常可用' },
+        { id: 'tool-012-generate-report', name: 'generateReport', description: '基于输入数据生成分析报告' }
+      ]
     }
-
-    const tools = node.tools || []
-    tools.forEach((tool, index) => {
-      groupMap.get(serviceKey).children.push({
-        id: `${node.id}${String(index + 1).padStart(2, '0')}`,
-        type: 'tool',
-        name: tool.name,
-        description: tool.description
-      })
-    })
-  })
-
-  return {
-    chosenServices,
-    serviceNodes: [
-      {
-        id: rootId,
-        type: 'group',
-        name: rootServiceText,
-        open: true,
-        children: Array.from(groupMap.values())
-      }
-    ]
-  }
+  ]
 }
 
-// 导出函数
+// 模拟数据获取相关的工具函数
+
+/**
+ * 获取模拟的元应用数据
+ * @param {string} serviceType - 服务类型
+ * @param {string} userInput - 用户输入
+ * @returns {Promise<Object>} - 返回flowData对象
+ */
 export function getMetaAppNodes(serviceType, userInput) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       let flowData
-
-      switch (serviceType) {
-        case 'aircraft':
-          flowData = aircraftApp
-          break
-        case 'health':
-          flowData = medicalDiagnosisApp
-          break
-        case 'agriculture':
-          flowData = agricultureApp
-          break
-        case 'evtol':
-          flowData = evtolApp
-          break
-        case 'ecommerce':
-          flowData = ecommerceApp
-          break
-        case 'homeAI':
-          flowData = homeAIApp
-          break
-        case 'aml':
-          // 对于金融领域，根据用户输入选择不同的应用
-          if (userInput.includes('课题三')) {
-            flowData = pj1pj4pj3App
-          } else if (userInput.includes('课题四')) {
-            flowData = pj4App
-          } else if (userInput.includes('课题一')) {
-            flowData = pj1App
-          } else if (userInput.includes('课题二')) {
-            flowData = pj2App
-          } else if (userInput.includes('课题一和课题三') || userInput.includes('综合')) {
-            flowData = pj1pj4pj3App
-          } else if (userInput.includes('欺诈')) {
-            flowData = fraudDetectionApp
-          } else {
-            reject(new Error('未找到对应的元应用'))
-            return
-          }
-          break
-        default:
+      // 对于金融领域，根据用户输入选择不同的应用
+      if (serviceType === 'aml') {
+        if (userInput.includes('课题三')) {
+          flowData = pj1pj4pj3App
+        } else if (userInput.includes('课题四')) {
+          flowData = pj4App
+        } else if (userInput.includes('课题一')) {
+          flowData = pj1App
+        } else if (userInput.includes('课题二')) {
+          flowData = pj2App
+        } else if (userInput.includes('课题一和课题三') || userInput.includes('综合')) {
+          flowData = pj1pj4pj3App
+        } else if (userInput.includes('欺诈')) {
+          flowData = fraudDetectionApp
+        } else if (userInput.includes('围标')) {
+          flowData = bidRiggingDetectionApp
+        } else {
           reject(new Error('未找到对应的元应用'))
           return
+        }
+      } else {
+        if (userInput.includes('应用') || userInput.includes('系统')) {
+          switch (serviceType) {
+            case 'aircraft':
+              flowData = aircraftApp
+              break
+            case 'health':
+              flowData = medicalDiagnosisApp
+              break
+            case 'agriculture':
+              flowData = agricultureApp
+              break
+            case 'evtol':
+              flowData = evtolApp
+              break
+            case 'ecommerce':
+              flowData = ecommerceApp
+              break
+            case 'homeAI':
+              flowData = homeAIApp
+              break
+            default:
+              reject(new Error('未找到对应的元应用'))
+              return
+          }
+        } else {
+          reject(new Error('未找到对应的元应用'))
+          return
+        }
       }
 
       if (flowData) {
-        // 根据服务类型确定根服务名称
-        const serviceTextMap = {
-          'aircraft': '无人飞机AI监控服务',
-          'health': '乡村医疗AI服务',
-          'agriculture': '农业数智AI服务',
-          'evtol': '低空飞行AI应用服务',
-          'ecommerce': '跨境电商AI服务',
-          'homeAI': '家庭机器人AI服务',
-          'aml': '跨境支付AI监测服务'
-        }
-
-        const rootServiceText = serviceTextMap[serviceType] || '智能服务'
-        const { chosenServices, serviceNodes } = generateServiceNodes(flowData, rootServiceText)
-
-        resolve({ chosenServices, serviceNodes, flowData })
+        resolve(flowData)
       }
-    }, 1600)
+    }, 2400)
   })
 }
