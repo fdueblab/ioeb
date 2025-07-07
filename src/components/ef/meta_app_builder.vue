@@ -139,18 +139,18 @@
           </a-row>
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="属性">
-                <a-select v-decorator="['attribute']" placeholder="请选择属性" allow-clear>
-                  <a-select-option v-for="(item, index) in attributeOptions" :key="index" :value="item.code">
+              <a-form-item label="技术">
+                <a-select v-decorator="['technology', { rules: [{ required: true, message: '请选择元应用技术!' }]}]" placeholder="请选择元应用技术" allow-clear>
+                  <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="item.code">
                     {{ item.text }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="行业">
-                <a-select v-decorator="['industry']" placeholder="请选择行业" allow-clear>
-                  <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
+              <a-form-item label="属性">
+                <a-select v-decorator="['attribute']" placeholder="请选择属性" allow-clear>
+                  <a-select-option v-for="(item, index) in attributeOptions" :key="index" :value="item.code">
                     {{ item.text }}
                   </a-select-option>
                 </a-select>
@@ -168,9 +168,9 @@
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="技术">
-                <a-select v-decorator="['technology']" placeholder="请选择元应用技术" allow-clear>
-                  <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="item.code">
+              <a-form-item label="行业">
+                <a-select v-decorator="['industry']" placeholder="请选择行业" allow-clear>
+                  <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
                     {{ item.text }}
                   </a-select-option>
                 </a-select>
