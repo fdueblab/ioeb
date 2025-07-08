@@ -6,7 +6,7 @@
           <a-row :gutter="48">
             <a-col :md="8" :sm="24">
               <a-form-item label="用户名称">
-                <a-input v-model="queryParam.id" placeholder=""/>
+                <a-input v-model="queryParam.name" placeholder=""/>
               </a-form-item>
             </a-col>
             <a-col :md="8" :sm="24">
@@ -20,8 +20,8 @@
             </a-col>
             <a-col :md="8" :sm="24">
               <span class="table-page-search-submitButtons">
-                <a-button type="primary" @click="$refs.table.refresh(true)">查询</a-button>
-                <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>
+                <a-button type="primary" @click="handleSearch">查询</a-button>
+                <a-button style="margin-left: 8px" @click="handleReset">重置</a-button>
               </span>
             </a-col>
           </a-row>
@@ -30,37 +30,32 @@
 
       <div class="table-operator">
         <a-button type="primary" icon="plus" @click="handleAdd">新建</a-button>
-        <a-dropdown v-action:edit v-if="selectedRowKeys.length > 0">
-          <a-menu slot="overlay">
-            <a-menu-item key="1"><a-icon type="delete" />删除</a-menu-item>
-            <a-menu-item key="2"><a-icon type="pause-circle" />停止</a-menu-item>
-            <a-menu-item key="3"><a-icon type="caret-right"/>启动</a-menu-item>
-            <a-menu-item key="4"><a-icon type="sync"/>更新</a-menu-item>
-          </a-menu>
-          <a-button style="margin-left: 8px">
-            批量操作 <a-icon type="down" />
-          </a-button>
-        </a-dropdown>
       </div>
 
       <a-table
         ref="table"
         :columns="columns"
         :dataSource="dataSource"
-        :row-selection="rowSelection"
+        :loading="loading"
+        :pagination="pagination"
       >
         <span slot="serial" slot-scope="text, record, index">
           {{ index + 1 }}
+        </span>
+        <span slot="avatar" slot-scope="text, record">
+          <a-avatar :src="record.avatar" :alt="record.name" size="small">
+            {{ record.name.charAt(0) }}
+          </a-avatar>
         </span>
         <span slot="status" slot-scope="text">
           <a-badge :status="text | statusTypeFilter" :text="text | statusFilter" />
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
-            <a v-if="record.status === 0" @click="handleEdit(record)">激活</a>
-            <a v-if="record.status === 1" @click="handleEdit(record)">停止</a>
+            <a v-if="record.status === 0" @click="handleActivate(record)">激活</a>
+            <a v-if="record.status === 1" @click="handleDisable(record)">禁用</a>
             <a-divider type="vertical" />
-            <a @click="handleSub(record)">删除</a>
+            <a @click="handleDelete(record)">删除</a>
           </template>
         </span>
       </a-table>
@@ -69,7 +64,9 @@
 </template>
 
 <script>
-import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
+import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
+import { getAllUsers } from '@/api/users'
+
 const statusMap = {
   0: {
     status: 'default',
@@ -80,23 +77,6 @@ const statusMap = {
     text: '已激活'
   }
 }
-const data = []
-data.push({
-  name: '张三',
-  field: '跨境支付AI监测服务',
-  org: '复旦大学',
-  contact: '133*****876',
-  number: '121',
-  status: 1
-})
-data.push({
-  name: '李四',
-  field: '无人机技术服务',
-  org: '复旦大学',
-  contact: '133*****134',
-  number: '198',
-  status: 0
-})
 
 export default {
   name: 'TableList',
@@ -117,6 +97,16 @@ export default {
       advanced: false,
       // 查询参数
       queryParam: {},
+      // 加载状态
+      loading: false,
+      // 分页参数
+      pagination: {
+        current: 1,
+        pageSize: 10,
+        showSizeChanger: true,
+        showQuickJumper: true,
+        showTotal: (total) => `共 ${total} 条数据`
+      },
       // 加载数据方法 必须为 Promise 对象
       columns: [
         {
@@ -124,24 +114,31 @@ export default {
           scopedSlots: { customRender: 'serial' }
         },
         {
-          title: '用户名称',
+          title: '头像',
+          dataIndex: 'avatar',
+          width: '80px',
+          align: 'center',
+          scopedSlots: { customRender: 'avatar' }
+        },
+        {
+          title: '用户名',
           dataIndex: 'name'
         },
         {
-          title: '用户领域',
-          dataIndex: 'field'
+          title: '用户角色',
+          dataIndex: 'roleId'
         },
         {
-          title: '所在单位',
-          dataIndex: 'org'
+          title: '联系方式',
+          dataIndex: 'telephone'
         },
         {
-          title: '联系方式 ',
-          dataIndex: 'contact'
+          title: '最后登录IP',
+          dataIndex: 'lastLoginIp'
         },
         {
-          title: '登录频次 ',
-          dataIndex: 'number'
+          title: '最后登录时间',
+          dataIndex: 'lastLoginTimeDisplay'
         },
         {
           title: '激活状态',
@@ -157,8 +154,7 @@ export default {
         }
       ],
       dataSource: [],
-      selectedRowKeys: [],
-      selectedRows: [],
+      originalData: [], // 保存原始数据用于搜索过滤
       response: ''
     }
   },
@@ -171,48 +167,132 @@ export default {
     }
   },
   created () {
-    this.dataSource = data
-  },
-  computed: {
-    rowSelection () {
-      return {
-        selectedRowKeys: this.selectedRowKeys,
-        onChange: this.onSelectChange
-      }
-    }
+    this.loadUserData()
   },
   methods: {
+    // 加载用户数据
+    async loadUserData() {
+      this.loading = true
+      try {
+        const response = await getAllUsers()
+        if (response.status === 'success' && response.users) {
+          this.originalData = response.users.map(user => ({
+            ...user,
+            key: user.id, // 为table添加key
+            roleId: user.roleId, // 角色
+            avatar: user.avatar || '/avatar2.svg', // 头像，提供默认值
+            lastLoginIp: user.lastLoginIp || '-', // 最后登录IP，提供默认值
+            lastLoginTimeDisplay: user.lastLoginTime ? this.formatTime(user.lastLoginTime) : '-' // 格式化时间
+          }))
+          this.dataSource = [...this.originalData]
+          this.pagination.total = this.originalData.length
+        } else {
+          this.$message.error('获取用户数据失败')
+        }
+      } catch (error) {
+        console.error('获取用户数据出错:', error)
+        this.$message.error('获取用户数据出错')
+      } finally {
+        this.loading = false
+      }
+    },
+    // 格式化时间戳
+    formatTime(timestamp) {
+      if (!timestamp) return '-'
+      const date = new Date(timestamp)
+      return date.toLocaleString('zh-CN')
+    },
+    // 搜索功能
+    handleSearch() {
+      let filteredData = [...this.originalData]
+      // 按用户名搜索
+      if (this.queryParam.name) {
+        filteredData = filteredData.filter(user =>
+          user.name.includes(this.queryParam.name)
+        )
+      }
+      // 按状态过滤
+      if (this.queryParam.status && this.queryParam.status !== '0') {
+        const statusValue = this.queryParam.status === '1' ? 1 : 0
+        filteredData = filteredData.filter(user => user.status === statusValue)
+      }
+      this.dataSource = filteredData
+      this.pagination.total = filteredData.length
+      this.pagination.current = 1 // 重置到第一页
+    },
+    // 重置搜索
+    handleReset() {
+      this.queryParam = {}
+      this.dataSource = [...this.originalData]
+      this.pagination.total = this.originalData.length
+      this.pagination.current = 1
+    },
     handleAdd () {
       this.$emit('onGoAdd')
     },
-    handleEdit (record) {
-      console.log(record)
+    // 激活用户
+    handleActivate (record) {
+      this.$confirm('确认激活', `确定要激活用户 ${record.name} 吗？`, {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'success',
+        closeOnClickModal: false
+      }).then(() => {
+        // 前端假逻辑：更新本地数据状态
+        const index = this.dataSource.findIndex(item => item.id === record.id)
+        if (index !== -1) {
+          this.dataSource[index].status = 1
+          this.$forceUpdate() // 强制更新视图
+        }
+        // 同时更新原始数据
+        const originalIndex = this.originalData.findIndex(item => item.id === record.id)
+        if (originalIndex !== -1) {
+          this.originalData[originalIndex].status = 1
+        }
+        this.$message.success(`用户 ${record.name} 激活成功！`)
+      })
     },
-    delConfirm() {
-      this.$message.success('删除成功！')
+    // 禁用用户
+    handleDisable (record) {
+      this.$confirm('确认禁用', `确定要禁用用户 ${record.name} 吗？`, {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        closeOnClickModal: false
+      }).then(() => {
+        // 前端假逻辑：更新本地数据状态
+        const index = this.dataSource.findIndex(item => item.id === record.id)
+        if (index !== -1) {
+          this.dataSource[index].status = 0
+          this.$forceUpdate() // 强制更新视图
+        }
+        // 同时更新原始数据
+        const originalIndex = this.originalData.findIndex(item => item.id === record.id)
+        if (originalIndex !== -1) {
+          this.originalData[originalIndex].status = 0
+        }
+        this.$message.success(`用户 ${record.name} 禁用成功！`)
+      })
+    },
+    // 删除用户
+    handleDelete (record) {
+      this.$confirm('确认删除', `确定要删除用户 ${record.name} 吗？`, {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'error',
+        closeOnClickModal: false
+      }).then(() => {
+        // 前端假逻辑：从本地数据中移除
+        this.dataSource = this.dataSource.filter(item => item.id !== record.id)
+        this.originalData = this.originalData.filter(item => item.id !== record.id)
+        this.pagination.total = this.dataSource.length
+        this.$message.success(`用户 ${record.name} 删除成功！`)
+      })
     },
     handleCancel () {
       this.visible = false
       const form = this.$refs.createModal.form
       form.resetFields() // 清理表单数据（可不做）
-    },
-    handleChange (value) {
-      console.log(`selected ${value}`)
-    },
-    onSelectChange (selectedRowKeys, selectedRows) {
-      this.selectedRowKeys = selectedRowKeys
-      this.selectedRows = selectedRows
-    },
-    toggleAdvanced () {
-      this.advanced = !this.advanced
-    },
-    onTest () {
-      const obj = {
-        code: 200,
-        message: '测试通过！'
-      }
-      const newObj = JSON.stringify(obj, null, 4)
-      this.response = newObj
     }
   }
 }
