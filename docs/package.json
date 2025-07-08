@@ -1,0 +1,16 @@
+{
+  "name": "ioeb-docs",
+  "version": "1.0.0",
+  "description": "算法模型智能体平台文档",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "dependencies": {
+    "vitepress": "^1.6.3"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3"
+  }
+}

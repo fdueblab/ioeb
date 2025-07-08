@@ -16,7 +16,7 @@
       <a-row :gutter="16">
         <!-- 类型标签筛选（下拉框） -->
         <a-col :span="4">
-          <a-form-item label="类型">
+          <a-form-item label="资源类型">
             <a-select
               v-model="filterValues.type"
               placeholder="请选择类型"

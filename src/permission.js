@@ -57,7 +57,7 @@ router.beforeEach(async (to, from, next) => {
           // 处理需要动态生成子路由的路由
           for (const router of addRouters) {
             if (router.path === '/' && router.children) {
-              // 1. 微服务与元应用检索路由
+              // 1. 垂域应用AI资源检索路由
               const verticalUserRoute = router.children.find(route => route.path === '/vertical-user')
               if (verticalUserRoute) {
                 // 获取第一个垂域路径作为重定向路径

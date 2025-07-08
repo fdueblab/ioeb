@@ -68,7 +68,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="数据集">
+                <a-form-item label="数据集类型">
                   <a-select v-model="dataSetType" placeholder="请选择" default-value="0">
                     <a-select-option value="0">平台数据集</a-select-option>
                     <a-select-option value="1">上载数据集</a-select-option>
@@ -100,7 +100,40 @@
           </a-form>
           <a-form>
             <a-form-item label="验证结果">
-              <a-textarea v-model="response" placeholder="" :rows="7" />
+              <!-- 新的验证结果显示组件 -->
+              <div v-if="evaluationResults.length > 0" class="evaluation-results">
+                <div
+                  v-for="(result, index) in evaluationResults"
+                  :key="index"
+                  class="evaluation-item"
+                  :class="{ 'expanded': result.expanded }"
+                >
+                  <div class="evaluation-header" @click="toggleExpanded(index)">
+                    <div class="evaluation-title">
+                      <span class="metric-name">{{ result.name }}</span>
+                      <a-tooltip :title="result.description">
+                        <a-icon type="question-circle" class="help-icon" />
+                      </a-tooltip>
+                    </div>
+                    <div class="evaluation-score">
+                      <span class="score-value">{{ result.score }}</span>
+                      <span v-if="result.range" class="score-range">{{ result.range }}</span>
+                    </div>
+                    <a-icon :type="result.expanded ? 'up' : 'down'" class="expand-icon" />
+                  </div>
+                  <div v-if="result.expanded" class="evaluation-details">
+                    <pre class="json-details">{{ result.details }}</pre>
+                  </div>
+                </div>
+              </div>
+              <!-- 空状态或原始textarea作为后备 -->
+              <a-textarea
+                v-else
+                v-model="response"
+                placeholder="选择验证指标并点击开始验证"
+                :rows="7"
+                :disabled="true"
+              />
             </a-form-item>
             <a-form-item
               :wrapperCol="{ span: 24 }"
@@ -207,6 +240,33 @@ export default {
       selectedRows: [],
       response: '',
       isRefreshing: false,
+      // 新增：验证结果数据结构
+      evaluationResults: [],
+
+      // 指标描述和取值范围配置
+      metricDescriptions: {
+        'recall': {
+          description: '查全率，衡量模型找到所有相关结果的能力，分值越高表示召回能力越强',
+          range: '[0, 1]'
+        },
+        'precision': {
+          description: '查准率，衡量模型返回结果的准确性，分值越高表示精确度越高',
+          range: '[0, 1]'
+        },
+        'computation_efficiency': {
+          description: '计算效率，衡量模型的计算资源利用效率，分值越高表示效率越高',
+          range: '[0, 1]'
+        },
+        'latency': {
+          description: '响应延迟，衡量模型的响应时间，数值越小表示响应越快',
+          range: '[0, +∞) ms'
+        },
+        'throughput': {
+          description: '吞吐量，衡量模型的并发处理能力，数值越大表示处理能力越强',
+          range: '[0, +∞) req/s'
+        }
+      },
+
       // 模拟响应数据
       mockResponse: {
         code: 200,
@@ -263,16 +323,15 @@ export default {
       agentFinalResults: null
     }
   },
-  created () {
-    this.loadDictionaryData()
-    this.initData()
+  async created() {
+    await this.loadDictionaryData()
+    await this.initData()
   },
   watch: {
     // 监听domain属性变化，当切换领域时重新加载数据
-    verticalType(newDomain, oldDomain) {
+    async verticalType(newDomain, oldDomain) {
       if (newDomain !== oldDomain) {
-        this.initData()
-        this.loadDictionaryData()
+        await this.initData()
       }
     }
   },
@@ -323,7 +382,9 @@ export default {
         this.metricOptions = [
           { code: 'recall', text: '查全率' },
           { code: 'precision', text: '查准率' },
-          { code: 'computation_efficiency', text: '计算效率' }
+          { code: 'computation_efficiency', text: '计算效率' },
+          { code: 'latency', text: '响应延迟' },
+          { code: 'throughput', text: '吞吐量' }
         ]
         this.statusDict = []
         this.statusStyleDict = []
@@ -340,9 +401,7 @@ export default {
 
         if (response && response.status === 'success') {
           console.log(`成功从API获取到${response.services.length}条元应用数据`)
-          // 筛选出运行中的服务
-          const runningStatus = this.statusDict.map(item => item.code)
-          this.dataSource = response.services.filter(item => runningStatus.includes(item.status))
+          this.dataSource = response.services
         } else {
           console.log('API获取失败，回退到静态数据')
           // 如果API调用失败，回退到静态数据
@@ -368,7 +427,9 @@ export default {
     },
     async fetchServicesFromAPI() {
       try {
-        return await filterServices({ domain: this.verticalType, type: 'meta' })
+        // 筛选出运行中的服务
+        const runningStatus = this.statusDict.map(item => item.code)
+        return await filterServices({ domain: this.verticalType, type: 'meta', status: runningStatus.join(',') })
       } catch (error) {
         console.error('获取服务数据失败:', error)
         return undefined
@@ -407,6 +468,7 @@ export default {
       this.selectedRows = selectedRows
       this.tested = false
       this.response = ''
+      this.evaluationResults = [] // 清空验证结果
     },
     async customDataSetFileChose (options) {
       const { file } = options
@@ -517,18 +579,36 @@ export default {
         onFinalResult: (results) => {
           this.agentFinalResults = results
 
-          // 处理验证结果并展示
+          // 处理验证结果数据
+          let validationData = null
           if (results.validation_result) {
-            // 如果是对象，转为JSON字符串展示
             if (typeof results.validation_result === 'object') {
-              this.response = JSON.stringify(results.validation_result, null, 4)
+              validationData = results.validation_result
             } else {
-              // 如果已经是字符串，直接展示
-              this.response = results.validation_result
+              try {
+                validationData = JSON.parse(results.validation_result)
+              } catch (e) {
+                console.error('解析验证结果失败:', e)
+                validationData = null
+              }
             }
+          }
+
+          if (validationData) {
+            // 使用新的处理方法
+            this.processEvaluationResults(validationData)
             this.$message.success(`${metaAppName} 验证完成！`)
+
+            // 更新服务norm字段
+            if (this.selectedRows.length > 0) {
+              const normToUpdate = this.evaluationResults.map(result => ({
+                key: result.code,
+                score: result.score
+              }))
+              this.updateServiceNorm(this.selectedRows[0], normToUpdate)
+            }
           } else {
-            // 若没有validation_result字段，展示整个结果对象
+            // 后备方案：显示原始结果
             this.response = JSON.stringify(results, null, 4)
             this.$message.info('验证完成，但未找到标准验证结果')
           }
@@ -536,27 +616,6 @@ export default {
           this.testLoading = false
           this.agentIsRunning = false
           this.tested = true
-          // todo: 根据response结构和结果更新对应评分
-          // 根据选择的指标过滤结果
-          const filteredData = {}
-          if (this.selectedMetric.length > 0) {
-            this.selectedMetric.forEach(metric => {
-              if (this.mockResponse.data[metric]) {
-                filteredData[metric] = this.mockResponse.data[metric]
-              }
-            })
-            // 更新服务的norm字段
-            if (this.selectedRows.length > 0) {
-              const normToUpdate = []
-              for (const key in filteredData) {
-                normToUpdate.push({
-                  key,
-                  score: filteredData[key].score.value
-                })
-              }
-              this.updateServiceNorm(this.selectedRows[0], normToUpdate)
-            }
-          }
         },
         onComplete: () => {
           this.testLoading = false
@@ -625,28 +684,21 @@ export default {
             }
           })
         } else {
-          // 如果未选择任何指标，不进行过滤
           return
         }
 
+        // 使用新的处理方法
+        this.processEvaluationResults(filteredData)
+
         // 更新服务的norm字段
         if (this.selectedRows.length > 0) {
-          const normToUpdate = []
-          for (const key in filteredData) {
-            normToUpdate.push({
-              key,
-              score: filteredData[key].score.value
-            })
-          }
+          const normToUpdate = this.evaluationResults.map(result => ({
+            key: result.code,
+            score: result.score
+          }))
           this.updateServiceNorm(this.selectedRows[0], normToUpdate)
         }
-        // 构造响应对象并展示
-        const obj = {
-          code: 200,
-          message: '验证通过！',
-          data: filteredData
-        }
-        this.response = JSON.stringify(obj, null, 4)
+
         this.testLoading = false
         this.tested = true
         this.$message.success(`${metaAppName} 验证完成！`)
@@ -660,6 +712,48 @@ export default {
         // 让下拉框失去焦点，从而关闭
         document.body.click()
       }, 100)
+    },
+
+    // 新增：切换展开状态
+    toggleExpanded(index) {
+      this.$set(this.evaluationResults[index], 'expanded', !this.evaluationResults[index].expanded)
+    },
+
+    // 新增：处理验证结果数据
+    processEvaluationResults(rawData) {
+      const results = []
+
+      // 遍历选中的指标
+      this.selectedMetric.forEach(metricCode => {
+        const metricOption = this.metricOptions.find(option => option.code === metricCode)
+        if (!metricOption) return
+
+        const metricData = rawData[metricCode]
+        if (!metricData) return
+
+        // 获取分值
+        let score = 'N/A'
+        if (metricData.value !== undefined) {
+          score = metricData.value
+        } else if (metricData.score && metricData.score.value !== undefined) {
+          score = metricData.score.value
+        }
+
+        // 获取指标描述和取值范围
+        const metricInfo = this.metricDescriptions[metricCode] || {}
+
+        results.push({
+          code: metricCode,
+          name: metricOption.text,
+          score: score,
+          range: metricInfo.range,
+          description: metricInfo.description,
+          details: JSON.stringify(metricData, null, 2),
+          expanded: false
+        })
+      })
+
+      this.evaluationResults = results
     }
   }
 }
@@ -675,5 +769,103 @@ export default {
 
 .list-articles-trigger {
   margin-left: 12px;
+}
+
+/* 新增：验证结果样式 */
+.evaluation-results {
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  overflow: hidden;
+
+  .evaluation-item {
+    border-bottom: 1px solid #f0f0f0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .evaluation-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+
+      &:hover {
+        background-color: #fafafa;
+      }
+
+      .evaluation-title {
+        flex: 1;
+        display: flex;
+        align-items: center;
+
+        .metric-name {
+          font-weight: 500;
+          margin-right: 8px;
+        }
+
+        .help-icon {
+          color: #8c8c8c;
+          cursor: help;
+
+          &:hover {
+            color: #1890ff;
+          }
+        }
+      }
+
+      .evaluation-score {
+        display: flex;
+        align-items: center;
+        margin-right: 16px;
+
+        .score-value {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1890ff;
+          margin-right: 8px;
+        }
+
+        .score-range {
+          font-size: 12px;
+          color: #8c8c8c;
+          background: #f5f5f5;
+          padding: 2px 6px;
+          border-radius: 4px;
+        }
+      }
+
+      .expand-icon {
+        color: #8c8c8c;
+        transition: transform 0.3s;
+      }
+    }
+
+    &.expanded .evaluation-header .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .evaluation-details {
+      padding: 16px;
+      background-color: #fafafa;
+      border-top: 1px solid #f0f0f0;
+
+      .json-details {
+        margin: 0;
+        padding: 12px;
+        background: #fff;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 12px;
+        line-height: 1.4;
+        max-height: 300px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+    }
+  }
 }
 </style>

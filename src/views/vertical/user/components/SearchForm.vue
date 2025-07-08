@@ -3,8 +3,8 @@
     <a-form layout="vertical">
       <a-row :gutter="16">
         <a-col :span="8">
-          <a-form-item label="微服务/元应用名称">
-            <a-input v-model="form.name" placeholder="请输入微服务/元应用名称" />
+          <a-form-item label="名称">
+            <a-input v-model="form.name" placeholder="请输入名称" />
           </a-form-item>
           <a-form-item label="通用描述">
             <a-input v-model="form.description" placeholder="请输入通用描述" />
@@ -36,38 +36,6 @@
         </a-col>
       </a-row>
     </a-form>
-
-    <!-- 开发测试模式下的可编辑接口配置 -->
-    <a-card title="用于测试的可编辑接口地址，只会在开发环境出现" v-if="isDev">
-      <a-row :gutter="16">
-        <a-col :span="8">
-          <a-form-item label="智能检索接口地址（可编辑）">
-            <a-input style="width: 100%" v-model="apiUrl" placeholder="请输入">
-              <span slot="addonBefore" style="text-align: center; display: inline-block;">
-                <a-select v-model="apiMethod" style="width: 80px">
-                  <a-select-option v-for="(item, index) in methodTypeOptions" :key="index" :value="index">
-                    {{ item }}
-                  </a-select-option>
-                </a-select>
-              </span>
-            </a-input>
-          </a-form-item>
-        </a-col>
-        <a-col :span="8">
-          <a-form-item label="智能检索接口请求头（可编辑）">
-            <a-textarea v-model="apiHeaderText" :rows="4" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="8">
-          <a-form-item label="智能检索接口参数（根据检索条件变化）">
-            <a-textarea v-model="formText" :rows="7" :readonly="true" />
-          </a-form-item>
-        </a-col>
-      </a-row>
-      <a-form-item label="智能检索返回结果">
-        <a-textarea v-model="apiResultText" :rows="5" :readonly="true" />
-      </a-form-item>
-    </a-card>
 
     <!-- 领域知识增强浮动容器 -->
     <div
@@ -101,20 +69,6 @@
           </a-form-item>
         </a-col>
       </a-row>
-      <!-- 开发模式下显示可编辑接口配置 -->
-      <a-row v-if="isDev">
-        <a-form-item label="上载知识库接口地址">
-          <a-input style="width: 100%" v-model="ragUploadUrl" placeholder="请输入">
-            <span slot="addonBefore" style="text-align: center; display: inline-block;">
-              <a-select v-model="ragUploadMethod" style="width: 80px">
-                <a-select-option v-for="(item, index) in methodTypeOptions" :key="index" :value="index">
-                  {{ item }}
-                </a-select-option>
-              </a-select>
-            </span>
-          </a-input>
-        </a-form-item>
-      </a-row>
     </div>
   </a-card>
 </template>
@@ -125,14 +79,6 @@ import request from '@/utils/request'
 export default {
   name: 'SearchForm',
   props: {
-    isDev: {
-      type: Boolean,
-      default: false
-    },
-    methodTypeOptions: {
-      type: Array,
-      default: () => []
-    },
     verticalType: {
       type: String,
       required: true
@@ -148,18 +94,15 @@ export default {
         requirement: ''
       },
       loading: false,
-      apiUrl: 'https://apirag.xyz:8086/api/predict',
-      apiMethod: 1,
+      apiUrl: 'http://eblab.club:8002/search',
       apiHeader: { 'Content-Type': 'application/json;charset=UTF-8' },
-      apiHeaderText: JSON.stringify({ 'Content-Type': 'application/json;charset=UTF-8' }, undefined, 4),
       apiResult: { answer: '' },
 
       // 知识增强相关
       showRAGInput: false,
       ragFiles: [],
       ragUploadFiles: [],
-      ragUploadUrl: 'https://apirag.xyz:8086/api/predict',
-      ragUploadMethod: 1,
+      ragUploadUrl: 'http://eblab.club:8002/search',
       ragUploadLoading: false,
       hasRagData: false,
 
@@ -209,32 +152,17 @@ export default {
         }
 
         try {
-          // 开发测试模式下解析JSON请求头
-          if (this.isDev) {
-            try {
-              this.apiHeader = JSON.parse(this.apiHeaderText)
-            } catch (error) {
-              this.$message.error('请求头JSON格式错误，请检查')
-              this.loading = false
-              return
-            }
-          }
-
-          // 处理响应
           this.apiResult = await request({
             url: this.apiUrl,
-            method: this.methodTypeOptions[this.apiMethod] || 'POST',
+            method: 'POST',
             data: this.form,
             headers: this.apiHeader
           })
 
+          console.log(this.apiResult)
           // 通知父组件搜索结果
-          if (!this.isDev) {
-            const searchResults = this.apiResult.answer.split('\n')
-            this.$emit('search-completed', searchResults)
-          } else {
-            this.$message.success('结果已返回！')
-          }
+          const searchResults = this.apiResult.data.services
+          this.$emit('search-completed', searchResults)
         } catch (error) {
           console.error('智能检索请求失败:', error)
           this.$message.error('请求异常，请稍后重试！')
@@ -309,19 +237,14 @@ export default {
 
         const response = await request({
           url: this.ragUploadUrl,
-          method: this.methodTypeOptions[this.ragUploadMethod] || 'POST',
+          method: 'POST',
           data: formData,
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         })
 
-        if (this.isDev) {
-          console.log(response)
-          this.$message.success('response message: ', response?.message)
-          this.hasRagData = true
-          this.showRAGInput = false
-        } else if (response && response.code === 200) {
+        if (response && response.code === 200) {
           this.$message.success('知识库上传成功！')
           this.hasRagData = true
           this.showRAGInput = false

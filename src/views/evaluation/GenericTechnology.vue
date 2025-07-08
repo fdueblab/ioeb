@@ -68,8 +68,8 @@
                 </a-form-item>
               </a-col>
               <a-col :span="8">
-                <a-form-item label="数据集">
-                  <a-select v-model="dataSetType" placeholder="请选择" default-value="0">
+                <a-form-item label="数据集类型">
+                  <a-select v-model="dataSetType" placeholder="请选择类型" default-value="0">
                     <a-select-option value="0">平台数据集</a-select-option>
                     <a-select-option value="1">上载数据集</a-select-option>
                   </a-select>
@@ -100,7 +100,38 @@
           </a-form>
           <a-form>
             <a-form-item label="测评结果">
-              <a-textarea v-model="response" placeholder="" :rows="7" />
+              <div v-if="evaluationResults.length > 0" class="evaluation-results">
+                <div
+                  v-for="(result, index) in evaluationResults"
+                  :key="index"
+                  class="evaluation-item"
+                  :class="{ 'expanded': result.expanded }"
+                >
+                  <div class="evaluation-header" @click="toggleExpanded(index)">
+                    <div class="evaluation-title">
+                      <span class="metric-name">{{ result.name }}</span>
+                      <a-tooltip :title="result.description">
+                        <a-icon type="question-circle" class="help-icon" />
+                      </a-tooltip>
+                    </div>
+                    <div class="evaluation-score">
+                      <span class="score-value">{{ result.score }}</span>
+                      <span v-if="result.range" class="score-range">{{ result.range }}</span>
+                    </div>
+                    <a-icon :type="result.expanded ? 'up' : 'down'" class="expand-icon" />
+                  </div>
+                  <div v-if="result.expanded" class="evaluation-details">
+                    <pre class="json-details">{{ result.details }}</pre>
+                  </div>
+                </div>
+              </div>
+              <a-textarea
+                v-else
+                v-model="response"
+                placeholder="选择评测指标并点击开始测评"
+                :rows="7"
+                :disabled="true"
+              />
             </a-form-item>
             <a-form-item
               :wrapperCol="{ span: 24 }"
@@ -207,10 +238,35 @@ export default {
       selectedRowKeys: [],
       selectedRows: [],
       response: '',
+      evaluationResults: [],
+      metricDescriptions: {
+        'privacy': {
+          description: '评估模型在处理敏感信息时的隐私保护能力，分值越高表示隐私保护能力越强',
+          range: '[0, 1]'
+        },
+        'safety-fingerprint': {
+          description: '评估模型的安全指纹检测能力，分值越高表示检测能力越强',
+          range: '[0, 1]'
+        },
+        'safety-watermark': {
+          description: '评估模型的安全水印验证能力，分值越高表示验证能力越强',
+          range: '[0, 1]'
+        },
+        'fairness': {
+          description: '评估模型在不同群体间的公平性表现，数值越大代表越公平',
+          range: '[0, +∞)'
+        },
+        'robustness': {
+          description: '评估模型在面对攻击时的鲁棒性，分值越高表示抗攻击能力越强',
+          range: '[0, 1]'
+        },
+        'explainability': {
+          description: '评估模型决策过程的可解释性，分值越高表示可解释性越强',
+          range: '[0, 1]'
+        }
+      },
       mockResponse: {
-        code: 200,
-        message: '测试通过！',
-        data: {
+        'score': {
           'privacy': {
             'Precision (Model 1)': {
               'value': 0.4952,
@@ -237,8 +293,8 @@ export default {
               'description': '一致性比例'
             },
             'score': {
-              'value': 4,
-              'description': '最终评级'
+              'value': 0.4527,
+              'description': '最终得分'
             }
           },
           'safety-fingerprint': {
@@ -283,13 +339,13 @@ export default {
             'fingerprint_score(atk)': {
               'value': 0.25,
               'description': '最终指纹得分（atk模式）'
-            },
-            'score': {
-              'value': 4,
-              'description': '最终评级'
             }
           },
           'safety-watermark': {
+            'watermark_score': {
+              'value': 0.6,
+              'description': '最终水印得分'
+            },
             'verification_ratio': {
               'value': 0.1667,
               'description': '生成异常样本的比例'
@@ -299,26 +355,32 @@ export default {
               'description': '对正常样本的识别准确性'
             },
             'positive_val': {
-              'value': [0.1667, 0.2667],
+              'value': [
+                0.1667,
+                0.2667
+              ],
               'description': '阳性模型对含有特殊触发器样本的验证准确性'
             },
             'negative_val': {
-              'value': [0.2, 0.0, 0.5, 0.0333, 0.0333, 0.8333, 0.1, 0.0, 0.2, 0.9667],
+              'value': [
+                0.2,
+                0.0,
+                0.5,
+                0.0333,
+                0.0333,
+                0.8333,
+                0.1,
+                0.0,
+                0.2,
+                0.9667
+              ],
               'description': '阴性模型对含有特殊触发器样本的验证准确性'
-            },
-            'score': {
-              'value': 5,
-              'description': '最终评级'
             }
           },
           'fairness': {
             'attribute': 'total_incoming_amount',
             'fairness_score': 10.6201,
-            'description': '关于属性total_incoming_amount的公平性评估，数值越大代表越公平',
-            'score': {
-              'value': 5,
-              'description': '最终评级'
-            }
+            'description': '关于属性"total_incoming_amount"的公平性评估，数值越大代表越公平'
           },
           'robustness': {
             'Surrogate model predict number before attack': {
@@ -327,8 +389,7 @@ export default {
                 'on class 1': 1,
                 'on class 2': 31
               },
-              'description':
-                'The result is the number of nodes for each class predicted by the surrogate model on the graph before the attack.'
+              'description': 'The result is the number of nodes for each class predicted by the surrogate model on the graph before the attack.'
             },
             'Surrogate model predict accuracy before attack': {
               'value': {
@@ -336,8 +397,7 @@ export default {
                 'on class 1': 1.0,
                 'on class 2': 1.0
               },
-              'description':
-                "The result is the accuracy before the attack, with the surrogate model's own predictions used as the ground truth, and thus it is 100%."
+              'description': "The result is the accuracy before the attack, with the surrogate model's own predictions used as the ground truth, and thus it is 100%."
             },
             'Surrogate model predict number after attack': {
               'value': {
@@ -345,8 +405,7 @@ export default {
                 'on class 1': 0,
                 'on class 2': 12
               },
-              'description':
-                'The result is the number of nodes for each class predicted by the surrogate model on the graph after the attack.'
+              'description': 'The result is the number of nodes for each class predicted by the surrogate model on the graph after the attack.'
             },
             'Surrogate model predict accuracy after attack': {
               'value': {
@@ -354,20 +413,15 @@ export default {
                 'on class 1': 0.0,
                 'on class 2': 0.3870967741935484
               },
-              'description':
-                'The result is the prediction accuracy of the surrogate model after the attack, with its own predictions used as the ground truth (i.e., the accuracy before the attack is 100%).'
+              'description': 'The result is the prediction accuracy of the surrogate model after the attack, with its own predictions used as the ground truth (i.e., the accuracy before the attack is 100%).'
             },
             'White box robustness score': {
               'value': 0.375,
-              'description': 'The result is the robustness score under the white-box attack scenario.'
-            },
-            'Black box robustness score': {
-              'value': 0.2,
-              'description': 'The result is the robustness score under the white-box attack scenario.'
-            },
-            'score': {
-              'value': 4,
-              'description': '最终评级'
+              'description': 'The result is the robustness score under the white-box attack scenario.',
+              'Black box robustness score': {
+                'value': 0.2,
+                'description': 'The result is the robustness score under the white-box attack scenario.'
+              }
             }
           },
           'explainability': {
@@ -395,6 +449,10 @@ export default {
               'value': 7,
               'description': 'Number of edges in subgraph 2'
             },
+            'score': {
+              'value': 0.3333,
+              'description': 'Final score based on Jaccard coefficient'
+            },
             'subgraphs3': {
               'value': './graph_dataset/delete_edges_within_subgraph',
               'description': 'Path to subgraph 3'
@@ -410,15 +468,60 @@ export default {
             'num_edges_subgraph4': {
               'value': 6,
               'description': 'Number of edges in subgraph 4'
+            }
+          }
+        },
+        'details': {
+          'privacy': {
+            'privacy_score': {
+              'value': '0.4527',
+              'range': [0, 1]
+            }
+          },
+          'safety-fingerprint': {
+            'safety-fingerprint_score(cln mode)': {
+              'value': '0.25',
+              'range': '[0, 1]'
             },
-            'score': {
-              'value': 3,
-              'description': '最终评级'
+            'safety-fingerprint_score(atk mode)': {
+              'value': '0.25',
+              'range': '[0, 1]'
+            }
+          },
+          'safety-watermark': {
+            'safety-watermark_score': {
+              'value': '0.6',
+              'range': [0, 1]
+            }
+          },
+          'fairness': {
+            'fairness_score': {
+              'value': '10.6201'
+            }
+          },
+          'robustness': {
+            'white_box_robustness_score': {
+              'value': '0.38',
+              'range': '[0, 1]'
+            },
+            'black_box_robustness_score': {
+              'value': '0.20',
+              'range': '[0, 1]'
+            }
+          },
+          'explainability': {
+            'explainablilty_score_2': {
+              'value': '0.6667'
+            },
+            'explainablilty_score_3': {
+              'value': '0.3333'
+            },
+            'explainablilty_score_4': {
+              'value': '0.3333'
             }
           }
         }
       },
-      // Agent面板相关字段
       showAgentPanel: false,
       agentIsRunning: false,
       agentSteps: [],
@@ -427,16 +530,14 @@ export default {
       agentFinalResults: null
     }
   },
-  created () {
-    this.loadDictionaryData()
-    this.initData()
+  async created() {
+    await this.loadDictionaryData()
+    await this.initData()
   },
   watch: {
-    // 监听domain属性变化，当切换领域时重新加载数据
-    verticalType(newDomain, oldDomain) {
+    async verticalType(newDomain, oldDomain) {
       if (newDomain !== oldDomain) {
-        this.initData()
-        this.loadDictionaryData()
+        await this.initData()
       }
     }
   },
@@ -473,13 +574,11 @@ export default {
       const statusItem = this.statusStyleDict.find(item => item && item.code === type)
       return statusItem ? statusItem.text : 'default'
     },
-    // 加载评测指标从字典缓存
     async loadDictionaryData() {
       try {
         this.normOptions = await dictionaryCache.loadDict('norm') || []
         const allStatus = await dictionaryCache.loadDict('status') || []
         this.statusStyleDict = await dictionaryCache.loadDict('status_style') || []
-        // 筛选出运行中的状态
         const runningStatusCode = this.statusStyleDict.filter(item => ['warning', 'success'].includes(item.text)).map(item => item.code)
         this.statusDict = allStatus.filter(item => runningStatusCode.includes(item.code))
       } catch (error) {
@@ -492,34 +591,29 @@ export default {
           { code: 'robustness', text: '鲁棒性' },
           { code: 'explainability', text: '可解释性' }
         ]
-        this.statusDict = []
+        this.statusDict = ['pre_release_unrated', 'pre_release_pending', 'released']
         this.statusStyleDict = []
       }
     },
     async initData() {
       this.dataLoading = true
-      this.filteredDataSource = [] // 清空现有数据，避免显示上一个页面的数据
+      this.filteredDataSource = []
 
       try {
-        // 尝试从API获取数据
         console.log(`正在加载${this.verticalType}领域的技术评测服务数据`)
         const response = await this.fetchServicesFromAPI()
 
         if (response && response.status === 'success') {
           console.log(`成功从API获取到${response.services.length}条服务数据`)
-          // 筛选出运行中的服务
-          const runningStatus = this.statusDict.map(item => item.code)
-          this.dataSource = response.services.filter(item => runningStatus.includes(item.status))
+          this.dataSource = response.services
         } else {
           console.log('API获取失败，回退到静态数据')
-          // 如果API调用失败，回退到静态数据
           this.dataSource = await getServiceData(this.verticalType, true)
         }
 
         this.filteredDataSource = [...this.dataSource]
       } catch (error) {
         console.error('初始化数据失败:', error)
-        // 出错时回退到静态数据
         try {
           this.dataSource = await getServiceData(this.verticalType, true)
           this.filteredDataSource = [...this.dataSource]
@@ -535,22 +629,20 @@ export default {
     },
     async fetchServicesFromAPI() {
       try {
-        return await filterServices({ domain: this.verticalType, type: 'atomic' })
+        const runningStatus = this.statusDict.map(item => item.code)
+        return await filterServices({ domain: this.verticalType, type: 'atomic,atomic_mcp', status: runningStatus.join(',') })
       } catch (error) {
         console.error('获取服务数据失败:', error)
         return undefined
       }
     },
     handleSearch() {
-      // 重置筛选后的数据
       this.filteredDataSource = [...this.dataSource]
-      // 按名称筛选
       if (this.queryParam.name) {
         this.filteredDataSource = this.filteredDataSource.filter(item => {
           return item.name && item.name.includes(this.queryParam.name)
         })
       }
-      // 按状态筛选
       if (this.queryParam.status && this.queryParam.status !== 'all') {
         this.filteredDataSource = this.filteredDataSource.filter(item => {
           return item.status === this.queryParam.status
@@ -562,6 +654,7 @@ export default {
       this.selectedRows = selectedRows
       this.tested = false
       this.response = ''
+      this.evaluationResults = []
     },
     async customDataSetFileChose (options) {
       const { file } = options
@@ -573,8 +666,8 @@ export default {
         uid: file?.uid,
         name: file.name,
         status: 'done',
-        url, // url 是展示在页面上的绝对链接
-        originFileObj: file // 添加原始文件对象以便后续上传
+        url,
+        originFileObj: file
       }]
     },
     removeDataSetFile () {
@@ -590,46 +683,34 @@ export default {
         return
       }
       this.testLoading = true
-      // 获取选中的服务名称
       const serviceName = this.selectedRows[0].name
       if (this.verticalType === 'aml') {
-        // 新条件：只要服务名称包含"模型"就使用Agent评测
         const containsModelKeyword = serviceName.includes('模型')
         if (this.selectedRows.length === 1 && containsModelKeyword) {
-          // 检查数据集类型和状态
           if (this.dataSetType === '1' && this.dataSetFiles.length === 0) {
             this.$message.warning('请上传数据集文件！')
             this.testLoading = false
             return
           }
-          // 使用模型评测Agent
           this.runAgentEvaluation(serviceName)
         } else {
-          // 其他情况使用模拟数据
           this.runMockEvaluation(serviceName)
         }
       } else {
-        // 非aml领域使用通用模拟数据
         this.runMockEvaluation(serviceName)
       }
     },
-    // 添加新方法：使用Agent进行评测
     async runAgentEvaluation(serviceName) {
-      // 准备表单数据
       const formData = new FormData()
       formData.append('model_name', serviceName)
 
-      // 根据选择的指标值进行处理，默认包含所有指标
       let metricsToSend = this.normOptions.map(item => item.code).join(',')
-      // 如果选择了特定指标
       if (this.selectedMetric.length > 0) {
         metricsToSend = this.selectedMetric.join(',')
       }
       formData.append('metrics', metricsToSend)
 
-      // 处理不同数据集类型
       if (this.dataSetType === '1') {
-        // 使用上传的数据集文件
         const fileObj = this.dataSetFiles[0].originFileObj || this.dataSetFiles[0]
         const fileName = fileObj.name || ''
         const fileExt = fileName.split('.').pop().toLowerCase()
@@ -642,12 +723,10 @@ export default {
 
         formData.append('data_file', fileObj)
       } else {
-        // 平台数据集 - 使用固定的URL
         const datasetUrl = 'https://lhcos-84055-1317429791.cos.ap-shanghai.myqcloud.com/ioeb/test_dataset.zip'
         formData.append('file_url', datasetUrl)
       }
 
-      // 创建Agent执行Panel组件
       if (!this.showAgentPanel) {
         this.showAgentPanel = true
         this.agentSteps = []
@@ -657,7 +736,6 @@ export default {
         this.agentIsRunning = true
       }
 
-      // 调用Agent API
       streamAgent('/api/agent/aml_model_evaluation', formData, {
         onStart: () => {
           this.agentIsRunning = true
@@ -677,21 +755,75 @@ export default {
           this.testLoading = false
           this.agentIsRunning = false
         },
-        onFinalResult: (results) => {
+                        onFinalResult: (results) => {
           this.agentFinalResults = results
 
-          // 直接展示evaluation_result，不添加任何额外信息
-          if (results.evaluation_result) {
-            // 如果是对象，转为JSON字符串展示
-            if (typeof results.evaluation_result === 'object') {
-              this.response = JSON.stringify(results.evaluation_result, null, 4)
-            } else {
-              // 如果已经是字符串，直接展示
-              this.response = results.evaluation_result
-            }
+          // 处理Agent返回的格式: {evaluation_result: {model_name: ..., evaluation_results: ...}}
+          let evaluationData = null
+          if (results.evaluation_result && results.evaluation_result.evaluation_results) {
+            evaluationData = results.evaluation_result.evaluation_results
+          } else if (results.score || results.details) {
+            // 兼容旧格式: {score: ..., details: ...}
+            evaluationData = results.details || results.score || {}
+          }
+
+          if (evaluationData) {
+            // 显示完整的Agent返回结果
+            this.response = JSON.stringify(results, null, 4)
             this.$message.success(`${serviceName} 测试完成！`)
+
+            // 尝试用新的方法处理结果显示
+            try {
+              this.processEvaluationResults(evaluationData, null)
+              // 只有成功处理后才清空原始response
+              if (this.evaluationResults.length > 0) {
+                this.response = ''
+              }
+            } catch (e) {
+              console.warn('新格式处理失败，保持原始显示:', e)
+            }
+
+            // 更新服务的norm字段
+            if (this.selectedRows.length > 0) {
+              const normToUpdate = []
+              this.selectedMetric.forEach(metric => {
+                let score = 'N/A'
+
+                // 从evaluation_results中获取分数
+                if (evaluationData[metric]) {
+                  const metricData = evaluationData[metric]
+                  if (metric === 'privacy' && metricData.privacy_score) {
+                    score = metricData.privacy_score.value
+                  } else if (metric === 'safety-fingerprint' && metricData['safety-fingerprint_score(cln mode)']) {
+                    score = metricData['safety-fingerprint_score(cln mode)'].value
+                  } else if (metric === 'safety-watermark' && metricData['safety-watermark_score']) {
+                    score = metricData['safety-watermark_score'].value
+                  } else if (metric === 'fairness' && metricData.fairness_score) {
+                    score = metricData.fairness_score.value
+                  } else if (metric === 'robustness') {
+                    const whiteBox = metricData.white_box_robustness_score?.value || 0
+                    const blackBox = metricData.black_box_robustness_score?.value || 0
+                    score = ((parseFloat(whiteBox) + parseFloat(blackBox)) / 2).toFixed(4)
+                  } else if (metric === 'explainability') {
+                    if (metricData.explainablilty_score_2) {
+                      score = metricData.explainablilty_score_2.value
+                    } else if (metricData.explainablilty_score_3) {
+                      score = metricData.explainablilty_score_3.value
+                    } else if (metricData.explainablilty_score_4) {
+                      score = metricData.explainablilty_score_4.value
+                    }
+                  }
+                }
+
+                normToUpdate.push({
+                  key: metric,
+                  score: score
+                })
+              })
+              this.updateServiceNorm(this.selectedRows[0], normToUpdate)
+            }
           } else {
-            // 若没有evaluation_result字段，展示整个结果对象
+            // 若没有找到评测结果，展示整个结果对象
             this.response = JSON.stringify(results, null, 4)
             this.$message.info('测试完成，但未找到标准评测结果')
           }
@@ -699,30 +831,6 @@ export default {
           this.testLoading = false
           this.agentIsRunning = false
           this.tested = true
-          // todo: 根据response结构和结果更新对应评分
-          // 根据选择的指标过滤结果
-          const filteredData = {}
-          if (this.selectedMetric.length > 0) {
-            this.selectedMetric.forEach(metric => {
-              if (this.mockResponse.data[metric]) {
-                filteredData[metric] = this.mockResponse.data[metric]
-              }
-            })
-          } else {
-            // 如果未选择任何指标，不进行过滤
-            return
-          }
-          // 更新服务的norm字段
-          if (this.selectedRows.length > 0) {
-            const normToUpdate = []
-            for (const key in filteredData) {
-              normToUpdate.push({
-                key,
-                score: filteredData[key].score.value
-              })
-            }
-            this.updateServiceNorm(this.selectedRows[0], normToUpdate)
-          }
         },
         onComplete: () => {
           this.testLoading = false
@@ -736,92 +844,166 @@ export default {
         }
       })
     },
-    // 添加模拟评测方法
-    runMockEvaluation(serviceName) {
+            runMockEvaluation(serviceName) {
       setTimeout(() => {
         // 根据选择的指标过滤结果
-        const filteredData = {}
+        const filteredScore = {}
+        const filteredDetails = {}
         if (this.selectedMetric.length > 0) {
           this.selectedMetric.forEach(metric => {
-            if (this.mockResponse.data[metric]) {
-              filteredData[metric] = this.mockResponse.data[metric]
+            if (this.mockResponse.score[metric]) {
+              filteredScore[metric] = this.mockResponse.score[metric]
+            }
+            if (this.mockResponse.details[metric]) {
+              filteredDetails[metric] = this.mockResponse.details[metric]
             }
           })
         } else {
-          // 如果未选择任何指标，不进行过滤
           return
         }
-        // 更新服务的norm字段
+
+        this.processEvaluationResults(filteredDetails, filteredScore)
+
         if (this.selectedRows.length > 0) {
-          const normToUpdate = []
-          for (const key in filteredData) {
-            normToUpdate.push({
-              key,
-              score: filteredData[key].score.value
-            })
-          }
+          const normToUpdate = this.evaluationResults.map(result => ({
+            key: result.code,
+            score: result.score
+          }))
           this.updateServiceNorm(this.selectedRows[0], normToUpdate)
         }
-        this.response = JSON.stringify(filteredData, null, 4)
+
         this.testLoading = false
         this.tested = true
         this.$message.success(`${serviceName} 测试完成！`)
       }, 1000)
     },
-    // 添加新方法用于更新服务的norm字段
     async updateServiceNorm(currentServiceData, normList) {
       const isPlatForm = store.getters.roles?.permissionList?.includes('admin') || false
       try {
-        // 获取当前服务数据
         const currentService = { ...currentServiceData }
-        // 如果norm字段不存在，创建新数组
         if (!currentService.norm) {
           currentService.norm = []
         }
-        // 更新每个norm
         normList.forEach(normItem => {
-          // 准备norm数据
           const normData = {
             key: normItem.key,
             score: normItem.score,
             platformChecked: isPlatForm ? 1 : 0
           }
-          // 检查是否已存在相同key的norm
           let normExists = false
           for (let i = 0; i < currentService.norm.length; i++) {
             if (currentService.norm[i].key === normItem.key) {
-              // 更新已存在的norm
               currentService.norm[i] = normData
               normExists = true
               break
             }
           }
-          // 如果不存在，添加新的norm
           if (!normExists) {
             currentService.norm.push(normData)
           }
         })
-        // 修改状态 todo: 应该在后端实现一个专门负责修改norm的接口，并实现状态的修改
         currentService.status = isPlatForm ? 'released' : 'pre_release_pending'
-        // 调用API更新服务
         await updateService(currentService.id, currentService)
       } catch (error) {
         console.error('更新服务评测指标失败:', error)
       }
     },
-    // 修改全选方法
     selectAllMetrics() {
-      // 全选所有指标
       this.selectedMetric = this.normOptions.map(item => item.code)
-      // 关闭下拉框
       setTimeout(() => {
-        // 让下拉框失去焦点，从而关闭
         document.body.click()
       }, 100)
+    },
+    toggleExpanded(index) {
+      this.$set(this.evaluationResults[index], 'expanded', !this.evaluationResults[index].expanded)
+    },
+        processEvaluationResults(detailsData, scoreData) {
+      const results = []
+
+      this.selectedMetric.forEach(metricCode => {
+        const metricOption = this.normOptions.find(option => option.code === metricCode)
+        if (!metricOption) return
+
+        const metricDetails = detailsData[metricCode]
+        const metricScore = scoreData?.[metricCode]
+        if (!metricDetails && !metricScore) return
+
+        let score = 'N/A'
+
+        // 优先从details中获取分数
+        if (metricDetails) {
+          if (metricCode === 'privacy' && metricDetails.privacy_score) {
+            score = metricDetails.privacy_score.value
+          } else if (metricCode === 'safety-fingerprint') {
+            if (metricDetails['safety-fingerprint_score(cln mode)']) {
+              score = metricDetails['safety-fingerprint_score(cln mode)'].value
+            } else if (metricDetails['safety-fingerprint_score(atk mode)']) {
+              score = metricDetails['safety-fingerprint_score(atk mode)'].value
+            }
+          } else if (metricCode === 'safety-watermark' && metricDetails['safety-watermark_score']) {
+            score = metricDetails['safety-watermark_score'].value
+          } else if (metricCode === 'fairness' && metricDetails.fairness_score) {
+            score = metricDetails.fairness_score.value
+          } else if (metricCode === 'robustness') {
+            const whiteBox = metricDetails.white_box_robustness_score?.value || 0
+            const blackBox = metricDetails.black_box_robustness_score?.value || 0
+            score = ((parseFloat(whiteBox) + parseFloat(blackBox)) / 2).toFixed(4)
+          } else if (metricCode === 'explainability') {
+            if (metricDetails.explainablilty_score_2) {
+              score = metricDetails.explainablilty_score_2.value
+            } else if (metricDetails.explainablilty_score_3) {
+              score = metricDetails.explainablilty_score_3.value
+            } else if (metricDetails.explainablilty_score_4) {
+              score = metricDetails.explainablilty_score_4.value
+            }
+          }
+        }
+
+        // 如果details中没有找到分数，从score中获取
+        if (score === 'N/A' && metricScore) {
+          if (metricScore.score && metricScore.score.value !== undefined) {
+            score = metricScore.score.value
+          } else if (metricCode === 'privacy' && metricScore['Kappa ']) {
+            score = metricScore['Kappa '].value
+          } else if (metricCode === 'safety-fingerprint' && metricScore['fingerprint_score(cln)']) {
+            score = metricScore['fingerprint_score(cln)'].value
+          } else if (metricCode === 'safety-watermark' && metricScore.watermark_score) {
+            score = metricScore.watermark_score.value
+          } else if (metricCode === 'fairness' && metricScore.fairness_score !== undefined) {
+            score = metricScore.fairness_score
+          } else if (metricCode === 'robustness') {
+            const whiteBoxData = metricScore['White box robustness score']
+            const blackBoxData = whiteBoxData?.['Black box robustness score']
+            if (whiteBoxData && blackBoxData) {
+              score = ((whiteBoxData.value + blackBoxData.value) / 2).toFixed(4)
+            }
+          } else if (metricCode === 'explainability' && metricScore.score) {
+            score = metricScore.score.value
+          }
+        }
+
+        const metricInfo = this.metricDescriptions[metricCode] || {}
+
+        // 优先使用score中的详细信息，如果没有则使用details
+        const detailsToShow = metricScore || metricDetails
+
+        results.push({
+          code: metricCode,
+          name: metricOption.text,
+          score: score,
+          range: metricInfo.range,
+          description: metricInfo.description,
+          details: JSON.stringify(detailsToShow, null, 2),
+          expanded: false
+        })
+      })
+
+      this.evaluationResults = results
     }
   }
 }
 </script>
+
 <style lang="less" scoped>
 .ant-pro-components-tag-select {
   :deep(.ant-pro-tag-select .ant-tag) {
@@ -833,5 +1015,102 @@ export default {
 
 .list-articles-trigger {
   margin-left: 12px;
+}
+
+.evaluation-results {
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  overflow: hidden;
+
+  .evaluation-item {
+    border-bottom: 1px solid #f0f0f0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .evaluation-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+
+      &:hover {
+        background-color: #fafafa;
+      }
+
+      .evaluation-title {
+        flex: 1;
+        display: flex;
+        align-items: center;
+
+        .metric-name {
+          font-weight: 500;
+          margin-right: 8px;
+        }
+
+        .help-icon {
+          color: #8c8c8c;
+          cursor: help;
+
+          &:hover {
+            color: #1890ff;
+          }
+        }
+      }
+
+      .evaluation-score {
+        display: flex;
+        align-items: center;
+        margin-right: 16px;
+
+        .score-value {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1890ff;
+          margin-right: 8px;
+        }
+
+        .score-range {
+          font-size: 12px;
+          color: #8c8c8c;
+          background: #f5f5f5;
+          padding: 2px 6px;
+          border-radius: 4px;
+        }
+      }
+
+      .expand-icon {
+        color: #8c8c8c;
+        transition: transform 0.3s;
+      }
+    }
+
+    &.expanded .evaluation-header .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .evaluation-details {
+      padding: 16px;
+      background-color: #fafafa;
+      border-top: 1px solid #f0f0f0;
+
+      .json-details {
+        margin: 0;
+        padding: 12px;
+        background: #fff;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 12px;
+        line-height: 1.4;
+        max-height: 300px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+    }
+  }
 }
 </style>

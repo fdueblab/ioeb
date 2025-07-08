@@ -98,3 +98,18 @@ export function deleteService(serviceId) {
     method: 'delete'
   })
 }
+
+/**
+ * 批量获取微服务
+ * @param {string[]} serviceIds 服务ID数组
+ * @returns {Promise} 返回批量获取的服务信息
+ */
+export function batchGetServices(serviceIds) {
+  return request({
+    url: `${API_BASE_URL}/services/batch`,
+    method: 'post',
+    data: {
+      ids: serviceIds
+    }
+  })
+}

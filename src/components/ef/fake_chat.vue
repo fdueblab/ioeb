@@ -40,7 +40,9 @@
 </template>
 
 <script>
-import { getChatData } from '@/mock/data/chat_data'
+import { getMetaAppNodes } from '@/mock/data/meta_apps_data'
+import { ChatMessageManager } from './chat_messages'
+import { generateServiceNodes } from './utils'
 
 export default {
   name: 'FakeChat',
@@ -51,7 +53,6 @@ export default {
     }
   },
   mounted() {
-    this.init()
     // 添加键盘事件监听
     document.addEventListener('keydown', this.handleKeyDown)
   },
@@ -62,30 +63,26 @@ export default {
   data() {
     return {
       userInput: '',
-      placeholder: '请输入您对应用的需求',
+      placeholder: '',
       messages: [],
       currentIndex: 0,
       isInputEnabled: true,
       isInputLoading: false,
       isGenerated: false,
       showSuggestions: false,
-      suggestions: [
-        { value: '我想基于课题一的算法生成一个跨境支付报告生成应用' },
-        { value: '我想基于课题二的算法生成一个跨境支付报告生成应用' },
-        { value: '我想基于课题三的算法构建一个智能分析系统' },
-        { value: '我想基于课题四的算法开发一个数据处理应用' },
-        { value: '我需要使用课题一和课题三的技术开发一个金融风控系统' },
-        { value: '请帮我用课题四的模型创建一个预测分析工具' }
-      ],
-      defaultSuggestions: [
-        { value: '我想基于课题一的算法生成一个跨境支付报告生成应用' },
-        { value: '我想基于课题二的算法生成一个跨境支付报告生成应用' },
-        { value: '我想基于课题三的算法构建一个智能分析系统' },
-        { value: '我想基于课题四的算法开发一个数据处理应用' },
-        { value: '我需要使用课题一和课题三的技术开发一个金融风控系统' },
-        { value: '请帮我用课题四的模型创建一个预测分析工具' }
-      ],
+      messageManager: null,
       filteredSuggestions: []
+    }
+  },
+  watch: {
+    verticalType: {
+      handler(newVal) {
+        if (newVal) {
+          this.messageManager = new ChatMessageManager(newVal)
+          this.init()
+        }
+      },
+      immediate: true
     }
   },
   methods: {
@@ -95,14 +92,10 @@ export default {
       }
     },
     onInputChange() {
-      if (!this.userInput) {
-        this.filteredSuggestions = [...this.defaultSuggestions]
-      } else {
-        this.filteredSuggestions = this.defaultSuggestions.filter(item =>
-          item.value.toLowerCase().includes(this.userInput.toLowerCase())
-        )
+      if (this.messageManager) {
+        this.filteredSuggestions = this.messageManager.filterSuggestions(this.userInput)
+        this.showSuggestions = true
       }
-      this.showSuggestions = true
     },
     activateSuggestions() {
       this.showSuggestions = true
@@ -126,16 +119,17 @@ export default {
       this.scrollToBottom()
       const input = this.userInput
       this.userInput = ''
-      getChatData(this.verticalType, input).then((res) => {
-        const { chosenServices, serviceNodes, flowData } = res
-        const outputMessage = `按照您的需求，我选择了<b>${chosenServices.join('</b>, <b>')}</b>中的相关接口，并以右侧的流程进行了初步编排。您可以自行拖动流程图以修改它们的构建方式或添加其它所需服务。`
+      getMetaAppNodes(this.verticalType, input).then((flowData) => {
+        // 使用utils中的方法生成服务节点
+        const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
+        const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
         this.typeWriter(outputMessage)
         this.$emit('update-services', serviceNodes)
         this.$emit('update-flow', flowData)
-        this.placeholder = '已智能生成工作流'
+        this.placeholder = '已智能生成元应用'
         this.isGenerated = true
       }).catch(() => {
-        const outputMessage = '非常抱歉，未能理解您的需求。本系统目前仅支持基于课题一、课题二、课题三、课题四的相关算法构建简单的元应用。'
+        const outputMessage = this.messageManager.getErrorReply()
         this.typeWriter(outputMessage)
         this.isInputEnabled = true
       })
@@ -161,15 +155,15 @@ export default {
     },
     init() {
       this.userInput = ''
-      this.placeholder = '请输入您对应用的需求'
+      this.placeholder = this.messageManager ? this.messageManager.getPlaceholder() : '请输入您对应用的需求'
       this.messages = []
       this.isInputEnabled = true
       this.isInputLoading = false
       this.isGenerated = false
       this.showSuggestions = false
-      this.suggestions = [...this.defaultSuggestions]
-      this.filteredSuggestions = [...this.defaultSuggestions]
-      this.messages.push({ text: '请告诉我您对应用的需求，我将根据您的需求生成元应用工作流', isUser: false })
+      this.filteredSuggestions = this.messageManager ? this.messageManager.getSuggestions() : []
+      const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '请告诉我您对应用的需求，我将根据您的需求尝试生成元应用'
+      this.messages.push({ text: initialMessage, isUser: false })
     },
     refresh() {
       this.init()
@@ -241,17 +235,17 @@ export default {
 
 .suggestion-dropdown {
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 0;
   width: 100%;
   background-color: #fff;
   border: 1px solid #d9d9d9;
-  border-radius: 0 0 4px 4px;
+  border-radius: 4px 4px 0 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 9999;
   max-height: 200px;
   overflow-y: auto;
-  margin-top: 2px;
+  margin-bottom: 2px;
   transform: translateZ(0);
 }
 

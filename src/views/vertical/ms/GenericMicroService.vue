@@ -1,6 +1,36 @@
 <template>
   <page-header-wrapper :title="false">
-    <a-card :bordered="false" size="small" title="程序上传">
+    <a-card :bordered="false" size="small" title="提交类型">
+      <div class="table-page-search-wrapper">
+        <a-form layout="inline">
+          <a-row :gutter="20">
+            <a-col :span="24">
+              <div style="display: flex">
+                <a-form-item label="提交类型" required>
+                  <a-radio-group v-model="submitType" @change="handleSubmitTypeChange">
+                    <a-radio-button value="algorithm">算法模型</a-radio-button>
+                    <a-radio-button value="microservice">微服务</a-radio-button>
+                    <a-radio-button disabled>智能体</a-radio-button>
+                  </a-radio-group>
+                </a-form-item>
+                <a-button
+                  v-show="submitType === 'algorithm'"
+                  type="link"
+                  icon="file-text"
+                  href="https://fdueblab.cn/docs/guide/code-template"
+                  target="_blank"
+                >
+                  算法代码提交要求文档
+                </a-button>
+              </div>
+            </a-col>
+          </a-row>
+        </a-form>
+      </div>
+    </a-card>
+
+    <!-- 算法模型上传部分 -->
+    <a-card v-if="submitType === 'algorithm'" :bordered="false" size="small" title="程序上传">
       <div class="table-page-search-wrapper">
         <a-form layout="inline">
           <a-row :gutter="20">
@@ -39,14 +69,19 @@
           </a-row>
           <a-row :gutter="20">
             <a-col :span="4">
-              <a-form-item label="程序">
+              <a-form-item :wrapperCol="{ span: 12 }">
+                <span slot="label">程序
+                  <a-tooltip title="请确保程序遵循文档中的规约，否则将无法成功上传使用">
+                    <a-icon type="question-circle-o" />
+                  </a-tooltip>
+                </span>
                 <a-upload
                   accept=".py,.zip,.jar"
                   :file-list="programFiles"
                   :remove="removeProgramFile"
                   :customRequest="customProgramFilesChose"
                   :multiple="false">
-                  <a-button> <a-icon type="upload" /> 选择程序 </a-button>
+                  <a-button icon="file-add"> 选择程序 </a-button>
                 </a-upload>
               </a-form-item>
             </a-col>
@@ -63,6 +98,7 @@
               <a-form-item label="上传">
                 <a-button
                   type="primary"
+                  icon="upload"
                   @click="onUpload"
                   :disabled="programFiles.length === 0"
                   :loading="uploadProgramLoading"
@@ -75,12 +111,150 @@
         </a-form>
       </div>
     </a-card>
-    <a-card v-if="options" :bordered="false" style="margin-top: 10px;">
-      <div class="g6-x">
-        <v-chart style="height: 100%; width: 100%;" :options="options" autoresize @click="handleNodeClick"/>
+
+    <!-- 微服务直接预发布部分 -->
+    <a-card v-if="submitType === 'microservice'" :bordered="false" size="small" title="微服务预发布">
+      <div class="table-page-search-wrapper">
+        <a-form layout="inline">
+          <a-row :gutter="20">
+            <a-col :span="4">
+              <a-form-item label="领域">
+                <span style="margin-left: 5px; font-size: 14px">{{ domainTitle }}</span>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="行业">
+                <a-select v-model="programInfo.industry" placeholder="请选择行业" allow-clear>
+                  <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
+                    {{ item.text }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="场景">
+                <a-select v-model="programInfo.scenario" placeholder="请选择场景" allow-clear>
+                  <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="item.code">
+                    {{ item.text }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="技术">
+                <a-select v-model="programInfo.technology" placeholder="请选择技术" allow-clear>
+                  <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="item.code">
+                    {{ item.text }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-row :gutter="20">
+            <a-col :span="4">
+              <a-form-item label="文件">
+                <a-upload
+                  accept=".zip,.7z,.jar"
+                  :file-list="programFiles"
+                  :remove="removeProgramFile"
+                  :customRequest="customProgramFilesChose"
+                  :multiple="false">
+                  <a-button> <a-icon type="folder-add" /> 选择文件 </a-button>
+                </a-upload>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="类型" required>
+                <a-select v-model="form.serverType" placeholder="请选择服务类型" allow-clear>
+                  <a-select-option value="restful">Restful Server</a-select-option>
+                  <a-select-option value="mcp">MCP Server</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item label="名称" required>
+                <a-input v-model="form.serviceName" placeholder="请输入微服务名称"/>
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item tooltip="value*category">
+                <span slot="label">预发布
+                  <a-tooltip title="预发布后服务及应用运维管理中将出现部署在容器中的该服务，可以管理其部署状态并对其进行验证与测评">
+                    <a-icon type="question-circle-o" />
+                  </a-tooltip>
+                </span>
+                <a-button
+                  type="primary"
+                  icon="play-circle"
+                  @click="uploadService"
+                  :disabled="uploadServiceDisabled"
+                  :loading="uploadServiceLoading"
+                >
+                  预发布
+                </a-button>
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-form>
       </div>
     </a-card>
-    <a-card :bordered="false" style="margin-top: 10px; height: 610px;">
+    <a-card v-if="options" :bordered="false" style="margin-top: 10px;">
+      <div slot="title" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>API依赖关系图</span>
+        <div v-if="submitType === 'algorithm'">
+          <a-button
+            v-if="isDev && !isMultiSelectMode"
+            type="primary"
+            icon="select"
+            @click="enableMultiSelect"
+            style="margin-right: 8px;"
+          >
+            多选节点（未完成，目前只在开发者模式下显示）
+          </a-button>
+          <div v-else style="display: inline-flex; align-items: center; gap: 8px;">
+            <a-tag color="blue">已选择 {{ selectedNodes.length }} 个节点</a-tag>
+            <a-button
+              type="primary"
+              icon="api"
+              @click="packageSelectedNodes"
+              :disabled="selectedNodes.length === 0"
+              :loading="packageLoading"
+            >
+              封装SSE服务
+            </a-button>
+            <a-button
+              icon="close"
+              @click="cancelMultiSelect"
+            >
+              取消
+            </a-button>
+          </div>
+        </div>
+      </div>
+      <div class="g6-x">
+        <v-chart
+          style="height: 100%; width: 100%;"
+          :options="options"
+          autoresize
+          @click="handleNodeClick"
+        />
+      </div>
+      <div v-if="isMultiSelectMode && selectedNodes.length > 0" style="margin-top: 16px;">
+        <a-divider>已选择的节点</a-divider>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <a-tag
+            v-for="node in selectedNodes"
+            :key="node.id"
+            closable
+            @close="removeSelectedNode(node.id)"
+            color="processing"
+          >
+            {{ node.name }}
+          </a-tag>
+        </div>
+      </div>
+    </a-card>
+    <a-card v-if="options && !isMultiSelectMode" :bordered="false" style="margin-top: 10px; height: 610px;">
       <a-row :gutter="20">
         <a-col :span="12">
           <a-card :bodyStyle="{ padding: 0 }" style="height: 560px;">
@@ -188,6 +362,7 @@
                     </span>
                     <a-button
                       type="primary"
+                      icon="play-circle"
                       @click="uploadService"
                       :disabled="uploadServiceDisabled"
                       :loading="uploadServiceLoading"
@@ -211,6 +386,67 @@
       :final-results="agentFinalResults"
       @close="closeAgentPanel"
     />
+    <!-- SSE服务封装配置弹窗 -->
+    <a-modal
+      v-model="showPackageModal"
+      title="SSE服务封装配置"
+      width="800px"
+      :confirmLoading="packageLoading"
+      @ok="confirmPackage"
+      @cancel="cancelPackage"
+    >
+      <a-form :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
+        <a-form-item label="服务名称" required>
+          <a-input
+            v-model="packageForm.serviceName"
+            placeholder="请输入SSE服务名称"
+          />
+        </a-form-item>
+        <a-form-item label="服务描述">
+          <a-textarea
+            v-model="packageForm.description"
+            placeholder="请输入服务描述"
+            :rows="3"
+          />
+        </a-form-item>
+        <a-form-item label="封装的节点">
+          <div style="max-height: 200px; overflow-y: auto; border: 1px solid #d9d9d9; padding: 8px; border-radius: 4px;">
+            <a-list size="small" :data-source="selectedNodes">
+              <a-list-item slot="renderItem" slot-scope="item">
+                <a-list-item-meta>
+                  <span slot="title">{{ item.name }}</span>
+                  <span slot="description">{{ item.description || '无描述' }}</span>
+                </a-list-item-meta>
+              </a-list-item>
+            </a-list>
+          </div>
+        </a-form-item>
+        <a-form-item label="SSE配置">
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item label="推送间隔(ms)" :label-col="{ span: 10 }" :wrapper-col="{ span: 14 }">
+                <a-input-number
+                  v-model="packageForm.pushInterval"
+                  :min="100"
+                  :max="10000"
+                  style="width: 100%"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="最大连接数" :label-col="{ span: 10 }" :wrapper-col="{ span: 14 }">
+                <a-input-number
+                  v-model="packageForm.maxConnections"
+                  :min="1"
+                  :max="1000"
+                  style="width: 100%"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </page-header-wrapper>
 </template>
 
@@ -264,6 +500,8 @@ export default {
   },
   data() {
     return {
+      // 开发模式标志
+      isDev: this.$route.query.isDev === 'true',
       // 领域标题
       domainTitle: '',
       // 编辑器配置
@@ -300,6 +538,8 @@ export default {
       configFiles: [],
       uploadFiles: [],
       uploadConfigFiles: [],
+      // 缓存的原始文件，用于服务封装
+      cachedFile: null,
       code: '',
       codeTemplate: `# 微服务名称: {{serviceName}}
 
@@ -330,6 +570,7 @@ class {{apiName}}({{input}}):
       options: null,
       // 表单数据
       form: {
+        serverType: undefined,
         apiName: undefined,
         apiType: undefined,
         methodType: undefined,
@@ -364,11 +605,26 @@ class {{apiName}}({{input}}):
       agentSteps: [],
       agentError: '',
       agentWarning: '',
-      agentFinalResults: null
+      agentFinalResults: null,
+      submitType: 'algorithm',
+      // 多选节点相关
+      isMultiSelectMode: false,
+      selectedNodes: [],
+      packageLoading: false,
+      showPackageModal: false,
+      packageForm: {
+        serviceName: '',
+        description: '',
+        pushInterval: 1000,
+        maxConnections: 100
+      }
     }
   },
   computed: {
     uploadServiceDisabled() {
+      if (this.submitType === 'microservice') {
+        return !this.form.serviceName || this.uploadFiles.length === 0
+      }
       return !this.form.serviceName || !this.form.apiName || this.uploadFiles.length === 0
     }
   },
@@ -392,6 +648,8 @@ class {{apiName}}({{input}}):
         this.domainTitle = domains.find(domain => domain.code === this.verticalType)?.text || '未知领域'
         // 清除代码框
         this.code = ''
+        // 重置提交类型
+        this.submitType = 'algorithm'
       } catch (error) {
         console.error('加载字典数据失败:', error)
         this.$message.error('加载数据字典失败，请刷新重试')
@@ -459,10 +717,13 @@ class {{apiName}}({{input}}):
       const file = this.uploadFiles[0]
       const fileExt = file.name.split('.').pop().toLowerCase()
 
+      // 缓存文件用于后续服务封装
+      this.cachedFile = file
+
       // 根据文件类型和垂直领域处理上传
-      if (fileExt === 'zip') {
+      if (fileExt === 'zip' || this.verticalType === 'aml') {
         // 真实代码分析逻辑
-        this.realCodeAnalysis(file)
+        this.realCodeAnalysisAgent(file)
       } else {
         // 其他领域的模拟上传逻辑
         this.mockCodeAnalysis(file)
@@ -582,7 +843,7 @@ class {{apiName}}({{input}}):
     },
 
     // 真实代码分析
-    realCodeAnalysis(file) {
+    realCodeAnalysisAgent(file) {
       // 重置Agent面板状态
       this.agentSteps = []
       this.agentError = ''
@@ -665,12 +926,130 @@ class {{apiName}}({{input}}):
       })
     },
 
+    // 真实服务封装
+    realServicePackageAgent(file) {
+      return new Promise((resolve, reject) => {
+        // 重置Agent面板状态
+        this.agentSteps = []
+        this.agentError = ''
+        this.agentWarning = ''
+        this.agentFinalResults = null
+        this.agentIsRunning = true
+        this.showAgentPanel = true
+
+        // 准备FormData
+        const formData = new FormData()
+        formData.append('file', file.originFileObj || file)
+
+        // 使用封装的streamAgent方法
+        streamAgent('/api/agent/service_packaging', formData, {
+          onStart: () => {
+            this.uploadServiceLoading = true
+            this.agentIsRunning = true
+          },
+          onStep: (data) => {
+            this.agentSteps.push(data)
+          },
+          onError: (error) => {
+            this.agentError = error
+            this.uploadServiceLoading = false
+            this.agentIsRunning = false
+            this.$message.error('服务封装出错: ' + error)
+            reject(error)
+          },
+          onWarning: (warning) => {
+            this.agentWarning = warning
+            this.uploadServiceLoading = false
+            this.agentIsRunning = false
+            this.$message.warning(warning)
+            reject(warning)
+          },
+          onFinalResult: (results) => {
+            this.agentFinalResults = results
+
+            // 从最终结果中提取服务包数据
+            if (results && results.service_package) {
+              try {
+                const servicePackage = results.service_package
+                // 下载返回的压缩文件
+                this.downloadServicePackage(servicePackage)
+                this.$message.success('服务封装成功，正在下载服务包...')
+                resolve(servicePackage)
+              } catch (e) {
+                console.error('处理服务包数据出错:', e)
+                this.$message.error('服务包数据处理失败')
+                reject(e)
+              }
+            } else {
+              this.$message.error('未能获取服务包数据')
+              reject(new Error('未能获取服务包数据'))
+            }
+
+            this.uploadServiceLoading = false
+            this.agentIsRunning = false
+          },
+          onComplete: () => {
+            this.uploadServiceLoading = false
+            this.agentIsRunning = false
+          },
+          onDataProcessError: (e, line) => {
+            console.error('解析数据失败:', e, line)
+            this.agentError = '解析数据失败: ' + e.message
+            this.uploadServiceLoading = false
+            this.agentIsRunning = false
+            reject(e)
+          }
+        })
+      })
+    },
+
+    // 下载服务包
+    downloadServicePackage(servicePackage) {
+      try {
+        // 将base64内容转换为二进制数据
+        const binaryData = atob(servicePackage.content)
+        const bytes = new Uint8Array(binaryData.length)
+        for (let i = 0; i < binaryData.length; i++) {
+          bytes[i] = binaryData.charCodeAt(i)
+        }
+
+        // 创建Blob对象
+        const blob = new Blob([bytes], { type: 'application/zip' })
+
+        // 创建下载链接
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = servicePackage.filename || 'service_package.zip'
+
+        // 触发下载
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        // 释放URL对象
+        window.URL.revokeObjectURL(url)
+
+        this.$message.success('服务包下载完成')
+      } catch (error) {
+        console.error('下载服务包失败:', error)
+        this.$message.error('下载服务包失败')
+      }
+    },
+
     // 点击节点处理
     handleNodeClick(params) {
       // 检查是否有节点ID
       if (params.data && params.data.id) {
         const nodeId = params.data.id
 
+        // 如果是多选模式
+        if (this.isMultiSelectMode) {
+          this.handleMultiSelectNode(params)
+          return
+        }
+
+        // 单选模式的原有逻辑
         // 检查是否是真实数据（带有code和api属性）
         if (params.data.code) {
           // 真实数据处理
@@ -702,6 +1081,68 @@ class {{apiName}}({{input}}):
         }
       }
     },
+
+    // 处理多选节点
+    handleMultiSelectNode(params) {
+      const nodeId = params.data.id
+      const nodeName = params.data.name
+
+      // 从原始数据中查找节点详细信息
+      const nodeDetail = this.programJson.nodes.find(n => n.id === nodeId)
+      if (!nodeDetail) {
+        this.$message.warning('无法找到节点详细信息')
+        return
+      }
+
+      // 检查节点是否已被选择
+      const existingIndex = this.selectedNodes.findIndex(node => node.id === nodeId)
+
+      if (existingIndex >= 0) {
+        // 如果已选择，则取消选择
+        this.selectedNodes.splice(existingIndex, 1)
+
+        // 重置节点样式
+        if (this.options && this.options.series && this.options.series[0]) {
+          const nodeData = this.options.series[0].data.find(node => node.id === nodeId)
+          if (nodeData) {
+            nodeData.itemStyle = {
+              color: '#5470c6'
+            }
+          }
+        }
+
+        this.$message.info(`已取消选择节点: ${nodeName}`)
+      } else {
+        // 如果未选择，则添加到选择列表
+        this.selectedNodes.push({
+          id: nodeId,
+          name: nodeName,
+          apiName: nodeDetail.label,
+          input: nodeDetail.input,
+          output: nodeDetail.output,
+          environment: nodeDetail.environment,
+          process: nodeDetail.process,
+          apiType: nodeDetail.apiType,
+          methodType: nodeDetail.methodType,
+          description: `${nodeDetail.label} - ${nodeDetail.input} -> ${nodeDetail.output}`
+        })
+
+        // 高亮选中的节点
+        if (this.options && this.options.series && this.options.series[0]) {
+          const nodeData = this.options.series[0].data.find(node => node.id === nodeId)
+          if (nodeData) {
+            nodeData.itemStyle = {
+              color: '#52c41a'
+            }
+          }
+        }
+
+        this.$message.success(`已选择节点: ${nodeName}`)
+      }
+
+      // 触发图表更新
+      this.options = { ...this.options }
+    },
     // 更新左端代码
     updateCode() {
       const { serviceName, environment, process, input, output, apiName, methodType } = this.form
@@ -718,7 +1159,11 @@ class {{apiName}}({{input}}):
     },
     // 上传微服务
     async uploadService() {
-      if (!this.form.serviceName || !this.form.apiName) {
+      if (!this.form.serviceName) {
+        this.$message.error('请填写微服务名称！')
+        return
+      }
+      if (this.submitType === 'algorithm' && !this.form.apiName) {
         this.$message.error('请填写必要的服务信息！')
         return
       }
@@ -729,7 +1174,13 @@ class {{apiName}}({{input}}):
       }
 
       this.uploadServiceLoading = true
+
       try {
+        // 如果有缓存的文件，先进行服务封装
+        if (this.cachedFile) {
+          await this.realServicePackageAgent(this.cachedFile)
+        }
+
         const data = {
           name: this.form.serviceName,
           attribute: this.programInfo.attribute,
@@ -820,8 +1271,140 @@ class {{apiName}}({{input}}):
       this.configFiles = []
       this.uploadFiles = []
       this.uploadConfigFiles = []
+      this.cachedFile = null
       this.code = ''
       this.options = null
+    },
+    handleSubmitTypeChange() {
+      this.resetForm()
+      this.cancelMultiSelect()
+    },
+    enableMultiSelect() {
+      this.isMultiSelectMode = true
+      this.selectedNodes = []
+      this.$message.info('已进入多选模式，点击节点进行选择')
+    },
+    cancelMultiSelect() {
+      this.isMultiSelectMode = false
+      this.selectedNodes = []
+      // 重置图表节点样式
+      this.resetNodeStyles()
+    },
+    resetNodeStyles() {
+      if (this.options && this.options.series && this.options.series[0]) {
+        const series = this.options.series[0]
+        if (series.data) {
+          series.data.forEach(node => {
+            node.itemStyle = {
+              color: '#5470c6'
+            }
+          })
+          // 触发图表更新
+          this.options = { ...this.options }
+        }
+      }
+    },
+    packageSelectedNodes() {
+      if (this.selectedNodes.length === 0) {
+        this.$message.warning('请先选择要封装的节点')
+        return
+      }
+
+      // 重置表单
+      this.packageForm = {
+        serviceName: `sse_service_${Date.now()}`,
+        description: `封装了${this.selectedNodes.length}个算法节点的SSE服务`,
+        pushInterval: 1000,
+        maxConnections: 100
+      }
+
+      this.showPackageModal = true
+    },
+    // 确认封装SSE服务
+    async confirmPackage() {
+      if (!this.packageForm.serviceName) {
+        this.$message.error('请输入服务名称')
+        return
+      }
+
+      this.packageLoading = true
+      try {
+        // 构建SSE服务配置
+        const sseServiceConfig = {
+          serviceName: this.packageForm.serviceName,
+          description: this.packageForm.description,
+          type: 'sse',
+          domain: this.verticalType,
+          industry: this.programInfo.industry,
+          scenario: this.programInfo.scenario,
+          technology: this.programInfo.technology,
+          nodes: this.selectedNodes.map(node => ({
+            id: node.id,
+            name: node.name,
+            apiName: node.apiName || node.name,
+            input: node.input,
+            output: node.output,
+            environment: node.environment,
+            process: node.process
+          })),
+          sseConfig: {
+            pushInterval: this.packageForm.pushInterval,
+            maxConnections: this.packageForm.maxConnections,
+            endpoint: `/sse/${this.packageForm.serviceName}`
+          },
+          status: 'packaging'
+        }
+
+        // 调用API创建SSE服务
+        const response = await createService(sseServiceConfig)
+
+        if (response && response.status === 'success') {
+          this.$message.success('SSE服务封装成功！正在部署中...')
+          this.showPackageModal = false
+          this.cancelMultiSelect()
+
+          // 可以在这里添加跳转到服务管理页面的逻辑
+          // this.$router.push('/service/management')
+        } else {
+          this.$message.error(response?.message || 'SSE服务封装失败')
+        }
+      } catch (error) {
+        console.error('封装SSE服务失败:', error)
+        this.$message.error('封装过程出现异常，请稍后重试')
+      } finally {
+        this.packageLoading = false
+      }
+    },
+    cancelPackage() {
+      this.showPackageModal = false
+      this.packageForm = {
+        serviceName: '',
+        description: '',
+        pushInterval: 1000,
+        maxConnections: 100
+      }
+    },
+    removeSelectedNode(nodeId) {
+      this.selectedNodes = this.selectedNodes.filter(node => node.id !== nodeId)
+
+      // 更新图表中对应节点的样式
+      if (this.options && this.options.series && this.options.series[0]) {
+        const series = this.options.series[0]
+        if (series.data) {
+          const nodeData = series.data.find(node => node.id === nodeId)
+          if (nodeData) {
+            nodeData.itemStyle = {
+              color: '#5470c6'
+            }
+          }
+          // 触发图表更新
+          this.options = { ...this.options }
+        }
+      }
+
+      if (this.selectedNodes.length === 0) {
+        this.$message.info('已清空选择，可以重新选择节点')
+      }
     }
   },
   watch: {

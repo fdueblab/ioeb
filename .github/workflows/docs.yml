@@ -1,0 +1,76 @@
+# docs分支负责文档部署
+name: Deploy docs to Server
+
+on:
+  push:
+    branches:
+      - docs
+
+jobs:
+  # 文档构建和推送镜像
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # 获取完整的git历史，用于lastUpdated功能
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push docs Docker image
+        run: |
+          docker build -f docs/Dockerfile -t polarsnowleopard/ioeb-docs:latest .
+          docker push polarsnowleopard/ioeb-docs:latest
+
+  # 部署到服务器 (依赖所有构建任务完成)
+  deploy:
+    needs: [build-docs]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          DOMAIN: ${{ secrets.DOMAIN }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+
+          # 创建部署目录
+          ssh ubuntu@$SERVER_IP "mkdir -p ~/ioeb"
+
+          # 拷贝配置文件到服务器
+          scp docker-compose.yml ubuntu@$SERVER_IP:~/ioeb/
+          # scp nginx.conf ubuntu@$SERVER_IP:~/ioeb/
+          scp -r api ubuntu@$SERVER_IP:~/ioeb/
+
+          # 确保数据目录存在
+          ssh ubuntu@$SERVER_IP << EOF
+            mkdir -p ~/ioeb/api/Project_1/checkpoint
+            mkdir -p ~/ioeb/api/Project_2/checkpoint
+            mkdir -p ~/ioeb/api/Project-3/data
+            mkdir -p ~/ioeb/api/Project-4/eval_config
+            mkdir -p ~/ioeb/api/Project-4/eval_result
+            mkdir -p ~/ioeb/api/Project-4/graph_dataset
+
+            cd ~/ioeb
+            
+            # 拉取最新镜像
+            sudo docker-compose pull docs
+
+            # 停止并移除现有容器
+            sudo docker-compose down || true
+
+            # 启动所有服务
+            sudo docker-compose up -d
+          EOF

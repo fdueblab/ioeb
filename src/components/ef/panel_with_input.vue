@@ -11,10 +11,10 @@
           <el-button type="text" icon="el-icon-download" size="large" @click="downloadData"></el-button>
           <el-button plain round @click="buildMetaApp" icon="el-icon-s-grid" type="success" size="large">构建为元应用</el-button>
           <div style="float: right;margin-right: 5px">
-            <el-button plain round icon="el-icon-document" @click="dataInfo" size="mini">流程数据</el-button>
-            <el-button plain round @click="dataReloadClear" icon="el-icon-refresh" size="mini">清空工作流</el-button>
+            <el-button plain round icon="el-icon-document" @click="dataInfo" size="mini">智能体数据</el-button>
+            <el-button plain round @click="dataReloadClear" icon="el-icon-refresh" size="mini">重置元应用</el-button>
             <!--  <el-button plain round @click="test" icon="el-icon-connection" size="mini">{{ this.isTesting ? '停止测试' : '测试连接' }}</el-button>-->
-            <el-button plain round @click="addServices" icon="el-icon-plus" size="mini">添加微服务</el-button>
+            <el-button plain round @click="addServices" icon="el-icon-plus" size="mini">添加工具</el-button>
           </div>
         </div>
       </el-col>
@@ -123,7 +123,7 @@ export default {
       loadEasyFlowFinish: false,
       services: [],
       data: {
-        name: '新工作流',
+        name: '新元应用',
         preName: '元应用名称',
         preInputName: '输入内容',
         preOutputName: '输出内容',
@@ -498,7 +498,7 @@ export default {
     dataReload(data) {
       this.easyFlowVisible = false
       this.data = {
-        name: '新工作流',
+        name: '新元应用',
         preName: '元应用名称',
         preInputName: '输入内容',
         preOutputName: '输出内容',

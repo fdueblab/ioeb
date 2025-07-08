@@ -1,3 +1,4 @@
+# 主分支只负责部署前端
 name: Deploy to Server
 
 on:

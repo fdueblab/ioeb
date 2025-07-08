@@ -7,6 +7,7 @@ import os
 from core import query_nl2gql, query_and_generate_report
 import uuid
 from datetime import datetime
+import random
 
 # 配置日志
 def setup_logging():
@@ -70,6 +71,14 @@ query_parser.add_argument('query',
                          required=True,
                          help='查询语句')
 
+# 定义报告生成参数模型
+report_parser = api.parser()
+report_parser.add_argument('node_id',
+                           type=int,
+                           location='args',
+                           required=True,
+                           help='节点编号')
+
 def generate_unique_filename() -> str:
     """生成唯一的文件名。
 
@@ -127,7 +136,7 @@ class NL2GQL(Resource):
 
 @ns.route('/generate-report')
 class GenerateReport(Resource):
-    @ns.expect(query_parser)
+    @ns.expect(report_parser)
     @ns.doc(responses={
         200: 'Success',
         400: 'Validation Error',
@@ -135,54 +144,35 @@ class GenerateReport(Resource):
     })
     def get(self):
         """
-        生成金融风险报告PDF文档并返回文件
+        根据节点编号生成并返回Word文档报告
         """
-        output_path = None
         try:
-            query = request.args.get('query')
-            if not query:
-                logger.error("未提供query参数")
-                return {'error': '请提供query参数'}, 400
+            node_id = request.args.get('node_id', type=int)
+            if node_id is None:
+                logger.error("未提供node_id参数")
+                return {'error': '请提供node_id参数'}, 400
             
-            logger.info(f"开始生成报告，查询: {query}")
+            logger.info(f"开始为节点 {node_id} 生成报告")
             
-            # 生成唯一的文件名
-            filename = generate_unique_filename()
-            output_path = os.path.join('output', filename)
-            logger.debug(f"输出文件路径: {output_path}")
+            # 报告模板路径
+            # 根据node_id在static文件夹下选一个docx文件
+            docx_list = [file for file in os.listdir('static') if file.endswith('.docx')]
+            report_path = os.path.join('static', docx_list[node_id % len(docx_list)])
             
-            # 生成报告
-            success = query_and_generate_report(query, output_path)
+            if not os.path.exists(report_path):
+                logger.error(f"报告模板文件未找到: {report_path}")
+                return {'error': '报告模板文件未找到'}, 500
             
-            if not success:
-                logger.error("报告生成失败")
-                return {'error': '报告生成失败'}, 500
+            logger.info(f"成功找到报告模板: {report_path}")
             
-            # 检查文件是否存在
-            if not os.path.exists(output_path):
-                logger.error(f"报告文件未生成: {output_path}")
-                return {'error': '报告文件未生成'}, 500
-            
-            logger.info(f"报告生成成功: {output_path}")
-            
-            # 使用try-finally确保文件会被清理
-            try:
-                return send_file(
-                    output_path,
-                    mimetype='application/pdf',
-                    as_attachment=True,
-                    download_name='financial_report.pdf'
-                )
-            finally:
-                # 在发送文件后清理
-                cleanup_file(output_path)
-                logger.debug(f"清理临时文件: {output_path}")
+            return send_file(
+                report_path,
+                mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                as_attachment=True,
+                download_name=f'风险报告_{node_id}.docx'
+            )
             
         except Exception as e:
-            # 如果过程中出错，也要清理文件
-            if output_path:
-                cleanup_file(output_path)
-                logger.debug(f"清理临时文件: {output_path}")
             logger.exception(f"生成报告时发生错误: {str(e)}")
             return {'error': f"处理过程出错: {str(e)}"}, 500
 
@@ -199,6 +189,7 @@ class Health(Resource):
 if __name__ == '__main__':
     # 确保输出目录存在
     os.makedirs('output', exist_ok=True)
+    os.makedirs('static', exist_ok=True)
     logger.info("服务启动中...")
     
     # 启动时清理output目录中的所有PDF文件
