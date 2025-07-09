@@ -39,3 +39,67 @@ export function createUser(userData) {
     data: userData
   })
 }
+
+/**
+ * 更新用户信息
+ * @param {string} userId 用户ID（UUID字符串）
+ * @param {Object} userData 更新的用户数据
+ * @param {string} userData.username 用户名
+ * @param {string} userData.name 用户姓名
+ * @param {string} userData.avatar 头像路径
+ * @param {string} userData.telephone 电话号码
+ * @param {string} userData.merchantCode 商户代码
+ * @param {string} userData.roleId 角色ID
+ * @returns {Promise} 返回更新后的用户信息
+ */
+export function updateUser(userId, userData) {
+  return request({
+    url: `${API_BASE_URL}/users/${userId}/update`,
+    method: 'post',
+    data: userData
+  })
+}
+
+/**
+ * 删除用户（逻辑删除）
+ * @param {string} userId 用户ID（UUID字符串）
+ * @returns {Promise} 返回删除结果
+ */
+export function deleteUser(userId) {
+  return request({
+    url: `${API_BASE_URL}/users/${userId}/delete`,
+    method: 'get'
+  })
+}
+
+/**
+ * 更新用户状态
+ * @param {string} userId 用户ID（UUID字符串）
+ * @param {number} status 用户状态（1-正常，0-禁用）
+ * @returns {Promise} 返回更新结果
+ */
+export function updateUserStatus(userId, status) {
+  return request({
+    url: `${API_BASE_URL}/users/${userId}/status`,
+    method: 'get',
+    params: { status }
+  })
+}
+
+/**
+ * 启用用户
+ * @param {string} userId 用户ID（UUID字符串）
+ * @returns {Promise} 返回更新结果
+ */
+export function enableUser(userId) {
+  return updateUserStatus(userId, 1)
+}
+
+/**
+ * 禁用用户
+ * @param {string} userId 用户ID（UUID字符串）
+ * @returns {Promise} 返回更新结果
+ */
+export function disableUser(userId) {
+  return updateUserStatus(userId, 0)
+}

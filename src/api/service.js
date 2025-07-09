@@ -94,8 +94,32 @@ export function updateService(serviceId, serviceData) {
  */
 export function deleteService(serviceId) {
   return request({
-    url: `${API_BASE_URL}/services/${serviceId}`,
-    method: 'delete'
+    url: `${API_BASE_URL}/services/${serviceId}/delete`,
+    method: 'get'
+  })
+}
+
+/**
+ * 部署微服务
+ * @param {string} serviceId 服务ID
+ * @returns {Promise} 返回部署结果
+ */
+export function deployService(serviceId) {
+  return request({
+    url: `${API_BASE_URL}/services/${serviceId}/deploy`,
+    method: 'get'
+  })
+}
+
+/**
+ * 停止微服务
+ * @param {string} serviceId 服务ID
+ * @returns {Promise} 返回停止结果
+ */
+export function stopService(serviceId) {
+  return request({
+    url: `${API_BASE_URL}/services/${serviceId}/stop`,
+    method: 'get'
   })
 }
 

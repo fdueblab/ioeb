@@ -32,21 +32,12 @@
       <div class="table-operator">
         <a-button type="primary" icon="plus" @click="handleAdd">新建</a-button>
         <a-button style="margin-left: 20px" icon="sync" @click="handleRefresh" :loading="isRefreshing">更新</a-button>
-        <a-dropdown v-action:edit v-if="selectedRowKeys.length > 0">
-          <a-menu slot="overlay">
-            <a-menu-item key="1" @click="handleBatchDelete"><a-icon type="delete" />批量删除</a-menu-item>
-            <a-menu-item key="2" @click="handleBatchStop"><a-icon type="pause-circle" />批量停止</a-menu-item>
-            <a-menu-item key="3" @click="handleBatchDeploy"><a-icon type="caret-right" />批量部署</a-menu-item>
-          </a-menu>
-          <a-button style="margin-left: 20px"> 批量操作 <a-icon type="down" /> </a-button>
-        </a-dropdown>
       </div>
 
       <a-table
         ref="table"
         :columns="columns"
         :dataSource="filteredDataSource"
-        :row-selection="rowSelection"
         :loading="dataLoading"
       >
         <span slot="serial" slot-scope="text, record, index">
@@ -72,7 +63,7 @@
 </template>
 
 <script>
-import { getServicesByVerticalType, filterServices } from '@/api/service'
+import { getServicesByVerticalType, filterServices, deployService, stopService, deleteService } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
 
 export default {
@@ -139,9 +130,7 @@ export default {
         }
       ],
       dataSource: [],
-      filteredDataSource: [],
-      selectedRowKeys: [],
-      selectedRows: []
+      filteredDataSource: []
     }
   },
   created() {
@@ -159,14 +148,6 @@ export default {
         }
       },
       immediate: false
-    }
-  },
-  computed: {
-    rowSelection() {
-      return {
-        selectedRowKeys: this.selectedRowKeys,
-        onChange: this.onSelectChange
-      }
     }
   },
   methods: {
@@ -291,61 +272,62 @@ export default {
         this.handleSearch()
       }
     },
-    // 选择行
-    onSelectChange(selectedRowKeys, selectedRows) {
-      this.selectedRowKeys = selectedRowKeys
-      this.selectedRows = selectedRows
-    },
-    // todo: 调用API
     // 启动
     handleDeploy(record) {
-      record.status = 'deploying'
-      this.$message.success(`正在部署 ${record.name}`)
+      this.$confirm('确认部署', `确定要部署服务 ${record.name} 吗？`, {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'success',
+        closeOnClickModal: false
+      }).then(async () => {
+        try {
+          await deployService(record.id)
+          this.$message.success(`服务 ${record.name} 部署成功！`)
+          // 重新加载数据
+          this.initData()
+        } catch (error) {
+          console.error('部署服务出错:', error)
+          this.$message.error('部署服务失败，请重试')
+        }
+      })
     },
     // 停止
     handleStop(record) {
-      record.status = 'not_deployed'
-      this.$message.success(`${record.name} 已停止`)
-    },
-    // 通过测评
-    handleAccept(record) {
-      record.status = 'released'
-      this.$message.success(`${record.name} 全部测评已通过`)
-    },
-    // 取消部署
-    handleCancelDeploy(record) {
-      record.status = 'not_deployed'
-      this.$message.success(`取消部署 ${record.name}`)
+      this.$confirm('确认停止', `确定要停止服务 ${record.name} 吗？`, {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        closeOnClickModal: false
+      }).then(async () => {
+        try {
+          await stopService(record.id)
+          this.$message.success(`服务 ${record.name} 停止成功！`)
+          // 重新加载数据
+          this.initData()
+        } catch (error) {
+          console.error('停止服务出错:', error)
+          this.$message.error('停止服务失败，请重试')
+        }
+      })
     },
     // 删除
     handleDelete(record) {
-      this.dataSource = this.dataSource.filter((item) => item.id !== record.id)
-      this.filteredDataSource = this.dataSource
-      this.selectedRowKeys = []
-      this.selectedRows = []
-      this.$message.success(`${record.name} 已删除`)
-    },
-    // 批量部署
-    handleBatchDeploy() {
-      this.selectedRows.forEach((row) => {
-        row.status = 'deploying'
+      this.$confirm('确认删除', `确定要删除服务 ${record.name} 吗？`, {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'error',
+        closeOnClickModal: false
+      }).then(async () => {
+        try {
+          await deleteService(record.id)
+          this.$message.success(`服务 ${record.name} 删除成功！`)
+          // 重新加载数据
+          this.initData()
+        } catch (error) {
+          console.error('删除服务出错:', error)
+          this.$message.error('删除服务失败，请重试')
+        }
       })
-      this.$message.success('开始批量部署')
-    },
-    // 批量停止
-    handleBatchStop() {
-      this.selectedRows.forEach((row) => {
-        row.status = 'not_deployed'
-      })
-      this.$message.success('批量停止成功')
-    },
-    // 批量删除
-    handleBatchDelete() {
-      this.dataSource = this.dataSource.filter((item) => !this.selectedRowKeys.includes(item.id))
-      this.filteredDataSource = this.dataSource
-      this.selectedRowKeys = []
-      this.selectedRows = []
-      this.$message.success('批量删除成功')
     }
   }
 }
