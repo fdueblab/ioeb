@@ -1178,9 +1178,9 @@ class {{apiName}}({{input}}):
 
       try {
         // 如果有缓存的文件，先进行服务封装
-        if (this.cachedFile) {
-          await this.realServicePackageAgent(this.cachedFile)
-        }
+        // if (this.cachedFile) {
+        //   await this.realServicePackageAgent(this.cachedFile)
+        // }
 
         const data = {
           name: this.form.serviceName,
