@@ -7,6 +7,7 @@ import os
 from core import query_nl2gql, query_and_generate_report
 import uuid
 from datetime import datetime
+import random
 
 # 配置日志
 def setup_logging():
@@ -153,8 +154,10 @@ class GenerateReport(Resource):
             
             logger.info(f"开始为节点 {node_id} 生成报告")
             
-            # 报告模板路径 - 假设在static文件夹下名为report_demo.docx
-            report_path = os.path.join('static', 'report_demo.docx')
+            # 报告模板路径
+            # 根据node_id在static文件夹下选一个docx文件
+            docx_list = [file for file in os.listdir('static') if file.endswith('.docx')]
+            report_path = os.path.join('static', docx_list[node_id % len(docx_list)])
             
             if not os.path.exists(report_path):
                 logger.error(f"报告模板文件未找到: {report_path}")
@@ -166,7 +169,7 @@ class GenerateReport(Resource):
                 report_path,
                 mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 as_attachment=True,
-                download_name=f'report_node_{node_id}.docx'
+                download_name=f'风险报告_{node_id}.docx'
             )
             
         except Exception as e:
