@@ -1,4 +1,4 @@
-import { UserLayout, BasicLayout, BlankLayout, PageView } from '@/layouts'
+import { UserLayout, BasicLayout, BlankLayout, AppView } from '@/layouts'
 // import { bxAnaalyse } from '@/core/icons'
 import { loadDict } from '@/utils/dictionaryCache'
 
