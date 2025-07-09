@@ -27,7 +27,7 @@
             <a-col :span="12">
               <a-form-item label="资源状态">
                 <a-select
-                  :disabled="!isAdmin"
+                  :disabled="true"
                   v-decorator="[
                     'status',
                     {
@@ -134,7 +134,7 @@
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="调用次数">
+              <a-form-item label="调用次数" :disabled="!isAdmin">
                 <a-input-number
                   v-decorator="[
                     'number',
