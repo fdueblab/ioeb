@@ -64,8 +64,7 @@
 </template>
 
 <script>
-import { ArticleListContent, Ellipsis, StandardFormRow, TagSelect } from '@/components'
-import { getAllUsers } from '@/api/users'
+import { getAllUsers, enableUser, disableUser, deleteUser } from '@/api/users'
 
 const statusMap = {
   0: {
@@ -80,12 +79,6 @@ const statusMap = {
 
 export default {
   name: 'TableList',
-  components: {
-    Ellipsis,
-    TagSelect,
-    StandardFormRow,
-    ArticleListContent
-  },
   data () {
     return {
       // create model
@@ -237,19 +230,16 @@ export default {
         cancelButtonText: '取消',
         type: 'success',
         closeOnClickModal: false
-      }).then(() => {
-        // 前端假逻辑：更新本地数据状态
-        const index = this.dataSource.findIndex(item => item.id === record.id)
-        if (index !== -1) {
-          this.dataSource[index].status = 1
-          this.$forceUpdate() // 强制更新视图
+      }).then(async () => {
+        try {
+          await enableUser(record.id)
+          this.$message.success(`用户 ${record.name} 激活成功！`)
+          // 重新加载数据
+          this.loadUserData()
+        } catch (error) {
+          console.error('激活用户出错:', error)
+          this.$message.error('激活用户失败，请重试')
         }
-        // 同时更新原始数据
-        const originalIndex = this.originalData.findIndex(item => item.id === record.id)
-        if (originalIndex !== -1) {
-          this.originalData[originalIndex].status = 1
-        }
-        this.$message.success(`用户 ${record.name} 激活成功！`)
       })
     },
     // 禁用用户
@@ -259,19 +249,16 @@ export default {
         cancelButtonText: '取消',
         type: 'warning',
         closeOnClickModal: false
-      }).then(() => {
-        // 前端假逻辑：更新本地数据状态
-        const index = this.dataSource.findIndex(item => item.id === record.id)
-        if (index !== -1) {
-          this.dataSource[index].status = 0
-          this.$forceUpdate() // 强制更新视图
+      }).then(async () => {
+        try {
+          await disableUser(record.id)
+          this.$message.success(`用户 ${record.name} 禁用成功！`)
+          // 重新加载数据
+          await this.loadUserData()
+        } catch (error) {
+          console.error('禁用用户出错:', error)
+          this.$message.error('禁用用户失败，请重试')
         }
-        // 同时更新原始数据
-        const originalIndex = this.originalData.findIndex(item => item.id === record.id)
-        if (originalIndex !== -1) {
-          this.originalData[originalIndex].status = 0
-        }
-        this.$message.success(`用户 ${record.name} 禁用成功！`)
       })
     },
     // 删除用户
@@ -281,12 +268,16 @@ export default {
         cancelButtonText: '取消',
         type: 'error',
         closeOnClickModal: false
-      }).then(() => {
-        // 前端假逻辑：从本地数据中移除
-        this.dataSource = this.dataSource.filter(item => item.id !== record.id)
-        this.originalData = this.originalData.filter(item => item.id !== record.id)
-        this.pagination.total = this.dataSource.length
-        this.$message.success(`用户 ${record.name} 删除成功！`)
+      }).then(async () => {
+        try {
+          await deleteUser(record.id)
+          this.$message.success(`用户 ${record.name} 删除成功！`)
+          // 重新加载数据
+          await this.loadUserData()
+        } catch (error) {
+          console.error('删除用户出错:', error)
+          this.$message.error('删除用户失败，请重试')
+        }
       })
     },
     handleCancel () {
