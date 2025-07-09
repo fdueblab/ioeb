@@ -935,7 +935,7 @@ export const asyncRouterMap = [
           title: '报告生成',
           keepAlive: true,
           icon: 'bar-chart',
-          permission: ['admin', 'publisher', 'user'],
+          permission: ['admin'],
           target: '_blank'
         }
         // component: () => import('@/views/dashboard/Analysis')
@@ -949,7 +949,7 @@ export const asyncRouterMap = [
           title: '图数据库',
           keepAlive: true,
           icon: 'bar-chart',
-          permission: ['admin', 'publisher', 'user'],
+          permission: ['admin'],
           target: '_blank'
         }
         // component: () => import('@/views/dashboard/Analysis')
@@ -961,7 +961,7 @@ export const asyncRouterMap = [
           title: '模型评估',
           keepAlive: true,
           icon: 'experiment',
-          permission: ['admin', 'publisher', 'user'],
+          permission: ['admin'],
           target: '_blank'
         }
         // component: () => import('@/views/dashboard/Analysis')
