@@ -87,7 +87,7 @@
 </template>
 
 <script>
-import { getMetaAppNodes } from '@/mock/data/meta_apps_data'
+import { getMetaAppNodes, generateMockSteps } from '@/mock/data/meta_apps_data'
 import { ChatMessageManager } from './chat_messages'
 import { streamAgent } from '@/utils/request'
 import { generateServiceNodes } from './utils'
@@ -184,7 +184,11 @@ export default {
 
       // 根据领域类型选择数据源
       if (this.verticalType === 'aml') {
-        this.callAgentForRecommendation(input)
+        if (input.includes('课题')) {
+          this.useFakeData(input)
+        } else {
+          this.callAgentForRecommendation(input)
+        }
       } else {
         this.useFakeData(input)
       }
@@ -335,13 +339,7 @@ export default {
         }
       }
     },
-    // 完成思考过程，延时收起
-    finishThinking() {
-      return new Promise((resolve) => {
-        // 不再需要延时，直接resolve
-        resolve()
-      })
-    },
+
     // 调用智能体获取推荐服务
     callAgentForRecommendation(input) {
       const formData = new FormData()
@@ -361,21 +359,17 @@ export default {
         },
         onError: (error) => {
           console.error('智能体推荐失败:', error)
-          this.finishThinking().then(() => {
-            this.$emit('stop-loading') // 停止loading状态
-            const outputMessage = this.messageManager.getErrorReply()
-            this.agentTypeWriter(outputMessage)
-            this.isInputEnabled = true
-          })
+          this.$emit('stop-loading') // 停止loading状态
+          const outputMessage = this.messageManager.getErrorReply()
+          this.agentTypeWriter(outputMessage)
+          this.isInputEnabled = true
         },
         onWarning: (warning) => {
           console.warn('智能体推荐警告:', warning)
-          this.finishThinking().then(() => {
-            this.$emit('stop-loading') // 停止loading状态
-            const outputMessage = this.messageManager.getErrorReply()
-            this.agentTypeWriter(outputMessage)
-            this.isInputEnabled = true
-          })
+          this.$emit('stop-loading') // 停止loading状态
+          const outputMessage = this.messageManager.getErrorReply()
+          this.agentTypeWriter(outputMessage)
+          this.isInputEnabled = true
         },
         onFinalResult: (results) => {
           console.log('智能体推荐结果:', results)
@@ -389,76 +383,104 @@ export default {
         },
         onDataProcessError: (error) => {
           console.error('智能体数据处理错误:', error)
-          this.finishThinking().then(() => {
-            this.$emit('stop-loading') // 停止loading状态
-            const outputMessage = this.messageManager.getErrorReply()
-            this.agentTypeWriter(outputMessage)
-            this.isInputEnabled = true
-          })
+          this.$emit('stop-loading') // 停止loading状态
+          const outputMessage = this.messageManager.getErrorReply()
+          this.agentTypeWriter(outputMessage)
+          this.isInputEnabled = true
         }
       })
     },
     // 处理智能体返回的数据
     handleAgentResponse(results) {
       try {
-        // 完成思考过程并等待延时结束
-        this.finishThinking().then(() => {
+        // eslint-disable-next-line camelcase
+        const { recommendation_result } = results
+        // 检查返回数据格式
+        if (recommendation_result.success) {
           // eslint-disable-next-line camelcase
-          const { recommendation_result } = results
-          // 检查返回数据格式
-          if (recommendation_result.success) {
-            // eslint-disable-next-line camelcase
-            const { result } = recommendation_result
-            // 转换数据格式以适配现有系统
-            const flowData = {
-              preName: result.preName,
-              preInputName: result.preInputName,
-              preOutputName: result.preOutputName,
-              nodeList: result.nodeList
-            }
-            // 生成服务节点和选中服务列表
-            const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
-            // 生成成功回复消息
-            const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
-            // 向父组件发送数据
-            this.$emit('update-services', serviceNodes)
-            this.$emit('update-flow', flowData)
-            this.placeholder = '已智能生成元应用'
-            this.isGenerated = true
-            // 使用agentTypeWriter在智能体消息中显示结果
-            this.agentTypeWriter(outputMessage)
-          } else {
-            this.$emit('stop-loading') // 停止loading状态
-            const outputMessage = this.messageManager.getErrorReply()
-            this.agentTypeWriter(outputMessage)
-            this.isInputEnabled = true
+          const { result } = recommendation_result
+          // 转换数据格式以适配现有系统
+          const flowData = {
+            preName: result.preName,
+            preInputName: result.preInputName,
+            preOutputName: result.preOutputName,
+            nodeList: result.nodeList
           }
-        })
-      } catch (error) {
-        console.error('处理智能体返回数据失败:', error)
-        this.finishThinking().then(() => {
+          // 生成服务节点和选中服务列表
+          const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
+          // 生成成功回复消息
+          const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
+          // 向父组件发送数据
+          this.$emit('update-services', serviceNodes)
+          this.$emit('update-flow', flowData)
+          this.placeholder = '已智能生成元应用'
+          this.isGenerated = true
+          // 使用agentTypeWriter在智能体消息中显示结果
+          this.agentTypeWriter(outputMessage)
+        } else {
           this.$emit('stop-loading') // 停止loading状态
-          const outputMessage = this.messageManager.getErrorReply(true)
+          const outputMessage = this.messageManager.getErrorReply()
           this.agentTypeWriter(outputMessage)
           this.isInputEnabled = true
-        })
+        }
+      } catch (error) {
+        console.error('处理智能体返回数据失败:', error)
+        this.$emit('stop-loading') // 停止loading状态
+        const outputMessage = this.messageManager.getErrorReply(true)
+        this.agentTypeWriter(outputMessage)
+        this.isInputEnabled = true
       }
     },
     // 使用假数据的逻辑
     useFakeData(input) {
+      // 开始模拟推理过程
+      this.fakeThinkingProcess(input)
+    },
+    // 模拟推理过程
+    fakeThinkingProcess(input) {
+      // 从meta_apps_data中获取模拟的推理步骤数据
+      const mockSteps = generateMockSteps(this.verticalType, input)
+      // 模拟步骤执行
+      let currentStepIndex = 0
+      const executeNextStep = () => {
+        if (currentStepIndex < mockSteps.length) {
+          const step = mockSteps[currentStepIndex]
+          // 模拟延迟
+          setTimeout(() => {
+            this.updateThinkingMessage(step.thought, step.step)
+            currentStepIndex++
+            // 继续下一步
+            executeNextStep()
+          }, 1000 + Math.random() * 1500) // 随机延迟1-2.5秒
+        } else {
+          this.handleMockFinalResult(input)
+        }
+      }
+      // 开始执行第一步
+      executeNextStep()
+    },
+
+    // 处理模拟的最终结果
+    handleMockFinalResult(input) {
+      // 标记任务结束并处理最后一步
+      this.isTaskFinishing = true
+      this.handleFinalStep()
+      // 获取原始数据并处理
       getMetaAppNodes(this.verticalType, input).then((flowData) => {
         // 使用utils中的方法生成服务节点
         const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
         const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
-        this.typeWriter(outputMessage)
+        // 向父组件发送数据
         this.$emit('update-services', serviceNodes)
         this.$emit('update-flow', flowData)
         this.placeholder = '已智能生成元应用'
         this.isGenerated = true
+        // 使用agentTypeWriter在智能体消息中显示结果
+        this.agentTypeWriter(outputMessage)
       }).catch(() => {
         this.$emit('stop-loading') // 停止loading状态
         const outputMessage = this.messageManager.getErrorReply()
-        this.typeWriter(outputMessage)
+        this.agentTypeWriter(outputMessage)
         this.isInputEnabled = true
       })
     },

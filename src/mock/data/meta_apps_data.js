@@ -614,6 +614,47 @@ const bidRiggingDetectionApp = {
 // 模拟数据获取相关的工具函数
 
 /**
+ * 生成模拟的推理步骤
+ * @param {string} serviceType - 服务类型
+ * @param {string} userInput - 用户输入
+ * @returns {Array} - 返回推理步骤数组
+ */
+export function generateMockSteps(serviceType, userInput) {
+  return [
+    {
+      step: 1,
+      thought: `MCP服务推荐Agent's thoughts: 我将帮助您根据用户需求推荐合适的MCP服务来构建相关应用。让我们按照任务步骤逐一执行。
+
+首先，我需要查询数据库获取所有符合条件的MCP服务信息。`
+    },
+    {
+      step: 2,
+      thought: `MCP服务推荐Agent's thoughts: 我已经完成了部分任务：
+
+1. 查询了数据库，获取了所有符合条件的MCP服务信息（服务类型为atomic_mcp，领域为${serviceType}，且未被删除）。
+
+2. 正在分析用户需求"${userInput}"，并从查询结果中寻找合适的服务进行推荐。
+
+3. 正在创建推荐结果，包含相关服务的详细信息以及它们各自的工具。`
+    },
+    {
+      step: 3,
+      thought: `MCP服务推荐Agent's thoughts: 我已经完成了所有任务：
+
+1. 查询了数据库，获取了所有符合条件的MCP服务信息（服务类型为atomic_mcp，领域为${serviceType}，且未被删除）。
+
+2. 分析了用户需求"${userInput}"，并从查询结果中找到了合适的服务进行推荐。
+
+3. 创建了推荐结果，包含了相关服务的详细信息，以及它们各自的工具。
+
+4. 将推荐结果按照指定的JSON格式保存到了 \`/app/workspace/temp/mcp_recommendation_result.json\` 文件中。
+
+所有任务都已完成，现在可以终止交互。`
+    }
+  ]
+}
+
+/**
  * 获取模拟的元应用数据
  * @param {string} serviceType - 服务类型
  * @param {string} userInput - 用户输入
@@ -621,62 +662,59 @@ const bidRiggingDetectionApp = {
  */
 export function getMetaAppNodes(serviceType, userInput) {
   return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      let flowData
-      // 对于金融领域，根据用户输入选择不同的应用
-      if (serviceType === 'aml') {
-        if (userInput.includes('课题三')) {
-          flowData = pj1pj4pj3App
-        } else if (userInput.includes('课题四')) {
-          flowData = pj4App
-        } else if (userInput.includes('课题一')) {
-          flowData = pj1App
-        } else if (userInput.includes('课题二')) {
-          flowData = pj2App
-        } else if (userInput.includes('课题一和课题三') || userInput.includes('综合')) {
-          flowData = pj1pj4pj3App
-        } else if (userInput.includes('欺诈')) {
-          flowData = fraudDetectionApp
-        } else if (userInput.includes('围标')) {
-          flowData = bidRiggingDetectionApp
-        } else {
-          reject(new Error('未找到对应的元应用'))
-          return
+    let flowData
+    // 对于金融领域，根据用户输入选择不同的应用
+    if (serviceType === 'aml') {
+      if (userInput.includes('课题三')) {
+        flowData = pj1pj4pj3App
+      } else if (userInput.includes('课题四')) {
+        flowData = pj4App
+      } else if (userInput.includes('课题一')) {
+        flowData = pj1App
+      } else if (userInput.includes('课题二')) {
+        flowData = pj2App
+      } else if (userInput.includes('课题一和课题三') || userInput.includes('综合')) {
+        flowData = pj1pj4pj3App
+      } else if (userInput.includes('欺诈')) {
+        flowData = fraudDetectionApp
+      } else if (userInput.includes('围标')) {
+        flowData = bidRiggingDetectionApp
+      } else {
+        reject(new Error('未找到对应的元应用'))
+        return
+      }
+    } else {
+      if (userInput.includes('应用') || userInput.includes('系统')) {
+        switch (serviceType) {
+          case 'aircraft':
+            flowData = aircraftApp
+            break
+          case 'health':
+            flowData = medicalDiagnosisApp
+            break
+          case 'agriculture':
+            flowData = agricultureApp
+            break
+          case 'evtol':
+            flowData = evtolApp
+            break
+          case 'ecommerce':
+            flowData = ecommerceApp
+            break
+          case 'homeAI':
+            flowData = homeAIApp
+            break
+          default:
+            reject(new Error('未找到对应的元应用'))
+            return
         }
       } else {
-        if (userInput.includes('应用') || userInput.includes('系统')) {
-          switch (serviceType) {
-            case 'aircraft':
-              flowData = aircraftApp
-              break
-            case 'health':
-              flowData = medicalDiagnosisApp
-              break
-            case 'agriculture':
-              flowData = agricultureApp
-              break
-            case 'evtol':
-              flowData = evtolApp
-              break
-            case 'ecommerce':
-              flowData = ecommerceApp
-              break
-            case 'homeAI':
-              flowData = homeAIApp
-              break
-            default:
-              reject(new Error('未找到对应的元应用'))
-              return
-          }
-        } else {
-          reject(new Error('未找到对应的元应用'))
-          return
-        }
+        reject(new Error('未找到对应的元应用'))
+        return
       }
-
-      if (flowData) {
-        resolve(flowData)
-      }
-    }, 2400)
+    }
+    if (flowData) {
+      resolve(flowData)
+    }
   })
 }
