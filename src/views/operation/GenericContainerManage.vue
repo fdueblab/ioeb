@@ -279,10 +279,10 @@ export default {
         cancelButtonText: '取消',
         type: 'success',
         closeOnClickModal: false
-      }).then(async () => {
+      }).then(() => {
         try {
-          await deployService(record.id)
-          this.$message.success(`服务 ${record.name} 部署成功！`)
+          deployService(record.id)
+          this.$message.info(`开始部署${record.name}服务...`)
           // 重新加载数据
           this.initData()
         } catch (error) {
@@ -303,7 +303,7 @@ export default {
           await stopService(record.id)
           this.$message.success(`服务 ${record.name} 停止成功！`)
           // 重新加载数据
-          this.initData()
+          await this.initData()
         } catch (error) {
           console.error('停止服务出错:', error)
           this.$message.error('停止服务失败，请重试')
@@ -322,7 +322,7 @@ export default {
           await deleteService(record.id)
           this.$message.success(`服务 ${record.name} 删除成功！`)
           // 重新加载数据
-          this.initData()
+          await this.initData()
         } catch (error) {
           console.error('删除服务出错:', error)
           this.$message.error('删除服务失败，请重试')

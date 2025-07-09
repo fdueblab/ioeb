@@ -254,7 +254,7 @@ export default {
           await disableUser(record.id)
           this.$message.success(`用户 ${record.name} 禁用成功！`)
           // 重新加载数据
-          this.loadUserData()
+          await this.loadUserData()
         } catch (error) {
           console.error('禁用用户出错:', error)
           this.$message.error('禁用用户失败，请重试')
@@ -273,7 +273,7 @@ export default {
           await deleteUser(record.id)
           this.$message.success(`用户 ${record.name} 删除成功！`)
           // 重新加载数据
-          this.loadUserData()
+          await this.loadUserData()
         } catch (error) {
           console.error('删除用户出错:', error)
           this.$message.error('删除用户失败，请重试')
