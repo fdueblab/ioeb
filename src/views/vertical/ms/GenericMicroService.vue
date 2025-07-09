@@ -721,7 +721,8 @@ class {{apiName}}({{input}}):
       this.cachedFile = file
 
       // 根据文件类型和垂直领域处理上传
-      if (fileExt === 'zip' || this.verticalType === 'aml') {
+      // 银联环境不使用Agent
+      if (process.env.VUE_APP_AGENT_BASE_URL === 'https://fdueblab.cn' && (fileExt === 'zip' || this.verticalType === 'aml')) {
         // 真实代码分析逻辑
         this.realCodeAnalysisAgent(file)
       } else {
