@@ -1,6 +1,6 @@
 <template>
   <div class="user-guide">
-    <h1>面向垂域应用的算法模型智能体平台</h1>
+    <h1>面向垂域应用的算法模型智能体中台</h1>
     <div>
       <ul>
         <li>
