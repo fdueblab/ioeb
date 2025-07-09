@@ -86,8 +86,8 @@ export default {
       // 媒体查询
       query: {},
       // 用户类型
-      title: '面向垂域应用',
-      subTitle: '的算法模型智能体平台',
+      title: '银联跨境支付监管系统',
+      subTitle: '算法模型智能体中台',
       // 是否手机模式
       isMobile: false
     }
