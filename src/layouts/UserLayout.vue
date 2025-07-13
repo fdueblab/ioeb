@@ -10,7 +10,7 @@
           <div class="header">
             <a href="/">
               <img src="../assets/fdu_logo_small.png" class="logo" alt="logo">
-              <span class="title">算法模型智能体中台</span>
+              <span class="title">跨境贸易支付监管系统技术中台</span>
             </a>
           </div>
           <div class="desc">
