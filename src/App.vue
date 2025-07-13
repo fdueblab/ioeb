@@ -24,7 +24,7 @@ export default {
         const pageTitle = i18nRender(title)
         const isAmlPage = this.$route.path.includes('/aml/')
         const isAmlSystemTitle = pageTitle.includes('跨境贸易支付监管系统')
-        
+
         // 如果是AML相关页面且标题包含"跨境贸易支付监管系统"，只显示页面标题
         if (isAmlPage && isAmlSystemTitle) {
           setDocumentTitle(pageTitle)

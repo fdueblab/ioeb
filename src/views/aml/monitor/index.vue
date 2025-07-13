@@ -72,20 +72,20 @@
             </div>
 
             <div class="nodes-container">
-                            <div 
-                v-for="(node, index) in computeNodes" 
+              <div
+                v-for="(node, index) in computeNodes"
                 :key="node.id"
                 :class="['compute-node-item', { 'local-node': node.isLocal, 'remote-node': !node.isLocal }]"
               >
-                                <div class="node-info">
+                <div class="node-info">
                   <div class="node-icon">
                     <a-icon type="desktop" style="font-size: 24px; color: #1890ff;" />
                   </div>
                   <div class="node-details">
                     <div class="node-name">
-                      <a-input 
-                        v-model="node.name" 
-                        size="small" 
+                      <a-input
+                        v-model="node.name"
+                        size="small"
                         style="width: 120px"
                         placeholder="节点名称"
                         :disabled="node.isLocal"
@@ -94,9 +94,9 @@
                     </div>
                     <div class="node-ip">
                       <span class="ip-label">IP:</span>
-                      <a-input 
-                        v-model="node.ip" 
-                        size="small" 
+                      <a-input
+                        v-model="node.ip"
+                        size="small"
                         style="width: 140px"
                         placeholder="192.168.1.1"
                         :disabled="node.isLocal"
@@ -106,9 +106,9 @@
                     <!-- 远程节点的数据源选择 -->
                     <div v-if="!node.isLocal" class="node-datasource">
                       <span class="datasource-label">数据源:</span>
-                      <a-select 
-                        v-model="node.dataSource" 
-                        size="small" 
+                      <a-select
+                        v-model="node.dataSource"
+                        size="small"
                         style="width: 160px"
                         @change="saveNodesConfig"
                       >
@@ -122,7 +122,7 @@
                     </div>
                   </div>
                 </div>
-                                <div class="node-actions">
+                <div class="node-actions">
                   <!-- 本地节点的状态标识 -->
                   <div v-if="node.isLocal" class="node-status">
                     <div class="status-indicator">
@@ -134,16 +134,16 @@
                       本地节点
                     </a-tag>
                   </div>
-                  
+
                   <!-- 远程节点的状态标识和连接测试 -->
                   <div v-if="!node.isLocal" class="node-status">
                     <div class="status-indicator">
                       <div :class="['status-dot', getStatusClass(node.status)]"></div>
                       <span class="status-text">{{ getStatusText(node.status) }}</span>
                     </div>
-                    <a-button 
-                      type="primary" 
-                      size="small" 
+                    <a-button
+                      type="primary"
+                      size="small"
                       :loading="node.status === 'connecting'"
                       @click="testNodeConnection(node)"
                       style="margin-left: 8px"
@@ -151,12 +151,12 @@
                       {{ node.status === 'connecting' ? '连接中...' : '测试连接' }}
                     </a-button>
                   </div>
-                  
+
                   <!-- 删除节点按钮 -->
                   <div v-if="selectedModel === 'multi' && computeNodes.length > 1 && !node.isLocal" class="delete-action">
-                    <a-button 
-                      type="link" 
-                      size="small" 
+                    <a-button
+                      type="link"
+                      size="small"
                       @click="removeComputeNode(index)"
                       style="color: #ff4d4f; margin-left: 8px"
                     >
@@ -1519,7 +1519,6 @@ export default {
         }).filter(num => num !== null)
 
         let newNodeNumber
-        let newNodeIp
 
         // 检查是否缺少节点1或节点2
         if (!existingNumbers.includes(1)) {
@@ -1533,9 +1532,9 @@ export default {
             newNodeNumber++
           }
         }
-        
+
         // 获取对应的IP地址
-        newNodeIp = this.getNodeIpAddress(newNodeNumber)
+        const newNodeIp = this.getNodeIpAddress(newNodeNumber)
 
         this.nodeCounter++
         const newNode = {
@@ -1547,19 +1546,19 @@ export default {
           status: 'disconnected'
         }
         this.computeNodes.push(newNode)
-        
+
         // 重新排序节点列表：本地节点在前，远程节点按编号排序
         this.computeNodes.sort((a, b) => {
           if (a.isLocal && !b.isLocal) return -1
           if (!a.isLocal && b.isLocal) return 1
           if (a.isLocal && b.isLocal) return 0
-          
+
           // 都是远程节点，按编号排序
           const aNumber = parseInt(a.name.match(/远程节点(\d+)/)?.[1]) || 0
           const bNumber = parseInt(b.name.match(/远程节点(\d+)/)?.[1]) || 0
           return aNumber - bNumber
         })
-        
+
         this.saveNodesConfig()
         this.$message.success(`成功添加${newNode.name}`)
       }
@@ -1571,19 +1570,19 @@ export default {
         const nodeToRemove = this.computeNodes[index]
         if (!nodeToRemove.isLocal) {
           this.computeNodes.splice(index, 1)
-          
+
           // 重新排序节点列表：本地节点在前，远程节点按编号排序
           this.computeNodes.sort((a, b) => {
             if (a.isLocal && !b.isLocal) return -1
             if (!a.isLocal && b.isLocal) return 1
             if (a.isLocal && b.isLocal) return 0
-            
+
             // 都是远程节点，按编号排序
             const aNumber = parseInt(a.name.match(/远程节点(\d+)/)?.[1]) || 0
             const bNumber = parseInt(b.name.match(/远程节点(\d+)/)?.[1]) || 0
             return aNumber - bNumber
           })
-          
+
           this.saveNodesConfig()
           this.$message.success(`成功删除${nodeToRemove.name}`)
         }
@@ -1601,20 +1600,20 @@ export default {
       // 节点1和节点2使用固定IP地址
       // 注意：如需修改节点1和节点2的IP地址，请在这里修改对应的值
       const fixedIps = {
-        1: '131.252.10.13',  // 远程节点1的固定IP地址
-        2: '131.252.10.14'   // 远程节点2的固定IP地址
+        1: '131.252.10.13', // 远程节点1的固定IP地址
+        2: '131.252.10.14' // 远程节点2的固定IP地址
       }
-      
+
       if (fixedIps[nodeNumber]) {
         return fixedIps[nodeNumber]
       }
-      
+
       // 其他节点（节点3及以上）随机生成IP地址（避免与现有IP冲突）
       let randomIp
       do {
         randomIp = `192.168.1.${Math.floor(Math.random() * 250) + 2}` // 2-251范围内随机生成
       } while (this.computeNodes.some(node => node.ip === randomIp))
-      
+
       return randomIp
     },
 
@@ -1655,14 +1654,14 @@ export default {
       try {
         // 模拟连接测试（实际项目中应该调用真实的API）
         await new Promise(resolve => setTimeout(resolve, 1500))
-        
+
         // 标准IPv4地址格式验证
         const ipRegex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/
         const match = node.ip.match(ipRegex)
         if (!match) {
           throw new Error('IP地址格式不正确，请输入有效的IPv4地址')
         }
-        
+
         // 验证每个数字段是否在有效范围内（0-255）
         const octets = match.slice(1, 5).map(octet => parseInt(octet))
         for (let i = 0; i < octets.length; i++) {
@@ -1670,7 +1669,7 @@ export default {
             throw new Error(`IP地址第${i + 1}段数字必须在0-255之间`)
           }
         }
-        
+
         // 验证不允许前导零（除了0本身）
         for (let i = 1; i < 5; i++) {
           if (match[i].length > 1 && match[i][0] === '0') {
@@ -1680,7 +1679,7 @@ export default {
 
         // 随机模拟连接结果（实际项目中应该是真实的连接测试）
         const connectSuccess = Math.random() > 0.3 // 70% 成功率
-        
+
         if (connectSuccess) {
           node.status = 'connected'
           this.$message.success(`${node.name} 连接成功`)
