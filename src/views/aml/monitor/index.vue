@@ -1,7 +1,7 @@
 <template>
   <div class="monitoring-fullscreen-container">
     <div class="header">
-      <h1>跨境支付事中监管系统</h1>
+      <h1>跨境贸易支付监管系统</h1>
       <div class="user-info">
         <span>金融机构：银联电子</span>
         <span>用户：管理员</span>
@@ -44,6 +44,128 @@
                 <a-select-option value="all">全部数据源</a-select-option>
               </a-select>
             </a-form-item>
+          </div>
+
+          <!-- 监管模型选择 -->
+          <div class="model-selector">
+            <a-form-item label="监管模型选择：">
+              <a-select v-model="selectedModel" style="width: 100%" @change="onModelChange">
+                <a-select-option value="single">单方图分析模型</a-select-option>
+                <a-select-option value="multi">多方图分析模型</a-select-option>
+              </a-select>
+            </a-form-item>
+          </div>
+
+          <!-- 计算节点配置 -->
+          <div class="compute-nodes-config">
+            <div class="config-header">
+              <span class="config-title">计算节点配置：</span>
+              <a-button
+                v-if="selectedModel === 'multi'"
+                type="dashed"
+                size="small"
+                @click="addComputeNode"
+                style="margin-left: 10px"
+              >
+                <a-icon type="plus" />添加节点
+              </a-button>
+            </div>
+
+            <div class="nodes-container">
+                            <div 
+                v-for="(node, index) in computeNodes" 
+                :key="node.id"
+                :class="['compute-node-item', { 'local-node': node.isLocal, 'remote-node': !node.isLocal }]"
+              >
+                                <div class="node-info">
+                  <div class="node-icon">
+                    <a-icon type="desktop" style="font-size: 24px; color: #1890ff;" />
+                  </div>
+                  <div class="node-details">
+                    <div class="node-name">
+                      <a-input 
+                        v-model="node.name" 
+                        size="small" 
+                        style="width: 120px"
+                        placeholder="节点名称"
+                        :disabled="node.isLocal"
+                        @blur="saveNodesConfig"
+                      />
+                    </div>
+                    <div class="node-ip">
+                      <span class="ip-label">IP:</span>
+                      <a-input 
+                        v-model="node.ip" 
+                        size="small" 
+                        style="width: 140px"
+                        placeholder="192.168.1.1"
+                        :disabled="node.isLocal"
+                        @blur="saveNodesConfig"
+                      />
+                    </div>
+                    <!-- 远程节点的数据源选择 -->
+                    <div v-if="!node.isLocal" class="node-datasource">
+                      <span class="datasource-label">数据源:</span>
+                      <a-select 
+                        v-model="node.dataSource" 
+                        size="small" 
+                        style="width: 160px"
+                        @change="saveNodesConfig"
+                      >
+                        <a-select-option value="default_data">默认数据</a-select-option>
+                        <a-select-option value="business_data_1">跨境支付业务数据源1</a-select-option>
+                        <a-select-option value="business_data_2">跨境支付业务数据源2</a-select-option>
+                        <a-select-option value="agent_1">业务数据智能体1</a-select-option>
+                        <a-select-option value="agent_2">业务数据智能体2</a-select-option>
+                        <a-select-option value="all">全部数据源</a-select-option>
+                      </a-select>
+                    </div>
+                  </div>
+                </div>
+                                <div class="node-actions">
+                  <!-- 本地节点的状态标识 -->
+                  <div v-if="node.isLocal" class="node-status">
+                    <div class="status-indicator">
+                      <div :class="['status-dot', getStatusClass(node.status)]"></div>
+                      <span class="status-text">{{ getStatusText(node.status) }}</span>
+                    </div>
+                    <a-tag color="blue" size="small" style="margin-left: 8px">
+                      <a-icon type="home" />
+                      本地节点
+                    </a-tag>
+                  </div>
+                  
+                  <!-- 远程节点的状态标识和连接测试 -->
+                  <div v-if="!node.isLocal" class="node-status">
+                    <div class="status-indicator">
+                      <div :class="['status-dot', getStatusClass(node.status)]"></div>
+                      <span class="status-text">{{ getStatusText(node.status) }}</span>
+                    </div>
+                    <a-button 
+                      type="primary" 
+                      size="small" 
+                      :loading="node.status === 'connecting'"
+                      @click="testNodeConnection(node)"
+                      style="margin-left: 8px"
+                    >
+                      {{ node.status === 'connecting' ? '连接中...' : '测试连接' }}
+                    </a-button>
+                  </div>
+                  
+                  <!-- 删除节点按钮 -->
+                  <div v-if="selectedModel === 'multi' && computeNodes.length > 1 && !node.isLocal" class="delete-action">
+                    <a-button 
+                      type="link" 
+                      size="small" 
+                      @click="removeComputeNode(index)"
+                      style="color: #ff4d4f; margin-left: 8px"
+                    >
+                      <a-icon type="delete" />
+                    </a-button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <a-button
@@ -333,7 +455,7 @@
     </div>
 
     <div class="footer">
-      <p>跨境支付事中监管系统 &copy; 2023 版权所有</p>
+      <p>跨境贸易支付监管系统 &copy; 2023 版权所有</p>
     </div>
   </div>
 </template>
@@ -349,6 +471,20 @@ export default {
       isMonitoring: false,
       loading: false,
       dataSource: 'default_data',
+      // 监管模型选择
+      selectedModel: 'single',
+      // 计算节点配置
+      computeNodes: [
+        {
+          id: 1,
+          name: '本地节点',
+          ip: '131.252.10.118',
+          isLocal: true,
+          dataSource: 'default_data',
+          status: 'connected' // connected, disconnected, connecting
+        }
+      ],
+      nodeCounter: 1,
       monitoringAlerts: '事中实时监测准备就绪...\n\n',
       monitoringReport: '',
       statisticsReport: '',
@@ -586,6 +722,17 @@ export default {
           if (state.timeRange) this.timeRange = state.timeRange
           if (state.businessScope) this.businessScope = state.businessScope
 
+          // 恢复监管模型和计算节点配置
+          if (state.selectedModel) {
+            this.selectedModel = state.selectedModel
+          }
+          if (state.computeNodes && state.computeNodes.length > 0) {
+            this.computeNodes = [...state.computeNodes]
+          }
+          if (state.nodeCounter) {
+            this.nodeCounter = parseInt(state.nodeCounter) || 1
+          }
+
           // 如果之前在监测中，重启定时器
           if (this.isMonitoring) {
             this.monitoringTimer = setInterval(() => {
@@ -636,7 +783,11 @@ export default {
           currentChart: this.currentChart,
           // 保存选择器状态
           timeRange: this.timeRange,
-          businessScope: this.businessScope
+          businessScope: this.businessScope,
+          // 保存监管模型和计算节点配置
+          selectedModel: this.selectedModel,
+          computeNodes: [...this.computeNodes], // 创建深拷贝
+          nodeCounter: this.nodeCounter
         }
 
         // 转换为JSON并保存
@@ -1262,6 +1413,20 @@ export default {
       this.hasMonitoringData = false
       this.alertsTableData = []
 
+      // 重置监管模型和计算节点配置
+      this.selectedModel = 'single'
+      this.computeNodes = [
+        {
+          id: 1,
+          name: '本地节点',
+          ip: '131.252.10.118',
+          isLocal: true,
+          dataSource: 'default_data',
+          status: 'connected'
+        }
+      ]
+      this.nodeCounter = 1
+
       // 重置统计数据
       this.statisticsData = {
         riskDistribution: [
@@ -1293,6 +1458,242 @@ export default {
       this.statisticsActiveKey = '1'
 
       this.$message.success('监测状态已重置')
+    },
+
+    // 监管模型切换处理
+    onModelChange(value) {
+      if (value === 'single') {
+        // 单方图分析模型：只保留一个本地计算节点
+        this.computeNodes = [
+          {
+            id: 1,
+            name: '本地节点',
+            ip: '131.252.10.118',
+            isLocal: true,
+            dataSource: 'default_data',
+            status: 'connected'
+          }
+        ]
+        this.nodeCounter = 1
+      } else if (value === 'multi') {
+        // 多方图分析模型：默认三个计算节点（本地+两个远程）
+        this.computeNodes = [
+          {
+            id: 1,
+            name: '本地节点',
+            ip: '131.252.10.118',
+            isLocal: true,
+            dataSource: 'default_data',
+            status: 'connected'
+          },
+          {
+            id: 2,
+            name: '远程节点1',
+            ip: this.getNodeIpAddress(1),
+            isLocal: false,
+            dataSource: 'default_data',
+            status: 'disconnected'
+          },
+          {
+            id: 3,
+            name: '远程节点2',
+            ip: this.getNodeIpAddress(2),
+            isLocal: false,
+            dataSource: 'default_data',
+            status: 'disconnected'
+          }
+        ]
+        this.nodeCounter = 3
+      }
+      this.saveNodesConfig()
+    },
+
+    // 添加计算节点
+    addComputeNode() {
+      if (this.selectedModel === 'multi') {
+        // 获取现有远程节点的编号
+        const existingRemoteNodes = this.computeNodes.filter(node => !node.isLocal)
+        const existingNumbers = existingRemoteNodes.map(node => {
+          const match = node.name.match(/远程节点(\d+)/)
+          return match ? parseInt(match[1]) : null
+        }).filter(num => num !== null)
+
+        let newNodeNumber
+        let newNodeIp
+
+        // 检查是否缺少节点1或节点2
+        if (!existingNumbers.includes(1)) {
+          newNodeNumber = 1
+        } else if (!existingNumbers.includes(2)) {
+          newNodeNumber = 2
+        } else {
+          // 如果节点1和节点2都存在，找到下一个可用的编号
+          newNodeNumber = 1
+          while (existingNumbers.includes(newNodeNumber)) {
+            newNodeNumber++
+          }
+        }
+        
+        // 获取对应的IP地址
+        newNodeIp = this.getNodeIpAddress(newNodeNumber)
+
+        this.nodeCounter++
+        const newNode = {
+          id: this.nodeCounter,
+          name: `远程节点${newNodeNumber}`,
+          ip: newNodeIp,
+          isLocal: false,
+          dataSource: 'default_data',
+          status: 'disconnected'
+        }
+        this.computeNodes.push(newNode)
+        
+        // 重新排序节点列表：本地节点在前，远程节点按编号排序
+        this.computeNodes.sort((a, b) => {
+          if (a.isLocal && !b.isLocal) return -1
+          if (!a.isLocal && b.isLocal) return 1
+          if (a.isLocal && b.isLocal) return 0
+          
+          // 都是远程节点，按编号排序
+          const aNumber = parseInt(a.name.match(/远程节点(\d+)/)?.[1]) || 0
+          const bNumber = parseInt(b.name.match(/远程节点(\d+)/)?.[1]) || 0
+          return aNumber - bNumber
+        })
+        
+        this.saveNodesConfig()
+        this.$message.success(`成功添加${newNode.name}`)
+      }
+    },
+
+    // 删除计算节点
+    removeComputeNode(index) {
+      if (this.selectedModel === 'multi' && this.computeNodes.length > 1) {
+        const nodeToRemove = this.computeNodes[index]
+        if (!nodeToRemove.isLocal) {
+          this.computeNodes.splice(index, 1)
+          
+          // 重新排序节点列表：本地节点在前，远程节点按编号排序
+          this.computeNodes.sort((a, b) => {
+            if (a.isLocal && !b.isLocal) return -1
+            if (!a.isLocal && b.isLocal) return 1
+            if (a.isLocal && b.isLocal) return 0
+            
+            // 都是远程节点，按编号排序
+            const aNumber = parseInt(a.name.match(/远程节点(\d+)/)?.[1]) || 0
+            const bNumber = parseInt(b.name.match(/远程节点(\d+)/)?.[1]) || 0
+            return aNumber - bNumber
+          })
+          
+          this.saveNodesConfig()
+          this.$message.success(`成功删除${nodeToRemove.name}`)
+        }
+      }
+    },
+
+    // 保存节点配置
+    saveNodesConfig() {
+      // 将节点配置保存到监测状态中
+      this.saveMonitoringState()
+    },
+
+    // 获取节点IP地址（固定节点1和2的IP，其他随机生成）
+    getNodeIpAddress(nodeNumber) {
+      // 节点1和节点2使用固定IP地址
+      // 注意：如需修改节点1和节点2的IP地址，请在这里修改对应的值
+      const fixedIps = {
+        1: '131.252.10.13',  // 远程节点1的固定IP地址
+        2: '131.252.10.14'   // 远程节点2的固定IP地址
+      }
+      
+      if (fixedIps[nodeNumber]) {
+        return fixedIps[nodeNumber]
+      }
+      
+      // 其他节点（节点3及以上）随机生成IP地址（避免与现有IP冲突）
+      let randomIp
+      do {
+        randomIp = `192.168.1.${Math.floor(Math.random() * 250) + 2}` // 2-251范围内随机生成
+      } while (this.computeNodes.some(node => node.ip === randomIp))
+      
+      return randomIp
+    },
+
+    // 获取节点状态CSS类
+    getStatusClass(status) {
+      switch (status) {
+        case 'connected':
+          return 'status-connected'
+        case 'connecting':
+          return 'status-connecting'
+        case 'disconnected':
+        default:
+          return 'status-disconnected'
+      }
+    },
+
+    // 获取节点状态文本
+    getStatusText(status) {
+      switch (status) {
+        case 'connected':
+          return '已连接'
+        case 'connecting':
+          return '连接中'
+        case 'disconnected':
+        default:
+          return '未连接'
+      }
+    },
+
+    // 测试节点连接
+    async testNodeConnection(node) {
+      if (node.isLocal) return
+
+      // 设置连接状态
+      node.status = 'connecting'
+      this.saveNodesConfig()
+
+      try {
+        // 模拟连接测试（实际项目中应该调用真实的API）
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        
+        // 标准IPv4地址格式验证
+        const ipRegex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/
+        const match = node.ip.match(ipRegex)
+        if (!match) {
+          throw new Error('IP地址格式不正确，请输入有效的IPv4地址')
+        }
+        
+        // 验证每个数字段是否在有效范围内（0-255）
+        const octets = match.slice(1, 5).map(octet => parseInt(octet))
+        for (let i = 0; i < octets.length; i++) {
+          if (octets[i] < 0 || octets[i] > 255) {
+            throw new Error(`IP地址第${i + 1}段数字必须在0-255之间`)
+          }
+        }
+        
+        // 验证不允许前导零（除了0本身）
+        for (let i = 1; i < 5; i++) {
+          if (match[i].length > 1 && match[i][0] === '0') {
+            throw new Error('IP地址不允许前导零')
+          }
+        }
+
+        // 随机模拟连接结果（实际项目中应该是真实的连接测试）
+        const connectSuccess = Math.random() > 0.3 // 70% 成功率
+        
+        if (connectSuccess) {
+          node.status = 'connected'
+          this.$message.success(`${node.name} 连接成功`)
+        } else {
+          node.status = 'disconnected'
+          this.$message.error(`${node.name} 连接失败，请检查网络和IP地址`)
+        }
+      } catch (error) {
+        node.status = 'disconnected'
+        this.$message.error(`${node.name} 连接失败：${error.message}`)
+      }
+
+      this.saveNodesConfig()
     }
   }
 }
@@ -1563,6 +1964,211 @@ export default {
         opacity: 1;
       }
     }
+
+    // 监管模型选择样式
+    .model-selector {
+      margin-bottom: 16px;
+    }
+
+    // 计算节点配置样式
+    .compute-nodes-config {
+      margin-bottom: 16px;
+      padding: 12px;
+      background-color: #f9f9f9;
+      border-radius: 6px;
+      border: 1px solid #e8e8e8;
+
+      .config-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e8e8e8;
+
+        .config-title {
+          font-weight: 600;
+          color: #1e3799;
+          font-size: 14px;
+        }
+      }
+
+      .nodes-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+              .compute-node-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 12px;
+          background-color: white;
+          border-radius: 4px;
+          border: 1px solid #d9d9d9;
+          transition: all 0.2s;
+
+          &:hover {
+            border-color: #1890ff;
+            box-shadow: 0 0 4px rgba(24, 144, 255, 0.2);
+          }
+
+          &.local-node {
+            background-color: #f0f8ff;
+            border-color: #1890ff;
+            position: relative;
+
+            &::before {
+              content: '';
+              position: absolute;
+              left: 0;
+              top: 0;
+              bottom: 0;
+              width: 3px;
+              background-color: #1890ff;
+              border-radius: 2px 0 0 2px;
+            }
+
+            &:hover {
+              background-color: #e6f7ff;
+              border-color: #40a9ff;
+              box-shadow: 0 0 8px rgba(24, 144, 255, 0.3);
+            }
+          }
+
+          &.remote-node {
+            &:hover {
+              border-color: #1890ff;
+              box-shadow: 0 0 4px rgba(24, 144, 255, 0.2);
+            }
+          }
+
+        .node-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .node-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          background-color: #f0f8ff;
+          border-radius: 4px;
+          border: 1px solid #e6f7ff;
+        }
+
+        .node-details {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .node-name {
+            font-weight: 500;
+          }
+
+          .node-ip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #666;
+
+            .ip-label {
+              font-weight: 500;
+              color: #1890ff;
+              min-width: 20px;
+            }
+          }
+
+          .node-datasource {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+
+            .datasource-label {
+              font-weight: 500;
+              color: #1890ff;
+              min-width: 50px;
+            }
+          }
+        }
+
+                .node-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .node-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .status-indicator {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              font-size: 12px;
+
+              .status-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                transition: all 0.2s;
+              }
+
+              .status-connected {
+                background-color: #52c41a;
+                box-shadow: 0 0 4px rgba(82, 196, 26, 0.4);
+              }
+
+              .status-connecting {
+                background-color: #faad14;
+                box-shadow: 0 0 4px rgba(250, 173, 20, 0.4);
+                animation: pulse 1.5s infinite;
+              }
+
+              .status-disconnected {
+                background-color: #ff4d4f;
+                box-shadow: 0 0 4px rgba(255, 77, 79, 0.4);
+              }
+
+              .status-text {
+                font-size: 12px;
+                color: #666;
+                font-weight: 500;
+              }
+            }
+          }
+
+          .delete-action {
+            display: flex;
+            align-items: center;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 添加状态点动画
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 </style>
