@@ -408,13 +408,13 @@ export const asyncRouterMap = [
     path: '/aml/monitor',
     name: 'aml-monitor-fullscreen',
     component: BlankLayout,
-    meta: { title: '跨境支付事中监测系统', permission: ['user'] },
+    meta: { title: '跨境贸易支付监管系统', permission: ['user'] },
     children: [
       {
         path: '',
         name: 'aml-monitor',
         component: () => import('@/views/aml/monitor'),
-        meta: { title: '跨境支付事中监测', keepAlive: true, permission: ['user'] }
+        meta: { title: '跨境贸易支付监管系统', keepAlive: true, permission: ['user'] }
       }
     ]
   },
@@ -423,7 +423,7 @@ export const asyncRouterMap = [
     path: '/aml/list',
     name: 'aml-list-fullscreen',
     component: BlankLayout,
-    meta: { title: '跨境支付风险商户查询', permission: ['user'] },
+    meta: { title: '跨境贸易支付风险商户查询', permission: ['user'] },
     children: [
       {
         path: '',
@@ -438,7 +438,7 @@ export const asyncRouterMap = [
     path: '/aml/detail/:id',
     name: 'aml-detail-fullscreen',
     component: BlankLayout,
-    meta: { title: '跨境支付商户风险详情', permission: ['user'] },
+    meta: { title: '跨境贸易支付商户风险详情', permission: ['user'] },
     children: [
       {
         path: '',
@@ -761,12 +761,12 @@ export const asyncRouterMap = [
       //     }
       //   ]
       // },
-      // 跨境支付事中监测系统（全屏）
+      // 跨境贸易支付监管系统（全屏）
       {
         path: '#/aml/monitor',
         name: 'aml-monitor-link',
         meta: {
-          title: '跨境支付事中监测',
+          title: '跨境贸易支付监管系统',
           icon: 'fund',
           target: '_blank',
           permission: ['user']
