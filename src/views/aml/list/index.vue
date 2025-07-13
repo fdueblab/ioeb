@@ -1,7 +1,7 @@
 <template>
   <div class="aml-list-container">
     <div class="header">
-      <h1>跨境支付事中监管系统</h1>
+      <h1>跨境贸易支付监管系统</h1>
       <div class="user-info">
         <span>金融机构：银联电子</span>
         <span>用户：管理员</span>
@@ -109,7 +109,7 @@
     </div>
 
     <div class="footer">
-      <p>跨境支付事中监管系统 &copy; 2023 版权所有</p>
+      <p>跨境贸易支付监管系统 &copy; 2023 版权所有</p>
     </div>
   </div>
 </template>
