@@ -23,7 +23,7 @@ export default {
   menu: {
     locale: true
   },
-  title: '算法模型智能体中台',
+  title: '跨境贸易支付监管系统技术中台',
   pwa: false,
   iconfontUrl: '',
   production: process.env.NODE_ENV === 'production' && process.env.VUE_APP_PREVIEW !== 'true'
