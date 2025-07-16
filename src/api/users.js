@@ -30,6 +30,7 @@ export function getUserById(userId) {
  * @param {Object} userData 用户数据对象
  * @param {string} userData.username 用户名（必填）
  * @param {string} userData.name 用户姓名（必填）
+ * @param {string} userData.password 用户密码（必填）
  * @returns {Promise} 返回创建的用户信息
  */
 export function createUser(userData) {
@@ -49,7 +50,6 @@ export function createUser(userData) {
  * @param {string} userData.avatar 头像路径
  * @param {string} userData.telephone 电话号码
  * @param {string} userData.merchantCode 商户代码
- * @param {string} userData.roleId 角色ID
  * @returns {Promise} 返回更新后的用户信息
  */
 export function updateUser(userId, userData) {
@@ -57,6 +57,34 @@ export function updateUser(userId, userData) {
     url: `${API_BASE_URL}/users/${userId}/update`,
     method: 'post',
     data: userData
+  })
+}
+
+/**
+ * 更新用户密码
+ * @param {string} userId 用户ID（UUID字符串）
+ * @param {string} password 新密码
+ * @returns {Promise} 返回更新结果
+ */
+export function updateUserPassword(userId, password) {
+  return request({
+    url: `${API_BASE_URL}/users/${userId}/password`,
+    method: 'post',
+    data: { password }
+  })
+}
+
+/**
+ * 更新用户角色
+ * @param {string} userId 用户ID（UUID字符串）
+ * @param {string} roleId 角色ID
+ * @returns {Promise} 返回更新结果
+ */
+export function updateUserRole(userId, roleId) {
+  return request({
+    url: `${API_BASE_URL}/users/${userId}/role`,
+    method: 'post',
+    data: { roleId }
   })
 }
 
@@ -102,4 +130,15 @@ export function enableUser(userId) {
  */
 export function disableUser(userId) {
   return updateUserStatus(userId, 0)
+}
+
+/**
+ * 获取所有角色
+ * @returns {Promise} 返回所有角色数据列表
+ */
+export function getAllRoles() {
+  return request({
+    url: `${API_BASE_URL}/auth/roles`,
+    method: 'get'
+  })
 }
