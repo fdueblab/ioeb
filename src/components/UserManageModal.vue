@@ -171,12 +171,12 @@ export default {
     showRoleSelectModal(user) {
       this.currentUser = user
       this.roleSelectVisible = true
-      
+
       // 如果角色列表为空，重新加载
       if (this.roleList.length === 0) {
         this.loadRoleList()
       }
-      
+
       this.$nextTick(() => {
         this.roleSelectForm.setFieldsValue({
           roleId: user.roleId
