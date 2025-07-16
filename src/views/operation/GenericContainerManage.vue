@@ -51,10 +51,10 @@
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
-            <a v-if="deployingStatusCode.includes(record.status)" @click="handleStop(record)">停止</a>
-            <a v-else @click="handleDeploy(record)">部署</a>
+            <a-button v-if="deployingStatusCode.includes(record.status)" style="padding: 0" type="link" @click="handleStop(record)">停止</a-button>
+            <a-button v-else style="padding: 0" type="link" @click="handleDeploy(record)">部署</a-button>
             <a-divider type="vertical" />
-            <a @click="handleDelete(record)">删除</a>
+            <a-button style="padding: 0;color: orangered" type="link" @click="handleDelete(record)">删除</a-button>
           </template>
         </span>
       </a-table>
@@ -279,12 +279,12 @@ export default {
         cancelButtonText: '取消',
         type: 'success',
         closeOnClickModal: false
-      }).then(() => {
+      }).then(async () => {
         try {
-          deployService(record.id)
+          await deployService(record.id)
           this.$message.info(`开始部署${record.name}服务...`)
           // 重新加载数据
-          this.initData()
+          await this.initData()
         } catch (error) {
           console.error('部署服务出错:', error)
           this.$message.error('部署服务失败，请重试')
