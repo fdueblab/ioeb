@@ -510,7 +510,13 @@ export const asyncRouterMap = [
                 path: '/application/aml',
                 name: 'aml-monitor-template',
                 component: () => import('@/views/application/aml/monitor'),
-                meta: { title: '风险监测系统定制', appCode: 'amlMonitor', keepAlive: true, permission: ['user'] }
+                meta: { title: '风险监测系统定制', appCode: 'amlMonitor', testPath: '/aml/monitor', keepAlive: true, permission: ['user'] }
+              },
+              // 跨境支付事中监测系统（全屏）
+              {
+                path: '#/aml/monitor',
+                name: 'aml-monitor-link',
+                meta: { title: '跨境支付事中监测', target: '_blank', permission: ['user'] }
               }
             ]
           }
@@ -763,16 +769,17 @@ export const asyncRouterMap = [
       //   ]
       // },
       // 跨境支付事中监测系统（全屏）
-      {
-        path: '#/aml/monitor',
-        name: 'aml-monitor-link',
-        meta: {
-          title: '跨境支付事中监测',
-          icon: 'fund',
-          target: '_blank',
-          permission: ['user']
-        }
-      },
+      // 已挪到”风险监测系统定制“下面
+      // {
+      //   path: '#/aml/monitor',
+      //   name: 'aml-monitor-link',
+      //   meta: {
+      //     title: '跨境支付事中监测',
+      //     icon: 'fund',
+      //     target: '_blank',
+      //     permission: ['user']
+      //   }
+      // },
       // 数据统计（首页）
       {
         path: '/home',
