@@ -497,20 +497,20 @@ export const asyncRouterMap = [
         name: 'application',
         redirect: '/application/aml',
         component: RouteView,
-        meta: { title: '垂域应用参数化构建', keepAlive: true, icon: 'pushpin', permission: ['user'] },
+        meta: { title: '垂域应用参数化构建', keepAlive: true, icon: 'pushpin', permission: ['admin'] },
         children: [
           {
             path: '',
             name: 'aml-app-template',
             redirect: '/application/aml',
             component: AppView,
-            meta: { title: '跨境支付AI监测', permission: ['user'] },
+            meta: { title: '跨境支付AI监测', permission: ['admin'] },
             children: [
               {
                 path: '/application/aml',
                 name: 'aml-monitor-template',
                 component: () => import('@/views/application/aml/monitor'),
-                meta: { title: '风险监测系统定制', appCode: 'amlMonitor', testPath: '/aml/monitor', keepAlive: true, permission: ['user'] }
+                meta: { title: '风险监测系统定制', appCode: 'amlMonitor', testPath: '/aml/monitor', keepAlive: true, permission: ['admin'] }
               },
               // 跨境支付事中监测系统（全屏）
               {
