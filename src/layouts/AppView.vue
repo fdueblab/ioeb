@@ -4,8 +4,9 @@
       <a-tag color="blue">Running</a-tag>
     </template>
     <template v-slot:extra>
-      <a-button key="3" type="link" icon="download" :loading="codeLoading" @click="handleDownloadCode">APP代码下载</a-button>
-      <a-button key="2" icon="download" :loading="appLoading" @click="handleDownloadApp">获取可安装APP</a-button>
+      <a-button key="1" type="dashed" icon="fund" :loading="codeLoading" @click="handleGoTest">前往测试</a-button>
+      <a-button key="2" type="link" icon="download" :loading="codeLoading" @click="handleDownloadCode">APP代码下载</a-button>
+      <a-button key="3" icon="download" :loading="appLoading" @click="handleDownloadApp">获取可安装APP</a-button>
     </template>
     <router-view />
   </page-header-wrapper>
@@ -43,6 +44,10 @@ export default {
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+    },
+
+    handleGoTest() {
+      this.$router.push(this.$route.meta.testPath)
     },
 
     async handleDownloadCode() {

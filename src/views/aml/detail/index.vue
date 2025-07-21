@@ -3,6 +3,7 @@
     <div class="header">
       <h1>跨境支付事中监管系统</h1>
       <div class="user-info">
+        <a-button style="margin-right: 15px" ghost type="dashed" icon="form" @click="handleGoCustomize">继续定制</a-button>
         <span>金融机构：银联电子</span>
         <span>用户：管理员</span>
         <a-avatar icon="user" />
@@ -485,6 +486,10 @@ export default {
           this.exportModalVisible = false
         }
       })
+    },
+
+    handleGoCustomize() {
+      this.$router.push('/application/aml')
     }
   }
 }
