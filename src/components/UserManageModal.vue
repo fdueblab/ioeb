@@ -79,6 +79,7 @@
 
 <script>
 import { createUser, updateUserRole, getAllRoles } from '@/api/users'
+import store from '@/store'
 
 export default {
   name: 'UserManageModal',
@@ -142,7 +143,7 @@ export default {
         if (!err) {
           this.addUserLoading = true
           try {
-            const response = await createUser(values)
+            const response = await createUser({ ...values, creatorId: store.getters.userInfo.username })
             if (response.status === 'success') {
               this.$notification['success']({
                 message: '用户创建成功',
