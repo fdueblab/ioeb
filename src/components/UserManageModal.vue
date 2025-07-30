@@ -79,6 +79,7 @@
 
 <script>
 import { createUser, updateUserRole, getAllRoles } from '@/api/users'
+import store from '@/store'
 
 export default {
   name: 'UserManageModal',
@@ -142,18 +143,29 @@ export default {
         if (!err) {
           this.addUserLoading = true
           try {
-            const response = await createUser(values)
+            const response = await createUser({ ...values, creatorId: store.getters.userInfo.username })
             if (response.status === 'success') {
-              this.$message.success('用户创建成功')
+              this.$notification['success']({
+                message: '用户创建成功',
+                duration: 4
+              })
               this.addUserVisible = false
               this.addUserForm.resetFields()
               this.$emit('refresh')
             } else {
-              this.$message.error('创建用户失败')
+              this.$notification['error']({
+                message: '创建用户失败',
+                description: response.message || '服务器异常',
+                duration: 4
+              })
             }
           } catch (error) {
             console.error('创建用户出错:', error)
-            this.$message.error('创建用户失败，请重试')
+            this.$notification['error']({
+              message: '创建用户失败',
+              description: '系统异常',
+              duration: 4
+            })
           } finally {
             this.addUserLoading = false
           }
