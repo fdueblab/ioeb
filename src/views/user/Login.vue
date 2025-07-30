@@ -100,7 +100,6 @@
 </template>
 
 <script>
-import md5 from 'md5'
 import TwoStepCaptcha from '@/components/tools/TwoStepCaptcha'
 import { mapActions } from 'vuex'
 // import { timeFix } from '@/utils/util'
@@ -139,7 +138,7 @@ export default {
     // this.requiredTwoStepCaptcha = true
   },
   methods: {
-    ...mapActions(['Login', 'LoginTwo', 'Logout', 'GetInfo']),
+    ...mapActions(['Login', 'Logout', 'GetInfo']),
     // handler
     handleUsernameOrEmail (rule, value, callback) {
       const { state } = this
@@ -174,7 +173,7 @@ export default {
           const loginParams = { ...values }
           delete loginParams.username
           loginParams[!state.loginType ? 'email' : 'username'] = values.username
-          loginParams.password = md5(values.password)
+          loginParams.password = values.password
 
           // 直接将登录请求发送到后端进行验证
           Login(loginParams)
@@ -246,7 +245,7 @@ export default {
     requestFailed (err) {
       this.isLoginError = true
       this.$notification['error']({
-        message: '错误',
+        message: '登录失败',
         description: ((err.response || {}).data || {}).message || '请求出现错误，请稍后再试',
         duration: 4
       })
