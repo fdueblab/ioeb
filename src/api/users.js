@@ -27,11 +27,6 @@ export function getUserById(userId) {
 
 /**
  * 创建新用户
- * @param {Object} userData 用户数据对象
- * @param {string} userData.username 用户名（必填）
- * @param {string} userData.name 用户姓名（必填）
- * @param {string} userData.password 用户密码（必填）
- * @returns {Promise} 返回创建的用户信息
  */
 export function createUser(userData) {
   return request({
