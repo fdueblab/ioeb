@@ -483,6 +483,7 @@ import vChart from 'vue-echarts'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
 import dictionaryCache from '@/utils/dictionaryCache'
 import { createService } from '@/api/service'
+import store from '@/store'
 
 export default {
   name: 'GenericMicroService',
@@ -1200,8 +1201,8 @@ class {{apiName}}({{input}}):
             companyName: '复旦大学课题组',
             companyAddress: '上海市杨浦区邯郸路220号',
             companyContact: '021-65642222',
-            companyIntroduce: '课题六',
-            msIntroduce: '预发布微服务',
+            companyIntroduce: '课题五',
+            msIntroduce: `${store.getters.nickname}发布的微服务。`,
             companyScore: 5,
             msScore: 5
           },
@@ -1219,13 +1220,7 @@ class {{apiName}}({{input}}):
                 }
               ],
               responseType: 1,
-              response: {
-                code: 200,
-                message: '微服务正在部署！',
-                data: {
-                  deployingStatus: 'pending'
-                }
-              }
+              response: { code: 203, message: '计算资源不足，暂时无法调用该服务！', success: false }
             }
           ]
         }

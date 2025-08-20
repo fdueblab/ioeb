@@ -198,7 +198,7 @@
 </template>
 
 <script>
-import { createService } from '@/api/service'
+import { prepublishService } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
 import store from '@/store'
 
@@ -256,16 +256,14 @@ export default {
       validateFields(async (errors, values) => {
           if (!errors) {
             const { name, subtitle, des, inputName, outputName, outputVisualization, submitButtonText } = values
-            let url = 'https://myMcpServer.com/metaApp/agent_ak7jq'
-            let method = 'post'
-            let response = {
-              code: 200,
-              message: '计算资源不足！',
-              success: false
-            }
+            let url = '/api/agent/meta_app/run'
+            let method = 'sse'
+            let isFake = false
+            let response
             if (name.includes('课题一')) {
               url = '/api/pj1_report_app'
               method = 'post'
+              isFake = true
               response = {
                 code: 200,
                 message: '获取成功!',
@@ -278,7 +276,7 @@ export default {
               ...values,
               domain: this.verticalType,
               type: 'meta',
-              status: 'deploying',
+              status: 'default',
               netWork: 'ioeb_app-network',
               port: '0.0.0.0:1021/TCP → 0.0.0.0:10021',
               volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/metaApp',
@@ -301,7 +299,7 @@ export default {
                   outputName,
                   outputVisualization,
                   submitButtonText,
-                  isFake: true,
+                  isFake,
                   url,
                   method,
                   services: this.serviceIds,
@@ -313,7 +311,7 @@ export default {
               number: 0
             }
             try {
-              const response = await createService(serviceData)
+              const response = await prepublishService(serviceData)
               if (response && response.status === 'success') {
                 this.$message.success('预发布成功！部署完成后可进行业务验证')
                 this.visible = false
