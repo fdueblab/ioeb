@@ -673,7 +673,7 @@ export function getMetaAppNodes(serviceType, userInput) {
         flowData = pj1App
       } else if (userInput.includes('课题二')) {
         flowData = pj2App
-      } else if (userInput.includes('课题一和课题三') || userInput.includes('综合')) {
+      } else if (userInput.includes('课题一和课题三') || userInput.includes('各课题')) {
         flowData = pj1pj4pj3App
       } else if (userInput.includes('欺诈')) {
         flowData = fraudDetectionApp
