@@ -80,7 +80,7 @@ export function createService(serviceData) {
  */
 export function prepublishService(serviceData) {
   return request({
-    url: `${API_BASE_URL}/prepublish`,
+    url: `${API_BASE_URL}/services/prepublish`,
     method: 'post',
     data: serviceData
   })
