@@ -2,7 +2,6 @@ import request from '@/utils/request'
 
 const userApi = {
   Login: '/auth/login',
-  Login2: '/auth/login',
   Logout: '/auth/logout',
   ForgePassword: '/auth/forge-password',
   Register: '/auth/register',
@@ -16,31 +15,14 @@ const userApi = {
   UserMenu: '/user/nav'
 }
 
-/**
- * login func
- * parameter: {
- *     username: '',
- *     password: '',
- *     remember_me: true,
- *     captcha: '12345'
- * }
- * @param parameter
- * @returns {*}
- */
 export function login (parameter) {
-  console.log('login', parameter)
-  let url = ''
-  if (parameter.username === 'user') {
-    url = userApi.Login2
-  } else {
-    url = userApi.Login
-  }
   return request({
-    url: url,
+    url: userApi.Login,
     method: 'post',
     data: parameter
   })
 }
+
 export function getSmsCaptcha (parameter) {
   return request({
     url: userApi.SendSms,

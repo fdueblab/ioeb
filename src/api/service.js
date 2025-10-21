@@ -74,6 +74,19 @@ export function createService(serviceData) {
 }
 
 /**
+ * 预发布新服务
+ * @param {Object} serviceData 服务数据
+ * @returns {Promise} 返回创建的服务信息
+ */
+export function prepublishService(serviceData) {
+  return request({
+    url: `${API_BASE_URL}/services/prepublish`,
+    method: 'post',
+    data: serviceData
+  })
+}
+
+/**
  * 更新微服务
  * @param {string} serviceId 服务ID
  * @param {Object} serviceData 更新的服务数据

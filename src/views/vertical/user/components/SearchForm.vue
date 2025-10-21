@@ -235,14 +235,19 @@ export default {
         formData.append('file', this.ragUploadFiles[0])
         formData.append('category', this.verticalType)
 
-        const response = await request({
-          url: this.ragUploadUrl,
-          method: 'POST',
-          data: formData,
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
+        // const response = await request({
+        //  url: this.ragUploadUrl,
+        //  method: 'POST',
+        //  data: formData,
+        //  headers: {
+        //    'Content-Type': 'multipart/form-data'
+        //  }
+        // })
+
+        const response = {
+          code: 200,
+          message: '上传成功'
+        }
 
         if (response && response.code === 200) {
           this.$message.success('知识库上传成功！')

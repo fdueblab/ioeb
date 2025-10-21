@@ -623,13 +623,13 @@ export function generateMockSteps(serviceType, userInput) {
   return [
     {
       step: 1,
-      thought: `MCP服务推荐Agent's thoughts: 我将帮助您根据用户需求推荐合适的MCP服务来构建相关应用。让我们按照任务步骤逐一执行。
+      thought: `我将根据您的需求推荐合适的MCP服务来构建相关应用。让我们按照任务步骤逐一执行。
 
 首先，我需要查询数据库获取所有符合条件的MCP服务信息。`
     },
     {
       step: 2,
-      thought: `MCP服务推荐Agent's thoughts: 我已经完成了部分任务：
+      thought: `我已经完成了部分任务：
 
 1. 查询了数据库，获取了所有符合条件的MCP服务信息（服务类型为atomic_mcp，领域为${serviceType}，且未被删除）。
 
@@ -639,7 +639,7 @@ export function generateMockSteps(serviceType, userInput) {
     },
     {
       step: 3,
-      thought: `MCP服务推荐Agent's thoughts: 我已经完成了所有任务：
+      thought: `我已经完成了所有任务：
 
 1. 查询了数据库，获取了所有符合条件的MCP服务信息（服务类型为atomic_mcp，领域为${serviceType}，且未被删除）。
 
@@ -673,7 +673,7 @@ export function getMetaAppNodes(serviceType, userInput) {
         flowData = pj1App
       } else if (userInput.includes('课题二')) {
         flowData = pj2App
-      } else if (userInput.includes('课题一和课题三') || userInput.includes('综合')) {
+      } else if (userInput.includes('课题一和课题三') || userInput.includes('各课题')) {
         flowData = pj1pj4pj3App
       } else if (userInput.includes('欺诈')) {
         flowData = fraudDetectionApp

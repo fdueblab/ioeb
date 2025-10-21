@@ -30,6 +30,7 @@
 
       <div class="table-operator">
         <a-button type="primary" icon="plus" @click="handleAdd">新建</a-button>
+        <a-button style="margin-left: 8px" icon="sync" @click="handleRefresh" :loading="refreshing">刷新</a-button>
       </div>
 
       <a-table
@@ -47,24 +48,44 @@
             {{ record.name.charAt(0) }}
           </a-avatar>
         </span>
+        <span slot="role" slot-scope="text, record">
+          <span v-if="record.username === 'root'">{{ getRoleName(record.roleId) }}</span>
+          <a-button
+            v-else
+            style="padding: 0"
+            type="link"
+            size="small"
+            @click="handleRoleEdit(record)"
+          >
+            {{ getRoleName(record.roleId) }}<a-icon type="edit" />
+          </a-button>
+        </span>
         <span slot="status" slot-scope="text">
           <a-badge :status="text | statusTypeFilter" :text="text | statusFilter" />
         </span>
         <span slot="action" slot-scope="text, record">
           <template>
-            <a v-if="record.status === 0" @click="handleActivate(record)">激活</a>
-            <a v-if="record.status === 1" @click="handleDisable(record)">禁用</a>
+            <a-button style="padding: 0" type="link" v-if="record.status === 0" :disabled="record.username === 'root'" size="small" @click="handleActivate(record)">激活</a-button>
+            <a-button style="padding: 0" type="link" v-if="record.status === 1" :disabled="record.username === 'root'" size="small" @click="handleDisable(record)">禁用</a-button>
             <a-divider type="vertical" />
-            <a @click="handleDelete(record)">删除</a>
+            <a-button v-if="record.username === 'root'" style="padding: 0" type="link" disabled size="small" @click="handleDelete(record)">删除</a-button>
+            <a-button v-else style="padding: 0;color: orangered" type="link" size="small" @click="handleDelete(record)">删除</a-button>
           </template>
         </span>
       </a-table>
     </a-card>
+
+    <!-- 用户管理弹窗组件 -->
+    <UserManageModal
+      ref="userManageModal"
+      @refresh="handleModalRefresh"
+    />
   </page-header-wrapper>
 </template>
 
 <script>
-import { getAllUsers, enableUser, disableUser, deleteUser } from '@/api/users'
+import { getAllUsers, enableUser, disableUser, deleteUser, getAllRoles } from '@/api/users'
+import UserManageModal from '@/components/UserManageModal'
 
 const statusMap = {
   0: {
@@ -79,19 +100,16 @@ const statusMap = {
 
 export default {
   name: 'TableList',
+  components: {
+    UserManageModal
+  },
   data () {
     return {
-      // create model
-      form: this.$form.createForm(this),
-      visible: false,
-      confirmLoading: false,
-      mdl: null,
-      // 高级搜索 展开/关闭
-      advanced: false,
       // 查询参数
       queryParam: {},
       // 加载状态
       loading: false,
+      refreshing: false,
       // 分页参数
       pagination: {
         current: 1,
@@ -119,7 +137,8 @@ export default {
         },
         {
           title: '用户角色',
-          dataIndex: 'roleId'
+          dataIndex: 'roleId',
+          scopedSlots: { customRender: 'role' }
         },
         {
           title: '联系方式',
@@ -148,7 +167,8 @@ export default {
       ],
       dataSource: [],
       originalData: [], // 保存原始数据用于搜索过滤
-      response: ''
+      response: '',
+      roleList: [] // 添加roleList数组用于存储从API获取的角色列表
     }
   },
   filters: {
@@ -161,8 +181,23 @@ export default {
   },
   created () {
     this.loadUserData()
+    this.loadRoleList()
   },
   methods: {
+    // 加载角色列表
+    async loadRoleList() {
+      try {
+        const response = await getAllRoles()
+        if (response.status === 'success' && response.roles) {
+          this.roleList = response.roles.filter(role => role.status === 1 && role.deleted === 0)
+        } else {
+          console.error('获取角色列表失败')
+        }
+      } catch (error) {
+        console.error('获取角色列表出错:', error)
+      }
+    },
+
     // 加载用户数据
     async loadUserData() {
       this.loading = true
@@ -221,7 +256,7 @@ export default {
       this.pagination.current = 1
     },
     handleAdd () {
-      this.$emit('onGoAdd')
+      this.$refs.userManageModal.showAddUserModal()
     },
     // 激活用户
     handleActivate (record) {
@@ -235,7 +270,7 @@ export default {
           await enableUser(record.id)
           this.$message.success(`用户 ${record.name} 激活成功！`)
           // 重新加载数据
-          this.loadUserData()
+          await this.loadUserData()
         } catch (error) {
           console.error('激活用户出错:', error)
           this.$message.error('激活用户失败，请重试')
@@ -280,10 +315,32 @@ export default {
         }
       })
     },
-    handleCancel () {
-      this.visible = false
-      const form = this.$refs.createModal.form
-      form.resetFields() // 清理表单数据（可不做）
+    handleRefresh() {
+      this.refreshing = true
+      Promise.all([
+        this.loadUserData(),
+        this.loadRoleList()
+      ]).then(() => {
+        this.$message.success('刷新成功')
+      }).finally(() => {
+        this.refreshing = false
+      })
+    },
+    handleRoleEdit(record) {
+      this.$refs.userManageModal.showRoleSelectModal(record)
+    },
+    getRoleName(roleId) {
+      // 如果UserManageModal组件已经加载，使用其getRoleName方法
+      if (this.$refs.userManageModal) {
+        return this.$refs.userManageModal.getRoleName(roleId)
+      }
+      // 否则从本地角色列表中查找
+      const role = this.roleList.find(r => r.id === roleId)
+      return role ? role.name : roleId
+    },
+    handleModalRefresh() {
+      this.loadUserData()
+      this.loadRoleList()
     }
   }
 }
