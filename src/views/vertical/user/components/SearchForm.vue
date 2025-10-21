@@ -94,7 +94,7 @@ export default {
         requirement: ''
       },
       loading: false,
-      apiUrl: 'http://eblab.club:8002/search',
+      apiUrl: 'https://eblab.club/api/agent/servicessearch/search',
       apiHeader: { 'Content-Type': 'application/json;charset=UTF-8' },
       apiResult: { answer: '' },
 
@@ -102,7 +102,7 @@ export default {
       showRAGInput: false,
       ragFiles: [],
       ragUploadFiles: [],
-      ragUploadUrl: 'http://eblab.club:8002/search',
+      ragUploadUrl: 'https://eblab.club/api/agent/servicessearch/search',
       ragUploadLoading: false,
       hasRagData: false,
 
