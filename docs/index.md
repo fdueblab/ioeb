@@ -3,7 +3,7 @@
 layout: home
 
 hero:
-  name: ""
+  name: "算法模型智能体平台"
   text: ""
   tagline: 有算法不会转化？有创意不会编程？教学缺算法案例？研究缺实验原型？请使用“算法模型智能体平台。
   actions:

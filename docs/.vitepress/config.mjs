@@ -19,7 +19,7 @@ export default defineConfig({
   // 配置lastUpdated功能
   lastUpdated: true,
 
-  title: "算法模型智能体平台",
+  title: "算法模型智能体平台文档",
   description: "复旦大学算法模型智能体平台用户文档",
 
   // 设置头部标签
@@ -93,13 +93,13 @@ export default defineConfig({
     },
 
     // 设置导航栏
-    // nav: [
-    //   { text: '首页', link: '/' },
-    //   { text: '快速开始', link: '/quickstart' },
-    //   { text: '用户指南', link: '/guide/' },
-    //   { text: '开发指南', link: '/dev/' },
-    //   { text: '常见问题', link: '/faq' },
-    // ],
+    nav: [
+      { text: '首页', link: '/' },
+      { text: '快速开始', link: '/quickstart' },
+      { text: '用户指南', link: '/guide/' },
+      { text: '开发指南', link: '/dev/' },
+      { text: '常见问题', link: '/faq' },
+    ],
 
     // 设置侧边栏
     sidebar: {
@@ -142,6 +142,7 @@ export default defineConfig({
             { text: 'Git 最佳实践', link: '/dev/git-practices' },
             { text: '平台项目快速开始', link: '/dev/project-quickstart' },
             { text: '智能体添加指南', link: '/dev/add-agent' },
+            { text: 'Agent SSE 接口调用指南', link: '/dev/agent-sse-api' },
             // { text: '代码规范', link: '/dev/code-standards' }
           ]
         },
