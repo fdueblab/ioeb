@@ -55,11 +55,17 @@ services:
       - '5000:5000'
     environment:
       - PYTHONUNBUFFERED=1
+      - SERVICES_BASE_PATH=/app/data/services
+      - PORT_RANGE_START=27000
+      - PORT_RANGE_END=28000
+      - SERVICE_HOST_URL=http://fdueblab.cn
     env_file:
       - ./env/backend.env
     volumes:
       - ./ioeb-backend/app_data:/app/uploads
       - ./ioeb-backend/app_db:/app/instance
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker socket挂载，允许容器内操作Docker
+      - /data/ioeb_services:/app/data/services      # 服务存储目录，与宿主机共享
     networks:
       - app-network # 加入现有网络
 
