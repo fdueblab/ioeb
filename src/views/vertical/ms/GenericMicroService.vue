@@ -396,7 +396,7 @@
         </a-button>
       </div>
     </a-card>
-    <agent-execution-panel
+    <!-- <agent-execution-panel
       v-if="showAgentPanel"
       :is-running="agentIsRunning"
       :steps="agentSteps"
@@ -404,7 +404,7 @@
       :warning="agentWarning"
       :final-results="agentFinalResults"
       @close="closeAgentPanel"
-    />
+    /> -->
   </page-header-wrapper>
 </template>
 
