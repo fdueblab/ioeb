@@ -46,7 +46,7 @@ export default {
     handleGoUse(record) {
       console.log('record', record)
       console.log('record.apiList', record.apiList)
-      
+
       // 根据服务类型处理数据
       switch (record.type) {
         case 'meta':

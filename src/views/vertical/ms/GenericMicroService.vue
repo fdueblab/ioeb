@@ -197,11 +197,11 @@
         <a-icon type="close-circle" theme="twoTone" two-tone-color="#f5222d" v-else />
         <span style="margin-left: 8px;">发布进度</span>
       </div>
-      
+
       <!-- 步骤展示 -->
       <div class="publish-steps">
-        <div 
-          v-for="(step, index) in publishProgress.steps" 
+        <div
+          v-for="(step, index) in publishProgress.steps"
           :key="index"
           :class="['step-item', {
             'active': index === publishProgress.current,
@@ -215,44 +215,44 @@
               <a-icon v-else-if="index === publishProgress.current && publishProgress.status === 'error'" type="close-circle" class="icon-error" />
               <a-icon v-else-if="index === publishProgress.current && publishProgress.status !== 'finish'" type="loading" class="icon-loading" />
               <span v-else class="step-number">{{ index + 1 }}</span>
-          </div>
+            </div>
             <div class="step-content">
               <div class="step-title">{{ step.title }}</div>
               <div class="step-description">{{ step.description }}</div>
-        </div>
-            <a-icon 
-              v-if="step.agentSteps.length > 0" 
-              :type="step.expanded ? 'up' : 'down'" 
+            </div>
+            <a-icon
+              v-if="step.agentSteps.length > 0"
+              :type="step.expanded ? 'up' : 'down'"
               class="expand-icon"
             />
-      </div>
-          
+          </div>
+
           <!-- Agent步骤列表（第二级） -->
           <div v-if="step.expanded && step.agentSteps.length > 0" class="agent-steps">
-            <div 
-              v-for="(agentStep, agentIndex) in step.agentSteps" 
+            <div
+              v-for="(agentStep, agentIndex) in step.agentSteps"
               :key="agentIndex"
               class="agent-step-item"
             >
               <div class="agent-step-header" @click="toggleAgentStepDetail(index, agentIndex)">
                 <span class="agent-step-number">步骤 {{ agentStep.step }}</span>
                 <span class="agent-step-summary">{{ getAgentStepSummary(agentStep) }}</span>
-                <a-icon 
-                  :type="agentStep.expanded ? 'up' : 'down'" 
+                <a-icon
+                  :type="agentStep.expanded ? 'up' : 'down'"
                   class="expand-icon-small"
                 />
-          </div>
-              
+              </div>
+
               <!-- 详细内容（第三级） -->
               <div v-if="agentStep.expanded" class="agent-step-details">
                 <div v-if="agentStep.thought" class="detail-section thought">
                   <div class="detail-label">💭 思考</div>
                   <div class="detail-content">{{ agentStep.thought }}</div>
-        </div>
+                </div>
                 <div v-if="agentStep.action" class="detail-section action">
                   <div class="detail-label">⚙️ 行动</div>
                   <div class="detail-content">{{ agentStep.action }}</div>
-      </div>
+                </div>
                 <div v-if="agentStep.action_result" class="detail-section observation">
                   <div class="detail-label">👁️ 结果</div>
                   <div class="detail-content">{{ agentStep.action_result }}</div>
@@ -260,7 +260,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- 无Agent的步骤显示简单描述 -->
           <div v-else-if="step.expanded && step.agentSteps.length === 0" class="simple-description">
             {{ step.description || '执行中...' }}
@@ -332,8 +332,8 @@
                   <div style="margin-top: 4px;">
                     <a-tag color="green">输入: {{ item.input }}</a-tag>
                     <a-tag color="blue">输出: {{ item.output }}</a-tag>
-        </div>
-                    </span>
+                  </div>
+                </span>
               </a-list-item-meta>
             </a-list-item>
           </a-list>
@@ -387,7 +387,7 @@
       <div style="margin-top: 16px; text-align: center;">
         <a-button type="primary" icon="download" @click="downloadServicePackage" v-if="servicePackageData">
           下载封装代码
-                    </a-button>
+        </a-button>
         <a-button type="primary" icon="database" @click="goToVerticalOverview" style="margin-left: 8px;">
           垂域资源总览
         </a-button>
