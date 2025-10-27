@@ -29,8 +29,8 @@
       </div>
     </a-card>
 
-    <!-- 算法模型上传部分 -->
-    <a-card v-if="submitType === 'algorithm'" :bordered="false" size="small" title="程序上传">
+    <!-- MCP服务配置 -->
+    <a-card v-if="submitType === 'algorithm'" :bordered="false" size="small" title="MCP服务配置">
       <div class="table-page-search-wrapper">
         <a-form layout="inline">
           <a-row :gutter="20">
@@ -39,7 +39,7 @@
                 <span style="margin-left: 5px; font-size: 14px">{{ domainTitle }}</span>
               </a-form-item>
             </a-col>
-            <a-col :span="6">
+            <a-col :span="5">
               <a-form-item label="行业">
                 <a-select v-model="programInfo.industry" placeholder="请选择行业" allow-clear>
                   <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
@@ -48,7 +48,7 @@
                 </a-select>
               </a-form-item>
             </a-col>
-            <a-col :span="6">
+            <a-col :span="5">
               <a-form-item label="场景">
                 <a-select v-model="programInfo.scenario" placeholder="请选择场景" allow-clear>
                   <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="item.code">
@@ -57,7 +57,7 @@
                 </a-select>
               </a-form-item>
             </a-col>
-            <a-col :span="6">
+            <a-col :span="5">
               <a-form-item label="技术">
                 <a-select v-model="programInfo.technology" placeholder="请选择技术" allow-clear>
                   <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="item.code">
@@ -66,44 +66,35 @@
                 </a-select>
               </a-form-item>
             </a-col>
+            <a-col :span="5">
+              <a-form-item label="服务名称" required>
+                <a-input v-model="form.serviceName" placeholder="请输入服务名称"/>
+              </a-form-item>
+            </a-col>
           </a-row>
           <a-row :gutter="20">
-            <a-col :span="4">
-              <a-form-item :wrapperCol="{ span: 12 }">
-                <span slot="label">程序
-                  <a-tooltip title="请确保程序遵循文档中的规约，否则将无法成功上传使用">
-                    <a-icon type="question-circle-o" />
-                  </a-tooltip>
-                </span>
+            <a-col :span="6">
+              <a-form-item label="程序文件">
                 <a-upload
                   accept=".py,.zip,.jar"
                   :file-list="programFiles"
                   :remove="removeProgramFile"
                   :customRequest="customProgramFilesChose"
                   :multiple="false">
-                  <a-button icon="file-add"> 选择程序 </a-button>
+                  <a-button icon="file-add"> 选择文件 </a-button>
                 </a-upload>
               </a-form-item>
             </a-col>
             <a-col :span="6">
-              <a-form-item label="属性">
-                <a-select v-model="programInfo.attribute" placeholder="请选择属性" allow-clear>
-                  <a-select-option v-for="(item, index) in attributeOptions" :key="index" :value="item.code">
-                    {{ item.text }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="6">
-              <a-form-item label="上传">
+              <a-form-item label="操作">
                 <a-button
                   type="primary"
-                  icon="upload"
-                  @click="onUpload"
-                  :disabled="programFiles.length === 0"
+                  icon="rocket"
+                  @click="onAutoPublish"
+                  :disabled="autoPublishDisabled"
                   :loading="uploadProgramLoading"
                 >
-                  开始上传
+                  上传并自动发布
                 </a-button>
               </a-form-item>
             </a-col>
@@ -198,186 +189,214 @@
         </a-form>
       </div>
     </a-card>
-    <a-card v-if="options" :bordered="false" style="margin-top: 10px;">
-      <div slot="title" style="display: flex; justify-content: space-between; align-items: center;">
-        <span>API依赖关系图</span>
-        <div v-if="submitType === 'algorithm'">
-          <a-button
-            v-if="isDev && !isMultiSelectMode"
-            type="primary"
-            icon="select"
-            @click="enableMultiSelect"
-            style="margin-right: 8px;"
-          >
-            多选节点（未完成，目前只在开发者模式下显示）
-          </a-button>
-          <div v-else style="display: inline-flex; align-items: center; gap: 8px;">
-            <a-tag color="blue">已选择 {{ selectedNodes.length }} 个节点</a-tag>
-            <a-button
-              type="primary"
-              icon="api"
-              @click="packageSelectedNodes"
-              :disabled="selectedNodes.length === 0"
-              :loading="packageLoading"
+    <!-- 发布进度 -->
+    <a-card v-if="publishProgress.show" :bordered="false" style="margin-top: 10px;">
+      <div slot="title">
+        <a-icon type="loading" v-if="publishProgress.status !== 'finish' && publishProgress.status !== 'error'" />
+        <a-icon type="check-circle" theme="twoTone" two-tone-color="#52c41a" v-else-if="publishProgress.status === 'finish'" />
+        <a-icon type="close-circle" theme="twoTone" two-tone-color="#f5222d" v-else />
+        <span style="margin-left: 8px;">发布进度</span>
+      </div>
+
+      <!-- 步骤展示 -->
+      <div class="publish-steps">
+        <div
+          v-for="(step, index) in publishProgress.steps"
+          :key="index"
+          :class="['step-item', {
+            'active': index === publishProgress.current,
+            'completed': index < publishProgress.current,
+            'error': publishProgress.status === 'error' && index === publishProgress.current
+          }]"
+        >
+          <div class="step-header" @click="toggleStepDetail(index)">
+            <div class="step-indicator">
+              <a-icon v-if="index < publishProgress.current" type="check-circle" class="icon-completed" />
+              <a-icon v-else-if="index === publishProgress.current && publishProgress.status === 'error'" type="close-circle" class="icon-error" />
+              <a-icon v-else-if="index === publishProgress.current && publishProgress.status !== 'finish'" type="loading" class="icon-loading" />
+              <span v-else class="step-number">{{ index + 1 }}</span>
+            </div>
+            <div class="step-content">
+              <div class="step-title">{{ step.title }}</div>
+              <div class="step-description">{{ step.description }}</div>
+            </div>
+            <a-icon
+              v-if="step.agentSteps.length > 0"
+              :type="step.expanded ? 'up' : 'down'"
+              class="expand-icon"
+            />
+          </div>
+
+          <!-- Agent步骤列表（第二级） -->
+          <div v-if="step.expanded && step.agentSteps.length > 0" class="agent-steps">
+            <div
+              v-for="(agentStep, agentIndex) in step.agentSteps"
+              :key="agentIndex"
+              class="agent-step-item"
             >
-              封装SSE服务
-            </a-button>
-            <a-button
-              icon="close"
-              @click="cancelMultiSelect"
-            >
-              取消
-            </a-button>
+              <div class="agent-step-header" @click="toggleAgentStepDetail(index, agentIndex)">
+                <span class="agent-step-number">步骤 {{ agentStep.step }}</span>
+                <span class="agent-step-summary">{{ getAgentStepSummary(agentStep) }}</span>
+                <a-icon
+                  :type="agentStep.expanded ? 'up' : 'down'"
+                  class="expand-icon-small"
+                />
+              </div>
+
+              <!-- 详细内容（第三级） -->
+              <div v-if="agentStep.expanded" class="agent-step-details">
+                <div v-if="agentStep.thought" class="detail-section thought">
+                  <div class="detail-label">💭 思考</div>
+                  <div class="detail-content">{{ agentStep.thought }}</div>
+                </div>
+                <div v-if="agentStep.action" class="detail-section action">
+                  <div class="detail-label">⚙️ 行动</div>
+                  <div class="detail-content">{{ agentStep.action }}</div>
+                </div>
+                <div v-if="agentStep.action_result" class="detail-section observation">
+                  <div class="detail-label">👁️ 结果</div>
+                  <div class="detail-content">{{ agentStep.action_result }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 无Agent的步骤显示简单描述 -->
+          <div v-else-if="step.expanded && step.agentSteps.length === 0" class="simple-description">
+            {{ step.description || '执行中...' }}
           </div>
         </div>
       </div>
+    </a-card>
+
+    <!-- MCP能力依赖图 -->
+    <a-card v-if="options" :bordered="false" style="margin-top: 10px;">
+      <div slot="title">MCP能力依赖图（只读可视化）</div>
       <div class="g6-x">
         <v-chart
           style="height: 100%; width: 100%;"
           :options="options"
           autoresize
-          @click="handleNodeClick"
         />
       </div>
-      <div v-if="isMultiSelectMode && selectedNodes.length > 0" style="margin-top: 16px;">
-        <a-divider>已选择的节点</a-divider>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-          <a-tag
-            v-for="node in selectedNodes"
-            :key="node.id"
-            closable
-            @close="removeSelectedNode(node.id)"
-            color="processing"
+    </a-card>
+
+    <!-- MCP Server信息 -->
+    <a-card v-if="mcpServerInfo.show" :bordered="false" style="margin-top: 10px;">
+      <div slot="title">
+        <a-icon type="check-circle" theme="twoTone" two-tone-color="#52c41a" />
+        <span style="margin-left: 8px;">MCP Server 发布成功</span>
+      </div>
+      <a-descriptions bordered :column="2">
+        <a-descriptions-item label="服务名称">
+          <a-tag color="blue">{{ mcpServerInfo.serviceName }}</a-tag>
+        </a-descriptions-item>
+        <a-descriptions-item label="协议版本">
+          MCP v1.0
+        </a-descriptions-item>
+        <a-descriptions-item label="领域">
+          {{ domainTitle }}
+        </a-descriptions-item>
+        <a-descriptions-item label="行业">
+          {{ getIndustryText(mcpServerInfo.industry) }}
+        </a-descriptions-item>
+        <a-descriptions-item label="场景">
+          {{ getScenarioText(mcpServerInfo.scenario) }}
+        </a-descriptions-item>
+        <a-descriptions-item label="技术">
+          {{ getTechnologyText(mcpServerInfo.technology) }}
+        </a-descriptions-item>
+      </a-descriptions>
+
+      <a-divider>识别的MCP能力</a-divider>
+
+      <a-tabs default-active-key="tools">
+        <a-tab-pane key="tools" tab="Tools">
+          <template slot="tab">
+            <a-badge :count="mcpServerInfo.tools.length" :overflow-count="99">
+              <span><a-icon type="api" /> Tools</span>
+            </a-badge>
+          </template>
+          <a-list
+            :data-source="mcpServerInfo.tools"
+            :locale="{ emptyText: '未识别到Tools' }"
           >
-            {{ node.name }}
-          </a-tag>
-        </div>
+            <a-list-item slot="renderItem" slot-scope="item">
+              <a-list-item-meta>
+                <span slot="title">
+                  <a-icon type="tool" />
+                  {{ item.name }}
+                </span>
+                <span slot="description">
+                  <div>{{ item.description || '无描述' }}</div>
+                  <div style="margin-top: 4px;">
+                    <a-tag color="green">输入: {{ item.input }}</a-tag>
+                    <a-tag color="blue">输出: {{ item.output }}</a-tag>
+                  </div>
+                </span>
+              </a-list-item-meta>
+            </a-list-item>
+          </a-list>
+        </a-tab-pane>
+
+        <a-tab-pane key="resources" tab="Resources">
+          <template slot="tab">
+            <a-badge :count="mcpServerInfo.resources.length" :overflow-count="99">
+              <span><a-icon type="database" /> Resources</span>
+            </a-badge>
+          </template>
+          <a-list
+            :data-source="mcpServerInfo.resources"
+            :locale="{ emptyText: '未识别到Resources' }"
+          >
+            <a-list-item slot="renderItem" slot-scope="item">
+              <a-list-item-meta>
+                <span slot="title">
+                  <a-icon type="file-text" />
+                  {{ item.name }}
+                </span>
+                <span slot="description">{{ item.description || '无描述' }}</span>
+              </a-list-item-meta>
+            </a-list-item>
+          </a-list>
+        </a-tab-pane>
+
+        <a-tab-pane key="prompts" tab="Prompts">
+          <template slot="tab">
+            <a-badge :count="mcpServerInfo.prompts.length" :overflow-count="99">
+              <span><a-icon type="message" /> Prompts</span>
+            </a-badge>
+          </template>
+          <a-list
+            :data-source="mcpServerInfo.prompts"
+            :locale="{ emptyText: '未识别到Prompts' }"
+          >
+            <a-list-item slot="renderItem" slot-scope="item">
+              <a-list-item-meta>
+                <span slot="title">
+                  <a-icon type="comment" />
+                  {{ item.name }}
+                </span>
+                <span slot="description">{{ item.description || '无描述' }}</span>
+              </a-list-item-meta>
+            </a-list-item>
+          </a-list>
+        </a-tab-pane>
+      </a-tabs>
+
+      <div style="margin-top: 16px; text-align: center;">
+        <a-button type="primary" icon="download" @click="downloadServicePackage" v-if="servicePackageData">
+          下载封装代码
+        </a-button>
+        <a-button type="primary" icon="database" @click="goToVerticalOverview" style="margin-left: 8px;">
+          垂域资源总览
+        </a-button>
+        <a-button type="primary" style="margin-left: 8px;" icon="check-circle" @click="goToTechEvaluation">
+          微服务技术评测
+        </a-button>
       </div>
     </a-card>
-    <a-card v-if="options && !isMultiSelectMode" :bordered="false" style="margin-top: 10px; height: 610px;">
-      <a-row :gutter="20">
-        <a-col :span="12">
-          <a-card :bodyStyle="{ padding: 0 }" style="height: 560px;">
-            <codemirror v-model="code" :style="codemirrorStyle" :options="cmOptions" />
-          </a-card>
-        </a-col>
-        <a-col :span="12">
-          <a-card style="height: 560px;">
-            <a-form>
-              <a-divider>接口配置</a-divider>
-              <a-row :gutter="20">
-                <a-col :span="12">
-                  <a-form-item label="API名称" required>
-                    <a-input v-model="form.apiName" placeholder="接口地址与方法名"/>
-                  </a-form-item>
-                </a-col>
-                <a-col :span="6">
-                  <a-form-item label="API类型" required>
-                    <a-select v-model="form.apiType" placeholder="请选择">
-                      <a-select-option v-for="(item, index) in apiTypeOptions" :key="index" :value="item.code">
-                        {{ item.text }}
-                      </a-select-option>
-                    </a-select>
-                  </a-form-item>
-                </a-col>
-                <a-col :span="6">
-                  <a-form-item label="请求方法" required>
-                    <a-select v-model="form.methodType" placeholder="请选择">
-                      <a-select-option v-for="(item, index) in methodTypeOptions" :key="index" :value="item.code">
-                        {{ item.text }}
-                      </a-select-option>
-                    </a-select>
-                  </a-form-item>
-                </a-col>
-              </a-row>
-              <a-row :gutter="20">
-                <a-col :span="6">
-                  <a-form-item label="输入类型">
-                    <a-select v-model="form.inputType" disabled >
-                      <a-select-option v-for="(item, index) in ioTypeOptions" :key="index" :value="item.code">
-                        {{ item.text }}
-                      </a-select-option>
-                    </a-select>
-                  </a-form-item>
-                </a-col>
-                <a-col :span="6">
-                  <a-form-item label="输入">
-                    <a-input v-model="form.input" disabled/>
-                  </a-form-item>
-                </a-col>
-                <a-col :span="6">
-                  <a-form-item label="输出类型">
-                    <a-select v-model="form.outputType" disabled >
-                      <a-select-option v-for="(item, index) in ioTypeOptions" :key="index" :value="item.code">
-                        {{ item.text }}
-                      </a-select-option>
-                    </a-select>
-                  </a-form-item>
-                </a-col>
-                <a-col :span="6">
-                  <a-form-item label="输出">
-                    <a-input v-model="form.output" disabled/>
-                  </a-form-item>
-                </a-col>
-              </a-row>
-              <a-row :gutter="20">
-                <a-col :span="24">
-                  <a-form-item label="条件（environment）">
-                    <a-input v-model="form.environment" placeholder="请输入Environment"/>
-                  </a-form-item>
-                </a-col>
-              </a-row>
-              <a-row :gutter="20">
-                <a-col :span="24">
-                  <a-form-item label="处理（process）">
-                    <a-input v-model="form.process" placeholder="请输入Process"/>
-                  </a-form-item>
-                </a-col>
-              </a-row>
-              <a-divider>微服务配置</a-divider>
-              <a-row :gutter="20">
-                <a-col :span="12">
-                  <a-form-item label="微服务名称" required>
-                    <a-input v-model="form.serviceName" placeholder="请输入微服务名称"/>
-                  </a-form-item>
-                </a-col>
-                <a-col :span="6">
-                  <a-form-item label="配置文件">
-                    <a-upload
-                      accept=".yml,.yaml,.json,.ini,.conf"
-                      :file-list="configFiles"
-                      :remove="removeConfigFile"
-                      :customRequest="customConfigFileChose"
-                      :multiple="false">
-                      <a-button> <a-icon type="upload" /> 选择文件 </a-button>
-                    </a-upload>
-                  </a-form-item>
-                </a-col>
-                <a-col :span="6">
-                  <a-form-item tooltip="value*category">
-                    <span slot="label">预发布
-                      <a-tooltip title="预发布后服务及应用运维管理中将出现部署在容器中的该服务，可以管理其部署状态并对其进行验证与测评">
-                        <a-icon type="question-circle-o" />
-                      </a-tooltip>
-                    </span>
-                    <a-button
-                      type="primary"
-                      icon="play-circle"
-                      @click="uploadService"
-                      :disabled="uploadServiceDisabled"
-                      :loading="uploadServiceLoading"
-                    >
-                      预发布
-                    </a-button>
-                  </a-form-item>
-                </a-col>
-              </a-row>
-            </a-form>
-          </a-card>
-        </a-col>
-      </a-row>
-    </a-card>
-    <agent-execution-panel
+    <!-- <agent-execution-panel
       v-if="showAgentPanel"
       :is-running="agentIsRunning"
       :steps="agentSteps"
@@ -385,96 +404,13 @@
       :warning="agentWarning"
       :final-results="agentFinalResults"
       @close="closeAgentPanel"
-    />
-    <!-- SSE服务封装配置弹窗 -->
-    <a-modal
-      v-model="showPackageModal"
-      title="SSE服务封装配置"
-      width="800px"
-      :confirmLoading="packageLoading"
-      @ok="confirmPackage"
-      @cancel="cancelPackage"
-    >
-      <a-form :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
-        <a-form-item label="服务名称" required>
-          <a-input
-            v-model="packageForm.serviceName"
-            placeholder="请输入SSE服务名称"
-          />
-        </a-form-item>
-        <a-form-item label="服务描述">
-          <a-textarea
-            v-model="packageForm.description"
-            placeholder="请输入服务描述"
-            :rows="3"
-          />
-        </a-form-item>
-        <a-form-item label="封装的节点">
-          <div style="max-height: 200px; overflow-y: auto; border: 1px solid #d9d9d9; padding: 8px; border-radius: 4px;">
-            <a-list size="small" :data-source="selectedNodes">
-              <a-list-item slot="renderItem" slot-scope="item">
-                <a-list-item-meta>
-                  <span slot="title">{{ item.name }}</span>
-                  <span slot="description">{{ item.description || '无描述' }}</span>
-                </a-list-item-meta>
-              </a-list-item>
-            </a-list>
-          </div>
-        </a-form-item>
-        <a-form-item label="SSE配置">
-          <a-row :gutter="16">
-            <a-col :span="12">
-              <a-form-item label="推送间隔(ms)" :label-col="{ span: 10 }" :wrapper-col="{ span: 14 }">
-                <a-input-number
-                  v-model="packageForm.pushInterval"
-                  :min="100"
-                  :max="10000"
-                  style="width: 100%"
-                />
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item label="最大连接数" :label-col="{ span: 10 }" :wrapper-col="{ span: 14 }">
-                <a-input-number
-                  v-model="packageForm.maxConnections"
-                  :min="1"
-                  :max="1000"
-                  style="width: 100%"
-                />
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </a-form-item>
-      </a-form>
-    </a-modal>
+    /> -->
   </page-header-wrapper>
 </template>
 
 <script>
+/* eslint-disable */
 import { streamAgent } from '@/utils/request'
-import { codemirror } from 'vue-codemirror'
-import 'codemirror/lib/codemirror.css'
-import 'codemirror/addon/lint/lint'
-import 'codemirror/addon/lint/lint.css'
-import 'codemirror/addon/fold/foldgutter.css'
-import 'codemirror/addon/fold/foldcode'
-import 'codemirror/addon/fold/foldgutter'
-import 'codemirror/addon/fold/brace-fold'
-import 'codemirror/addon/fold/comment-fold'
-import 'codemirror/addon/fold/markdown-fold'
-import 'codemirror/addon/fold/xml-fold'
-import 'codemirror/addon/fold/indent-fold'
-import 'codemirror/addon/hint/show-hint.css'
-import 'codemirror/addon/hint/show-hint.js'
-import 'codemirror/addon/hint/javascript-hint'
-import 'codemirror/addon/hint/xml-hint'
-import 'codemirror/addon/hint/sql-hint'
-import 'codemirror/addon/hint/anyword-hint'
-import 'codemirror/addon/search/match-highlighter'
-import 'codemirror/addon/edit/matchbrackets'
-import 'codemirror/addon/edit/closebrackets'
-import 'codemirror/mode/python/python.js'
-import 'codemirror/theme/idea.css'
 import { domainMockData, convertToGraphFormat } from './chartData'
 // 必须要引用echarts，否则图表无法显示
 // eslint-disable-next-line no-unused-vars
@@ -489,7 +425,6 @@ export default {
   name: 'GenericMicroService',
   components: {
     vChart,
-    codemirror,
     AgentExecutionPanel
   },
   props: {
@@ -501,91 +436,21 @@ export default {
   },
   data() {
     return {
-      // 开发模式标志
-      isDev: this.$route.query.isDev === 'true',
       // 领域标题
       domainTitle: '',
-      // 编辑器配置
-      cmOptions: {
-        mode: 'python',
-        theme: 'idea',
-        gutters: ['CodeMirror-lint-markers', 'CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
-        lineNumbers: true,
-        line: true,
-        lint: true,
-        lineWrapping: true,
-        autofocus: true,
-        autoCloseBrackets: true,
-        foldGutter: true, // 块槽
-        hintOptions: { completeSingle: true },
-        matchTags: { bothTags: true },
-        matchBrackets: true,
-        showCursorWhenSelecting: true,
-        styleSelectedText: true,
-        styleActiveLine: true,
-        autoRefresh: true,
-        highlightSelectionMatches: {
-          minChars: 2,
-          trim: true,
-          style: 'matchhighlight',
-          showToken: false
-        }
-      },
-      codemirrorStyle: {
-        height: '560px'
-      },
       // 上传文件
       programFiles: [],
       configFiles: [],
       uploadFiles: [],
       uploadConfigFiles: [],
-      // 缓存的原始文件，用于服务封装
-      cachedFile: null,
-      code: '',
-      codeTemplate: `# 微服务名称: {{serviceName}}
-
-@ns.route('/{{apiName}}')
-class {{apiName}}({{input}}):
-  @ns.doc(responses={
-    200: 'Success',
-    400: 'Validation Error',
-    500: 'Internal Server Error'
-  })
-
-
-  # 条件: {{environment}}
-  def {{methodType}}(self):
-    try:
-      logger.debug('开始处理{{apiName}}请求')
-
-      # 处理: {{process}}
-      """{{apiName}} source code"""
-
-      logger.debug('{{apiName}}请求处理完成')
-      return {{output}}
-
-    except Exception:
-      logger.exception('{{apiName}}处理过程出错，错误信息: ', Exception)
-      return {'error': f'处理过程出错: {str(Exception)}'}, 500
-`,
       options: null,
       // 表单数据
       form: {
-        serverType: undefined,
-        apiName: undefined,
-        apiType: undefined,
-        methodType: undefined,
-        inputType: undefined,
-        input: undefined,
-        outputType: undefined,
-        output: undefined,
-        environment: undefined,
-        process: undefined,
+        serverType: 'mcp',
         serviceName: undefined
       },
       // 程序信息
       programInfo: {
-        attribute: undefined,
         industry: undefined,
         scenario: undefined,
         technology: undefined
@@ -593,14 +458,10 @@ class {{apiName}}({{input}}):
       uploadProgramLoading: false,
       uploadServiceLoading: false,
       // 字典选项
-      attributeOptions: [],
       industryOptions: [],
       scenarioOptions: [],
       technologyOptions: [],
-      apiTypeOptions: [],
-      methodTypeOptions: [],
-      ioTypeOptions: [],
-      // 真实agent调用
+      // Agent调用
       showAgentPanel: false,
       agentIsRunning: false,
       agentSteps: [],
@@ -608,17 +469,33 @@ class {{apiName}}({{input}}):
       agentWarning: '',
       agentFinalResults: null,
       submitType: 'algorithm',
-      // 多选节点相关
-      isMultiSelectMode: false,
-      selectedNodes: [],
-      packageLoading: false,
-      showPackageModal: false,
-      packageForm: {
+      // 发布进度
+      publishProgress: {
+        show: false,
+        current: 0,
+        status: 'process', // process | finish | error | wait
+        steps: [
+          { title: '上传文件', description: '', expanded: false, agentSteps: [] },
+          { title: '代码分析', description: '', expanded: false, agentSteps: [] },
+          { title: 'MCP封装', description: '', expanded: false, agentSteps: [] },
+          { title: '服务部署', description: '', expanded: false, agentSteps: [] }
+        ]
+      },
+      // 保存服务包数据
+      servicePackageData: null,
+      // MCP Server信息
+      mcpServerInfo: {
+        show: false,
         serviceName: '',
-        description: '',
-        pushInterval: 1000,
-        maxConnections: 100
-      }
+        industry: undefined,
+        scenario: undefined,
+        technology: undefined,
+        tools: [],
+        resources: [],
+        prompts: []
+      },
+      // 程序解析结果
+      programJson: null
     }
   },
   computed: {
@@ -626,7 +503,10 @@ class {{apiName}}({{input}}):
       if (this.submitType === 'microservice') {
         return !this.form.serviceName || this.uploadFiles.length === 0
       }
-      return !this.form.serviceName || !this.form.apiName || this.uploadFiles.length === 0
+      return !this.form.serviceName || this.uploadFiles.length === 0
+    },
+    autoPublishDisabled() {
+      return !this.form.serviceName || this.uploadFiles.length === 0
     }
   },
   created() {
@@ -637,27 +517,18 @@ class {{apiName}}({{input}}):
     async initData() {
       try {
         // 加载字典缓存
-        this.apiTypeOptions = await dictionaryCache.loadDict('api_type') || []
-        this.methodTypeOptions = await dictionaryCache.loadDict('method_type') || []
-        this.ioTypeOptions = await dictionaryCache.loadDict('io_type') || []
-        this.attributeOptions = await dictionaryCache.loadDict('attribute') || []
         this.industryOptions = await dictionaryCache.loadDict(`${this.verticalType}_industry`) || []
         this.scenarioOptions = await dictionaryCache.loadDict(`${this.verticalType}_scenario`) || []
         this.technologyOptions = await dictionaryCache.loadDict(`${this.verticalType}_technology`) || []
         // 设置领域标题
         const domains = await dictionaryCache.loadDict('domain') || []
         this.domainTitle = domains.find(domain => domain.code === this.verticalType)?.text || '未知领域'
-        // 清除代码框
-        this.code = ''
         // 重置提交类型
         this.submitType = 'algorithm'
       } catch (error) {
         console.error('加载字典数据失败:', error)
         this.$message.error('加载数据字典失败，请刷新重试')
         // 确保所有数组初始化，防止undefined错误
-        this.apiTypeOptions = this.apiTypeOptions || []
-        this.methodTypeOptions = this.methodTypeOptions || []
-        this.ioTypeOptions = this.ioTypeOptions || []
         this.industryOptions = this.industryOptions || []
         this.scenarioOptions = this.scenarioOptions || []
         this.technologyOptions = this.technologyOptions || []
@@ -706,68 +577,441 @@ class {{apiName}}({{input}}):
       this.uploadConfigFiles = []
     },
 
-    // 上传程序
-    onUpload() {
+    // 自动发布MCP服务
+    async onAutoPublish() {
       if (this.uploadFiles.length === 0) {
         this.$message.error('请先选择程序文件！')
         return
       }
 
-      this.uploadProgramLoading = true
-      // 获取文件和文件扩展名
-      const file = this.uploadFiles[0]
-      const fileExt = file.name.split('.').pop().toLowerCase()
-
-      // 缓存文件用于后续服务封装
-      this.cachedFile = file
-
-      // 根据文件类型和垂直领域处理上传
-      if (fileExt === 'zip' || this.verticalType === 'aml') {
-        // 真实代码分析逻辑
-        this.realCodeAnalysisAgent(file)
-      } else {
-        // 其他领域的模拟上传逻辑
-        this.mockCodeAnalysis(file)
-      }
-    },
-
-    // 根据领域类型返回模拟数据
-    mockCodeAnalysis(file) {
-      this.uploadProgramLoading = true
-      // 获取当前领域的模拟数据
-      const programData = domainMockData[this.verticalType] || { checkFile: null, nodes: [], edges: [] }
-
-      // 延时模拟请求处理
-      setTimeout(() => {
-        // 检查文件合法性（如果当前领域有文件名检查需求）
-        if (programData.checkFile && file.name !== programData.checkFile) {
-          this.$message.error('上传的程序不符合规范，上传失败！')
-          this.uploadProgramLoading = false
+      if (!this.form.serviceName) {
+        this.$message.error('请输入服务名称！')
           return
         }
 
-        // 设置分析结果
-        this.programJson = {
-          nodes: programData.nodes,
-          edges: programData.edges
-        }
-        this.setChart()
-        this.$message.success('解析成功，发现以下可用API及调用关系')
-        this.uploadProgramLoading = false
-      }, 1000)
+      // 重置状态
+      this.publishProgress = {
+        show: true,
+        current: 0,
+        status: 'process',
+        steps: [
+          { title: '上传文件', description: '', expanded: false, agentSteps: [] },
+          { title: '代码分析', description: '', expanded: false, agentSteps: [] },
+          { title: 'MCP封装', description: '', expanded: false, agentSteps: [] },
+          { title: '服务部署', description: '', expanded: false, agentSteps: [] }
+        ]
+      }
+      this.mcpServerInfo.show = false
+      this.servicePackageData = null
+
+      this.uploadProgramLoading = true
+      const file = this.uploadFiles[0]
+
+      try {
+        // Step 1: 上传文件
+        this.updatePublishProgress(0, 'process', '正在上传文件...')
+        await new Promise(resolve => setTimeout(resolve, 500))
+        this.updatePublishProgress(0, 'process', '文件上传完成')
+
+        // Step 2: 代码分析（识别MCP能力）
+        this.updatePublishProgress(1, 'process', '正在分析代码结构...')
+        await this.analyzeMCPCapabilities(file)
+        this.updatePublishProgress(1, 'process', '代码分析完成，已识别MCP能力')
+
+        // Step 3: 自动封装为MCP Server
+        this.updatePublishProgress(2, 'process', '正在封装MCP服务...')
+        await this.autoPackageMCPServer()
+        this.updatePublishProgress(2, 'process', '服务封装完成')
+
+        // Step 4: 自动部署
+        this.updatePublishProgress(3, 'process', '正在部署服务...')
+        await this.autoDeployMCPServer()
+        this.updatePublishProgress(3, 'process', '服务部署完成')
+
+        // 完成
+        this.publishProgress.status = 'finish'
+        this.$message.success('MCP Server 发布成功！')
+
+        // 显示MCP服务信息
+        this.showMCPServerInfo()
+      } catch (error) {
+        console.error('自动发布失败:', error)
+        this.publishProgress.status = 'error'
+        this.publishProgress.steps[this.publishProgress.current] = '失败: ' + (error.message || error)
+        this.$message.error('发布失败：' + (error.message || error))
+      } finally {
+          this.uploadProgramLoading = false
+      }
     },
 
-    // 设置图表
-    setChart() {
+    // 更新发布进度
+    updatePublishProgress(step, status, description) {
+      this.publishProgress.current = step
+      this.publishProgress.status = status
+      this.publishProgress.steps[step].description = description
+    },
+
+    // 添加Agent步骤到指定的主步骤
+    addAgentStep(stepIndex, agentData) {
+      if (!this.publishProgress.steps[stepIndex]) {
+        console.error('步骤索引无效:', stepIndex)
+          return
+        }
+
+      // 确保 agentSteps 数组存在
+      if (!this.publishProgress.steps[stepIndex].agentSteps) {
+        this.$set(this.publishProgress.steps[stepIndex], 'agentSteps', [])
+      }
+      
+      const agentStep = {
+        step: agentData.step || (this.publishProgress.steps[stepIndex].agentSteps.length + 1),
+        thought: agentData.thought || '',
+        action: agentData.action || '',
+        action_result: agentData.action_result || '',
+        expanded: false
+      }
+      this.publishProgress.steps[stepIndex].agentSteps.push(agentStep)
+      
+      // 自动更新主步骤描述为最新的Agent步骤摘要
+      this.publishProgress.steps[stepIndex].description = this.getAgentStepSummary(agentStep)
+    },
+
+    // 切换主步骤详情展开/折叠
+    toggleStepDetail(index) {
+      this.publishProgress.steps[index].expanded = !this.publishProgress.steps[index].expanded
+    },
+
+    // 切换Agent步骤详情展开/折叠
+    toggleAgentStepDetail(stepIndex, agentIndex) {
+      const agentStep = this.publishProgress.steps[stepIndex].agentSteps[agentIndex]
+      if (agentStep) {
+        agentStep.expanded = !agentStep.expanded
+      }
+    },
+
+    // 获取Agent步骤的摘要信息
+    getAgentStepSummary(agentStep) {
+      if (agentStep.thought && agentStep.thought.length > 0) {
+        const thoughtPreview = agentStep.thought.length > 40 
+          ? agentStep.thought.substring(0, 40) + '...' 
+          : agentStep.thought
+        return `💭 ${thoughtPreview}`
+      } else if (agentStep.action) {
+        const actionPreview = agentStep.action.length > 40 
+          ? agentStep.action.substring(0, 40) + '...' 
+          : agentStep.action
+        return `⚙️ ${actionPreview}`
+      } else if (agentStep.action_result) {
+        return '👁️ 查看执行结果'
+      }
+      return '处理中...'
+    },
+
+    // 分析MCP能力
+    async analyzeMCPCapabilities(file) {
+      const fileExt = file.name.split('.').pop().toLowerCase()
+
+      // 根据文件类型处理
+      if (fileExt === 'zip' || this.verticalType === 'aml') {
+        // 真实Agent分析
+        return this.realMCPAnalysisAgent(file)
+              } else {
+        // 模拟分析
+        return this.mockMCPAnalysis(file)
+      }
+    },
+
+    // 真实代码分析
+    realMCPAnalysisAgent(file) {
+      return new Promise((resolve, reject) => {
+      // 重置Agent面板状态
+      this.agentSteps = []
+      this.agentError = ''
+      this.agentWarning = ''
+      this.agentFinalResults = null
+      this.agentIsRunning = true
+      this.showAgentPanel = true
+
+      // 准备FormData
+      const formData = new FormData()
+      formData.append('file', file.originFileObj || file)
+
+        // 使用封装的streamAgent方法 - 调用 code_analysis 接口
+      streamAgent('/api/agent/code_analysis', formData, {
+        onStart: () => {
+          this.agentIsRunning = true
+        },
+        onStep: (data) => {
+          this.agentSteps.push(data)
+            // 将Agent步骤添加到第二级（步骤1：代码分析）
+            this.addAgentStep(1, data)
+        },
+        onError: (error) => {
+          this.agentError = error
+          this.agentIsRunning = false
+            reject(error)
+        },
+        onWarning: (warning) => {
+          this.agentWarning = warning
+          this.agentIsRunning = false
+            reject(warning)
+        },
+        onFinalResult: (results) => {
+          this.agentFinalResults = results
+            this.agentIsRunning = false
+
+          // 从最终结果中提取函数依赖图数据
+          if (results && results.function) {
+            try {
+              const funcData = results.function
+
+              // 如果数据已经包含nodes和edges，直接使用
+              if (funcData.nodes && funcData.edges) {
+                this.programJson = funcData
+              } else {
+                // 否则使用转换方法
+                this.programJson = convertToGraphFormat(funcData)
+                }
+
+                // 将节点转换为MCP能力（Tools）
+                if (this.programJson && this.programJson.nodes) {
+                  const tools = this.programJson.nodes.map(node => ({
+                    id: node.id,
+                    name: node.label,
+                    description: `${node.label} - ${node.input} -> ${node.output}`,
+                    input: node.input,
+                    output: node.output,
+                    mcpType: 'tool'
+                  }))
+                  
+                  this.mcpServerInfo.tools = tools
+                  this.mcpServerInfo.resources = []
+                  this.mcpServerInfo.prompts = []
+                  
+                  this.setMCPChart()
+                  resolve(results)
+                } else {
+                  reject(new Error('函数依赖图数据处理失败'))
+              }
+            } catch (e) {
+              console.error('处理函数依赖数据出错:', e)
+                reject(e)
+            }
+          } else {
+              reject(new Error('未能获取函数依赖关系数据'))
+          }
+        },
+        onComplete: () => {
+          this.agentIsRunning = false
+        },
+        onDataProcessError: (e, line) => {
+          console.error('解析数据失败:', e, line)
+          this.agentError = '解析数据失败: ' + e.message
+          this.agentIsRunning = false
+            reject(e)
+          }
+        })
+      })
+    },
+
+    // 模拟MCP分析
+    mockMCPAnalysis(file) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          // 获取当前领域的模拟数据
+          const programData = domainMockData[this.verticalType] || { checkFile: null, nodes: [], edges: [] }
+
+          // 将节点转换为MCP能力
+          const tools = programData.nodes.map(node => ({
+            id: node.id,
+            name: node.label,
+            description: `${node.label} - ${node.input} -> ${node.output}`,
+            input: node.input,
+            output: node.output,
+            mcpType: 'tool'
+          }))
+
+          this.mcpServerInfo.tools = tools
+          this.mcpServerInfo.resources = []
+          this.mcpServerInfo.prompts = []
+
+          // 设置分析结果
+          this.programJson = {
+            nodes: programData.nodes,
+            edges: programData.edges
+          }
+          this.setMCPChart()
+
+          resolve({ tools, resources: [], prompts: [] })
+        }, 1000)
+      })
+    },
+
+    // 自动封装MCP Server
+    async autoPackageMCPServer() {
+      const file = this.uploadFiles[0]
+      
+      return new Promise((resolve, reject) => {
+        // 准备FormData
+        const formData = new FormData()
+        formData.append('file', file.originFileObj || file)
+
+        // 使用封装的streamAgent方法 - 调用 service_packaging 接口
+        streamAgent('/api/agent/service_packaging', formData, {
+          onStart: () => {
+            this.agentIsRunning = true
+          },
+          onStep: (data) => {
+            this.agentSteps.push(data)
+            // 将Agent步骤添加到第二级（步骤2：MCP封装）
+            this.addAgentStep(2, data)
+          },
+          onError: (error) => {
+            this.agentError = error
+            this.agentIsRunning = false
+            reject(error)
+          },
+          onWarning: (warning) => {
+            this.agentWarning = warning
+            this.agentIsRunning = false
+            reject(warning)
+          },
+          onFinalResult: (results) => {
+            this.agentFinalResults = results
+            this.agentIsRunning = false
+
+            // 从最终结果中提取服务包数据
+            if (results && results.service_package) {
+              try {
+                const servicePackage = results.service_package
+                // 保存服务包信息供下载使用
+                this.servicePackageData = servicePackage
+                console.log('服务封装完成:', servicePackage)
+                resolve(servicePackage)
+              } catch (e) {
+                console.error('处理服务包数据出错:', e)
+                reject(e)
+              }
+            } else {
+              // 如果没有返回service_package，也认为成功（向后兼容）
+              resolve(results)
+            }
+          },
+          onComplete: () => {
+            this.agentIsRunning = false
+          },
+          onDataProcessError: (e, line) => {
+            console.error('解析数据失败:', e, line)
+            this.agentError = '解析数据失败: ' + e.message
+            this.agentIsRunning = false
+            reject(e)
+          }
+        })
+      })
+    },
+
+    // 自动部署MCP Server
+    async autoDeployMCPServer() {
+      if (!this.servicePackageData) {
+        throw new Error('服务包数据不存在，无法部署')
+      }
+
+      try {
+        // 将base64转换为Blob
+        const binaryData = atob(this.servicePackageData.content)
+        const bytes = new Uint8Array(binaryData.length)
+        for (let i = 0; i < binaryData.length; i++) {
+          bytes[i] = binaryData.charCodeAt(i)
+        }
+        const blob = new Blob([bytes], { type: 'application/zip' })
+
+        // 创建File对象
+        const filename = this.servicePackageData.filename || `${this.form.serviceName}_mcp_service.zip`
+        const file = new File([blob], filename, { type: 'application/zip' })
+
+        // 构建FormData
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('name', this.form.serviceName)
+        formData.append('type', 'atomic_mcp')
+        formData.append('domain', this.verticalType)
+        
+        // 可选字段
+        if (this.programInfo.industry) {
+          formData.append('industry', this.programInfo.industry)
+        }
+        if (this.programInfo.scenario) {
+          formData.append('scenario', this.programInfo.scenario)
+        }
+        if (this.programInfo.technology) {
+          formData.append('technology', this.programInfo.technology)
+        }
+        
+        formData.append('number', '0')
+        
+        // 序列化复杂对象为JSON字符串
+        const sourceInfo = {
+          popoverTitle: 'MCP服务溯源',
+          companyName: '复旦大学课题组',
+          companyAddress: '上海市杨浦区邯郸路220号',
+          companyContact: '021-65642222',
+          companyIntroduce: '课题五',
+          msIntroduce: `${store.getters.nickname}发布的MCP服务。`,
+          companyScore: 5,
+          msScore: 5
+        }
+        formData.append('source', JSON.stringify(sourceInfo))
+        
+        // 不传 apiList，让后端自动生成，部署完成后可通过 PATCH 接口更新
+
+        // 调用上传并部署接口
+        const response = await this.uploadAndDeployService(formData)
+        
+        if (response && response.status === 'success') {
+          return response
+        } else {
+          throw new Error(response?.message || '部署失败')
+        }
+      } catch (error) {
+        console.error('部署服务时出错:', error)
+        throw error
+      }
+    },
+
+    // 调用上传并部署服务接口
+    async uploadAndDeployService(formData) {
+      try {
+        const response = await this.$http.post('/services/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          timeout: 60000 // 60秒超时
+        })
+        return response
+      } catch (error) {
+        console.error('上传服务失败:', error)
+        throw new Error(error.response?.data?.message || error.message || '上传服务失败')
+      }
+    },
+
+    // 显示MCP服务信息
+    showMCPServerInfo() {
+      this.mcpServerInfo.show = true
+      this.mcpServerInfo.serviceName = this.form.serviceName
+      this.mcpServerInfo.industry = this.programInfo.industry
+      this.mcpServerInfo.scenario = this.programInfo.scenario
+      this.mcpServerInfo.technology = this.programInfo.technology
+    },
+
+    // 设置MCP能力依赖图
+    setMCPChart() {
       // 确保程序Json存在
       if (!this.programJson || !this.programJson.nodes || !this.programJson.edges) {
         console.error('程序Json数据不完整，无法渲染图表', this.programJson)
-        return
-      }
-      // 在属性内使用this指代的不是组件，所以要在外面先取要用的数据
+          return
+        }
+
       const json = this.programJson
-      const apiTypes = this.apiTypeOptions
-      const methodTypes = this.methodTypeOptions
       const processedNodes = json.nodes.map(node => ({
         x: node.x,
         y: node.y,
@@ -778,9 +1022,12 @@ class {{apiName}}({{input}}):
           show: true,
           position: 'inside'
         },
-        value: node.id
+        value: node.id,
+        itemStyle: {
+          color: node.mcpType === 'resource' ? '#52c41a' : node.mcpType === 'prompt' ? '#1890ff' : '#722ed1'
+        }
       }))
-      // 确保每条边具有必要的属性
+
       const processedEdges = json.edges.map(edge => ({
         source: edge.sourceID,
         target: edge.targetID,
@@ -790,6 +1037,7 @@ class {{apiName}}({{input}}):
         symbol: ['none', 'arrow'],
         symbolSize: [0, 10]
       }))
+
       // 设置echarts图表配置
       this.options = {
         animationDurationUpdate: 1500,
@@ -815,25 +1063,18 @@ class {{apiName}}({{input}}):
           trigger: 'item',
           formatter: function (params) {
             const node = json.nodes.find(n => n.id === params.data.id)
-            if (node) {
-              let apiTypeText, methodTypeText
-              try {
-                apiTypeText = apiTypes.find(item => item.code === node.apiType)?.text || '未知'
-                methodTypeText = methodTypes.find(item => item.code === node.methodType)?.text || '未知'
-              } catch (e) {
-                apiTypeText = '未知'
-                methodTypeText = '未知'
-              }
+          if (node) {
+              const mcpTypeText = node.mcpType === 'tool' ? 'Tool'
+                                  : node.mcpType === 'resource' ? 'Resource'
+                                  : node.mcpType === 'prompt' ? 'Prompt' : 'Tool'
 
               return `
               <div style="font-size: 14px; line-height: 1.5; color: #333;">
                 <strong>${node.label}</strong><br/>
-                <span style="color: #888;">Input:</span> ${node.input}<br/>
-                <span style="color: #888;">Output:</span> ${node.output}<br/>
-                <span style="color: #888;">Environment:</span> ${node.environment || '无'}<br/>
-                <span style="color: #888;">Process:</span> ${node.process || '无'}<br/>
-                <span style="color: #888;">Interface Type:</span> ${apiTypeText}<br/>
-                <span style="color: #888;">Method Type:</span> ${methodTypeText}
+                <span style="color: #888;">MCP类型:</span> ${mcpTypeText}<br/>
+                <span style="color: #888;">输入:</span> ${node.input}<br/>
+                <span style="color: #888;">输出:</span> ${node.output}<br/>
+                <span style="color: #888;">描述:</span> ${node.description || '无'}
               </div>
               `
             }
@@ -843,172 +1084,46 @@ class {{apiName}}({{input}}):
       }
     },
 
-    // 真实代码分析
-    realCodeAnalysisAgent(file) {
-      // 重置Agent面板状态
-      this.agentSteps = []
-      this.agentError = ''
-      this.agentWarning = ''
-      this.agentFinalResults = null
-      this.agentIsRunning = true
-      this.showAgentPanel = true
-
-      // 准备FormData
-      const formData = new FormData()
-      formData.append('file', file.originFileObj || file)
-
-      // 使用封装的streamAgent方法
-      streamAgent('/api/agent/code_analysis', formData, {
-        onStart: () => {
-          this.uploadProgramLoading = true
-          this.agentIsRunning = true
-        },
-        onStep: (data) => {
-          this.agentSteps.push(data)
-        },
-        onError: (error) => {
-          this.agentError = error
-          this.uploadProgramLoading = false
-          this.agentIsRunning = false
-          this.$message.error('解析出错: ' + error)
-        },
-        onWarning: (warning) => {
-          this.agentWarning = warning
-          this.uploadProgramLoading = false
-          this.agentIsRunning = false
-          this.$message.warning(warning)
-        },
-        onFinalResult: (results) => {
-          this.agentFinalResults = results
-
-          // 从最终结果中提取函数依赖图数据
-          if (results && results.function) {
-            try {
-              // 检查返回的数据格式
-              const funcData = results.function
-
-              // 如果数据已经包含nodes和edges，直接使用
-              if (funcData.nodes && funcData.edges) {
-                this.programJson = funcData
-                this.setChart()
-                this.$message.success('解析成功，发现以下可用API及调用关系')
-              } else {
-                // 否则使用转换方法
-                this.programJson = convertToGraphFormat(funcData)
-
-                if (this.programJson) {
-                  this.setChart()
-                  this.$message.success('解析成功，发现以下可用API及调用关系')
-                } else {
-                  this.$message.warning('函数依赖图数据处理失败')
-                }
-              }
-            } catch (e) {
-              console.error('处理函数依赖数据出错:', e)
-              this.$message.warning('函数依赖图数据处理失败')
-            }
-          } else {
-            this.$message.warning('未能获取函数依赖关系数据')
-          }
-
-          this.uploadProgramLoading = false
-          this.agentIsRunning = false
-        },
-        onComplete: () => {
-          this.uploadProgramLoading = false
-          this.agentIsRunning = false
-        },
-        onDataProcessError: (e, line) => {
-          console.error('解析数据失败:', e, line)
-          this.agentError = '解析数据失败: ' + e.message
-          this.uploadProgramLoading = false
-          this.agentIsRunning = false
-        }
-      })
+    // 辅助方法：获取行业文本
+    getIndustryText(code) {
+      const item = this.industryOptions.find(opt => opt.code === code)
+      return item ? item.text : code || '未设置'
     },
 
-    // 真实服务封装
-    realServicePackageAgent(file) {
-      return new Promise((resolve, reject) => {
-        // 重置Agent面板状态
-        this.agentSteps = []
-        this.agentError = ''
-        this.agentWarning = ''
-        this.agentFinalResults = null
-        this.agentIsRunning = true
-        this.showAgentPanel = true
-
-        // 准备FormData
-        const formData = new FormData()
-        formData.append('file', file.originFileObj || file)
-
-        // 使用封装的streamAgent方法
-        streamAgent('/api/agent/service_packaging', formData, {
-          onStart: () => {
-            this.uploadServiceLoading = true
-            this.agentIsRunning = true
-          },
-          onStep: (data) => {
-            this.agentSteps.push(data)
-          },
-          onError: (error) => {
-            this.agentError = error
-            this.uploadServiceLoading = false
-            this.agentIsRunning = false
-            this.$message.error('服务封装出错: ' + error)
-            reject(error)
-          },
-          onWarning: (warning) => {
-            this.agentWarning = warning
-            this.uploadServiceLoading = false
-            this.agentIsRunning = false
-            this.$message.warning(warning)
-            reject(warning)
-          },
-          onFinalResult: (results) => {
-            this.agentFinalResults = results
-
-            // 从最终结果中提取服务包数据
-            if (results && results.service_package) {
-              try {
-                const servicePackage = results.service_package
-                // 下载返回的压缩文件
-                this.downloadServicePackage(servicePackage)
-                this.$message.success('服务封装成功，正在下载服务包...')
-                resolve(servicePackage)
-              } catch (e) {
-                console.error('处理服务包数据出错:', e)
-                this.$message.error('服务包数据处理失败')
-                reject(e)
-              }
-            } else {
-              this.$message.error('未能获取服务包数据')
-              reject(new Error('未能获取服务包数据'))
-            }
-
-            this.uploadServiceLoading = false
-            this.agentIsRunning = false
-          },
-          onComplete: () => {
-            this.uploadServiceLoading = false
-            this.agentIsRunning = false
-          },
-          onDataProcessError: (e, line) => {
-            console.error('解析数据失败:', e, line)
-            this.agentError = '解析数据失败: ' + e.message
-            this.uploadServiceLoading = false
-            this.agentIsRunning = false
-            reject(e)
-          }
-        })
-      })
+    // 辅助方法：获取场景文本
+    getScenarioText(code) {
+      const item = this.scenarioOptions.find(opt => opt.code === code)
+      return item ? item.text : code || '未设置'
     },
 
-    // 下载服务包
-    downloadServicePackage(servicePackage) {
+    // 辅助方法：获取技术文本
+    getTechnologyText(code) {
+      const item = this.technologyOptions.find(opt => opt.code === code)
+      return item ? item.text : code || '未设置'
+    },
+
+    // 跳转到垂域资源总览
+    goToVerticalOverview() {
+      // 跳转到当前垂域资源总览页面
+      this.$router.push(`/vertical-user/${this.verticalType}`)
+    },
+
+    // 跳转到微服务技术评测
+    goToTechEvaluation() {
+      // 跳转到微服务技术评测页面
+      this.$router.push(`/evaluation/${this.verticalType}/technology`)
+    },
+
+    // 下载封装好的服务代码
+    downloadServicePackage() {
+      if (!this.servicePackageData) {
+        this.$message.warning('暂无可下载的服务包')
+        return
+      }
+
       try {
         // 将base64内容转换为二进制数据
-        const binaryData = atob(servicePackage.content)
+        const binaryData = atob(this.servicePackageData.content)
         const bytes = new Uint8Array(binaryData.length)
         for (let i = 0; i < binaryData.length; i++) {
           bytes[i] = binaryData.charCodeAt(i)
@@ -1021,7 +1136,7 @@ class {{apiName}}({{input}}):
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
-        link.download = servicePackage.filename || 'service_package.zip'
+        link.download = this.servicePackageData.filename || `${this.form.serviceName}_mcp_service.zip`
 
         // 触发下载
         document.body.appendChild(link)
@@ -1031,141 +1146,16 @@ class {{apiName}}({{input}}):
         // 释放URL对象
         window.URL.revokeObjectURL(url)
 
-        this.$message.success('服务包下载完成')
+        this.$message.success('服务包下载成功')
       } catch (error) {
         console.error('下载服务包失败:', error)
         this.$message.error('下载服务包失败')
       }
     },
-
-    // 点击节点处理
-    handleNodeClick(params) {
-      // 检查是否有节点ID
-      if (params.data && params.data.id) {
-        const nodeId = params.data.id
-
-        // 如果是多选模式
-        if (this.isMultiSelectMode) {
-          this.handleMultiSelectNode(params)
-          return
-        }
-
-        // 单选模式的原有逻辑
-        // 检查是否是真实数据（带有code和api属性）
-        if (params.data.code) {
-          // 真实数据处理
-          this.code = params.data.code
-          if (params.data.api) {
-            this.form = {
-              ...this.form,
-              ...params.data.api
-            }
-          }
-        } else {
-          // 模拟数据处理 - 从节点数组中查找对应节点
-          const node = this.programJson.nodes.find(n => n.id === nodeId)
-          if (node) {
-            this.form = {
-              serviceName: '',
-              input: node.input,
-              output: node.output,
-              environment: node.environment,
-              process: node.process,
-              apiType: node.apiType,
-              apiName: node.label,
-              methodType: node.methodType,
-              inputType: node.inputType,
-              outputType: node.outputType
-            }
-            this.updateCode()
-          }
-        }
-      }
-    },
-
-    // 处理多选节点
-    handleMultiSelectNode(params) {
-      const nodeId = params.data.id
-      const nodeName = params.data.name
-
-      // 从原始数据中查找节点详细信息
-      const nodeDetail = this.programJson.nodes.find(n => n.id === nodeId)
-      if (!nodeDetail) {
-        this.$message.warning('无法找到节点详细信息')
-        return
-      }
-
-      // 检查节点是否已被选择
-      const existingIndex = this.selectedNodes.findIndex(node => node.id === nodeId)
-
-      if (existingIndex >= 0) {
-        // 如果已选择，则取消选择
-        this.selectedNodes.splice(existingIndex, 1)
-
-        // 重置节点样式
-        if (this.options && this.options.series && this.options.series[0]) {
-          const nodeData = this.options.series[0].data.find(node => node.id === nodeId)
-          if (nodeData) {
-            nodeData.itemStyle = {
-              color: '#5470c6'
-            }
-          }
-        }
-
-        this.$message.info(`已取消选择节点: ${nodeName}`)
-      } else {
-        // 如果未选择，则添加到选择列表
-        this.selectedNodes.push({
-          id: nodeId,
-          name: nodeName,
-          apiName: nodeDetail.label,
-          input: nodeDetail.input,
-          output: nodeDetail.output,
-          environment: nodeDetail.environment,
-          process: nodeDetail.process,
-          apiType: nodeDetail.apiType,
-          methodType: nodeDetail.methodType,
-          description: `${nodeDetail.label} - ${nodeDetail.input} -> ${nodeDetail.output}`
-        })
-
-        // 高亮选中的节点
-        if (this.options && this.options.series && this.options.series[0]) {
-          const nodeData = this.options.series[0].data.find(node => node.id === nodeId)
-          if (nodeData) {
-            nodeData.itemStyle = {
-              color: '#52c41a'
-            }
-          }
-        }
-
-        this.$message.success(`已选择节点: ${nodeName}`)
-      }
-
-      // 触发图表更新
-      this.options = { ...this.options }
-    },
-    // 更新左端代码
-    updateCode() {
-      const { serviceName, environment, process, input, output, apiName, methodType } = this.form
-      const methods = ['get', 'post', 'put', 'delete']
-      // 动态生成代码
-      this.code = this.codeTemplate
-        .replace(/\{\{apiName}}/g, apiName)
-        .replace(/\{\{methodType}}/g, methods[methodType])
-        .replace(/\{\{input}}/g, input)
-        .replace(/\{\{output}}/g, output)
-        .replace(/\{\{serviceName}}/g, serviceName)
-        .replace(/\{\{environment}}/g, environment)
-        .replace(/\{\{process}}/g, process)
-    },
-    // 上传微服务
+    // 上传微服务（微服务直接预发布）
     async uploadService() {
       if (!this.form.serviceName) {
         this.$message.error('请填写微服务名称！')
-        return
-      }
-      if (this.submitType === 'algorithm' && !this.form.apiName) {
-        this.$message.error('请填写必要的服务信息！')
         return
       }
 
@@ -1177,22 +1167,17 @@ class {{apiName}}({{input}}):
       this.uploadServiceLoading = true
 
       try {
-        // 如果有缓存的文件，先进行服务封装
-        if (this.cachedFile) {
-          await this.realServicePackageAgent(this.cachedFile)
-        }
-
         const data = {
           name: this.form.serviceName,
-          attribute: this.programInfo.attribute,
           type: 'atomic',
+          serverType: this.form.serverType,
           domain: this.verticalType,
           industry: this.programInfo.industry,
           scenario: this.programInfo.scenario,
           technology: this.programInfo.technology,
           netWork: 'bridge',
-          port: '0.0.0.0:7777/TCP → 0.0.0.0:77777',
-          volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
+          port: '0.0.0.0:8080/TCP → 0.0.0.0:8080',
+          volume: '/var/opt/service/data',
           status: 'deploying',
           number: 0,
           norm: [],
@@ -1205,24 +1190,7 @@ class {{apiName}}({{input}}):
             msIntroduce: `${store.getters.nickname}发布的微服务。`,
             companyScore: 5,
             msScore: 5
-          },
-          apiList: [
-            {
-              name: this.form.apiName,
-              isFake: true,
-              url: 'https://myApiServer.com/add',
-              method: this.form.methodType,
-              parameterType: 1,
-              parameters: [
-                {
-                  name: this.form.input,
-                  type: 'string'
-                }
-              ],
-              responseType: 1,
-              response: { code: 203, message: '计算资源不足，暂时无法调用该服务！', success: false }
-            }
-          ]
+          }
         }
         const response = await createService(data)
         if (response && response.status === 'success') {
@@ -1242,22 +1210,14 @@ class {{apiName}}({{input}}):
     closeAgentPanel() {
       this.showAgentPanel = false
     },
+
     // 重置表单
     resetForm() {
       this.form = {
-        apiName: undefined,
-        apiType: undefined,
-        methodType: undefined,
-        inputType: undefined,
-        input: undefined,
-        outputType: undefined,
-        output: undefined,
-        environment: undefined,
-        process: undefined,
+        serverType: 'mcp',
         serviceName: undefined
       }
       this.programInfo = {
-        attribute: undefined,
         industry: undefined,
         scenario: undefined,
         technology: undefined
@@ -1266,140 +1226,14 @@ class {{apiName}}({{input}}):
       this.configFiles = []
       this.uploadFiles = []
       this.uploadConfigFiles = []
-      this.cachedFile = null
-      this.code = ''
       this.options = null
+      this.programJson = null
     },
+
     handleSubmitTypeChange() {
       this.resetForm()
-      this.cancelMultiSelect()
-    },
-    enableMultiSelect() {
-      this.isMultiSelectMode = true
-      this.selectedNodes = []
-      this.$message.info('已进入多选模式，点击节点进行选择')
-    },
-    cancelMultiSelect() {
-      this.isMultiSelectMode = false
-      this.selectedNodes = []
-      // 重置图表节点样式
-      this.resetNodeStyles()
-    },
-    resetNodeStyles() {
-      if (this.options && this.options.series && this.options.series[0]) {
-        const series = this.options.series[0]
-        if (series.data) {
-          series.data.forEach(node => {
-            node.itemStyle = {
-              color: '#5470c6'
-            }
-          })
-          // 触发图表更新
-          this.options = { ...this.options }
-        }
-      }
-    },
-    packageSelectedNodes() {
-      if (this.selectedNodes.length === 0) {
-        this.$message.warning('请先选择要封装的节点')
-        return
-      }
-
-      // 重置表单
-      this.packageForm = {
-        serviceName: `sse_service_${Date.now()}`,
-        description: `封装了${this.selectedNodes.length}个算法节点的SSE服务`,
-        pushInterval: 1000,
-        maxConnections: 100
-      }
-
-      this.showPackageModal = true
-    },
-    // 确认封装SSE服务
-    async confirmPackage() {
-      if (!this.packageForm.serviceName) {
-        this.$message.error('请输入服务名称')
-        return
-      }
-
-      this.packageLoading = true
-      try {
-        // 构建SSE服务配置
-        const sseServiceConfig = {
-          serviceName: this.packageForm.serviceName,
-          description: this.packageForm.description,
-          type: 'sse',
-          domain: this.verticalType,
-          industry: this.programInfo.industry,
-          scenario: this.programInfo.scenario,
-          technology: this.programInfo.technology,
-          nodes: this.selectedNodes.map(node => ({
-            id: node.id,
-            name: node.name,
-            apiName: node.apiName || node.name,
-            input: node.input,
-            output: node.output,
-            environment: node.environment,
-            process: node.process
-          })),
-          sseConfig: {
-            pushInterval: this.packageForm.pushInterval,
-            maxConnections: this.packageForm.maxConnections,
-            endpoint: `/sse/${this.packageForm.serviceName}`
-          },
-          status: 'packaging'
-        }
-
-        // 调用API创建SSE服务
-        const response = await createService(sseServiceConfig)
-
-        if (response && response.status === 'success') {
-          this.$message.success('SSE服务封装成功！正在部署中...')
-          this.showPackageModal = false
-          this.cancelMultiSelect()
-
-          // 可以在这里添加跳转到服务管理页面的逻辑
-          // this.$router.push('/service/management')
-        } else {
-          this.$message.error(response?.message || 'SSE服务封装失败')
-        }
-      } catch (error) {
-        console.error('封装SSE服务失败:', error)
-        this.$message.error('封装过程出现异常，请稍后重试')
-      } finally {
-        this.packageLoading = false
-      }
-    },
-    cancelPackage() {
-      this.showPackageModal = false
-      this.packageForm = {
-        serviceName: '',
-        description: '',
-        pushInterval: 1000,
-        maxConnections: 100
-      }
-    },
-    removeSelectedNode(nodeId) {
-      this.selectedNodes = this.selectedNodes.filter(node => node.id !== nodeId)
-
-      // 更新图表中对应节点的样式
-      if (this.options && this.options.series && this.options.series[0]) {
-        const series = this.options.series[0]
-        if (series.data) {
-          const nodeData = series.data.find(node => node.id === nodeId)
-          if (nodeData) {
-            nodeData.itemStyle = {
-              color: '#5470c6'
-            }
-          }
-          // 触发图表更新
-          this.options = { ...this.options }
-        }
-      }
-
-      if (this.selectedNodes.length === 0) {
-        this.$message.info('已清空选择，可以重新选择节点')
-      }
+      this.mcpServerInfo.show = false
+      this.publishProgress.show = false
     }
   },
   watch: {
@@ -1412,21 +1246,6 @@ class {{apiName}}({{input}}):
         }
       },
       immediate: false
-    },
-    'form.apiName': function () {
-      this.updateCode()
-    },
-    'form.methodType': function () {
-      this.updateCode()
-    },
-    'form.environment': function () {
-      this.updateCode()
-    },
-    'form.process': function () {
-      this.updateCode()
-    },
-    'form.serviceName': function () {
-      this.updateCode()
     }
   }
 }
@@ -1443,7 +1262,215 @@ class {{apiName}}({{input}}):
   width: 100%;
   height: 300px;
 }
-/deep/ .CodeMirror {
-  height: 558px;
+
+// 发布步骤样式
+.publish-steps {
+  .step-item {
+    position: relative;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    background: #fafafa;
+    transition: all 0.3s;
+
+    &.active {
+      border-color: #1890ff;
+      background: #e6f7ff;
+    }
+
+    &.completed {
+      border-color: #52c41a;
+      background: #f6ffed;
+    }
+
+    &.error {
+      border-color: #f5222d;
+      background: #fff1f0;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+
+      &:hover {
+        opacity: 0.8;
+      }
+
+      .step-indicator {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        border-radius: 50%;
+        background: #fff;
+        border: 2px solid #d9d9d9;
+        flex-shrink: 0;
+
+        .step-number {
+          font-size: 14px;
+          font-weight: 600;
+          color: #666;
+        }
+
+        .icon-completed {
+          font-size: 20px;
+          color: #52c41a;
+        }
+
+        .icon-loading {
+          font-size: 20px;
+          color: #1890ff;
+        }
+
+        .icon-error {
+          font-size: 20px;
+          color: #f5222d;
+        }
+      }
+
+      .step-content {
+        flex: 1;
+        min-width: 0;
+
+        .step-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #333;
+          margin-bottom: 4px;
+        }
+
+        .step-description {
+          font-size: 14px;
+          color: #666;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+
+      .expand-icon {
+        font-size: 16px;
+        color: #999;
+        margin-left: 8px;
+        transition: transform 0.3s;
+      }
+    }
+
+    // Agent步骤列表（第二级）
+    .agent-steps {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e8e8e8;
+      max-height: 400px;
+      overflow-y: auto;
+
+      .agent-step-item {
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        border-radius: 4px;
+        transition: all 0.3s;
+
+        &:hover {
+          border-color: #1890ff;
+          box-shadow: 0 2px 4px rgba(24, 144, 255, 0.1);
+        }
+
+        .agent-step-header {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          user-select: none;
+
+          .agent-step-number {
+            font-weight: 600;
+            color: #1890ff;
+            margin-right: 8px;
+            white-space: nowrap;
+          }
+
+          .agent-step-summary {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .expand-icon-small {
+            font-size: 14px;
+            color: #999;
+            margin-left: 8px;
+          }
+        }
+
+        // Agent步骤详情（第三级）
+        .agent-step-details {
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid #f0f0f0;
+
+          .detail-section {
+            margin-bottom: 12px;
+
+            &:last-child {
+  margin-bottom: 0;
+}
+
+            .detail-label {
+              font-weight: 600;
+              font-size: 13px;
+              margin-bottom: 6px;
+              color: #333;
+            }
+
+            .detail-content {
+              padding: 8px 12px;
+              border-radius: 4px;
+              font-size: 13px;
+              line-height: 1.6;
+              white-space: pre-wrap;
+              word-break: break-all;
+              max-height: 200px;
+              overflow-y: auto;
+            }
+
+            &.thought .detail-content {
+              background: #f0f7ff;
+              border-left: 3px solid #1890ff;
+            }
+
+            &.action .detail-content {
+              background: #fff5e6;
+              border-left: 3px solid #fa8c16;
+            }
+
+            &.observation .detail-content {
+              background: #f0fff0;
+              border-left: 3px solid #52c41a;
+            }
+          }
+        }
+      }
+    }
+
+    // 无Agent的简单描述
+    .simple-description {
+      margin-top: 12px;
+      padding: 12px;
+      background: #fff;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+    }
+  }
 }
 </style>
