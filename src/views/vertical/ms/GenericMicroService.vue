@@ -912,21 +912,45 @@ export default {
 
     // 自动部署MCP Server
     async autoDeployMCPServer() {
-      const data = {
-        name: this.form.serviceName,
-        type: 'mcp',
-        serverType: 'mcp',
-        domain: this.verticalType,
-        industry: this.programInfo.industry,
-        scenario: this.programInfo.scenario,
-        technology: this.programInfo.technology,
-        netWork: 'bridge',
-        port: '0.0.0.0:8080/TCP → 0.0.0.0:8080',
-        volume: '/var/opt/mcp/data',
-        status: 'deploying',
-        number: 0,
-        norm: [],
-        source: {
+      if (!this.servicePackageData) {
+        throw new Error('服务包数据不存在，无法部署')
+      }
+
+      try {
+        // 将base64转换为Blob
+        const binaryData = atob(this.servicePackageData.content)
+        const bytes = new Uint8Array(binaryData.length)
+        for (let i = 0; i < binaryData.length; i++) {
+          bytes[i] = binaryData.charCodeAt(i)
+        }
+        const blob = new Blob([bytes], { type: 'application/zip' })
+
+        // 创建File对象
+        const filename = this.servicePackageData.filename || `${this.form.serviceName}_mcp_service.zip`
+        const file = new File([blob], filename, { type: 'application/zip' })
+
+        // 构建FormData
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('name', this.form.serviceName)
+        formData.append('type', 'atomic_mcp')
+        formData.append('domain', this.verticalType)
+        
+        // 可选字段
+        if (this.programInfo.industry) {
+          formData.append('industry', this.programInfo.industry)
+        }
+        if (this.programInfo.scenario) {
+          formData.append('scenario', this.programInfo.scenario)
+        }
+        if (this.programInfo.technology) {
+          formData.append('technology', this.programInfo.technology)
+        }
+        
+        formData.append('number', '0')
+        
+        // 序列化复杂对象为JSON字符串
+        const sourceInfo = {
           popoverTitle: 'MCP服务溯源',
           companyName: '复旦大学课题组',
           companyAddress: '上海市杨浦区邯郸路220号',
@@ -935,19 +959,38 @@ export default {
           msIntroduce: `${store.getters.nickname}发布的MCP服务。`,
           companyScore: 5,
           msScore: 5
-        },
-        mcpCapabilities: {
-          tools: this.mcpServerInfo.tools,
-          resources: this.mcpServerInfo.resources,
-          prompts: this.mcpServerInfo.prompts
         }
-      }
+        formData.append('source', JSON.stringify(sourceInfo))
+        
+        // 不传 apiList，让后端自动生成，部署完成后可通过 PATCH 接口更新
 
-      const response = await createService(data)
-      if (response && response.status === 'success') {
-        return response
+        // 调用上传并部署接口
+        const response = await this.uploadAndDeployService(formData)
+        
+        if (response && response.status === 'success') {
+          return response
         } else {
-        throw new Error(response?.message || '部署失败')
+          throw new Error(response?.message || '部署失败')
+        }
+      } catch (error) {
+        console.error('部署服务时出错:', error)
+        throw error
+      }
+    },
+
+    // 调用上传并部署服务接口
+    async uploadAndDeployService(formData) {
+      try {
+        const response = await this.$http.post('/services/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          timeout: 60000 // 60秒超时
+        })
+        return response
+      } catch (error) {
+        console.error('上传服务失败:', error)
+        throw new Error(error.response?.data?.message || error.message || '上传服务失败')
       }
     },
 
