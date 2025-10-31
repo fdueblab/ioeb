@@ -501,7 +501,7 @@ export default {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 75vh;
+  height: 100vh;
   border-radius: 12px;
   background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
