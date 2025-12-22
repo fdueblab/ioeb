@@ -349,8 +349,10 @@ export default {
       switch (statusType) {
         case 'default':
         case 'error':
+          this.$message.info('服务异常，暂时无法使用！')
+          break
         case 'processing':
-          this.$message.info('该服务暂时无法使用！')
+          this.$message.info('该服务正在部署，暂时无法使用！')
           break
         default:
           this.$emit('onGoUse', record)
