@@ -899,23 +899,6 @@ export default {
       const defaultData = createDefaultFlowData()
       this.dataReload(defaultData)
     },
-    downloadData() {
-      this.$confirm('确定要下载流程数据吗？', '下载确认', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'info',
-        closeOnClickModal: false
-      }).then(() => {
-        let datastr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(this.data, null, '\t'))
-        let downloadAnchorNode = document.createElement('a')
-        downloadAnchorNode.setAttribute('href', datastr)
-        downloadAnchorNode.setAttribute('download', `${this.data.name || 'flow'}.json`)
-        downloadAnchorNode.click()
-        downloadAnchorNode.remove()
-        this.$message.success('文件下载中...')
-      }).catch(() => {
-      })
-    },
     async loadDictionaryData() {
       try {
         // 加载字典缓存
