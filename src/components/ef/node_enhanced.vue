@@ -37,7 +37,7 @@
       </div>
 
       <!-- 删除按钮 -->
-      <div v-if="!isMetaAgent" class="ef-node-delete-btn" @click.stop="deleteNode">
+      <div v-if="!isMetaAgent && !chromeLocked" class="ef-node-delete-btn" @click.stop="deleteNode">
         <a-button type="danger" shape="circle" size="small" icon="delete" />
       </div>
     </div>
@@ -78,6 +78,16 @@ export default {
     appName: {
       type: String,
       default: '新元应用'
+    },
+    /** 父组件传入的仿真构建视觉状态（与画布联动） */
+    simVisual: {
+      type: Object,
+      default: () => ({})
+    },
+    /** 为真时隐藏删除等编辑入口（仿真构建进行中） */
+    chromeLocked: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -91,12 +101,23 @@ export default {
       return this.node.name === 'metaAppAgent'
     },
     nodeContainerClass() {
-      return {
+      const v = this.simVisual || {}
+      const o = {
         'ef-node-enhanced': true,
         'ef-node-agent': this.isMetaAgent,
         'ef-node-tool': !this.isMetaAgent,
         'ef-node-tooltip-visible': this.tooltipVisible
       }
+      if (v.active) {
+        o['sim-visual-active'] = true
+        if (v.step != null && v.step !== '') o[`sim-visual-step-${v.step}`] = true
+        if (this.isMetaAgent && v.phase && v.phaseStatus === 'running') {
+          o[`sim-agent-phase-${v.phase}`] = true
+        } else if (!this.isMetaAgent && v.status) {
+          o[`sim-svc-${v.status}`] = true
+        }
+      }
+      return o
     },
     // 动态控制节点容器的z-index
     nodeContainerZIndex() {
@@ -226,6 +247,42 @@ export default {
   &.ef-node-tooltip-visible {
     z-index: 999 !important;
   }
+
+  /* —— 仿真构建画布联动：服务节点 —— */
+  &.sim-visual-active.sim-svc-checking {
+    box-shadow: 0 0 0 2px rgba(250, 173, 20, 0.85), 0 4px 14px rgba(250, 173, 20, 0.35);
+    animation: sim-svc-pulse 1.2s ease-in-out infinite;
+  }
+  &.sim-visual-active.sim-svc-online {
+    box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.75), 0 2px 10px rgba(82, 196, 26, 0.25);
+  }
+  &.sim-visual-active.sim-svc-error {
+    box-shadow: 0 0 0 2px rgba(245, 34, 45, 0.85), 0 2px 10px rgba(245, 34, 45, 0.2);
+    animation: sim-svc-shake 0.5s ease-in-out;
+  }
+}
+
+@keyframes sim-svc-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(250, 173, 20, 0.65), 0 4px 12px rgba(250, 173, 20, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(250, 173, 20, 0.95), 0 6px 18px rgba(250, 173, 20, 0.4);
+  }
+}
+
+@keyframes sim-svc-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
 }
 
 // 智能体节点样式
@@ -245,6 +302,50 @@ export default {
 
   &:hover {
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  }
+
+  /* 仿真构建：智能体在 data / logic / check 阶段的强调色环 */
+  &.sim-visual-active.sim-agent-phase-data {
+    box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.65), 0 8px 28px rgba(24, 144, 255, 0.45);
+    animation: sim-agent-ring-data 1.4s ease-in-out infinite;
+  }
+  &.sim-visual-active.sim-agent-phase-logic {
+    box-shadow: 0 0 0 3px rgba(114, 46, 209, 0.65), 0 8px 28px rgba(114, 46, 209, 0.4);
+    animation: sim-agent-ring-logic 1.4s ease-in-out infinite;
+  }
+  &.sim-visual-active.sim-agent-phase-check {
+    box-shadow: 0 0 0 3px rgba(82, 196, 26, 0.65), 0 8px 28px rgba(82, 196, 26, 0.4);
+    animation: sim-agent-ring-check 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes sim-agent-ring-data {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.5), 0 6px 22px rgba(24, 144, 255, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.85), 0 10px 32px rgba(24, 144, 255, 0.5);
+  }
+}
+
+@keyframes sim-agent-ring-logic {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(114, 46, 209, 0.5), 0 6px 22px rgba(114, 46, 209, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(114, 46, 209, 0.85), 0 10px 32px rgba(114, 46, 209, 0.5);
+  }
+}
+
+@keyframes sim-agent-ring-check {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.5), 0 6px 22px rgba(82, 196, 26, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(82, 196, 26, 0.85), 0 10px 32px rgba(82, 196, 26, 0.5);
   }
 }
 
