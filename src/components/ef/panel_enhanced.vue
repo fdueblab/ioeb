@@ -11,26 +11,54 @@
             </h4>
           </div>
           <div class="toolbar-center">
-            <a-button type="primary" shape="round" icon="build" @click="buildMetaApp" :loading="buildingMetaApp">
-              构建为元应用
-            </a-button>
+            <a-space>
+              <div class="simulation-btn-wrapper">
+                <a-button
+                  type="primary"
+                  shape="round"
+                  icon="play-circle"
+                  :disabled="simulationChromeLocked"
+                  @click="simulationBuild"
+                >
+                  开始仿真构建
+                </a-button>
+                <transition name="tips-float">
+                  <div v-if="hasServiceNodes && !simulationPassed" class="simulation-tips-float">
+                    <span>看起来还行？进入仿真构建环节</span>
+                    <div class="tips-arrow"></div>
+                  </div>
+                </transition>
+              </div>
+              <!-- 预发布按钮已整合到仿真构建弹窗内 -->
+              <!-- <a-tooltip :title="simulationPassed ? '' : '请先完成仿真构建'">
+                <a-button
+                  shape="round"
+                  icon="rocket"
+                  :disabled="!simulationPassed"
+                  :class="{ 'success-button': simulationPassed }"
+                  @click="previewAndPublish"
+                >
+                  元应用预览与发布
+                </a-button>
+              </a-tooltip> -->
+            </a-space>
           </div>
           <div class="toolbar-right">
             <a-space>
               <a-tooltip title="下载元应用配置">
-                <a-button shape="circle" icon="download" @click="exportMetaApp" :disabled="loadingFlow" />
+                <a-button shape="circle" icon="download" @click="exportMetaApp" :disabled="toolbarDisabled" />
               </a-tooltip>
               <a-tooltip title="导入元应用配置">
-                <a-button shape="circle" icon="import" @click="importMetaApp" :disabled="loadingFlow" :loading="importLoading" />
+                <a-button shape="circle" icon="import" @click="importMetaApp" :disabled="toolbarDisabled" :loading="importLoading" />
               </a-tooltip>
               <a-tooltip title="元应用详情">
-                <a-button shape="circle" :disabled="loadingFlow" icon="file-text" @click="showDataInfo" />
+                <a-button shape="circle" :disabled="toolbarDisabled" icon="file-text" @click="showDataInfo" />
               </a-tooltip>
               <a-tooltip title="重置元应用">
-                <a-button shape="circle" :disabled="loadingFlow" icon="reload" @click="dataReloadClear" />
+                <a-button shape="circle" :disabled="toolbarDisabled" icon="reload" @click="dataReloadClear" />
               </a-tooltip>
               <a-tooltip title="添加服务">
-                <a-button type="primary" :disabled="loadingFlow" shape="circle" icon="plus" @click="addServices" />
+                <a-button type="primary" :disabled="toolbarDisabled" shape="circle" icon="plus" @click="addServices" />
               </a-tooltip>
             </a-space>
           </div>
@@ -38,9 +66,29 @@
       </el-col>
     </el-row>
 
-    <div class="ef-main-container" :style="mainContainerStyle">
+    <div
+      class="ef-main-container"
+      :class="{ 'ef-main--simulation': simulationBuilderVisible }"
+      :style="mainContainerStyle"
+    >
+      <!-- 仿真构建：与画布同级，左栏（无遮罩） -->
+      <div v-if="simulationBuilderVisible" class="ef-simulation-pane">
+        <simulation-builder
+          ref="simulationBuilder"
+          :service-nodes="data.nodeList"
+          :app-name="data.preName"
+          :app-id="data.name || 'meta-app-draft'"
+          :domain="verticalType"
+          :scenario-description="data.preDes"
+          @success="handleSimulationSuccess"
+          @prePublish="previewAndPublish"
+          @canvas-visual="onSimulationCanvasVisual"
+          @close="simulationBuilderVisible = false"
+        />
+      </div>
+
       <!-- 左侧工具栏 - 可选显示 -->
-      <div v-if="showSidebar" class="ef-sidebar">
+      <div v-if="showSidebar && !simulationBuilderVisible" class="ef-sidebar">
         <div v-if="loadingServices" class="loading-overlay">
           <a-spin size="large" tip="正在选择服务"/>
         </div>
@@ -48,7 +96,12 @@
       </div>
 
       <!-- 主画布区域 -->
-      <div id="efContainer" ref="efContainer" class="ef-canvas">
+      <div
+        id="efContainer"
+        ref="efContainer"
+        class="ef-canvas"
+        :class="simulationCanvasClasses"
+      >
         <div v-if="loadingFlow" class="loading-overlay">
           <a-spin size="large" tip="正在生成元应用">
             <div style="height: 200px;"></div>
@@ -70,22 +123,23 @@
         </div>
 
         <!-- 节点渲染 -->
-        <template v-for="node in data.nodeList">
-          <flow-node-enhanced
-            :key="node.id"
-            :node="node"
-            :app-name="data.preName"
-            @nodeRightMenu="nodeRightMenu"
-            @deleteNode="deleteNode"
-            :style="{
-              position: 'absolute',
-              left: node.left,
-              top: node.top,
-              opacity: nodePositionsCalculated ? 1 : 0,
-              transition: 'opacity 0.3s ease'
-            }"
-          />
-        </template>
+        <flow-node-enhanced
+          v-for="node in data.nodeList"
+          :key="node.id"
+          :node="node"
+          :app-name="data.preName"
+          :sim-visual="simulationVisualForNode(node)"
+          :chrome-locked="simulationChromeLocked"
+          @nodeRightMenu="nodeRightMenu"
+          @deleteNode="deleteNode"
+          :style="{
+            position: 'absolute',
+            left: node.left,
+            top: node.top,
+            opacity: nodePositionsCalculated ? 1 : 0,
+            transition: 'opacity 0.3s ease'
+          }"
+        />
       </div>
     </div>
 
@@ -129,13 +183,13 @@
 <script>
 /* eslint-disable */
 
-import draggable from 'vuedraggable'
 import { easyFlowMixin } from '@/components/ef/mixins'
 import flowNodeEnhanced from '@/components/ef/node_enhanced'
 import nodeMenu from '@/components/ef/node_menu_enhanced'
 import InfoDisplayEnhanced from '@/components/ef/info_display_enhanced'
 import ServicesAdder from '@/components/ef/services_adder'
 import MetaAppBuilder from '@/components/ef/meta_app_builder'
+import SimulationBuilder from '@/components/ef/simulation_builder'
 import {
   SERVICE_TEXT_MAP,
   hasLine,
@@ -208,6 +262,28 @@ export default {
         (status) => statusFilter(status, this.statusDict),
         (status) => statusStyleFilter(status, this.statusStyleDict)
       )
+    },
+    // 检查画布上是否有服务节点（排除智能体节点）
+    hasServiceNodes() {
+      return this.data.nodeList.filter(node => node.name !== 'metaAppAgent').length > 0
+    },
+    /** 仿真构建进行时画布的步骤 / 阶段 class，用于连线与背景动效 */
+    simulationCanvasClasses() {
+      const sc = this.simulationCanvas
+      if (!sc.active) return {}
+      const o = {
+        'sim-build-active': true
+      }
+      if (sc.step != null && sc.step !== '') o[`sim-build-step-${sc.step}`] = true
+      const p = sc.simulatePhase
+      if (p && p.phase && p.status) o[`sim-phase-${p.phase}-${p.status}`] = true
+      return o
+    },
+    simulationChromeLocked() {
+      return this.simulationBuilderVisible
+    },
+    toolbarDisabled() {
+      return this.loadingFlow || this.simulationChromeLocked
     }
   },
   data() {
@@ -217,7 +293,9 @@ export default {
       flowInfoVisible: false,
       servicesAdderVisible: false,
       metaAppBuilderVisible: false,
-      buildingMetaApp: false,
+      simulationBuilderVisible: false,
+      simulationBuilding: false,
+      simulationPassed: false,
       loadEasyFlowFinish: false,
       importLoading: false,
       fileSelectionInProgress: false,
@@ -243,6 +321,13 @@ export default {
         x: 0,
         y: 0,
         type: ''
+      },
+      /** 仿真构建与画布联动（由 simulation_builder 的 canvas-visual 驱动） */
+      simulationCanvas: {
+        active: false,
+        step: null,
+        nodes: {},
+        simulatePhase: null
       },
       isTesting: false,
       intervalId: null,
@@ -283,12 +368,12 @@ export default {
   },
   mixins: [easyFlowMixin],
   components: {
-    draggable,
     flowNodeEnhanced,
     nodeMenu,
     InfoDisplayEnhanced,
     ServicesAdder,
-    MetaAppBuilder
+    MetaAppBuilder,
+    SimulationBuilder
   },
   mounted() {
     this.loadDictionaryData()
@@ -303,6 +388,18 @@ export default {
       },
       deep: true
     },
+    simulationBuilderVisible(val) {
+      this.$emit('simulation-ui', { open: !!val })
+      this.$nextTick(() => {
+        if (this.jsPlumb) {
+          this.jsPlumb.importDefaults({
+            ...this.jsplumbSetting,
+            ConnectionsDetachable: !val
+          })
+          this.jsPlumb.repaintEverything()
+        }
+      })
+    }
   },
   methods: {
     // 解析初始流程数据
@@ -564,6 +661,9 @@ export default {
 
         // 连线验证
         this.jsPlumb.bind('beforeDrop', (evt) => {
+          if (this.simulationBuilderVisible) {
+            return false
+          }
           const from = evt.sourceId
           const to = evt.targetId
           if (from === to) {
@@ -843,6 +943,7 @@ export default {
     },
 
     nodeRightMenu(nodeId, evt) {
+      if (this.simulationBuilderVisible) return
       this.menu.show = true
       this.menu.curNodeId = nodeId
       this.menu.left = evt.x + 'px'
@@ -880,6 +981,8 @@ export default {
     },
     updateInitialFlow(newFlow) {
       console.log('updateInitialFlow 被调用，newFlow:', newFlow)
+      // 导入新流程后需要重新进行仿真验证
+      this.simulationPassed = false
       const parsedFlow = parseInitialFlow(newFlow, this.statusDict, this.statusStyleDict)
       if (parsedFlow) {
         // 同步初始节点到左侧服务列表
@@ -894,6 +997,8 @@ export default {
     dataReloadClear() {
       // 重置服务列表为基础状态，根据verticalType决定根节点名称
       this.setServices(getBaseServiceNodes(this.verticalType))
+      // 重置仿真状态
+      this.simulationPassed = false
 
       // 创建默认数据，包含智能体节点
       const defaultData = createDefaultFlowData()
@@ -992,22 +1097,33 @@ export default {
         this.$refs.servicesAdder.init()
       })
     },
-    buildMetaApp() {
+    // 仿真构建
+    simulationBuild() {
       if (this.data.nodeList.length > 1) {
-        this.buildingMetaApp = true
-        this.$message.info('正在构建元应用...')
+        this.simulationBuilderVisible = true
+        this.$nextTick(() => {
+          this.$refs.simulationBuilder.init(this.data.nodeList)
+        })
+      } else {
+        this.$message.error('请先智能生成应用或添加服务！')
+      }
+    },
+    // 仿真构建成功回调
+    handleSimulationSuccess(result) {
+      console.log('仿真构建成功:', result)
+      this.simulationPassed = true
+    },
+    // 元应用预览与发布
+    previewAndPublish() {
+      if (this.data.nodeList.length > 1) {
         // 提取服务ID列表（排除智能体节点）
         const serviceIds = this.data.nodeList
           .filter(node => node.name !== 'metaAppAgent')
           .map(node => node.id)
-        setTimeout(() => {
-          this.buildingMetaApp = false
-          this.metaAppBuilderVisible = true
-          this.$message.success('构建完成！')
-          this.$nextTick(() => {
-            this.$refs.metaAppBuilder.init(serviceIds)
-          })
-        }, 2000)
+        this.metaAppBuilderVisible = true
+        this.$nextTick(() => {
+          this.$refs.metaAppBuilder.init(serviceIds)
+        })
       } else {
         this.$message.error('请先智能生成应用或添加服务！')
       }
@@ -1204,6 +1320,60 @@ export default {
       this.$emit('import-request', importData)
       // 重置按钮loading状态（父组件会处理具体的loading状态）
       this.importLoading = false
+    },
+    onSimulationCanvasVisual(payload) {
+      if (!payload || typeof payload !== 'object') return
+      const { type } = payload
+      if (type === 'clear') {
+        this.simulationCanvas = {
+          active: false,
+          step: null,
+          nodes: {},
+          simulatePhase: null
+        }
+        return
+      }
+      if (type === 'build') {
+        this.simulationCanvas.active = !!payload.active
+        if (!payload.active) {
+          this.simulationCanvas.nodes = {}
+          this.simulationCanvas.simulatePhase = null
+          this.simulationCanvas.step = null
+        }
+        return
+      }
+      if (type === 'step') {
+        this.simulationCanvas.step = payload.step
+        return
+      }
+      if (type === 'node') {
+        this.$set(this.simulationCanvas.nodes, String(payload.id), payload.status)
+        return
+      }
+      if (type === 'simulatePhase') {
+        this.simulationCanvas.simulatePhase = {
+          phase: payload.phase,
+          status: payload.status
+        }
+      }
+    },
+    simulationVisualForNode(node) {
+      const sc = this.simulationCanvas
+      if (!sc.active) return { active: false }
+      const id = String(node.id)
+      const isAgent = node.name === 'metaAppAgent'
+      const sp = sc.simulatePhase || {}
+      let status = sc.nodes[id]
+      if (!isAgent && status == null && sc.step != null && sc.step < 2) {
+        status = 'checking'
+      }
+      return {
+        active: true,
+        step: sc.step,
+        status: isAgent ? null : status,
+        phase: isAgent ? sp.phase : null,
+        phaseStatus: isAgent ? sp.status : null
+      }
     }
   }
 }
@@ -1310,6 +1480,71 @@ export default {
   flex: 2;
   display: flex;
   justify-content: center;
+
+  // 仿真构建按钮包装器
+  .simulation-btn-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+
+  // 浮动提示样式
+  .simulation-tips-float {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #389e0d;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+    border: 1px solid #b7eb8f;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(82, 196, 26, 0.15);
+    white-space: nowrap;
+    z-index: 100;
+
+    // 指向按钮的箭头
+    .tips-arrow {
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      background: #d9f7be;
+      border-right: 1px solid #b7eb8f;
+      border-bottom: 1px solid #b7eb8f;
+      transform: translateX(-50%) rotate(45deg);
+    }
+  }
+
+  // 浮动提示动画
+  .tips-float-enter-active,
+  .tips-float-leave-active {
+    transition: all 0.3s ease;
+  }
+
+  .tips-float-enter,
+  .tips-float-leave-to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+
+  // 成功按钮样式（仿真通过后的预发布按钮）
+  .success-button {
+    background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%) !important;
+    border-color: #52c41a !important;
+    color: #fff !important;
+
+    &:hover {
+      background: linear-gradient(135deg, #73d13d 0%, #52c41a 100%) !important;
+      border-color: #73d13d !important;
+    }
+
+    &:active {
+      background: linear-gradient(135deg, #389e0d 0%, #237804 100%) !important;
+      border-color: #389e0d !important;
+    }
+  }
 }
 
 .toolbar-right {
@@ -1324,6 +1559,25 @@ export default {
   display: flex;
   height: calc(100% - 65px);
   position: relative;
+}
+
+/* 仿真构建与画布左右并排（构建在左） */
+.ef-main-container.ef-main--simulation {
+  align-items: stretch;
+  min-height: 0;
+}
+
+.ef-simulation-pane {
+  /* 不用 CSS min()，避免 less 把 min 当内置函数解析 */
+  flex: 0 0 40vw;
+  min-width: 360px;
+  max-width: 640px;
+  border-right: 1px solid #e8e8e8;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 // 左侧边栏
@@ -1341,8 +1595,42 @@ export default {
   flex: 1;
   position: relative;
   background: #f8f9fa;
-  overflow: hidden;  // 防止滚动
+  overflow: hidden !important;  // 防止滚动
   min-width: 0;
+}
+
+/* 仿真构建进行时：背景网格轻微呼吸，突出「流水线」感 */
+.ef-canvas.sim-build-active .canvas-grid {
+  animation: sim-canvas-grid-pulse 3.5s ease-in-out infinite;
+}
+
+@keyframes sim-canvas-grid-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
+/* 阶段二（智能体调度仿真）：连线虚线流动 */
+.ef-canvas.sim-build-active.sim-build-step-2 /deep/ svg.jtk-connector path,
+.ef-canvas.sim-build-active.sim-build-step-2 /deep/ .jtk-connector path {
+  stroke-dasharray: 10 8;
+  animation: sim-connector-flow 0.85s linear infinite;
+}
+
+@keyframes sim-connector-flow {
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
+/* 阶段零/一：连线略提亮，无强流动 */
+.ef-canvas.sim-build-active.sim-build-step-0 /deep/ svg.jtk-connector path,
+.ef-canvas.sim-build-active.sim-build-step-1 /deep/ svg.jtk-connector path {
+  filter: drop-shadow(0 0 2px rgba(24, 144, 255, 0.45));
 }
 
 // 网格背景

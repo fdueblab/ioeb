@@ -1,8 +1,8 @@
 <template>
   <page-header-wrapper :title="false">
     <a-card :body-style="{padding: '24px 32px'}" :bordered="false">
-      <div style="display: flex; justify-content: space-between">
-        <div style="width: 30%">
+      <div style="display: flex; width: 100%; align-items: stretch">
+        <div v-show="!simulationChromeOpen" style="width: 30%; flex-shrink: 0">
           <div class="app-preview" v-if="apiList[0]">
             <div class="app-header">
               <span class="app-title">{{ apiList[0].name }}</span>
@@ -20,14 +20,16 @@
                   class="input-box"
                   placeholder="您想让应用做什么？"
                   :rows="4"
+                  :disabled="simulationChromeOpen"
                 />
                 <div v-show="apiList[0].parameterType === 2 || apiList[0].parameterType === 3" class="file-upload-section">
                   <a-upload
                     :file-list="fileList"
                     :remove="removeFile"
                     :customRequest="customFileChose"
+                    :disabled="simulationChromeOpen"
                     :multiple="false">
-                    <a-button class="file-button"> <a-icon type="upload" /> 选择数据文件 </a-button>
+                    <a-button class="file-button" :disabled="simulationChromeOpen"> <a-icon type="upload" /> 选择数据文件 </a-button>
                   </a-upload>
                 </div>
                 <div class="submit-section">
@@ -36,7 +38,7 @@
                     type="primary"
                     @click="onSubmitClick"
                     :loading="isStreaming && !isCompleted"
-                    :disabled="!isCompleted && isSendDisabled"
+                    :disabled="simulationChromeOpen || (!isCompleted && isSendDisabled)"
                     :class="{ 'is-streaming': isStreaming && !isCompleted, 'is-completed': isCompleted }"
                     :style="{ '--progress': progressPercent + '%' }"
                     @mouseenter="isHoveringSubmit = true"
@@ -55,7 +57,7 @@
                   <span class="section-title">{{ apiList[0].outputName }}</span>
                 </div>
                 <div v-if="apiList[0].responseType === 2" class="file-download-section">
-                  <a-button class="file-button" :disabled="!fileUrl" icon="download" @click="downloadFile">下载结果文件</a-button>
+                  <a-button class="file-button" :disabled="simulationChromeOpen || !fileUrl" icon="download" @click="downloadFile">下载结果文件</a-button>
                 </div>
                 <div v-else class="output-box">
                   <div class="markdown-box" v-html="responseHtml" />
@@ -74,9 +76,9 @@
             <div>数据缺失</div>
           </div>
         </div>
-        <div style="width: 65%">
+        <div style="flex: 1; min-width: 0">
           <div style="display: flex; justify-content: flex-end; align-items: center; height: 32px; margin-bottom: 8px;">
-            <a-switch size="small" v-model="showLogs" />
+            <a-switch size="small" v-model="showLogs" :disabled="simulationChromeOpen" />
             <span style="margin-left: 8px; color: #666">显示智能体的执行过程</span>
           </div>
           <div style="display: flex;height: calc(100% - 47px);">
@@ -100,12 +102,13 @@
               :show-sidebar="false"
               style="flex: 1; position: relative; background-color: #f0f2f7"
               v-show="!showLogs"
+              @simulation-ui="onSimulationUi"
             />
           </div>
         </div>
       </div>
       <div style="width: 100%; text-align: center; margin-top: 20px">
-        <a-button type="primary" @click="handleGoBack">返回</a-button>
+        <a-button type="primary" :disabled="simulationChromeOpen" @click="handleGoBack">返回</a-button>
       </div>
     </a-card>
   </page-header-wrapper>
@@ -178,7 +181,8 @@ export default {
       flowData: {},
       services: [],
       fullServices: [], // 保存完整服务信息供流式运行使用
-      showLogs: false // 是否显示日志（除运行中自动显示外可手动开启）
+      showLogs: false, // 是否显示日志（除运行中自动显示外可手动开启）
+      simulationChromeOpen: false
     }
   },
   computed: {
@@ -207,6 +211,9 @@ export default {
     this.loadFlowData()
   },
   methods: {
+    onSimulationUi(payload) {
+      this.simulationChromeOpen = !!(payload && payload.open)
+    },
     onCmReady(cm) {
       cm.on('inputRead', (cm, obj) => {
         if (obj.text && obj.text.length > 0) {
