@@ -29,8 +29,26 @@
       </div>
     </a-card>
 
+    <!-- 想定模板快速选择 -->
+    <a-card v-if="submitType === 'algorithm'" :bordered="false" size="small" style="margin-top: 10px;">
+      <div slot="title"><a-icon type="appstore" style="margin-right: 8px;" />场景模板（可选）</div>
+      <div class="template-grid">
+        <div
+          v-for="tpl in packagingTemplates"
+          :key="tpl.key"
+          :class="['template-card', { active: selectedTemplate === tpl.key }]"
+          :style="{ '--tpl-color': tpl.color }"
+          @click="selectTemplate(tpl)"
+        >
+          <a-icon :type="tpl.icon" class="template-icon" />
+          <div class="template-label">{{ tpl.label }}</div>
+          <div class="template-desc">{{ tpl.desc }}</div>
+        </div>
+      </div>
+    </a-card>
+
     <!-- MCP服务配置 -->
-    <a-card v-if="submitType === 'algorithm'" :bordered="false" size="small" title="MCP服务配置">
+    <a-card v-if="submitType === 'algorithm'" :bordered="false" size="small" title="想定式封装配置">
       <div class="table-page-search-wrapper">
         <a-form layout="inline">
           <a-row :gutter="20">
@@ -73,6 +91,31 @@
             </a-col>
           </a-row>
           <a-row :gutter="20">
+            <a-col :span="10">
+              <a-form-item label="服务描述">
+                <a-input v-model="form.serviceDesc" placeholder="描述服务的核心功能和用途" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="5">
+              <a-form-item label="目标用户">
+                <a-select v-model="form.targetUser" placeholder="请选择" allow-clear>
+                  <a-select-option v-for="item in targetUserOptions" :key="item.code" :value="item.code">
+                    {{ item.text }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="5">
+              <a-form-item label="部署规格">
+                <a-select v-model="form.deploySpec" placeholder="请选择">
+                  <a-select-option v-for="item in deploySpecOptions" :key="item.code" :value="item.code">
+                    {{ item.text }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-row :gutter="20">
             <a-col :span="6">
               <a-form-item label="程序文件">
                 <a-upload
@@ -89,12 +132,11 @@
               <a-form-item label="操作">
                 <a-button
                   type="primary"
-                  icon="rocket"
-                  @click="onAutoPublish"
+                  icon="eye"
+                  @click="showIntentPreview = true"
                   :disabled="autoPublishDisabled"
-                  :loading="uploadProgramLoading"
                 >
-                  上传并自动发布
+                  预览封装意图
                 </a-button>
               </a-form-item>
             </a-col>
@@ -189,6 +231,31 @@
         </a-form>
       </div>
     </a-card>
+    <!-- 封装意图预览 -->
+    <a-card v-if="showIntentPreview && !publishProgress.show" :bordered="false" style="margin-top: 10px;" class="intent-preview-card">
+      <div slot="title">
+        <a-icon type="bulb" theme="twoTone" two-tone-color="#faad14" />
+        <span style="margin-left: 8px;">封装意图确认</span>
+      </div>
+      <div class="intent-body">
+        <div class="intent-text">{{ intentPreviewText }}</div>
+        <a-divider style="margin: 16px 0;" />
+        <div style="text-align: center;">
+          <a-button style="margin-right: 12px;" @click="showIntentPreview = false">
+            <a-icon type="edit" /> 返回修改
+          </a-button>
+          <a-button
+            type="primary"
+            icon="rocket"
+            :loading="uploadProgramLoading"
+            @click="confirmAndPublish"
+          >
+            确认并开始封装
+          </a-button>
+        </div>
+      </div>
+    </a-card>
+
     <!-- 发布进度 -->
     <a-card v-if="publishProgress.show" :bordered="false" style="margin-top: 10px;">
       <div slot="title">
@@ -196,7 +263,28 @@
         <a-icon type="check-circle" theme="twoTone" two-tone-color="#52c41a" v-else-if="publishProgress.status === 'finish'" />
         <a-icon type="close-circle" theme="twoTone" two-tone-color="#f5222d" v-else />
         <span style="margin-left: 8px;">发布进度</span>
+        <span v-if="publishProgress.status !== 'finish' && publishProgress.status !== 'error'" style="margin-left: 12px; font-size: 13px; color: #999; font-weight: normal;">
+          {{ publishProgress.current + 1 }} / {{ publishProgress.steps.length }}
+        </span>
       </div>
+      <template slot="extra">
+        <a-button
+          v-if="publishProgress.status !== 'finish' && publishProgress.status !== 'error'"
+          size="small"
+          @click="cancelPublish"
+          style="color: #f5222d; border-color: #f5222d;"
+        >
+          <a-icon type="stop" /> 取消
+        </a-button>
+        <a-button
+          v-if="publishProgress.status === 'error'"
+          type="primary"
+          size="small"
+          @click="onAutoPublish"
+        >
+          <a-icon type="redo" /> 重新发布
+        </a-button>
+      </template>
 
       <!-- 步骤展示 -->
       <div class="publish-steps">
@@ -246,16 +334,26 @@
               <!-- 详细内容（第三级） -->
               <div v-if="agentStep.expanded" class="agent-step-details">
                 <div v-if="agentStep.thought" class="detail-section thought">
-                  <div class="detail-label">💭 思考</div>
+                  <div class="detail-label">💭 AI 思考</div>
                   <div class="detail-content">{{ agentStep.thought }}</div>
                 </div>
-                <div v-if="agentStep.action" class="detail-section action">
+                <div v-if="agentStep.toolName" class="detail-section action">
+                  <div class="detail-label">⚙️ 执行操作</div>
+                  <div class="detail-content">
+                    <a-tag color="purple">{{ agentStep.toolName }}</a-tag>
+                    <span v-if="agentStep.toolArgs.command" class="tool-args-code">{{ agentStep.toolArgs.command }}</span>
+                    <span v-else-if="agentStep.toolArgs.file_path" class="tool-args-file">
+                      <a-icon type="file" /> {{ agentStep.toolArgs.file_path.split('/').pop() }}
+                    </span>
+                  </div>
+                </div>
+                <div v-else-if="agentStep.action && agentStep.action !== '没有工具调用'" class="detail-section action">
                   <div class="detail-label">⚙️ 行动</div>
                   <div class="detail-content">{{ agentStep.action }}</div>
                 </div>
                 <div v-if="agentStep.action_result" class="detail-section observation">
-                  <div class="detail-label">👁️ 结果</div>
-                  <div class="detail-content">{{ agentStep.action_result }}</div>
+                  <div class="detail-label">📋 执行结果</div>
+                  <div class="detail-content detail-content-code">{{ truncateResult(agentStep.action_result, 500) }}</div>
                 </div>
               </div>
             </div>
@@ -270,10 +368,24 @@
     </a-card>
 
     <!-- MCP能力依赖图 -->
-    <a-card v-if="options" :bordered="false" style="margin-top: 10px;">
-      <div slot="title">MCP能力依赖图（只读可视化）</div>
-      <div class="g6-x">
+    <a-card v-if="options" :bordered="false" style="margin-top: 10px;" :class="{ 'chart-fullscreen': isChartFullscreen }">
+      <div slot="title">
+        <a-icon type="apartment" style="margin-right: 8px; color: #722ed1;" />
+        MCP能力依赖图
+        <a-tag color="purple" style="margin-left: 12px; font-weight: normal;">
+          {{ programJson ? programJson.nodes.length : 0 }} 节点 · {{ programJson ? programJson.edges.length : 0 }} 连接
+        </a-tag>
+      </div>
+      <template slot="extra">
+        <a-tooltip :title="isChartFullscreen ? '退出全屏' : '全屏查看'">
+          <a-button type="link" size="large" @click="toggleChartFullscreen">
+            <a-icon :type="isChartFullscreen ? 'fullscreen-exit' : 'fullscreen'" style="font-size: 18px;" />
+          </a-button>
+        </a-tooltip>
+      </template>
+      <div class="chart-container">
         <v-chart
+          ref="mcpChart"
           style="height: 100%; width: 100%;"
           :options="options"
           autoresize
@@ -308,7 +420,20 @@
         </a-descriptions-item>
       </a-descriptions>
 
-      <a-divider>识别的MCP能力</a-divider>
+      <div class="mcp-stats-row">
+        <div class="mcp-stat-item" style="--accent: #722ed1;">
+          <div class="mcp-stat-value">{{ mcpServerInfo.tools.length }}</div>
+          <div class="mcp-stat-label"><a-icon type="api" /> Tools</div>
+        </div>
+        <div class="mcp-stat-item" style="--accent: #52c41a;">
+          <div class="mcp-stat-value">{{ mcpServerInfo.resources.length }}</div>
+          <div class="mcp-stat-label"><a-icon type="database" /> Resources</div>
+        </div>
+        <div class="mcp-stat-item" style="--accent: #1890ff;">
+          <div class="mcp-stat-value">{{ mcpServerInfo.prompts.length }}</div>
+          <div class="mcp-stat-label"><a-icon type="message" /> Prompts</div>
+        </div>
+      </div>
 
       <a-tabs default-active-key="tools">
         <a-tab-pane key="tools" tab="Tools">
@@ -317,26 +442,22 @@
               <span><a-icon type="api" /> Tools</span>
             </a-badge>
           </template>
-          <a-list
-            :data-source="mcpServerInfo.tools"
-            :locale="{ emptyText: '未识别到Tools' }"
-          >
-            <a-list-item slot="renderItem" slot-scope="item">
-              <a-list-item-meta>
-                <span slot="title">
-                  <a-icon type="tool" />
-                  {{ item.name }}
-                </span>
-                <span slot="description">
-                  <div>{{ item.description || '无描述' }}</div>
-                  <div style="margin-top: 4px;">
-                    <a-tag color="green">输入: {{ item.input }}</a-tag>
-                    <a-tag color="blue">输出: {{ item.output }}</a-tag>
-                  </div>
-                </span>
-              </a-list-item-meta>
-            </a-list-item>
-          </a-list>
+          <a-row :gutter="[16, 16]">
+            <a-col :span="8" v-for="item in mcpServerInfo.tools" :key="item.name">
+              <div class="mcp-tool-card">
+                <div class="mcp-tool-card-header">
+                  <span class="mcp-tool-card-icon"><a-icon type="api" /></span>
+                  <span class="mcp-tool-card-name">{{ item.name }}</span>
+                </div>
+                <div class="mcp-tool-card-desc">{{ item.description || '无描述' }}</div>
+                <div class="mcp-tool-card-tags">
+                  <a-tag color="green"><a-icon type="login" /> {{ item.input }}</a-tag>
+                  <a-tag color="blue"><a-icon type="logout" /> {{ item.output }}</a-tag>
+                </div>
+              </div>
+            </a-col>
+          </a-row>
+          <a-empty v-if="mcpServerInfo.tools.length === 0" description="未识别到Tools" />
         </a-tab-pane>
 
         <a-tab-pane key="resources" tab="Resources">
@@ -345,20 +466,18 @@
               <span><a-icon type="database" /> Resources</span>
             </a-badge>
           </template>
-          <a-list
-            :data-source="mcpServerInfo.resources"
-            :locale="{ emptyText: '未识别到Resources' }"
-          >
-            <a-list-item slot="renderItem" slot-scope="item">
-              <a-list-item-meta>
-                <span slot="title">
-                  <a-icon type="file-text" />
-                  {{ item.name }}
-                </span>
-                <span slot="description">{{ item.description || '无描述' }}</span>
-              </a-list-item-meta>
-            </a-list-item>
-          </a-list>
+          <a-row :gutter="[16, 16]">
+            <a-col :span="12" v-for="item in mcpServerInfo.resources" :key="item.name">
+              <div class="mcp-resource-card">
+                <a-icon type="database" class="mcp-resource-icon" />
+                <div>
+                  <div style="font-weight: 600;">{{ item.name }}</div>
+                  <div style="color: #888; font-size: 13px;">{{ item.description || '无描述' }}</div>
+                </div>
+              </div>
+            </a-col>
+          </a-row>
+          <a-empty v-if="mcpServerInfo.resources.length === 0" description="未识别到Resources" />
         </a-tab-pane>
 
         <a-tab-pane key="prompts" tab="Prompts">
@@ -367,20 +486,18 @@
               <span><a-icon type="message" /> Prompts</span>
             </a-badge>
           </template>
-          <a-list
-            :data-source="mcpServerInfo.prompts"
-            :locale="{ emptyText: '未识别到Prompts' }"
-          >
-            <a-list-item slot="renderItem" slot-scope="item">
-              <a-list-item-meta>
-                <span slot="title">
-                  <a-icon type="comment" />
-                  {{ item.name }}
-                </span>
-                <span slot="description">{{ item.description || '无描述' }}</span>
-              </a-list-item-meta>
-            </a-list-item>
-          </a-list>
+          <a-row :gutter="[16, 16]">
+            <a-col :span="12" v-for="item in mcpServerInfo.prompts" :key="item.name">
+              <div class="mcp-resource-card">
+                <a-icon type="message" class="mcp-prompt-icon" />
+                <div>
+                  <div style="font-weight: 600;">{{ item.name }}</div>
+                  <div style="color: #888; font-size: 13px;">{{ item.description || '无描述' }}</div>
+                </div>
+              </div>
+            </a-col>
+          </a-row>
+          <a-empty v-if="mcpServerInfo.prompts.length === 0" description="未识别到Prompts" />
         </a-tab-pane>
       </a-tabs>
 
@@ -396,6 +513,7 @@
         </a-button>
       </div>
     </a-card>
+
     <!-- <agent-execution-panel
       v-if="showAgentPanel"
       :is-running="agentIsRunning"
@@ -447,7 +565,10 @@ export default {
       // 表单数据
       form: {
         serverType: 'mcp',
-        serviceName: undefined
+        serviceName: undefined,
+        serviceDesc: '',
+        targetUser: undefined,
+        deploySpec: 'standard'
       },
       // 程序信息
       programInfo: {
@@ -495,7 +616,29 @@ export default {
         prompts: []
       },
       // 程序解析结果
-      programJson: null
+      programJson: null,
+      isChartFullscreen: false,
+      targetUserOptions: [
+        { code: 'analyst', text: '业务分析师' },
+        { code: 'developer', text: '开发工程师' },
+        { code: 'ops', text: '运维人员' },
+        { code: 'researcher', text: '科研人员' },
+        { code: 'manager', text: '管理决策者' }
+      ],
+      deploySpecOptions: [
+        { code: 'lightweight', text: '轻量级（适合测试）' },
+        { code: 'standard', text: '标准容器（推荐）' },
+        { code: 'ha', text: '高可用集群' }
+      ],
+      packagingTemplates: [
+        { key: 'data_analysis', icon: 'bar-chart', label: '数据分析服务', color: '#1890ff', desc: '数据分析与可视化', serviceName: '数据分析服务', serviceDesc: '提供数据分析、统计计算和可视化能力', targetUser: 'analyst', deploySpec: 'standard' },
+        { key: 'model_inference', icon: 'robot', label: '模型推理服务', color: '#722ed1', desc: '模型在线推理', serviceName: '模型推理服务', serviceDesc: '封装训练好的模型为在线推理服务', targetUser: 'developer', deploySpec: 'standard' },
+        { key: 'report_gen', icon: 'file-text', label: '报告生成服务', color: '#52c41a', desc: '自动生成报告', serviceName: '报告生成服务', serviceDesc: '自动生成业务分析报告与文档', targetUser: 'analyst', deploySpec: 'lightweight' },
+        { key: 'data_pipeline', icon: 'swap', label: '数据处理管道', color: '#fa8c16', desc: '数据 ETL 处理', serviceName: '数据处理管道', serviceDesc: '构建自动化数据清洗、转换和加载流水线', targetUser: 'developer', deploySpec: 'standard' }
+      ],
+      selectedTemplate: null,
+      showIntentPreview: false,
+      editingTools: []
     }
   },
   computed: {
@@ -507,6 +650,31 @@ export default {
     },
     autoPublishDisabled() {
       return !this.form.serviceName || this.uploadFiles.length === 0
+    },
+    intentPreviewText() {
+      const fileName = this.uploadFiles.length > 0 ? this.uploadFiles[0].name : '未选择文件'
+      const industry = this.getIndustryText(this.programInfo.industry)
+      const scenario = this.getScenarioText(this.programInfo.scenario)
+      const technology = this.getTechnologyText(this.programInfo.technology)
+      const targetUser = (this.targetUserOptions.find(o => o.code === this.form.targetUser) || {}).text || '未指定'
+      const deploySpec = (this.deploySpecOptions.find(o => o.code === this.form.deploySpec) || {}).text || '未指定'
+
+      let parts = []
+      parts.push(`将上传的代码「${fileName}」封装为`)
+      let scopeParts = []
+      if (industry !== '未设置') scopeParts.push(`${industry}行业`)
+      if (scenario !== '未设置') scopeParts.push(`${scenario}场景`)
+      if (scopeParts.length > 0) parts.push(`面向${scopeParts.join('、')}的`)
+      parts.push('MCP 微服务。')
+
+      let info = parts.join('')
+      info += `\n\n• 服务名称：${this.form.serviceName || '未填写'}`
+      if (this.form.serviceDesc) info += `\n• 服务描述：${this.form.serviceDesc}`
+      info += `\n• 目标用户：${targetUser}`
+      if (technology !== '未设置') info += `\n• 技术路线：${technology}`
+      info += `\n• 部署规格：${deploySpec}`
+      info += '\n\nAgent 将基于以上想定信息，自动完成代码解析、MCP 能力识别、Server 代码生成与 Docker 容器化封装。'
+      return info
     }
   },
   created() {
@@ -628,51 +796,84 @@ export default {
         await this.autoDeployMCPServer()
         this.updatePublishProgress(3, 'process', '服务部署完成')
 
-        // 完成
         this.publishProgress.status = 'finish'
-        this.$message.success('MCP Server 发布成功！')
-
-        // 显示MCP服务信息
+        this.$message.success('服务发布成功！')
         this.showMCPServerInfo()
       } catch (error) {
         console.error('自动发布失败:', error)
         this.publishProgress.status = 'error'
-        this.publishProgress.steps[this.publishProgress.current] = '失败: ' + (error.message || error)
         this.$message.error('发布失败：' + (error.message || error))
       } finally {
-          this.uploadProgramLoading = false
+        this.uploadProgramLoading = false
       }
     },
 
-    // 更新发布进度
     updatePublishProgress(step, status, description) {
       this.publishProgress.current = step
       this.publishProgress.status = status
       this.publishProgress.steps[step].description = description
+      this.publishProgress.steps.forEach((s, i) => {
+        s.expanded = (i === step)
+      })
     },
 
-    // 添加Agent步骤到指定的主步骤
+    toggleChartFullscreen() {
+      this.isChartFullscreen = !this.isChartFullscreen
+      this.$nextTick(() => {
+        if (this.$refs.mcpChart) {
+          this.$refs.mcpChart.resize()
+        }
+      })
+    },
+
+    cancelPublish() {
+      this.publishProgress.status = 'error'
+      this.publishProgress.steps[this.publishProgress.current].description = '已取消'
+      this.uploadProgramLoading = false
+      this.agentIsRunning = false
+      this.$message.warning('发布已取消')
+    },
+
+    selectTemplate(tpl) {
+      if (this.selectedTemplate === tpl.key) {
+        this.selectedTemplate = null
+        return
+      }
+      this.selectedTemplate = tpl.key
+      this.form.serviceName = tpl.serviceName
+      this.form.serviceDesc = tpl.serviceDesc
+      this.form.targetUser = tpl.targetUser
+      this.form.deploySpec = tpl.deploySpec
+    },
+
+    confirmAndPublish() {
+      this.showIntentPreview = false
+      this.onAutoPublish()
+    },
+
+
     addAgentStep(stepIndex, agentData) {
       if (!this.publishProgress.steps[stepIndex]) {
         console.error('步骤索引无效:', stepIndex)
-          return
-        }
+        return
+      }
 
-      // 确保 agentSteps 数组存在
       if (!this.publishProgress.steps[stepIndex].agentSteps) {
         this.$set(this.publishProgress.steps[stepIndex], 'agentSteps', [])
       }
-      
+
+      const parsed = this.parseToolCall(agentData.action)
       const agentStep = {
         step: agentData.step || (this.publishProgress.steps[stepIndex].agentSteps.length + 1),
         thought: agentData.thought || '',
         action: agentData.action || '',
         action_result: agentData.action_result || '',
+        toolName: parsed ? parsed.toolName : '',
+        toolArgs: parsed ? parsed.args : {},
+        friendlyAction: parsed ? this.getToolFriendlyDescription(parsed.toolName, parsed.args) : '',
         expanded: false
       }
       this.publishProgress.steps[stepIndex].agentSteps.push(agentStep)
-      
-      // 自动更新主步骤描述为最新的Agent步骤摘要
       this.publishProgress.steps[stepIndex].description = this.getAgentStepSummary(agentStep)
     },
 
@@ -689,22 +890,80 @@ export default {
       }
     },
 
-    // 获取Agent步骤的摘要信息
     getAgentStepSummary(agentStep) {
+      if (agentStep.friendlyAction) {
+        return agentStep.friendlyAction
+      }
       if (agentStep.thought && agentStep.thought.length > 0) {
-        const thoughtPreview = agentStep.thought.length > 40 
-          ? agentStep.thought.substring(0, 40) + '...' 
-          : agentStep.thought
-        return `💭 ${thoughtPreview}`
-      } else if (agentStep.action) {
-        const actionPreview = agentStep.action.length > 40 
-          ? agentStep.action.substring(0, 40) + '...' 
-          : agentStep.action
-        return `⚙️ ${actionPreview}`
-      } else if (agentStep.action_result) {
-        return '👁️ 查看执行结果'
+        const firstLine = agentStep.thought.split('\n')[0].trim()
+        const preview = firstLine.length > 50 ? firstLine.substring(0, 50) + '...' : firstLine
+        return `💭 ${preview}`
+      }
+      if (agentStep.action_result) {
+        return '查看执行结果'
       }
       return '处理中...'
+    },
+
+    parseToolCall(action) {
+      if (!action || !action.startsWith('调用工具')) return null
+      const nameMatch = action.match(/name='(\w+)'/)
+      if (!nameMatch) return null
+      const rawName = nameMatch[1]
+      const knownSuffixes = ['bash', 'cmd', 'terminate', 'file_saver', 'json_saver']
+      let toolName = rawName
+      for (const suffix of knownSuffixes) {
+        if (rawName.endsWith(suffix)) { toolName = suffix; break }
+      }
+      const argsMatch = action.match(/arguments='(\{[^']*\})'/)
+      let args = {}
+      if (argsMatch) {
+        try { args = JSON.parse(argsMatch[1]) } catch (e) { /* ignore */ }
+      }
+      return { toolName, args }
+    },
+
+    getToolFriendlyDescription(toolName, args) {
+      const t = toolName || ''
+      if (t.endsWith('bash') || t.endsWith('cmd')) {
+        const cmd = args.command || ''
+        if (cmd.match(/\b(ls|find|tree|dir)\b/)) return '📂 浏览项目文件结构'
+        if (cmd.match(/\b(cat|head|tail|more|less)\b/)) return '📄 读取文件内容'
+        if (cmd.includes('pip install') || cmd.includes('npm install')) return '📦 安装依赖包'
+        if (cmd.includes('python') && cmd.includes('test')) return '🧪 运行测试'
+        if (cmd.includes('python')) return '🐍 运行 Python 脚本'
+        if (cmd.match(/\bmkdir\b/)) return '📁 创建目录'
+        if (cmd.match(/\b(cp|mv)\b/)) return '📋 整理文件'
+        if (cmd.includes('docker')) return '🐳 配置 Docker 环境'
+        if (cmd.match(/\b(grep|rg|awk|sed)\b/)) return '🔍 搜索代码内容'
+        if (cmd.match(/\b(cd|pwd)\b/)) return '📂 切换工作目录'
+        if (cmd.match(/\b(wc|stat|file)\b/)) return '📄 查看文件信息'
+        return '⌨️ 执行终端命令'
+      }
+      if (t.endsWith('file_saver')) {
+        const f = (args.file_path || '').split('/').pop()
+        if (f === 'server.py') return '🔧 生成 MCP Server 入口文件'
+        if (f === 'Dockerfile') return '🐳 生成 Dockerfile 容器配置'
+        if (f.includes('docker-compose')) return '🐳 生成 Docker Compose 编排文件'
+        if (f === 'requirements.txt') return '📦 生成 Python 依赖清单'
+        if (f === 'README.md') return '📝 生成项目说明文档'
+        if (f.endsWith('.py')) return `🐍 生成 Python 文件: ${f}`
+        return `💾 生成文件: ${f}`
+      }
+      if (t.endsWith('json_saver')) {
+        const f = (args.file_path || '').split('/').pop()
+        if (f === 'function.json') return '📊 保存函数依赖分析结果'
+        return `📊 保存分析数据: ${f}`
+      }
+      if (t.endsWith('terminate')) {
+        return '✅ 任务完成'
+      }
+      return '⚙️ 正在处理...'
+    },
+
+    truncateResult(text, maxLen) {
+      if (!text || text.length <= maxLen) return text
+      return text.substring(0, maxLen) + '\n... (已截断)'
     },
 
     // 分析MCP能力
@@ -1001,84 +1260,128 @@ export default {
       this.mcpServerInfo.industry = this.programInfo.industry
       this.mcpServerInfo.scenario = this.programInfo.scenario
       this.mcpServerInfo.technology = this.programInfo.technology
+      this.editingTools = JSON.parse(JSON.stringify(this.mcpServerInfo.tools))
     },
 
-    // 设置MCP能力依赖图
     setMCPChart() {
-      // 确保程序Json存在
       if (!this.programJson || !this.programJson.nodes || !this.programJson.edges) {
         console.error('程序Json数据不完整，无法渲染图表', this.programJson)
-          return
-        }
+        return
+      }
 
       const json = this.programJson
-      const processedNodes = json.nodes.map(node => ({
-        x: node.x,
-        y: node.y,
-        id: node.id,
-        name: node.label,
-        symbolSize: node.size,
-        label: {
-          show: true,
-          position: 'inside'
-        },
-        value: node.id,
-        itemStyle: {
-          color: node.mcpType === 'resource' ? '#52c41a' : node.mcpType === 'prompt' ? '#1890ff' : '#722ed1'
+      const nodeMap = {}
+      json.nodes.forEach(node => { nodeMap[node.id] = node })
+
+      const typeColors = {
+        tool: { main: '#722ed1', light: 'rgba(114, 46, 209, 0.12)' },
+        resource: { main: '#52c41a', light: 'rgba(82, 196, 26, 0.12)' },
+        prompt: { main: '#1890ff', light: 'rgba(24, 144, 255, 0.12)' }
+      }
+      const categoryMap = { tool: 0, resource: 1, prompt: 2 }
+
+      const processedNodes = json.nodes.map(node => {
+        const mcpType = node.mcpType || 'tool'
+        const colors = typeColors[mcpType] || typeColors.tool
+        return {
+          id: node.id,
+          name: node.label,
+          symbolSize: 60,
+          category: categoryMap[mcpType] ?? 0,
+          label: {
+            show: true,
+            position: 'inside',
+            fontSize: 11,
+            fontWeight: 'bold',
+            color: '#fff',
+            overflow: 'truncate',
+            ellipsis: '...',
+            width: 52
+          },
+          itemStyle: {
+            color: colors.main,
+            borderColor: '#fff',
+            borderWidth: 2,
+            shadowBlur: 12,
+            shadowColor: colors.light
+          }
         }
-      }))
+      })
 
       const processedEdges = json.edges.map(edge => ({
         source: edge.sourceID,
         target: edge.targetID,
-        lineStyle: {
-          curveness: 0.3
-        },
+        lineStyle: { color: '#c0c0c0', curveness: 0.3, width: 1.5 },
         symbol: ['none', 'arrow'],
-        symbolSize: [0, 10]
+        symbolSize: [0, 12]
       }))
 
-      // 设置echarts图表配置
+      const categories = [
+        { name: 'Tool', itemStyle: { color: '#722ed1' } },
+        { name: 'Resource', itemStyle: { color: '#52c41a' } },
+        { name: 'Prompt', itemStyle: { color: '#1890ff' } }
+      ]
+
       this.options = {
-        animationDurationUpdate: 1500,
+        animationDuration: 1500,
         animationEasingUpdate: 'quinticInOut',
-        series: [
-          {
-            type: 'graph',
-            layout: 'none',
-            data: processedNodes,
-            edges: processedEdges,
-            emphasis: {
-              focus: 'adjacency'
-            },
-            roam: true,
-            lineStyle: {
-              width: 0.5,
-              curveness: 0.3,
-              opacity: 0.7
-            }
-          }
-        ],
+        legend: {
+          data: categories.map(c => c.name),
+          top: 8,
+          left: 'center',
+          textStyle: { fontSize: 13, color: '#666' },
+          icon: 'circle',
+          itemWidth: 12,
+          itemHeight: 12,
+          itemGap: 32
+        },
+        series: [{
+          type: 'graph',
+          layout: 'force',
+          categories: categories,
+          data: processedNodes,
+          edges: processedEdges,
+          force: {
+            repulsion: 350,
+            edgeLength: [100, 200],
+            gravity: 0.08,
+            layoutAnimation: true
+          },
+          emphasis: {
+            focus: 'adjacency',
+            lineStyle: { width: 3, color: '#722ed1' }
+          },
+          roam: true,
+          draggable: true,
+          lineStyle: { width: 1.5, curveness: 0.3, opacity: 0.6 }
+        }],
         tooltip: {
           trigger: 'item',
+          backgroundColor: 'rgba(255, 255, 255, 0.96)',
+          borderColor: '#e8e8e8',
+          borderWidth: 1,
+          padding: [12, 16],
+          textStyle: { color: '#333', fontSize: 13 },
+          extraCssText: 'box-shadow: 0 4px 16px rgba(0,0,0,0.12); border-radius: 8px;',
           formatter: function (params) {
-            const node = json.nodes.find(n => n.id === params.data.id)
-          if (node) {
-              const mcpTypeText = node.mcpType === 'tool' ? 'Tool'
-                                  : node.mcpType === 'resource' ? 'Resource'
-                                  : node.mcpType === 'prompt' ? 'Prompt' : 'Tool'
-
-              return `
-              <div style="font-size: 14px; line-height: 1.5; color: #333;">
-                <strong>${node.label}</strong><br/>
-                <span style="color: #888;">MCP类型:</span> ${mcpTypeText}<br/>
-                <span style="color: #888;">输入:</span> ${node.input}<br/>
-                <span style="color: #888;">输出:</span> ${node.output}<br/>
-                <span style="color: #888;">描述:</span> ${node.description || '无'}
+            if (params.dataType === 'edge') return null
+            const node = nodeMap[params.data.id]
+            if (!node) return params.name
+            const mcpType = node.mcpType || 'tool'
+            const colors = typeColors[mcpType] || typeColors.tool
+            const typeText = mcpType === 'resource' ? 'Resource' : mcpType === 'prompt' ? 'Prompt' : 'Tool'
+            return `<div style="min-width: 180px;">
+              <div style="display:flex;align-items:center;margin-bottom:8px;">
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colors.main};margin-right:8px;"></span>
+                <strong style="font-size:15px;">${node.label}</strong>
+                <span style="margin-left:8px;padding:2px 10px;border-radius:10px;font-size:11px;background:${colors.light};color:${colors.main};font-weight:600;">${typeText}</span>
               </div>
-              `
-            }
-            return params.value
+              <div style="color:#666;font-size:12px;line-height:2;">
+                <div><b>输入:</b> ${node.input}</div>
+                <div><b>输出:</b> ${node.output}</div>
+                ${node.description ? '<div><b>描述:</b> ' + node.description + '</div>' : ''}
+              </div>
+            </div>`
           }
         }
       }
@@ -1215,7 +1518,10 @@ export default {
     resetForm() {
       this.form = {
         serverType: 'mcp',
-        serviceName: undefined
+        serviceName: undefined,
+        serviceDesc: '',
+        targetUser: undefined,
+        deploySpec: 'standard'
       }
       this.programInfo = {
         industry: undefined,
@@ -1228,6 +1534,9 @@ export default {
       this.uploadConfigFiles = []
       this.options = null
       this.programJson = null
+      this.selectedTemplate = null
+      this.showIntentPreview = false
+      this.editingTools = []
     },
 
     handleSubmitTypeChange() {
@@ -1258,9 +1567,188 @@ export default {
 .list-articles-trigger {
   margin-left: 12px;
 }
-.g6-x {
+
+// 图表容器
+.chart-container {
   width: 100%;
-  height: 300px;
+  height: 500px;
+  transition: height 0.3s ease;
+}
+.chart-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  .chart-container {
+    height: calc(100vh - 80px);
+  }
+}
+
+// MCP 统计行
+.mcp-stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  padding: 20px 0;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #f9f0ff 0%, #e6f7ff 50%, #f6ffed 100%);
+  border-radius: 8px;
+  .mcp-stat-item {
+    text-align: center;
+    .mcp-stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent, #333);
+      line-height: 1.2;
+    }
+    .mcp-stat-label {
+      font-size: 14px;
+      color: #888;
+      margin-top: 4px;
+    }
+  }
+}
+
+// MCP Tool 卡片
+.mcp-tool-card {
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 16px;
+  height: 100%;
+  transition: all 0.3s ease;
+  background: #fff;
+  &:hover {
+    border-color: #722ed1;
+    box-shadow: 0 4px 12px rgba(114, 46, 209, 0.1);
+    transform: translateY(-2px);
+  }
+  .mcp-tool-card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    .mcp-tool-card-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #722ed1, #9254de);
+      color: #fff;
+      font-size: 14px;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .mcp-tool-card-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+  .mcp-tool-card-desc {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.5;
+  }
+  .mcp-tool-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+}
+
+// 场景模板网格
+.template-grid {
+  display: flex;
+  gap: 16px;
+  .template-card {
+    flex: 1;
+    padding: 16px;
+    border: 2px solid #f0f0f0;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fafafa;
+    &:hover {
+      border-color: var(--tpl-color, #1890ff);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+    &.active {
+      border-color: var(--tpl-color, #1890ff);
+      background: linear-gradient(135deg, fade(#1890ff, 5%) 0%, fade(#722ed1, 5%) 100%);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .template-icon {
+      font-size: 28px;
+      color: var(--tpl-color, #1890ff);
+      margin-bottom: 8px;
+    }
+    .template-label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    .template-desc {
+      font-size: 12px;
+      color: #999;
+    }
+  }
+}
+
+// 封装意图预览
+.intent-preview-card {
+  .intent-body {
+    .intent-text {
+      padding: 20px 24px;
+      background: linear-gradient(135deg, #fffbe6 0%, #fff7e6 100%);
+      border: 1px solid #ffe58f;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 2;
+      color: #333;
+      white-space: pre-line;
+    }
+  }
+}
+
+// 服务预览
+// MCP Resource / Prompt 卡片
+.mcp-resource-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  background: #fff;
+  transition: all 0.3s ease;
+  &:hover {
+    border-color: #52c41a;
+    box-shadow: 0 2px 8px rgba(82, 196, 26, 0.1);
+  }
+  .mcp-resource-icon {
+    font-size: 22px;
+    color: #52c41a;
+  }
+  .mcp-prompt-icon {
+    font-size: 22px;
+    color: #1890ff;
+  }
 }
 
 // 发布步骤样式
@@ -1450,6 +1938,32 @@ export default {
             &.action .detail-content {
               background: #fff5e6;
               border-left: 3px solid #fa8c16;
+              display: flex;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 8px;
+              .tool-args-code {
+                font-family: 'Consolas', 'Monaco', 'SF Mono', monospace;
+                font-size: 12px;
+                background: rgba(0, 0, 0, 0.06);
+                padding: 2px 8px;
+                border-radius: 4px;
+                color: #333;
+                word-break: break-all;
+              }
+              .tool-args-file {
+                font-size: 13px;
+                color: #555;
+              }
+            }
+
+            .detail-content-code {
+              font-family: 'Consolas', 'Monaco', 'SF Mono', monospace;
+              font-size: 12px;
+              background: #1e1e1e !important;
+              color: #d4d4d4 !important;
+              border-left: 3px solid #52c41a !important;
+              border-radius: 4px;
             }
 
             &.observation .detail-content {
