@@ -138,7 +138,7 @@ const vueConfig = {
 
   devServer: {
     // development server port 8000
-    port: 8000,
+    port: 8001,
     // 允许任何主机访问
     host: '0.0.0.0',
     // 允许所有来源
@@ -148,7 +148,7 @@ const vueConfig = {
       webSocketURL: {
         hostname: '0.0.0.0',
         pathname: '/ws',
-        port: 8000
+        port: 8001
       }
     }
     // 如果需要代理，请去除下面的注释
