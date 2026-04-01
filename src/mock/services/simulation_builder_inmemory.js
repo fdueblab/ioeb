@@ -9,26 +9,20 @@
  * 通过 emit(eventName, payload) 模拟 SSE。
  *
  * 【流水线（与 emit 顺序对应）】
- * 1) step#0 + 逐服务 service 事件（可能 early complete 失败）
+ * 1) step#0 + 逐服务 service 事件（进程内模拟均为在线，无随机失败）
  * 2) step#1 + progress(env) × N + log
- * 3) step#2 循环：iteration(running) → phase data/logic/check → 可能 issue →
- *    iteration(retry|passed|failed) → 失败则 complete；成功则 metrics（研究）
+ * 3) step#2：单轮 iteration → phase data/logic/check → passed（无随机 issue/重试）
  * 4) step#3 + progress(generate) × N → complete(success)
  *
- * 数据与概率参数全部来自 `@/mock/data/simulation_builder_data.js`。
+ * 延迟与 metrics 范围来自 `@/mock/data/simulation_builder_data.js`。
  */
 
 import {
   SIMULATION_BUILD_DEFAULT_STRATEGY,
   SIMULATION_BUILD_ENV_TASKS,
   SIMULATION_BUILD_GEN_TASKS,
-  SIMULATION_BUILD_ISSUE_TEMPLATES,
   SIMULATION_BUILD_DELAYS_MS,
-  SIMULATION_BUILD_PROB,
   simulationBuildRandomBetween,
-  simulationBuildRandomIntBetween,
-  simulationBuildComputeFailBias,
-  simulationBuildSampleIssueTemplate,
   simulationBuildModuleMetrics
 } from '@/mock/data/simulation_builder_data'
 
@@ -62,10 +56,6 @@ function sleepRange(range) {
 
 function mergeStrategy(body) {
   return { ...SIMULATION_BUILD_DEFAULT_STRATEGY, ...(body.strategy || {}) }
-}
-
-function issueFingerprint(issue) {
-  return `${issue.type || ''}|${issue.message || ''}`
 }
 
 function start(body) {
@@ -150,7 +140,6 @@ async function runStream(sessionId, emit) {
 
   const { body, strategy, mode } = session
   const servicesMeta = body.servicesMeta || []
-  const maxIterations = Math.min(Math.max(body.maxIterations || 5, 1), 8)
   const isResearch = mode === 'research'
 
   const pushLog = (level, message) => {
@@ -161,32 +150,21 @@ async function runStream(sessionId, emit) {
   try {
     emit('step', { step: 0, name: '服务匹配' })
     pushLog('INFO', '开始服务匹配')
+    const dk = body.domainKnowledge
+    if (dk && typeof dk.summary === 'string' && dk.summary) {
+      pushLog('INFO', `领域知识已注入: ${dk.summary}`)
+    }
 
     for (const svc of servicesMeta) {
       checkCancel()
       await sleepRange(SIMULATION_BUILD_DELAYS_MS.serviceCheck)
       pushLog('INFO', `检测服务: ${svc.name}`)
-      const online = Math.random() >= SIMULATION_BUILD_PROB.serviceOffline
-      const latency = online
-        ? simulationBuildRandomIntBetween(70, 190)
-        : undefined
+      const latency = 120
       emit('service', {
         id: svc.id,
-        status: online ? 'online' : 'error',
+        status: 'online',
         latency
       })
-      if (!online) {
-        pushLog('ERROR', `${svc.name} 不可用`)
-        session.result = { success: false, error: `无法连接到服务「${svc.name}」` }
-        const m0 = { iterations: 0, elapsedMs: Date.now() - session.startedAt }
-        emit('complete', {
-          success: false,
-          metrics: m0,
-          result: session.result
-        })
-        pushResearchRecord(session, m0, false)
-        return
-      }
       pushLog('SUCCESS', `${svc.name} 连接正常 (${latency}ms)`)
     }
     pushLog('SUCCESS', '服务匹配完成')
@@ -207,108 +185,29 @@ async function runStream(sessionId, emit) {
     emit('step', { step: 2, name: '智能构建' })
     pushLog('INFO', '开始智能构建')
 
-    let success = false
-    let iteration = 1
-    let lastFingerprint = ''
-    let sameCount = 0
-    const repairNone = strategy.repair === 'none'
+    const iteration = 1
+    checkCancel()
+    emit('iteration', { iteration, status: 'running' })
+    pushLog('INFO', `开始第 ${iteration} 轮验证`)
 
-    while (iteration <= maxIterations && !success) {
+    const runPhase = async (phase) => {
       checkCancel()
-      emit('iteration', { iteration, status: 'running' })
-      pushLog('INFO', `开始第 ${iteration} 轮验证`)
-
-      const runPhase = async (phase) => {
-        checkCancel()
-        emit('phase', { phase, status: 'running' })
-        await sleepRange(SIMULATION_BUILD_DELAYS_MS.phase)
-        emit('phase', { phase, status: 'done' })
-      }
-
-      await runPhase('data')
-      pushLog('SUCCESS', '数据仿真: 数据流转正常')
-
-      await runPhase('logic')
-      pushLog('SUCCESS', '逻辑仿真: 业务逻辑正常')
-
-      await runPhase('check')
-      pushLog('INFO', '链路检视: 检查偏差和冗余')
-
-      const failBias = simulationBuildComputeFailBias(strategy, iteration)
-      const shouldIssue =
-        !repairNone &&
-        iteration < maxIterations &&
-        Math.random() < failBias
-
-      if (shouldIssue) {
-        const tpl = simulationBuildSampleIssueTemplate(
-          SIMULATION_BUILD_ISSUE_TEMPLATES
-        )
-        const fp = issueFingerprint(tpl)
-        if (fp === lastFingerprint) sameCount += 1
-        else {
-          lastFingerprint = fp
-          sameCount = 1
-        }
-
-        emit('issue', {
-          type: tpl.type,
-          message: tpl.message,
-          fix: tpl.fix
-        })
-        pushLog('WARN', `链路检视: 发现 ${tpl.message}`)
-        await sleepRange(SIMULATION_BUILD_DELAYS_MS.issueFix)
-        pushLog('SUCCESS', `自动修复: ${tpl.fix}`)
-
-        if (sameCount >= SIMULATION_BUILD_PROB.smartTerminateSameIssues) {
-          pushLog('ERROR', '连续多轮相同问题，判定无法自动修复')
-          session.result = {
-            success: false,
-            error: '智能终止：相同问题多次重复，需人工处理',
-            suggestion: '请检查服务契约或调整服务组合'
-          }
-          emit('iteration', { iteration, status: 'failed' })
-          const failMetricsEarly = {
-            iterations: iteration,
-            elapsedMs: Date.now() - session.startedAt
-          }
-          emit('complete', {
-            success: false,
-            metrics: failMetricsEarly,
-            result: session.result
-          })
-          pushResearchRecord(session, failMetricsEarly, false)
-          return
-        }
-
-        emit('iteration', { iteration, status: 'retry' })
-        iteration += 1
-        continue
-      }
-
-      pushLog('SUCCESS', '链路检视: 未发现偏差')
-      success = true
-      emit('iteration', { iteration, status: 'passed' })
+      emit('phase', { phase, status: 'running' })
+      await sleepRange(SIMULATION_BUILD_DELAYS_MS.phase)
+      emit('phase', { phase, status: 'done' })
     }
 
-    if (!success) {
-      session.result = {
-        success: false,
-        error: '经过多轮尝试仍无法生成稳定方案',
-        suggestion: '建议检查服务配置或调整服务组合'
-      }
-      const mFail = {
-        iterations: maxIterations,
-        elapsedMs: Date.now() - session.startedAt
-      }
-      emit('complete', {
-        success: false,
-        metrics: mFail,
-        result: session.result
-      })
-      pushResearchRecord(session, mFail, false)
-      return
-    }
+    await runPhase('data')
+    pushLog('SUCCESS', '数据仿真: 数据流转正常')
+
+    await runPhase('logic')
+    pushLog('SUCCESS', '逻辑仿真: 业务逻辑正常')
+
+    await runPhase('check')
+    pushLog('INFO', '链路检视: 检查偏差和冗余')
+    pushLog('SUCCESS', '链路检视: 未发现偏差')
+
+    emit('iteration', { iteration, status: 'passed' })
 
     const elapsedMs = Date.now() - session.startedAt
     const metrics = simulationBuildModuleMetrics(iteration, elapsedMs)
@@ -359,7 +258,8 @@ async function runStream(sessionId, emit) {
       strategy,
       scenarioDescription: body.scenarioDescription,
       appName: body.appName,
-      domain: body.domain
+      domain: body.domain,
+      domainKnowledge: body.domainKnowledge
     }
 
     pushLog('SUCCESS', '方案生成完成')
