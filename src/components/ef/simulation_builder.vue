@@ -575,6 +575,7 @@ import {
   SIMULATION_BUILD_GEN_TASKS,
   SIMULATION_BUILD_DEFAULT_STRATEGY
 } from '@/mock/data/simulation_builder_data'
+import { getSimulationDomainKnowledge } from '@/domain/simulationDomainKnowledge'
 
 function mapSetupItems(tasks) {
   return tasks.map((text) => ({ text, done: false, active: false }))
@@ -808,10 +809,19 @@ export default {
     },
 
     buildStartPayload() {
+      const domain = this.domain || 'generic'
+      const domainKnowledge = getSimulationDomainKnowledge(domain, {
+        appId: this.appId || 'meta-app-draft',
+        appName: this.appName,
+        scenarioDescription: this.scenarioDraft,
+        serviceNames: this.serviceStatuses.map((s) => s.name),
+        mode: this.internalMode
+      })
       return {
         appId: this.appId || 'meta-app-draft',
         appName: this.appName,
-        domain: this.domain || 'generic',
+        domain,
+        domainKnowledge,
         serviceIds: this.serviceStatuses.map((s) => String(s.id)),
         servicesMeta: this.serviceStatuses.map((s) => ({ id: String(s.id), name: s.name })),
         maxIterations: this.maxIterations,

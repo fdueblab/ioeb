@@ -10,7 +10,7 @@
  * `src/mock/services/simulation_builder_inmemory.js` 按时间顺序推进一次构建，
  * 在每一步读取本文件中的常量/函数，用来：
  *   - 决定「等多久」（SIMULATION_BUILD_DELAYS_MS）
- *   - 决定「随机事件是否发生」（SIMULATION_BUILD_PROB、simulationBuildComputeFailBias）
+ *   - （保留）SIMULATION_BUILD_PROB / simulationBuildComputeFailBias：供实验或未来脚本复现随机路径；当前进程内模拟器已不做随机失败
  *   - 决定「日志/进度条展示什么文案」（ENV / GEN 任务列表、ISSUE 模板）
  *   - 决定「研究模式结束时指标数量级」（SIMULATION_BUILD_METRIC_RANGES、simulationBuildModuleMetrics）
  *
