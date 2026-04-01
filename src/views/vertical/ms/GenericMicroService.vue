@@ -513,60 +513,6 @@
         </a-button>
       </div>
     </a-card>
-    <!-- 服务能力确认 -->
-    <a-card v-if="capabilityReviewVisible" :bordered="false" style="margin-top: 10px;" class="capability-review-card">
-      <div slot="title">
-        <a-icon type="check-square" style="margin-right: 8px; color: #722ed1;" />
-        确认服务能力
-      </div>
-      <template slot="extra">
-        <a-tag color="orange">请确认后继续</a-tag>
-      </template>
-
-      <div v-if="iterationChat.length === 0" class="iteration-start">
-        <p style="color: #666; margin-bottom: 12px;">不确定这些能力是否满足需求？让 AI 助手通过几个简单问题帮您优化。</p>
-        <a-button type="primary" ghost icon="message" @click="startIterationChat">
-          开始对话优化
-        </a-button>
-      </div>
-
-      <div v-else class="iteration-chat">
-        <div class="chat-messages" ref="iterationChatBox">
-          <div v-for="(msg, i) in iterationChat" :key="i" :class="['chat-msg', msg.role]">
-            <div class="chat-avatar">
-              <a-avatar v-if="msg.role === 'assistant'" :size="28" style="background: #722ed1;">
-                <a-icon type="robot" />
-              </a-avatar>
-              <a-avatar v-else :size="28" style="background: #1890ff;">
-                <a-icon type="user" />
-              </a-avatar>
-            </div>
-            <div class="chat-bubble">{{ msg.content }}<span v-if="msg.role === 'assistant' && iterationLoading && i === iterationChat.length - 1" class="typing-cursor">|</span></div>
-          </div>
-        </div>
-        <div class="chat-input-row">
-          <a-input
-            v-model="iterationInput"
-            placeholder="输入您的回答..."
-            @pressEnter="sendIterationMessage"
-            :disabled="iterationLoading"
-          />
-          <a-button type="primary" icon="send" @click="sendIterationMessage" :loading="iterationLoading" :disabled="!iterationInput.trim()">
-            发送
-          </a-button>
-        </div>
-      </div>
-
-      <a-divider style="margin: 24px 0 16px;" />
-      <div style="text-align: center;">
-        <a-button style="margin-right: 12px;" @click="capabilityReviewVisible = false">
-          返回修改配置
-        </a-button>
-        <a-button type="primary" icon="rocket" size="large" @click="continuePackaging">
-          确认能力，开始封装部署
-        </a-button>
-      </div>
-    </a-card>
 
     <!-- <agent-execution-panel
       v-if="showAgentPanel"
@@ -582,7 +528,7 @@
 
 <script>
 /* eslint-disable */
-import { streamAgent, callAgentApi, streamLLMChat } from '@/utils/request'
+import { streamAgent } from '@/utils/request'
 import { domainMockData, convertToGraphFormat } from './chartData'
 // 必须要引用echarts，否则图表无法显示
 // eslint-disable-next-line no-unused-vars
@@ -692,12 +638,7 @@ export default {
       ],
       selectedTemplate: null,
       showIntentPreview: false,
-      capabilityReviewVisible: false,
-      capabilityTranslating: false,
-      editingTools: [],
-      iterationChat: [],
-      iterationInput: '',
-      iterationLoading: false
+      editingTools: []
     }
   },
   computed: {
@@ -843,27 +784,14 @@ export default {
         // Step 2: 代码分析（识别MCP能力）
         this.updatePublishProgress(1, 'process', '正在分析代码结构...')
         await this.analyzeMCPCapabilities(file)
-        this.updatePublishProgress(1, 'process', '代码分析完成，请确认服务能力')
+        this.updatePublishProgress(1, 'process', '代码分析完成，已识别MCP能力')
 
-        this.prepareCapabilityReview()
-        this.capabilityReviewVisible = true
-      } catch (error) {
-        console.error('代码分析失败:', error)
-        this.publishProgress.status = 'error'
-        this.$message.error('分析失败：' + (error.message || error))
-      } finally {
-        this.uploadProgramLoading = false
-      }
-    },
-
-    async continuePackaging() {
-      this.capabilityReviewVisible = false
-      this.uploadProgramLoading = true
-      try {
-        this.updatePublishProgress(2, 'process', '正在封装服务...')
+        // Step 3: 自动封装为MCP Server
+        this.updatePublishProgress(2, 'process', '正在封装MCP服务...')
         await this.autoPackageMCPServer()
         this.updatePublishProgress(2, 'process', '服务封装完成')
 
+        // Step 4: 自动部署
         this.updatePublishProgress(3, 'process', '正在部署服务...')
         await this.autoDeployMCPServer()
         this.updatePublishProgress(3, 'process', '服务部署完成')
@@ -872,7 +800,7 @@ export default {
         this.$message.success('服务发布成功！')
         this.showMCPServerInfo()
       } catch (error) {
-        console.error('封装部署失败:', error)
+        console.error('自动发布失败:', error)
         this.publishProgress.status = 'error'
         this.$message.error('发布失败：' + (error.message || error))
       } finally {
@@ -923,117 +851,6 @@ export default {
       this.onAutoPublish()
     },
 
-    async prepareCapabilityReview() {
-      const tools = this.mcpServerInfo.tools || []
-      this.editingTools = tools.map(t => ({
-        ...t,
-        friendlyName: t.name,
-        friendlyDesc: t.description || '',
-        friendlyInput: t.input || '',
-        friendlyOutput: t.output || '',
-        enabled: true
-      }))
-      this.iterationChat = []
-      this.iterationInput = ''
-
-      this.capabilityTranslating = true
-      try {
-        const context = `服务名称：${this.form.serviceName || ''}，行业：${this.getIndustryText(this.programInfo.industry)}，场景：${this.getScenarioText(this.programInfo.scenario)}`
-        const capJson = JSON.stringify(tools.map(t => ({
-          name: t.name, description: t.description, input: t.input, output: t.output
-        })))
-
-        const fd = new FormData()
-        fd.append('capabilities', capJson)
-        fd.append('context', context)
-
-        const res = await callAgentApi('/api/agent/capability_describe', fd)
-        if (res.success && Array.isArray(res.data)) {
-          res.data.forEach(item => {
-            const match = this.editingTools.find(t => t.name === item.name)
-            if (match) {
-              match.friendlyName = item.friendlyName || match.friendlyName
-              match.friendlyDesc = item.friendlyDesc || match.friendlyDesc
-              match.friendlyInput = item.friendlyInput || match.friendlyInput
-              match.friendlyOutput = item.friendlyOutput || match.friendlyOutput
-            }
-          })
-        }
-      } catch (e) {
-        console.warn('LLM能力翻译失败，使用原始名称:', e)
-      } finally {
-        this.capabilityTranslating = false
-      }
-    },
-
-    getCapabilityContext() {
-      const caps = this.editingTools
-        .filter(t => t.enabled)
-        .map((t, i) => `${i + 1}. ${t.friendlyName}：${t.friendlyDesc}`)
-        .join('\n')
-      return `服务名称：${this.form.serviceName || ''}，行业：${this.getIndustryText(this.programInfo.industry)}，场景：${this.getScenarioText(this.programInfo.scenario)}`
-        + `\n\n当前能力列表：\n${caps}`
-    },
-
-    startIterationChat() {
-      this.iterationChat = []
-      this.iterationLoading = true
-
-      const capsJson = JSON.stringify(this.editingTools.filter(t => t.enabled).map(t => ({
-        name: t.name, friendlyName: t.friendlyName, friendlyDesc: t.friendlyDesc
-      })))
-      const fd = new FormData()
-      fd.append('capabilities', capsJson)
-      fd.append('context', this.getCapabilityContext())
-      fd.append('history', '[]')
-
-      this.iterationChat.push({ role: 'assistant', content: '' })
-      const lastIdx = this.iterationChat.length - 1
-
-      streamLLMChat('/api/agent/capability_chat', fd, {
-        onText: (text) => {
-          this.iterationChat[lastIdx].content += text
-          this.$forceUpdate()
-        },
-        onDone: () => { this.iterationLoading = false },
-        onError: (err) => {
-          this.iterationLoading = false
-          this.$message.error('AI助手连接失败：' + err)
-        }
-      })
-    },
-
-    sendIterationMessage() {
-      const msg = this.iterationInput.trim()
-      if (!msg || this.iterationLoading) return
-
-      this.iterationChat.push({ role: 'user', content: msg })
-      this.iterationInput = ''
-      this.iterationLoading = true
-
-      const capsJson = JSON.stringify(this.editingTools.filter(t => t.enabled).map(t => ({
-        name: t.name, friendlyName: t.friendlyName, friendlyDesc: t.friendlyDesc
-      })))
-      const fd = new FormData()
-      fd.append('capabilities', capsJson)
-      fd.append('context', this.getCapabilityContext())
-      fd.append('history', JSON.stringify(this.iterationChat))
-
-      this.iterationChat.push({ role: 'assistant', content: '' })
-      const lastIdx = this.iterationChat.length - 1
-
-      streamLLMChat('/api/agent/capability_chat', fd, {
-        onText: (text) => {
-          this.iterationChat[lastIdx].content += text
-          this.$forceUpdate()
-        },
-        onDone: () => { this.iterationLoading = false },
-        onError: (err) => {
-          this.iterationLoading = false
-          this.$message.error('AI助手连接失败：' + err)
-        }
-      })
-    },
 
     addAgentStep(stepIndex, agentData) {
       if (!this.publishProgress.steps[stepIndex]) {
@@ -1719,12 +1536,7 @@ export default {
       this.programJson = null
       this.selectedTemplate = null
       this.showIntentPreview = false
-      this.capabilityReviewVisible = false
-      this.capabilityTranslating = false
       this.editingTools = []
-      this.iterationChat = []
-      this.iterationInput = ''
-      this.iterationLoading = false
     },
 
     handleSubmitTypeChange() {
@@ -1915,62 +1727,6 @@ export default {
 }
 
 // 服务预览
-.iteration-start {
-  text-align: center;
-  padding: 16px;
-  background: #fafafa;
-  border-radius: 8px;
-}
-.iteration-chat {
-  .chat-messages {
-    max-height: 320px;
-    overflow-y: auto;
-    padding: 12px;
-    background: #f7f7f8;
-    border-radius: 8px;
-    margin-bottom: 12px;
-  }
-  .chat-msg {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 14px;
-    &.user {
-      flex-direction: row-reverse;
-      .chat-bubble {
-        background: #722ed1;
-        color: #fff;
-        border-radius: 12px 4px 12px 12px;
-      }
-    }
-    &.assistant .chat-bubble {
-      background: #fff;
-      border: 1px solid #e8e8e8;
-      border-radius: 4px 12px 12px 12px;
-    }
-  }
-  .chat-bubble {
-    max-width: 75%;
-    padding: 10px 14px;
-    font-size: 13px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .typing-cursor {
-    animation: blink 0.8s infinite;
-    color: #722ed1;
-    font-weight: bold;
-  }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
-  .chat-input-row {
-    display: flex;
-    gap: 8px;
-  }
-}
-
 // MCP Resource / Prompt 卡片
 .mcp-resource-card {
   display: flex;
