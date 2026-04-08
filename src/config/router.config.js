@@ -189,6 +189,51 @@ export async function getFirstMSPath() {
   return '/vertical-ms/aml' // 默认返回aml路径
 }
 
+// 获取想定式开发路由的第一个路径，用于重定向
+export async function getFirstScenarioDevPath() {
+  try {
+    const domains = await loadDict('domain', [])
+    if (domains && domains.length > 0) {
+      return `/vertical-scenario-dev/${domains[0].code}`
+    }
+  } catch (error) {
+    console.error('获取第一个想定式开发路径失败:', error)
+  }
+  return '/vertical-scenario-dev/aml' // 默认返回aml路径
+}
+
+// 动态生成算法模型想定式开发路由的辅助函数
+export async function generateVerticalScenarioDevRoutes() {
+  try {
+    const domains = await loadDict('domain', [])
+    if (!domains || domains.length === 0) {
+      return [{
+        path: '/vertical-scenario-dev/aml',
+        name: 'vertical-scenario-dev-aml',
+        component: () => import('@/views/vertical/scenarioDev/GenericScenarioDev'),
+        props: { verticalType: 'aml' },
+        meta: { title: '跨境支付AI监测想定式开发', keepAlive: true, permission: ['publisher'] }
+      }]
+    }
+    return domains.map(domain => ({
+      path: `/vertical-scenario-dev/${domain.code}`,
+      name: `vertical-scenario-dev-${domain.code}`,
+      component: () => import('@/views/vertical/scenarioDev/GenericScenarioDev'),
+      props: { verticalType: domain.code },
+      meta: { title: `${domain.text}想定式开发`, keepAlive: true, permission: ['publisher'] }
+    }))
+  } catch (error) {
+    console.error('生成想定式开发路由失败:', error)
+    return [{
+      path: '/vertical-scenario-dev/aml',
+      name: 'vertical-scenario-dev-aml',
+      component: () => import('@/views/vertical/scenarioDev/GenericScenarioDev'),
+      props: { verticalType: 'aml' },
+      meta: { title: '跨境支付AI监测想定式开发', keepAlive: true, permission: ['publisher'] }
+    }]
+  }
+}
+
 export async function getFirstAppPath() {
   try {
     const domains = await loadDict('domain', [])
@@ -465,6 +510,15 @@ export const asyncRouterMap = [
         redirect: '/vertical-user/aml', // 默认重定向，会在路由初始化时被更新
         component: RouteView,
         meta: { title: '垂域应用AI资源检索', keepAlive: true, icon: 'appstore', permission: ['admin', 'publisher', 'user'] },
+        children: [] // 子路由在路由初始化时动态加载
+      },
+      // 算法模型想定式开发 - 从字典动态获取（置于垂域原子微服务发布上方）
+      {
+        path: '/vertical-scenario-dev',
+        name: 'vertical-scenario-dev',
+        redirect: '/vertical-scenario-dev/aml', // 默认重定向，会在路由初始化时被更新
+        component: RouteView,
+        meta: { title: '算法模型想定式开发', keepAlive: true, icon: 'code', permission: ['publisher'] },
         children: [] // 子路由在路由初始化时动态加载
       },
       // 垂域原子微服务发布 - 从字典动态获取

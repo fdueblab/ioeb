@@ -114,6 +114,18 @@ export default {
       immediate: false
     }
   },
+  activated() {
+    // keep-alive 返回本页时：若想定式开发刚登记过同领域资源，则重新拉列表
+    try {
+      const flag = sessionStorage.getItem(`eb_vertical_list_refresh_${this.verticalType}`)
+      if (flag === '1') {
+        sessionStorage.removeItem(`eb_vertical_list_refresh_${this.verticalType}`)
+        this.initData()
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  },
   methods: {
     initStaticData() {
       // 重置筛选条件和数据
@@ -145,6 +157,11 @@ export default {
         this.industryArr = await dictionaryCache.loadDict(`${this.verticalType}_industry`) || []
         this.scenarioArr = await dictionaryCache.loadDict(`${this.verticalType}_scenario`) || []
         this.technologyArr = await dictionaryCache.loadDict(`${this.verticalType}_technology`) || []
+        // 想定式生成资源类型：若字典未同步，补一条以便筛选与表格展示
+        const genAlgo = { code: 'generated_algorithm', text: '想定式生成算法' }
+        if (!this.typeArr.some((t) => t.code === genAlgo.code)) {
+          this.typeArr = [...this.typeArr, genAlgo]
+        }
       } catch (error) {
         console.error('加载字典数据失败:', error)
         this.$message.error('加载数据字典失败，请刷新重试')
@@ -345,6 +362,11 @@ export default {
     },
     // 使用服务
     handleUse(record) {
+      // 想定式生成算法仅落库存档，状态为未部署；仍需允许进入下载流程
+      if (record && record.type === 'generated_algorithm') {
+        this.$emit('onGoUse', record)
+        return
+      }
       const statusType = this.statusStyleDict.find(item => item.code === record.status)?.text || 'default'
       switch (statusType) {
         case 'default':
