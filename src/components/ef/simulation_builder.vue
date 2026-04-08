@@ -31,15 +31,15 @@
           <!-- 准备：说明 + 生产/研究 + 策略（模块化插拔，仅研究展示） -->
           <template v-if="showPreStart">
             <div class="pre-start-panel">
-              <div class="pre-start-title">开始前的说明</div>
+              <div class="pre-start-title">准备就绪</div>
               <p class="pre-start-lead">
-                仿真构建会在<strong>不改动您生产数据</strong>的前提下，按顺序完成下面四步，最后给出可预览发布的元应用方案。
+                系统将在<strong>不影响真实数据</strong>的安全环境中，自动完成以下四步：
               </p>
               <ul class="pre-start-list">
-                <li><strong>服务匹配</strong>：检查画布上各 MCP 服务是否可用、延迟如何。</li>
-                <li><strong>环境准备</strong>：初始化沙箱、拦截写操作、加载拟真数据（由后端执行，此处为进度展示）。</li>
-                <li><strong>智能构建</strong>：多轮「数据仿真 → 逻辑仿真 → 链路检视」，发现问题会自动尝试修复。</li>
-                <li><strong>方案生成</strong>：固化通过验证的调度结果，生成配置与报告。</li>
+                <li><strong>服务匹配</strong> — 确认右侧画布上的各项服务可用</li>
+                <li><strong>环境准备</strong> — 搭建安全的测试环境并加载模拟数据</li>
+                <li><strong>智能构建</strong> — 自动编排、验证并优化服务调度方案</li>
+                <li><strong>方案生成</strong> — 输出可直接预览和发布的应用配置</li>
               </ul>
 
               <div class="pre-start-services" v-if="serviceStatuses.length">
@@ -54,69 +54,67 @@
 
               <div class="pre-start-config">
                 <div class="toolbar-row">
-                  <span class="toolbar-label">模式</span>
-                  <a-radio-group v-model="internalMode" size="small">
-                    <a-radio-button value="production">生产</a-radio-button>
-                    <a-radio-button value="research">研究</a-radio-button>
-                  </a-radio-group>
-                </div>
-                <div v-if="internalMode === 'research'" class="toolbar-row scenario-row">
-                  <span class="toolbar-label">场景</span>
-                  <a-input
-                    v-model="scenarioDraft"
+                  <span class="toolbar-label">研究模式</span>
+                  <a-switch
+                    :checked="internalMode === 'research'"
                     size="small"
-                    placeholder="可选：自然语言场景描述（将传给构建服务）"
+                    @change="(val) => { internalMode = val ? 'research' : 'production' }"
                   />
                 </div>
-                <a-collapse
-                  v-if="internalMode === 'research'"
-                  :bordered="false"
-                  class="strategy-collapse pre-start-strategy"
-                >
-                  <a-collapse-panel key="s" header="策略配置（模块化，M1–M5，仅研究模式生效）">
+
+                <template v-if="internalMode === 'research'">
+                  <div class="toolbar-row scenario-row">
+                    <span class="toolbar-label">场景描述</span>
+                    <a-input
+                      v-model="scenarioDraft"
+                      size="small"
+                      placeholder="可选：用一句话描述你的业务场景"
+                    />
+                  </div>
+                  <div class="research-strategy-panel">
                     <div class="strategy-grid">
                       <div class="strategy-field">
-                        <span>沙箱 M1</span>
+                        <span>M1 沙箱</span>
                         <a-select v-model="strategy.sandbox" size="small" style="width: 100%">
-                          <a-select-option value="cow">CoW 沙箱</a-select-option>
+                          <a-select-option value="cow">CoW</a-select-option>
                           <a-select-option value="none">无沙箱</a-select-option>
                           <a-select-option value="full_mock">全模拟</a-select-option>
                         </a-select>
                       </div>
                       <div class="strategy-field">
-                        <span>规划 M2</span>
+                        <span>M2 规划</span>
                         <a-select v-model="strategy.planning" size="small" style="width: 100%">
-                          <a-select-option value="llm_autonomous">LLM 自主规划</a-select-option>
-                          <a-select-option value="preset_workflow">预设工作流</a-select-option>
+                          <a-select-option value="llm_autonomous">LLM 自主</a-select-option>
+                          <a-select-option value="preset_workflow">预设流程</a-select-option>
                         </a-select>
                       </div>
                       <div class="strategy-field">
-                        <span>验证 M3</span>
+                        <span>M3 验证</span>
                         <a-select v-model="strategy.verification" size="small" style="width: 100%">
-                          <a-select-option value="multi_agent">多 Agent 验证</a-select-option>
+                          <a-select-option value="multi_agent">多 Agent</a-select-option>
                           <a-select-option value="single_agent">单 Agent</a-select-option>
-                          <a-select-option value="rule_based">规则校验</a-select-option>
+                          <a-select-option value="rule_based">规则</a-select-option>
                         </a-select>
                       </div>
                       <div class="strategy-field">
-                        <span>修复 M4</span>
+                        <span>M4 修复</span>
                         <a-select v-model="strategy.repair" size="small" style="width: 100%">
-                          <a-select-option value="llm_repair">LLM 修复</a-select-option>
-                          <a-select-option value="rule_repair">规则修复</a-select-option>
-                          <a-select-option value="none">无修复</a-select-option>
+                          <a-select-option value="llm_repair">LLM</a-select-option>
+                          <a-select-option value="rule_repair">规则</a-select-option>
+                          <a-select-option value="none">禁用</a-select-option>
                         </a-select>
                       </div>
                       <div class="strategy-field">
-                        <span>固化 M5</span>
+                        <span>M5 固化</span>
                         <a-select v-model="strategy.solidify" size="small" style="width: 100%">
                           <a-select-option value="golden_trace">经验固化</a-select-option>
-                          <a-select-option value="replan">每次重规划</a-select-option>
-                          <a-select-option value="static">静态配置</a-select-option>
+                          <a-select-option value="replan">重规划</a-select-option>
+                          <a-select-option value="static">静态</a-select-option>
                         </a-select>
                       </div>
                     </div>
-                  </a-collapse-panel>
-                </a-collapse>
+                  </div>
+                </template>
               </div>
             </div>
           </template>
@@ -1388,21 +1386,12 @@ export default {
   }
 }
 
-.pre-start-strategy.strategy-collapse {
-  margin-top: 4px;
-
-  /deep/ .ant-collapse-item {
-    border: none;
-  }
-
-  /deep/ .ant-collapse-header {
-    padding: 8px 0 !important;
-    font-size: 13px;
-  }
-
-  /deep/ .ant-collapse-content-box {
-    padding: 0 0 8px !important;
-  }
+.research-strategy-panel {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #fafafa;
+  border-radius: 4px;
+  border: 1px solid #f0f0f0;
 }
 
 .pre-start-config .strategy-grid {

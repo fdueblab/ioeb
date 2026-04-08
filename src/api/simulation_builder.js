@@ -4,14 +4,14 @@
  * 【设计】虚拟（进程内）与真实（HTTP + SSE）只在「选择实现」处分叉一次，
  * 对外导出函数签名不变，组件只 import 本文件。
  *
- * 切换：`SIMULATION_USE_MOCK`。对接真实后端时置为 false，并保证 BASE_URL 可访问 docs/dev/build-design4llm.md §5 所述路径。
+ * 切换：`SIMULATION_USE_MOCK`。对接真实后端时置为 false，并保证 `VUE_APP_API_BASE_URL` 指向可访问的网关。
  */
 import request from '@/utils/request'
 import { simulationBuildInMemory } from '@/mock/services/simulation_builder_inmemory'
 
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || ''
 
-/** 为 false 时使用 HTTP + EventSource（需后端实现 docs/dev/build-design4llm.md §5） */
+/** 为 false 时使用 HTTP + EventSource 订阅 `streamUrl` */
 export const SIMULATION_USE_MOCK = true
 
 /** SSE 自定义事件名（与后端约定一致） */
