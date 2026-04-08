@@ -5,8 +5,7 @@
  *
  * 对应组件：`simulation_builder.vue` · API：`src/api/simulation_builder.js`
  *
- * 职责：在浏览器内维护会话 Map，按 docs/dev/build-design4llm.md 四阶段顺序
- * 通过 emit(eventName, payload) 模拟 SSE。
+ * 职责：在浏览器内维护会话 Map，按四阶段顺序通过 emit(eventName, payload) 模拟 SSE。
  *
  * 【流水线（与 emit 顺序对应）】
  * 1) step#0 + 逐服务 service 事件（进程内模拟均为在线，无随机失败）
@@ -25,6 +24,10 @@ import {
   simulationBuildRandomBetween,
   simulationBuildModuleMetrics
 } from '@/mock/data/simulation_builder_data'
+import {
+  enhanceForStage,
+  DOMAIN_KNOWLEDGE_STAGES
+} from '@/domain/simulationDomainKnowledge'
 
 const sessions = new Map()
 let idSeq = 0
@@ -56,6 +59,13 @@ function sleepRange(range) {
 
 function mergeStrategy(body) {
   return { ...SIMULATION_BUILD_DEFAULT_STRATEGY, ...(body.strategy || {}) }
+}
+
+/** 日志中展示 prompt 片段长度上限 */
+function truncateForLog(text, max = 220) {
+  if (text == null || text === '') return '（空）'
+  const s = String(text).replace(/\s+/g, ' ').trim()
+  return s.length <= max ? s : `${s.slice(0, max)}…`
 }
 
 function start(body) {
@@ -141,6 +151,10 @@ async function runStream(sessionId, emit) {
   const { body, strategy, mode } = session
   const servicesMeta = body.servicesMeta || []
   const isResearch = mode === 'research'
+  const dk = body.domainKnowledge
+  const stageCtxBase = {
+    serviceNames: servicesMeta.map((s) => s.name)
+  }
 
   const pushLog = (level, message) => {
     checkCancel()
@@ -148,12 +162,20 @@ async function runStream(sessionId, emit) {
   }
 
   try {
+    session.enhancements = []
+
     emit('step', { step: 0, name: '服务匹配' })
     pushLog('INFO', '开始服务匹配')
-    const dk = body.domainKnowledge
-    if (dk && typeof dk.summary === 'string' && dk.summary) {
-      pushLog('INFO', `领域知识已注入: ${dk.summary}`)
-    }
+    const enScenario = enhanceForStage(
+      dk,
+      DOMAIN_KNOWLEDGE_STAGES.scenarioParsing,
+      stageCtxBase
+    )
+    session.enhancements.push(enScenario)
+    pushLog(
+      'INFO',
+      `[想定解析] 领域知识增强: ${truncateForLog(enScenario.promptFragment)}`
+    )
 
     for (const svc of servicesMeta) {
       checkCancel()
@@ -197,11 +219,32 @@ async function runStream(sessionId, emit) {
       emit('phase', { phase, status: 'done' })
     }
 
+    const enPlanning = enhanceForStage(dk, DOMAIN_KNOWLEDGE_STAGES.planning, {
+      ...stageCtxBase,
+      iterationIndex: iteration
+    })
+    session.enhancements.push(enPlanning)
+    pushLog(
+      'INFO',
+      `[调度规划] 领域知识增强: ${truncateForLog(enPlanning.promptFragment)}`
+    )
+
     await runPhase('data')
     pushLog('SUCCESS', '数据仿真: 数据流转正常')
 
     await runPhase('logic')
     pushLog('SUCCESS', '逻辑仿真: 业务逻辑正常')
+
+    const enVerify = enhanceForStage(
+      dk,
+      DOMAIN_KNOWLEDGE_STAGES.verification,
+      { ...stageCtxBase, iterationIndex: iteration }
+    )
+    session.enhancements.push(enVerify)
+    pushLog(
+      'INFO',
+      `[仿真验证] 领域知识增强: ${truncateForLog(enVerify.promptFragment)}`
+    )
 
     await runPhase('check')
     pushLog('INFO', '链路检视: 检查偏差和冗余')
@@ -259,7 +302,8 @@ async function runStream(sessionId, emit) {
       scenarioDescription: body.scenarioDescription,
       appName: body.appName,
       domain: body.domain,
-      domainKnowledge: body.domainKnowledge
+      domainKnowledge: body.domainKnowledge,
+      enhancements: session.enhancements || []
     }
 
     pushLog('SUCCESS', '方案生成完成')

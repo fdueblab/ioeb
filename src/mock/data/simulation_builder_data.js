@@ -4,7 +4,6 @@
  * ============================================================================
  *
  * 对应组件：`src/components/ef/simulation_builder.vue`
- * 对应文档：docs/dev/build-design4llm.md
  *
  * 【与进程内模拟器的关系】
  * `src/mock/services/simulation_builder_inmemory.js` 按时间顺序推进一次构建，

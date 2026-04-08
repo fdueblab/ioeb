@@ -3,6 +3,7 @@
  *
  * - 与 UI 解耦：仅导出纯函数与注册表，供 simulation_builder 组装请求体。
  * - 后端可同名消费 `domainKnowledge` 字段；未来可将 provider 迁到服务端，前端只传 domain id。
+ * - `enhanceForStage`：按想定解析 / 调度规划 / 仿真验证三阶段裁剪 prompt 片段（进程内模拟器与真实后端均可调用）。
  */
 
 /** @type {Map<string, (ctx: object) => object>} */
@@ -206,6 +207,100 @@ function deepMerge(base, patch) {
 function normalizeDomainId(domain) {
   const d = (domain && String(domain).trim()) || 'generic'
   return BUILTIN[d] ? d : 'generic'
+}
+
+/** 与仿真流水线阶段对齐的增强切片（Planner / Verifier / 想定解析） */
+export const DOMAIN_KNOWLEDGE_STAGES = {
+  scenarioParsing: 'scenarioParsing',
+  planning: 'planning',
+  verification: 'verification'
+}
+
+function formatTerminologyList(list) {
+  if (!Array.isArray(list) || !list.length) return ''
+  return list
+    .map((t) => (t && t.term ? `${t.term}：${t.definition || ''}` : ''))
+    .filter(Boolean)
+    .join('；')
+}
+
+function joinLines(label, items) {
+  if (!Array.isArray(items) || !items.length) return ''
+  return `${label}：${items.join('；')}`
+}
+
+/**
+ * 按阶段从同一份 domainKnowledge 中裁剪子集并生成可拼入 system prompt 的片段。
+ * @param {object} [domainKnowledge] getSimulationDomainKnowledge 的返回值
+ * @param {'scenarioParsing'|'planning'|'verification'} stage
+ * @param {{ serviceNames?: string[], iterationIndex?: number }} [stageContext] 预留，后续可按服务/轮次细化
+ * @returns {{ stage: string, promptFragment: string, sections: object }}
+ */
+export function enhanceForStage(domainKnowledge, stage, stageContext = {}) {
+  void stageContext
+  const dk = domainKnowledge && typeof domainKnowledge === 'object' ? domainKnowledge : {}
+  const sec = dk.sections || {}
+  const baseMeta = dk.summary ? `【领域摘要】${dk.summary}` : ''
+
+  if (stage === DOMAIN_KNOWLEDGE_STAGES.scenarioParsing) {
+    const sections = {
+      terminology: sec.terminology,
+      constraints: sec.constraints,
+      scenarioContext: dk.scenarioContext
+    }
+    const termText = formatTerminologyList(sec.terminology)
+    const conText = joinLines('约束', sec.constraints)
+    const scenText =
+      dk.scenarioContext && dk.scenarioContext.excerpt
+        ? `用户场景摘要：${dk.scenarioContext.excerpt}`
+        : ''
+    const promptFragment = [baseMeta, termText && `术语：${termText}`, conText, scenText]
+      .filter(Boolean)
+      .join('\n')
+    return { stage, promptFragment, sections }
+  }
+
+  if (stage === DOMAIN_KNOWLEDGE_STAGES.planning) {
+    const sections = {
+      workflowHints: sec.workflowHints,
+      constraints: sec.constraints,
+      terminology: sec.terminology
+    }
+    const termShort = formatTerminologyList(sec.terminology)
+    const promptFragment = [
+      baseMeta,
+      joinLines('编排建议', sec.workflowHints),
+      joinLines('约束', sec.constraints),
+      termShort && `术语速查：${termShort}`
+    ]
+      .filter(Boolean)
+      .join('\n')
+    return { stage, promptFragment, sections }
+  }
+
+  if (stage === DOMAIN_KNOWLEDGE_STAGES.verification) {
+    const sections = {
+      constraints: sec.constraints,
+      complianceNotes: sec.complianceNotes,
+      terminology: sec.terminology
+    }
+    const termShort = formatTerminologyList(sec.terminology)
+    const promptFragment = [
+      baseMeta,
+      joinLines('校验与一致性约束', sec.constraints),
+      joinLines('合规与风控要点', sec.complianceNotes),
+      termShort && `术语参照：${termShort}`
+    ]
+      .filter(Boolean)
+      .join('\n')
+    return { stage, promptFragment, sections }
+  }
+
+  return {
+    stage: String(stage),
+    promptFragment: baseMeta,
+    sections: {}
+  }
 }
 
 /**
