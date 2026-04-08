@@ -132,6 +132,7 @@
       <span slot="action" slot-scope="text, record">
         <a-button type="link" @click="$emit('edit', record)">编辑</a-button>
         <a-button v-if="record.type === 'meta'" type="link" @click="$emit('use', record)">试用</a-button>
+        <a-button v-else-if="record.type === 'generated_algorithm'" type="link" @click="$emit('use', record)">下载</a-button>
         <a-button v-else type="link" @click="$emit('use', record)">测试</a-button>
       </span>
     </a-table>

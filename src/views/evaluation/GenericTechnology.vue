@@ -28,12 +28,15 @@
             ref="table"
             :columns="columns"
             :dataSource="filteredDataSource"
+            :rowKey="record => record.id"
             :row-selection="rowSelection"
             :loading="dataLoading"
+            :pagination="tablePagination"
             size="middle"
+            @change="onTableChange"
           >
             <span slot="serial" slot-scope="text, record, index">
-              {{ index + 1 }}
+              {{ (tablePagination.current - 1) * tablePagination.pageSize + index + 1 }}
             </span>
             <span slot="status" slot-scope="text">
               <a-badge :status="statusStyleFilter(text)" :text="statusFilter(text)" />
@@ -43,41 +46,331 @@
       </a-col>
       <a-col :span="12">
         <a-card :bordered="false">
+          <!-- 未选择服务提示 -->
+          <a-alert
+            v-if="!hasSelectedService"
+            message="请先选择要评测的MCP服务"
+            description="👈 请在左侧服务列表中勾选一个MCP服务，然后即可配置评测参数"
+            type="info"
+            show-icon
+            :closable="false"
+            style="margin-bottom: 16px;"
+          >
+            <template slot="icon">
+              <a-icon type="arrow-left" />
+            </template>
+          </a-alert>
+
           <a-form>
+            <!-- 专业指标评测 -->
             <a-row :gutter="20">
-              <a-col :span="8">
-                <a-form-item label="评测指标">
+              <a-col :span="16">
+                <a-form-item>
+                  <span slot="label">
+                    专业指标评测
+                    <a-tooltip title="平台提供的标准化技术评测指标，基于算法模型的技术特性">
+                      <a-icon type="info-circle" style="margin-left: 4px; color: #1890ff;" />
+                    </a-tooltip>
+                  </span>
                   <a-select
-                    ref="metricsSelect"
-                    v-model="selectedMetric"
+                    ref="professionalMetricsSelect"
+                    v-model="selectedProfessionalMetrics"
                     mode="multiple"
-                    placeholder="请选择评测指标"
+                    placeholder="请先选择左侧的MCP服务"
                     style="width: 100%"
                     :dropdownStyle="{ padding: 0 }"
+                    :disabled="!hasSelectedService"
+                    @change="onProfessionalMetricsChange"
+                    @click="checkServiceSelected"
                   >
                     <div slot="dropdownRender" slot-scope="menu">
                       <div style="padding: 8px; cursor: pointer; text-align: center; border-bottom: 1px solid #e8e8e8;">
-                        <a @click="selectAllMetrics">全选</a>
+                        <a @click="selectAllProfessionalMetrics">全选</a>
                       </div>
                       <v-nodes :vnodes="menu" />
                     </div>
-                    <a-select-option v-for="(item, index) in normOptions" :key="index" :value="item.code">
+                    <a-select-option v-for="(item, index) in professionalMetrics" :key="index" :value="item.code">
                       {{ item.text }}
                     </a-select-option>
                   </a-select>
                 </a-form-item>
               </a-col>
+
+              <!-- AI自定义评测开关 -->
+              <a-col :span="8">
+                <a-form-item label="AI自定义评测">
+                  <a-switch
+                    v-model="enableAICustomEvaluation"
+                    checked-children="启用"
+                    un-checked-children="关闭"
+                    :disabled="!hasSelectedService"
+                    @change="onAICustomToggle"
+                    @click="checkServiceSelected"
+                  >
+                    <template slot="checkedChildren">
+                      <a-icon type="robot" /> 启用
+                    </template>
+                    <template slot="unCheckedChildren">
+                      关闭
+                    </template>
+                  </a-switch>
+                  <div style="margin-top: 4px; font-size: 12px; color: #999;">
+                    {{ hasSelectedService ? '由AI根据您的需求进行评测' : '请先选择MCP服务' }}
+                  </div>
+                </a-form-item>
+              </a-col>
+            </a-row>
+
+            <!-- AI自定义评测配置面板 - 精美设计 -->
+            <a-card
+              v-if="enableAICustomEvaluation"
+              :bordered="false"
+              style="margin-top: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px;"
+              :body-style="{ padding: '24px' }"
+            >
+              <div slot="title" style="color: white; font-size: 16px; font-weight: 500;">
+                <a-icon type="robot" style="margin-right: 8px;" />
+                AI智能评测助手
+              </div>
+
+              <a-card :bordered="false" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <!-- 步骤指示器 -->
+                <a-steps :current="aiConfigStep" size="small" style="margin-bottom: 24px;">
+                  <a-step title="评测目标" />
+                  <a-step title="评测方法" />
+                  <a-step title="高级配置" />
+                </a-steps>
+
+                <!-- 步骤1: 评测目标 -->
+                <div v-show="aiConfigStep === 0">
+                  <a-form-item>
+                    <span slot="label" style="font-weight: 500; font-size: 14px;">
+                      <a-icon type="target" style="color: #1890ff; margin-right: 4px;" />
+                      请描述您的评测目标
+                    </span>
+                    <a-textarea
+                      v-model="customEvaluationPrompt"
+                      :placeholder="aiPromptPlaceholder"
+                      :rows="5"
+                      :maxLength="800"
+                      showCount
+                      style="font-size: 14px;"
+                    />
+                  </a-form-item>
+
+                  <!-- 快速示例 -->
+                  <a-card title="💡 示例参考" size="small" style="margin-top: 16px; background: #f6ffed; border: 1px solid #b7eb8f;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                      <a-tag
+                        v-for="(example, idx) in promptExamples"
+                        :key="idx"
+                        color="green"
+                        style="cursor: pointer; margin: 4px;"
+                        @click="useExamplePrompt(example.prompt)"
+                      >
+                        <a-icon type="bulb" /> {{ example.title }}
+                      </a-tag>
+                    </div>
+                  </a-card>
+
+                  <div style="text-align: right; margin-top: 16px;">
+                    <a-button type="primary" @click="aiConfigStep = 1" :disabled="!customEvaluationPrompt">
+                      下一步 <a-icon type="right" />
+                    </a-button>
+                  </div>
+                </div>
+
+                <!-- 步骤2: 评测方法 -->
+                <div v-show="aiConfigStep === 1">
+                  <a-form-item>
+                    <span slot="label" style="font-weight: 500; font-size: 14px;">
+                      <a-icon type="experiment" style="color: #52c41a; margin-right: 4px;" />
+                      选择评测方法
+                    </span>
+                    <a-radio-group v-model="customEvaluationMethod" style="width: 100%;">
+                      <a-row :gutter="16">
+                        <a-col :span="8">
+                          <a-card
+                            :hoverable="true"
+                            :class="{ 'selected-method': customEvaluationMethod === 'ai-analysis' }"
+                            @click="customEvaluationMethod = 'ai-analysis'"
+                            style="cursor: pointer; text-align: center; border: 2px solid transparent; transition: all 0.3s;"
+                          >
+                            <a-radio value="ai-analysis" style="display: none;"></a-radio>
+                            <div style="font-size: 32px; margin-bottom: 8px;">
+                              <a-icon type="eye" :style="{ color: customEvaluationMethod === 'ai-analysis' ? '#1890ff' : '#999' }" />
+                            </div>
+                            <div style="font-weight: 500; margin-bottom: 4px;">AI智能分析</div>
+                            <div style="font-size: 12px; color: #666;">
+                              AI深度分析服务输出和行为模式
+                            </div>
+                          </a-card>
+                        </a-col>
+                        <a-col :span="8">
+                          <a-card
+                            :hoverable="true"
+                            :class="{ 'selected-method': customEvaluationMethod === 'ai-generated-test' }"
+                            @click="customEvaluationMethod = 'ai-generated-test'"
+                            style="cursor: pointer; text-align: center; border: 2px solid transparent; transition: all 0.3s;"
+                          >
+                            <a-radio value="ai-generated-test" style="display: none;"></a-radio>
+                            <div style="font-size: 32px; margin-bottom: 8px;">
+                              <a-icon type="experiment" :style="{ color: customEvaluationMethod === 'ai-generated-test' ? '#52c41a' : '#999' }" />
+                            </div>
+                            <div style="font-weight: 500; margin-bottom: 4px;">AI生成测试</div>
+                            <div style="font-size: 12px; color: #666;">
+                              AI自动生成测试用例并执行
+                            </div>
+                          </a-card>
+                        </a-col>
+                        <a-col :span="8">
+                          <a-card
+                            :hoverable="true"
+                            :class="{ 'selected-method': customEvaluationMethod === 'hybrid' }"
+                            @click="customEvaluationMethod = 'hybrid'"
+                            style="cursor: pointer; text-align: center; border: 2px solid transparent; transition: all 0.3s;"
+                          >
+                            <a-radio value="hybrid" style="display: none;"></a-radio>
+                            <div style="font-size: 32px; margin-bottom: 8px;">
+                              <a-icon type="thunderbolt" :style="{ color: customEvaluationMethod === 'hybrid' ? '#faad14' : '#999' }" />
+                            </div>
+                            <div style="font-weight: 500; margin-bottom: 4px;">混合模式</div>
+                            <div style="font-size: 12px; color: #666;">
+                              结合AI分析和规则验证
+                            </div>
+                          </a-card>
+                        </a-col>
+                      </a-row>
+                    </a-radio-group>
+                  </a-form-item>
+
+                  <!-- 方法说明 -->
+                  <a-alert
+                    :message="evaluationMethodInfo[customEvaluationMethod].title"
+                    :description="evaluationMethodInfo[customEvaluationMethod].description"
+                    type="info"
+                    show-icon
+                    style="margin-top: 16px;"
+                  />
+
+                  <div style="text-align: right; margin-top: 16px;">
+                    <a-button @click="aiConfigStep = 0" style="margin-right: 8px;">
+                      <a-icon type="left" /> 上一步
+                    </a-button>
+                    <a-button type="primary" @click="aiConfigStep = 2">
+                      下一步 <a-icon type="right" />
+                    </a-button>
+                  </div>
+                </div>
+
+                <!-- 步骤3: 高级配置 -->
+                <div v-show="aiConfigStep === 2">
+                  <a-form-item>
+                    <span slot="label" style="font-weight: 500; font-size: 14px;">
+                      <a-icon type="setting" style="color: #722ed1; margin-right: 4px;" />
+                      高级配置 (可选)
+                    </span>
+
+                    <a-row :gutter="16">
+                      <a-col :span="12">
+                        <a-form-item label="评测深度">
+                          <a-select v-model="aiEvaluationDepth" placeholder="选择评测深度">
+                            <a-select-option value="basic">
+                              <a-icon type="thunder" /> 基础评测 (快速)
+                            </a-select-option>
+                            <a-select-option value="standard">
+                              <a-icon type="check-circle" /> 标准评测 (推荐)
+                            </a-select-option>
+                            <a-select-option value="comprehensive">
+                              <a-icon type="fund" /> 全面评测 (详尽)
+                            </a-select-option>
+                          </a-select>
+                        </a-form-item>
+                      </a-col>
+                      <a-col :span="12">
+                        <a-form-item label="预期评测时间">
+                          <a-select v-model="aiExpectedTime" disabled>
+                            <a-select-option value="5-15">5-15秒</a-select-option>
+                            <a-select-option value="15-30">15-30秒</a-select-option>
+                            <a-select-option value="30-60">30-60秒</a-select-option>
+                          </a-select>
+                        </a-form-item>
+                      </a-col>
+                    </a-row>
+
+                    <a-form-item label="期望输出">
+                      <a-checkbox-group v-model="aiOutputPreferences">
+                        <a-row>
+                          <a-col :span="8">
+                            <a-checkbox value="detailed_analysis">详细分析报告</a-checkbox>
+                          </a-col>
+                          <a-col :span="8">
+                            <a-checkbox value="suggestions">改进建议</a-checkbox>
+                          </a-col>
+                          <a-col :span="8">
+                            <a-checkbox value="test_cases">测试用例</a-checkbox>
+                          </a-col>
+                        </a-row>
+                      </a-checkbox-group>
+                    </a-form-item>
+                  </a-form-item>
+
+                  <a-divider />
+
+                  <!-- 配置预览 -->
+                  <a-descriptions title="配置预览" bordered size="small" :column="2">
+                    <a-descriptions-item label="评测目标">
+                      {{ customEvaluationPrompt.substring(0, 50) }}{{ customEvaluationPrompt.length > 50 ? '...' : '' }}
+                    </a-descriptions-item>
+                    <a-descriptions-item label="评测方法">
+                      {{ evaluationMethodInfo[customEvaluationMethod].title }}
+                    </a-descriptions-item>
+                    <a-descriptions-item label="评测深度">
+                      {{ aiEvaluationDepth === 'basic' ? '基础' : aiEvaluationDepth === 'standard' ? '标准' : '全面' }}
+                    </a-descriptions-item>
+                    <a-descriptions-item label="预计耗时">
+                      {{ aiExpectedTime }}秒
+                    </a-descriptions-item>
+                  </a-descriptions>
+
+                  <div style="text-align: right; margin-top: 16px;">
+                    <a-button @click="aiConfigStep = 1" style="margin-right: 8px;">
+                      <a-icon type="left" /> 上一步
+                    </a-button>
+                    <a-button type="primary" @click="confirmAIConfig">
+                      <a-icon type="check" /> 确认配置
+                    </a-button>
+                  </div>
+                </div>
+              </a-card>
+            </a-card>
+
+            <!-- 数据集类型选择 -->
+            <a-row :gutter="20" style="margin-top: 16px;">
               <a-col :span="8">
                 <a-form-item label="数据集类型">
-                  <a-select v-model="dataSetType" placeholder="请选择类型" default-value="0">
+                  <a-select
+                    v-model="dataSetType"
+                    placeholder="请选择数据集类型"
+                    :disabled="!hasSelectedService"
+                    @change="onDatasetTypeChange"
+                    @click="checkServiceSelected"
+                  >
                     <a-select-option value="0">平台数据集</a-select-option>
                     <a-select-option value="1">上载数据集</a-select-option>
+                    <a-select-option value="2">开源数据集</a-select-option>
                   </a-select>
                 </a-form-item>
               </a-col>
               <a-col v-if="dataSetType === '0'" :span="8">
                 <a-form-item label="选择数据集">
-                  <a-select placeholder="请选择" default-value="0">
+                  <a-select
+                    v-model="selectedPlatformDataset"
+                    placeholder="请选择数据集"
+                    :disabled="!hasSelectedService"
+                    @change="handlePlatformDatasetChange"
+                    @click="checkServiceSelected"
+                  >
                     <a-select-option v-for="(dataset, index) in domainDatasets" :key="index" :value="index.toString()">
                       {{ dataset }}
                     </a-select-option>
@@ -87,17 +380,97 @@
               <a-col v-if="dataSetType === '1'" :span="8">
                 <a-form-item label="上载数据集">
                   <a-upload
-                    accept=".zip"
+                    accept=".zip,.csv,.json,.xlsx,.xls"
                     :file-list="dataSetFiles"
                     :remove="removeDataSetFile"
                     :customRequest="customDataSetFileChose"
-                    :multiple="false">
-                    <a-button> <a-icon type="upload" /> 选择数据集 </a-button>
+                    :multiple="true"
+                    :disabled="!hasSelectedService"
+                    @click="checkServiceSelected"
+                  >
+                    <a-button :disabled="!hasSelectedService">
+                      <a-icon type="upload" /> 选择数据集
+                    </a-button>
                   </a-upload>
                 </a-form-item>
               </a-col>
+              <!-- 开源数据集选择 -->
+              <a-col v-if="dataSetType === '2'" :span="16">
+                <a-form-item label="选择数据集">
+                  <a-row :gutter="8">
+                    <a-col :span="12">
+                      <a-select
+                        v-model="openSourceDatasetType"
+                        placeholder="选择预配置数据集或输入自定义URL"
+                        :disabled="!hasSelectedService"
+                        @change="handleOpenSourceDatasetChange"
+                        @click="checkServiceSelected"
+                        allowClear
+                      >
+                        <a-select-opt-group label="🔬 机器学习经典数据集">
+                          <a-select-option value="iris">Iris - 鸢尾花数据集</a-select-option>
+                          <a-select-option value="mnist">MNIST - 手写数字</a-select-option>
+                          <a-select-option value="cifar10">CIFAR-10 - 图像分类</a-select-option>
+                          <a-select-option value="boston">Boston Housing - 房价预测</a-select-option>
+                        </a-select-opt-group>
+                        <a-select-opt-group label="📊 Kaggle热门数据集">
+                          <a-select-option value="titanic">Titanic - 泰坦尼克号</a-select-option>
+                          <a-select-option value="houseprices">House Prices - 房价预测</a-select-option>
+                          <a-select-option value="creditcard">Credit Card Fraud - 信用卡欺诈</a-select-option>
+                        </a-select-opt-group>
+                        <a-select-opt-group label="🤖 NLP数据集">
+                          <a-select-option value="imdb">IMDB - 电影评论情感分析</a-select-option>
+                          <a-select-option value="squad">SQuAD - 阅读理解</a-select-option>
+                          <a-select-option value="glue">GLUE Benchmark</a-select-option>
+                        </a-select-opt-group>
+                        <a-select-option value="custom">
+                          <a-icon type="link" /> 自定义URL...
+                        </a-select-option>
+                      </a-select>
+                    </a-col>
+
+                    <!-- 自定义URL输入 -->
+                    <a-col :span="12" v-if="openSourceDatasetType === 'custom'">
+                      <a-input
+                        v-model="customDatasetUrl"
+                        placeholder="输入数据集URL（支持HTTP/HTTPS直链）"
+                        :disabled="!hasSelectedService"
+                        @pressEnter="handleCustomUrlSubmit"
+                      >
+                        <a-icon slot="prefix" type="link" />
+                        <a-button
+                          slot="suffix"
+                          type="link"
+                          size="small"
+                          @click="handleCustomUrlSubmit"
+                          :disabled="!customDatasetUrl"
+                        >
+                          确认
+                        </a-button>
+                      </a-input>
+                    </a-col>
+
+                    <!-- 数据集信息提示 -->
+                    <a-col :span="12" v-else-if="openSourceDatasetType && openSourceDatasetType !== 'custom'">
+                      <div class="dataset-info">
+                        <a-tag color="blue">
+                          <a-icon type="database" /> {{ getDatasetInfo().size }}
+                        </a-tag>
+                        <a-tag color="green">
+                          <a-icon type="file-text" /> {{ getDatasetInfo().format }}
+                        </a-tag>
+                        <a-tooltip :title="getDatasetInfo().description">
+                          <a-icon type="info-circle" style="margin-left: 8px; cursor: help; color: #1890ff;" />
+                        </a-tooltip>
+                      </div>
+                    </a-col>
+                  </a-row>
+                </a-form-item>
+              </a-col>
             </a-row>
+
           </a-form>
+
           <a-form>
             <a-form-item label="测评结果">
               <div v-if="evaluationResults.length > 0" class="evaluation-results">
@@ -137,7 +510,28 @@
               :wrapperCol="{ span: 24 }"
               style="text-align: center">
               <a-button v-if="tested" disabled icon="check">测评完成</a-button>
-              <a-button v-else type="primary" :loading="testLoading" @click="onTest" icon="stock">开始测评</a-button>
+              <a-button
+                v-if="tested"
+                type="default"
+                icon="redo"
+                @click="resetForRetest"
+                style="margin-left: 10px"
+              >
+                重新测评
+              </a-button>
+              <a-button
+                v-else
+                type="primary"
+                :loading="testLoading"
+                :disabled="!hasSelectedService"
+                @click="onTest"
+                icon="stock"
+              >
+                开始测评
+              </a-button>
+              <div v-if="!hasSelectedService" style="margin-top: 8px; color: #999; font-size: 12px;">
+                请先选择左侧的MCP服务
+              </div>
             </a-form-item>
           </a-form>
         </a-card>
@@ -163,6 +557,7 @@ import { streamAgent } from '@/utils/request'
 import { filterServices, updateService } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
 import store from '@/store'
+ import { Modal } from 'ant-design-vue'
 
 // 领域数据集配置
 const domainDatasetsMap = {
@@ -228,13 +623,149 @@ export default {
           scopedSlots: { customRender: 'status' }
         }
       ],
+      // 专业指标（原norm指标）
+      selectedProfessionalMetrics: [],
+      professionalMetrics: [],
+      // AI自定义评测配置
+      enableAICustomEvaluation: false,
+      customEvaluationPrompt: '',
+      customEvaluationMethod: 'ai-analysis',
+      aiConfigStep: 0,
+      aiEvaluationDepth: 'standard',
+      aiExpectedTime: '15-30',
+      aiOutputPreferences: ['detailed_analysis', 'suggestions'],
+      // 提示词示例
+      promptExamples: [
+        { title: '边缘情况处理', prompt: '评测该服务对边缘情况的处理能力，包括空值、超长输入、特殊字符等异常输入的容错性和错误处理机制' },
+        { title: '高并发稳定性', prompt: '评估服务在高并发场景下的稳定性和一致性，关注响应时间的波动和错误率' },
+        { title: '多语言支持', prompt: '分析服务对不同语言（中文、英文、日文等）输入的处理效果和准确性' },
+        { title: '数据质量要求', prompt: '测试服务对输入数据质量的要求和容忍度，包括缺失值、异常值的处理' }
+      ],
+      // 评测方法说明
+      evaluationMethodInfo: {
+        'ai-analysis': {
+          title: 'AI智能分析',
+          description: 'AI将深度分析服务的输出结果、行为模式和性能表现，给出全面的评测报告。适用于需要理解服务整体表现的场景。'
+        },
+        'ai-generated-test': {
+          title: 'AI生成测试用例',
+          description: 'AI根据您的评测目标自动生成多个测试用例，并逐一执行评测。适用于需要覆盖多种场景的评测需求。'
+        },
+        'hybrid': {
+          title: '混合模式',
+          description: '结合AI智能分析和自动化测试用例，提供最全面的评测结果。推荐用于重要服务的深度评测。'
+        }
+      },
+      // 兼容旧代码
       selectedMetric: [],
       normOptions: [],
-      dataSetType: '0',
+      dataSetType: undefined, // 数据集类型，默认为空让用户选择
+      selectedPlatformDataset: undefined, // 选中的平台数据集索引，默认为空
       dataSetFiles: [],
+
+      // 开源数据集相关
+      openSourceDatasetType: undefined, // 选择的开源数据集类型
+      customDatasetUrl: '', // 自定义URL
+      openSourceDatasetInfo: null, // 开源数据集元信息
+
+      // 预配置的开源数据集映射
+      openSourceDatasets: {
+        // 机器学习经典数据集
+        'iris': {
+          name: 'Iris Dataset',
+          url: 'https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data',
+          format: 'CSV',
+          size: '4.5KB',
+          description: '经典的鸢尾花分类数据集，包含150个样本，4个特征',
+          source: 'UCI ML Repository'
+        },
+        'mnist': {
+          name: 'MNIST',
+          url: 'http://yann.lecun.com/exdb/mnist/',
+          format: 'IDX',
+          size: '~11MB',
+          description: '手写数字识别数据集，60000训练样本+10000测试样本',
+          source: 'Yann LeCun'
+        },
+        'cifar10': {
+          name: 'CIFAR-10',
+          url: 'https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz',
+          format: 'Pickle',
+          size: '~170MB',
+          description: '60000张32x32彩色图像，10个类别',
+          source: 'University of Toronto'
+        },
+        'boston': {
+          name: 'Boston Housing',
+          url: 'https://raw.githubusercontent.com/selva86/datasets/master/BostonHousing.csv',
+          format: 'CSV',
+          size: '~50KB',
+          description: '波士顿房价预测数据集，506个样本，13个特征',
+          source: 'UCI ML Repository'
+        },
+        // Kaggle热门数据集
+        'titanic': {
+          name: 'Titanic Dataset',
+          url: 'https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv',
+          format: 'CSV',
+          size: '~60KB',
+          description: '泰坦尼克号乘客生存预测，891个训练样本',
+          source: 'Kaggle'
+        },
+        'houseprices': {
+          name: 'House Prices Dataset',
+          url: 'kaggle:house-prices-advanced-regression-techniques',
+          format: 'CSV',
+          size: '~450KB',
+          description: 'Kaggle房价预测竞赛数据集',
+          source: 'Kaggle',
+          requiresAuth: true
+        },
+        'creditcard': {
+          name: 'Credit Card Fraud Detection',
+          url: 'kaggle:mlg-ulb/creditcardfraud',
+          format: 'CSV',
+          size: '~150MB',
+          description: '信用卡欺诈检测数据集，284,807笔交易',
+          source: 'Kaggle',
+          requiresAuth: true
+        },
+        // NLP数据集
+        'imdb': {
+          name: 'IMDB Reviews',
+          url: 'https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz',
+          format: 'Text',
+          size: '~84MB',
+          description: 'IMDB电影评论情感分析，50000条评论',
+          source: 'Stanford AI Lab'
+        },
+        'squad': {
+          name: 'SQuAD 2.0',
+          url: 'https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v2.0.json',
+          format: 'JSON',
+          size: '~45MB',
+          description: '问答系统数据集，包含不可回答的问题',
+          source: 'Stanford'
+        },
+        'glue': {
+          name: 'GLUE Benchmark',
+          url: 'https://gluebenchmark.com/tasks',
+          format: 'Multiple',
+          size: '~1GB',
+          description: 'NLP模型通用语言理解评估基准',
+          source: 'NYU/UW/DeepMind'
+        }
+      },
+
       dataLoading: false,
       dataSource: [],
       filteredDataSource: [],
+      tablePagination: {
+        current: 1,
+        pageSize: 10,
+        showSizeChanger: true,
+        showTotal: total => `共 ${total} 条`
+      },
       selectedRowKeys: [],
       selectedRows: [],
       response: '',
@@ -539,9 +1070,26 @@ export default {
       if (newDomain !== oldDomain) {
         await this.initData()
       }
+    },
+    // 监听评测深度，自动设置预期时间
+    aiEvaluationDepth(newDepth) {
+      const timeMap = {
+        'basic': '5-15',
+        'standard': '15-30',
+        'comprehensive': '30-60'
+      }
+      this.aiExpectedTime = timeMap[newDepth] || '15-30'
     }
   },
   computed: {
+    // 是否已选择服务
+    hasSelectedService() {
+      return this.selectedRows && this.selectedRows.length > 0
+    },
+    // AI提示词占位符
+    aiPromptPlaceholder() {
+      return `请详细描述您想要评测的内容和标准，例如：\n\n• 评测该服务对边缘情况的处理能力\n• 评估在高并发下的稳定性和响应速度\n• 测试对不同语言输入的支持程度\n• 分析输出结果的准确性和一致性\n\n描述越详细，AI的评测结果就越精准。`
+    },
     domainDatasets() {
       return domainDatasetsMap[this.verticalType] || []
     },
@@ -554,6 +1102,17 @@ export default {
     }
   },
   methods: {
+    // 检查是否选择了服务
+    checkServiceSelected() {
+      if (!this.hasSelectedService) {
+        this.$message.warning({
+          content: '请先在左侧选择要评测的MCP服务',
+          duration: 2
+        })
+        return false
+      }
+      return true
+    },
     statusFilter(type) {
       if (type === undefined) {
         return '未知状态'
@@ -576,14 +1135,18 @@ export default {
     },
     async loadDictionaryData() {
       try {
-        this.normOptions = await dictionaryCache.loadDict('norm') || []
+        // 加载专业指标（原norm指标）
+        this.professionalMetrics = await dictionaryCache.loadDict('norm') || []
+        this.normOptions = this.professionalMetrics // 保持兼容性
+
         const allStatus = await dictionaryCache.loadDict('status') || []
         this.statusStyleDict = await dictionaryCache.loadDict('status_style') || []
         const runningStatusCode = this.statusStyleDict.filter(item => ['warning', 'success'].includes(item.text)).map(item => item.code)
         this.statusDict = allStatus.filter(item => runningStatusCode.includes(item.code))
       } catch (error) {
         console.error('加载评测指标字典失败:', error)
-        this.normOptions = [
+        // 专业指标默认值
+        this.professionalMetrics = [
           { code: 'privacy', text: '隐私性' },
           { code: 'safety-fingerprint', text: '安全性指纹' },
           { code: 'safety-watermark', text: '安全性水印' },
@@ -591,6 +1154,8 @@ export default {
           { code: 'robustness', text: '鲁棒性' },
           { code: 'explainability', text: '可解释性' }
         ]
+        this.normOptions = this.professionalMetrics
+
         this.statusDict = ['pre_release_unrated', 'pre_release_pending', 'released']
         this.statusStyleDict = []
       }
@@ -648,6 +1213,11 @@ export default {
           return item.status === this.queryParam.status
         })
       }
+      this.tablePagination.current = 1
+    },
+    onTableChange (pagination) {
+      this.tablePagination.current = pagination.current
+      this.tablePagination.pageSize = pagination.pageSize
     },
     onSelectChange (selectedRowKeys, selectedRows) {
       this.selectedRowKeys = selectedRowKeys
@@ -655,54 +1225,244 @@ export default {
       this.tested = false
       this.response = ''
       this.evaluationResults = []
+
+      // 清空右侧所有配置（当切换服务时）
+      this.resetRightSideConfigurations()
     },
+
+    // 重置右侧所有配置
+    resetRightSideConfigurations() {
+      // 1. 清空专业指标选择
+      this.selectedProfessionalMetrics = []
+      this.selectedMetric = []
+
+      // 2. 清空AI自定义评测配置
+      this.enableAICustomEvaluation = false
+      this.customEvaluationPrompt = ''
+      this.customEvaluationMethod = 'ai-analysis'
+      this.aiConfigStep = 0
+      this.aiEvaluationDepth = 'standard'
+      this.aiExpectedTime = '15-30'
+      this.aiOutputPreferences = ['detailed_analysis', 'suggestions']
+
+      // 3. 清空数据集配置
+      this.dataSetType = undefined
+      this.selectedPlatformDataset = undefined
+      this.dataSetFiles = []
+      this.openSourceDatasetType = undefined
+      this.customDatasetUrl = ''
+      this.openSourceDatasetInfo = null
+
+      // 4. 清空评测结果
+      this.response = ''
+      this.evaluationResults = []
+      this.tested = false
+    },
+
+    // 重新测评（保持服务选择，清空配置和结果）
+    resetForRetest() {
+      const serviceName = this.selectedRows[0]?.name || 'MCP服务'
+
+      // 使用友好的确认对话框
+      Modal.confirm({
+        title: '🔄 重新测评',
+        content: `您即将为 "${serviceName}" 进行重新测评。\n\n此操作将清空：\n• 已选择的评测指标\n• AI自定义评测配置\n• 数据集选择\n• 当前评测结果\n\n但会保留您当前选择的MCP服务，方便您使用不同的配置重新评测。`,
+        okText: '确认重新测评',
+        okType: 'primary',
+        cancelText: '取消',
+        width: 500,
+        icon: () => null,
+        onOk: () => {
+          // 1. 清空专业指标选择
+          this.selectedProfessionalMetrics = []
+          this.selectedMetric = []
+
+          // 2. 清空AI自定义评测配置
+          this.enableAICustomEvaluation = false
+          this.customEvaluationPrompt = ''
+          this.customEvaluationMethod = 'ai-analysis'
+          this.aiConfigStep = 0
+          this.aiEvaluationDepth = 'standard'
+          this.aiExpectedTime = '15-30'
+          this.aiOutputPreferences = ['detailed_analysis', 'suggestions']
+
+          // 3. 清空数据集配置
+          this.dataSetType = undefined
+          this.selectedPlatformDataset = undefined
+          this.dataSetFiles = []
+          this.openSourceDatasetType = undefined
+          this.customDatasetUrl = ''
+          this.openSourceDatasetInfo = null
+
+          // 4. 清空评测结果
+          this.response = ''
+          this.evaluationResults = []
+          this.tested = false
+
+          // 注意：不清空 selectedRowKeys 和 selectedRows（保持MCP服务选择）
+
+          this.$message.success({
+            content: '✨ 配置已清空，请重新选择评测参数',
+            duration: 3
+          })
+        },
+        onCancel: () => {
+          this.$message.info('已取消重新测评')
+        }
+      })
+    },
+    // 数据集类型切换
+    onDatasetTypeChange(value) {
+      // 清空之前选择的数据集
+      if (value === '0') {
+        // 切换到平台数据集，清空平台数据集选择
+        this.selectedPlatformDataset = undefined
+      } else if (value === '1') {
+        // 切换到上载数据集，清空上传的文件
+        this.dataSetFiles = []
+      } else if (value === '2') {
+        // 切换到开源数据集，清空开源数据集相关
+        this.openSourceDatasetType = undefined
+        this.customDatasetUrl = ''
+        this.openSourceDatasetInfo = null
+      }
+    },
+
+    // 平台数据集选择变化（只在用户明确选择后触发）
+    async handlePlatformDatasetChange(value) {
+      // 如果是undefined（初始状态或清空），不触发检查
+      if (value === undefined || value === null || value === '') {
+        return
+      }
+
+      this.selectedPlatformDataset = value
+    },
+
+    // 开源数据集选择变化
+    async handleOpenSourceDatasetChange(value) {
+      if (!value || value === 'custom') {
+        this.customDatasetUrl = ''
+        this.openSourceDatasetInfo = null
+        return
+      }
+
+      // 获取数据集信息
+      this.openSourceDatasetInfo = this.openSourceDatasets[value]
+
+      // 如果需要认证（如Kaggle）
+      if (this.openSourceDatasetInfo?.requiresAuth) {
+        Modal.warning({
+          title: '需要身份认证',
+          content: `该数据集来自 ${this.openSourceDatasetInfo.source}，需要配置API密钥才能下载。请联系管理员配置相关凭证。`,
+          okText: '我知道了',
+          width: 450
+        })
+        // 注意：即使需要认证，也保留选择，后端可能已配置
+      }
+    },
+
+    // 自定义URL提交
+    async handleCustomUrlSubmit() {
+      if (!this.customDatasetUrl) {
+        this.$message.warning('请输入数据集URL')
+        return
+      }
+
+      // 验证URL格式
+      const urlPattern = /^https?:\/\/.+/
+      if (!urlPattern.test(this.customDatasetUrl)) {
+        this.$message.error('请输入有效的URL（支持HTTP/HTTPS）')
+        return
+      }
+
+      // 构建自定义数据集信息
+      this.openSourceDatasetInfo = {
+        name: '自定义数据集',
+        url: this.customDatasetUrl,
+        format: '未知',
+        size: '未知',
+        description: '用户自定义的开源数据集',
+        source: 'Custom'
+      }
+
+      this.$message.success('已添加自定义数据集URL')
+    },
+
+    // 获取数据集信息（用于UI显示）
+    getDatasetInfo() {
+      if (!this.openSourceDatasetInfo) {
+        return { size: '-', format: '-', description: '' }
+      }
+      return this.openSourceDatasetInfo
+    },
+
+    // 获取数据集显示名称
     async customDataSetFileChose (options) {
       const { file } = options
       if (!file) {
         return false
       }
       const url = URL.createObjectURL(file)
-      this.dataSetFiles = [{
+      // 支持多文件上传
+      this.dataSetFiles.push({
         uid: file?.uid,
         name: file.name,
         status: 'done',
         url,
         originFileObj: file
-      }]
+      })
     },
-    removeDataSetFile () {
-      this.dataSetFiles = []
+    removeDataSetFile (file) {
+      const index = this.dataSetFiles.indexOf(file)
+      if (index > -1) {
+        this.dataSetFiles.splice(index, 1)
+      }
     },
-    onTest () {
+    async onTest () {
+      // 1. 基本验证
       if (this.selectedRows.length === 0) {
         this.$message.warning('请选择测评服务！')
         return
       }
-      if (this.selectedMetric.length === 0) {
-        this.$message.warning('请选择评测指标！')
+
+      // 检查是否至少选择了一项评测指标或AI评测
+      const hasProfessionalMetrics = this.selectedProfessionalMetrics.length > 0
+      const hasAIEvaluation = this.enableAICustomEvaluation
+
+      if (!hasProfessionalMetrics && !hasAIEvaluation) {
+        this.$message.warning('请至少选择一项专业指标或启用AI自定义评测！')
         return
       }
-      this.testLoading = true
-      const serviceName = this.selectedRows[0].name
-      if (this.verticalType === 'aml') {
-        const containsModelKeyword = serviceName.includes('模型')
-        if (this.selectedRows.length === 1 && containsModelKeyword) {
-          if (this.dataSetType === '1' && this.dataSetFiles.length === 0) {
-            this.$message.warning('请上传数据集文件！')
-            this.testLoading = false
-            return
-          }
-          this.runAgentEvaluation(serviceName)
-        } else {
-          this.runMockEvaluation(serviceName)
+
+      // 如果启用了AI自定义评测，验证配置完整性
+      if (this.enableAICustomEvaluation) {
+        if (!this.customEvaluationPrompt || this.customEvaluationPrompt.trim() === '') {
+          this.$message.warning('请输入AI自定义评测的目标描述！')
+          return
         }
-      } else {
-        this.runMockEvaluation(serviceName)
       }
+
+      // 兼容旧代码：同步selectedMetric
+      this.selectedMetric = [...this.selectedProfessionalMetrics]
+
+      // 2. 数据集验证
+      if (this.dataSetType === '1' && this.dataSetFiles.length === 0) {
+        this.$message.warning('请上传数据集文件！')
+        return
+      }
+
+      this.testLoading = true
+      const service = this.selectedRows[0]
+      const serviceName = (service.name || service.title || '').trim()
+
+      // 3. 原子微服务技术评测：本页面统一走Agent评测（不再使用Mock）
+      this.runAgentEvaluation(serviceName)
     },
     async runAgentEvaluation(serviceName) {
       const formData = new FormData()
       formData.append('model_name', serviceName)
+      formData.append('dataset_type', this.dataSetType ?? '0')
+      formData.append('enable_adaptation', 'true')
 
       let metricsToSend = this.normOptions.map(item => item.code).join(',')
       if (this.selectedMetric.length > 0) {
@@ -710,19 +1470,37 @@ export default {
       }
       formData.append('metrics', metricsToSend)
 
+      // 根据数据集类型处理数据
       if (this.dataSetType === '1') {
+        // 用户上载数据集（Agent支持ZIP/CSV/JSON）
         const fileObj = this.dataSetFiles[0].originFileObj || this.dataSetFiles[0]
         const fileName = fileObj.name || ''
-        const fileExt = fileName.split('.').pop().toLowerCase()
+        const fileExt = (fileName.split('.').pop() || '').toLowerCase()
+        const allowedExts = ['zip', 'csv', 'json']
 
-        if (fileExt !== 'zip') {
-          this.$message.error('请上传ZIP格式的数据集文件')
+        if (!allowedExts.includes(fileExt)) {
+          this.$message.error('请上传ZIP、CSV或JSON格式的数据集文件')
           this.testLoading = false
           return
         }
 
         formData.append('data_file', fileObj)
+      } else if (this.dataSetType === '0') {
+        // 平台数据集
+        const datasetUrl = 'https://lhcos-84055-1317429791.cos.ap-shanghai.myqcloud.com/ioeb/test_dataset.zip'
+        formData.append('file_url', datasetUrl)
+      } else if (this.dataSetType === '2') {
+        // 开源数据集
+        const datasetInfo = this.openSourceDatasets[this.openSourceDatasetType]
+        if (datasetInfo && datasetInfo.url) {
+          formData.append('file_url', datasetInfo.url)
+        } else {
+          this.$message.error('请选择有效的开源数据集')
+          this.testLoading = false
+          return
+        }
       } else {
+        // 默认使用平台数据集
         const datasetUrl = 'https://lhcos-84055-1317429791.cos.ap-shanghai.myqcloud.com/ioeb/test_dataset.zip'
         formData.append('file_url', datasetUrl)
       }
@@ -844,38 +1622,45 @@ export default {
         }
       })
     },
-            runMockEvaluation(serviceName) {
-      setTimeout(() => {
-        // 根据选择的指标过滤结果
-        const filteredScore = {}
-        const filteredDetails = {}
-        if (this.selectedMetric.length > 0) {
-          this.selectedMetric.forEach(metric => {
-            if (this.mockResponse.score[metric]) {
-              filteredScore[metric] = this.mockResponse.score[metric]
-            }
-            if (this.mockResponse.details[metric]) {
-              filteredDetails[metric] = this.mockResponse.details[metric]
-            }
-          })
-        } else {
-          return
-        }
+    async runMockEvaluation(serviceName) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          // 根据选择的指标过滤结果
+          const filteredScore = {}
+          const filteredDetails = {}
+          if (this.selectedMetric.length > 0) {
+            this.selectedMetric.forEach(metric => {
+              if (this.mockResponse.score[metric]) {
+                filteredScore[metric] = this.mockResponse.score[metric]
+              }
+              if (this.mockResponse.details[metric]) {
+                filteredDetails[metric] = this.mockResponse.details[metric]
+              }
+            })
+          } else {
+            this.testLoading = false
+            this.agentIsRunning = false
+            resolve()
+            return
+          }
 
-        this.processEvaluationResults(filteredDetails, filteredScore)
+          this.processEvaluationResults(filteredDetails, filteredScore)
 
-        if (this.selectedRows.length > 0) {
-          const normToUpdate = this.evaluationResults.map(result => ({
-            key: result.code,
-            score: result.score
-          }))
-          this.updateServiceNorm(this.selectedRows[0], normToUpdate)
-        }
+          if (this.selectedRows.length > 0) {
+            const normToUpdate = this.evaluationResults.map(result => ({
+              key: result.code,
+              score: result.score
+            }))
+            this.updateServiceNorm(this.selectedRows[0], normToUpdate)
+          }
 
-        this.testLoading = false
-        this.tested = true
-        this.$message.success(`${serviceName} 测试完成！`)
-      }, 1000)
+          this.testLoading = false
+          this.agentIsRunning = false
+          this.tested = true
+          this.$message.success(`${serviceName} 测试完成！`)
+          resolve()
+        }, 1000)
+      })
     },
     async updateServiceNorm(currentServiceData, normList) {
       const isPlatForm = store.getters.roles?.permissionList?.includes('admin') || false
@@ -913,6 +1698,47 @@ export default {
       setTimeout(() => {
         document.body.click()
       }, 100)
+    },
+    // 全选专业指标
+    selectAllProfessionalMetrics() {
+      this.selectedProfessionalMetrics = this.professionalMetrics.map(item => item.code)
+      // 同步到旧的selectedMetric（保持兼容）
+      this.selectedMetric = [...this.selectedProfessionalMetrics, ...this.selectedGenericMetrics.filter(m => m !== 'custom')]
+      setTimeout(() => {
+        document.body.click()
+      }, 100)
+    },
+    // 全选通用指标（不包括custom）
+    // 专业指标变化监听
+    onProfessionalMetricsChange() {
+      // 同步到旧的selectedMetric（保持兼容）
+      this.selectedMetric = [...this.selectedProfessionalMetrics, ...this.selectedGenericMetrics.filter(m => m !== 'custom')]
+    },
+    // AI自定义评测开关切换
+    onAICustomToggle(checked) {
+      if (checked) {
+        // 启用AI评测，重置配置
+        this.aiConfigStep = 0
+        this.customEvaluationPrompt = ''
+        this.customEvaluationMethod = 'ai-analysis'
+        this.aiEvaluationDepth = 'standard'
+        this.aiOutputPreferences = ['detailed_analysis', 'suggestions']
+      } else {
+        // 关闭AI评测
+        this.customEvaluationPrompt = ''
+      }
+      // 同步到旧的selectedMetric
+      this.selectedMetric = [...this.selectedProfessionalMetrics]
+    },
+    // 使用示例提示词
+    useExamplePrompt(prompt) {
+      this.customEvaluationPrompt = prompt
+      this.$message.success('已应用示例提示词')
+    },
+    // 确认AI配置
+    confirmAIConfig() {
+      this.aiConfigStep = 0
+      this.$message.success('AI评测配置已完成！')
     },
     toggleExpanded(index) {
       this.$set(this.evaluationResults[index], 'expanded', !this.evaluationResults[index].expanded)
@@ -1112,5 +1938,33 @@ export default {
       }
     }
   }
+}
+
+// AI评测方法选中样式
+.selected-method {
+  border: 2px solid #1890ff !important;
+  background: #e6f7ff !important;
+}
+
+// 开源数据集相关样式
+.dataset-info {
+  display: flex;
+  align-items: center;
+  padding: 4px 11px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  height: 32px;
+
+  .ant-tag {
+    margin-right: 8px;
+    margin-bottom: 0;
+  }
+}
+
+// 自定义URL输入框优化
+:deep(.ant-input-affix-wrapper .ant-input-suffix .ant-btn) {
+  padding: 0 8px;
+  height: 22px;
+  font-size: 12px;
 }
 </style>
