@@ -13,6 +13,8 @@ import {
   getFirstVerticalUserPath,
   generateVerticalMSRoutes,
   getFirstMSPath,
+  generateVerticalScenarioDevRoutes,
+  getFirstScenarioDevPath,
   generateVerticalAppRoutes,
   getFirstAppPath,
   generateGuideRoutes,
@@ -95,6 +97,15 @@ router.beforeEach(async (to, from, next) => {
                   }
 
                   verticalMSRoute.children = allMSRoutes
+                }
+              }
+              // 2b. 算法模型想定式开发（publisher 权限）
+              if (store.getters.roles.permissionList &&
+                  store.getters.roles.permissionList.includes('publisher')) {
+                const verticalScenarioDevRoute = router.children.find(route => route.path === '/vertical-scenario-dev')
+                if (verticalScenarioDevRoute) {
+                  verticalScenarioDevRoute.redirect = await getFirstScenarioDevPath()
+                  verticalScenarioDevRoute.children = await generateVerticalScenarioDevRoutes()
                 }
               }
               // 3. 垂域元应用仿真构建
