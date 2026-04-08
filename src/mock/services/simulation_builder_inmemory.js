@@ -24,10 +24,8 @@ import {
   simulationBuildRandomBetween,
   simulationBuildModuleMetrics
 } from '@/mock/data/simulation_builder_data'
-import {
-  enhanceForStage,
-  DOMAIN_KNOWLEDGE_STAGES
-} from '@/domain/simulationDomainKnowledge'
+import { enhanceForStage } from '@/domain'
+import { SIMULATION_STAGES, SIMULATION_ENHANCEMENT_RULES } from '@/components/ef/simulationStages'
 
 const sessions = new Map()
 let idSeq = 0
@@ -168,7 +166,7 @@ async function runStream(sessionId, emit) {
     pushLog('INFO', '开始服务匹配')
     const enScenario = enhanceForStage(
       dk,
-      DOMAIN_KNOWLEDGE_STAGES.scenarioParsing,
+      SIMULATION_ENHANCEMENT_RULES[SIMULATION_STAGES.scenarioParsing],
       stageCtxBase
     )
     session.enhancements.push(enScenario)
@@ -219,7 +217,7 @@ async function runStream(sessionId, emit) {
       emit('phase', { phase, status: 'done' })
     }
 
-    const enPlanning = enhanceForStage(dk, DOMAIN_KNOWLEDGE_STAGES.planning, {
+    const enPlanning = enhanceForStage(dk, SIMULATION_ENHANCEMENT_RULES[SIMULATION_STAGES.planning], {
       ...stageCtxBase,
       iterationIndex: iteration
     })
@@ -237,7 +235,7 @@ async function runStream(sessionId, emit) {
 
     const enVerify = enhanceForStage(
       dk,
-      DOMAIN_KNOWLEDGE_STAGES.verification,
+      SIMULATION_ENHANCEMENT_RULES[SIMULATION_STAGES.verification],
       { ...stageCtxBase, iterationIndex: iteration }
     )
     session.enhancements.push(enVerify)

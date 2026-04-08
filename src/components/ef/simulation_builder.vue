@@ -33,11 +33,11 @@
             <div class="pre-start-panel">
               <div class="pre-start-title">准备就绪</div>
               <p class="pre-start-lead">
-                系统将在<strong>不影响真实数据</strong>的安全环境中，自动完成以下四步：
+                系统将在安全仿真环境中，自动完成以下四步：
               </p>
               <ul class="pre-start-list">
-                <li><strong>服务匹配</strong> — 确认右侧画布上的各项服务可用</li>
-                <li><strong>环境准备</strong> — 搭建安全的测试环境并加载模拟数据</li>
+                <li><strong>服务匹配</strong> — 确认各项服务可用</li>
+                <li><strong>环境准备</strong> — 搭建安全的仿真环境</li>
                 <li><strong>智能构建</strong> — 自动编排、验证并优化服务调度方案</li>
                 <li><strong>方案生成</strong> — 输出可直接预览和发布的应用配置</li>
               </ul>
@@ -50,6 +50,10 @@
               </div>
               <div v-else class="pre-start-warn">
                 <a-icon type="warning" /> 请先在画布上添加至少一个服务节点。
+              </div>
+
+              <div v-if="domainHint" class="pre-start-domain-hint">
+                <a-icon type="bulb" /> {{ domainHint }}
               </div>
 
               <div class="pre-start-config">
@@ -309,6 +313,15 @@
                 <div class="path-label">策略摘要</div>
                 <div class="strategy-tags">
                   <a-tag v-for="(v, k) in strategy" :key="k">{{ strategyLabel(k, v) }}</a-tag>
+                </div>
+              </div>
+
+              <div v-if="internalMode === 'research' && resultEnhancements.length" class="strategy-summary">
+                <div class="path-label">领域知识增强</div>
+                <div class="strategy-tags">
+                  <a-tag v-for="en in resultEnhancements" :key="en.stage" color="blue">
+                    {{ enhancementStageLabel(en.stage) }} ✓
+                  </a-tag>
                 </div>
               </div>
 
@@ -573,7 +586,7 @@ import {
   SIMULATION_BUILD_GEN_TASKS,
   SIMULATION_BUILD_DEFAULT_STRATEGY
 } from '@/mock/data/simulation_builder_data'
-import { getSimulationDomainKnowledge } from '@/domain/simulationDomainKnowledge'
+import { getKnowledge } from '@/domain'
 
 function mapSetupItems(tasks) {
   return tasks.map((text) => ({ text, done: false, active: false }))
@@ -697,6 +710,16 @@ export default {
     showPreStart() {
       return !this.hasStarted && !this.isCompleted
     },
+    domainHint() {
+      const d = this.domain || 'generic'
+      if (d === 'generic') return ''
+      const dk = getKnowledge(d)
+      return dk && dk.summary ? `已识别领域：${dk.summary}` : ''
+    },
+    resultEnhancements() {
+      if (!this.finalResult || !Array.isArray(this.finalResult.enhancements)) return []
+      return this.finalResult.enhancements
+    },
     /** 步骤条高亮：0=准备，1–4 对应后端 currentMainStep 0–3；完成时视为全部走完 */
     stepBarIndex() {
       if (this.isCompleted) return 5
@@ -707,6 +730,10 @@ export default {
   methods: {
     compareModalGetContainer() {
       return document.body
+    },
+    enhancementStageLabel(stage) {
+      const m = { scenarioParsing: '想定解析', planning: '调度规划', verification: '仿真验证' }
+      return m[stage] || stage
     },
     strategyLabel(key, value) {
       const labels = {
@@ -808,7 +835,7 @@ export default {
 
     buildStartPayload() {
       const domain = this.domain || 'generic'
-      const domainKnowledge = getSimulationDomainKnowledge(domain, {
+      const domainKnowledge = getKnowledge(domain, {
         appId: this.appId || 'meta-app-draft',
         appName: this.appName,
         scenarioDescription: this.scenarioDraft,
@@ -1359,6 +1386,18 @@ export default {
 
   li {
     margin-bottom: 6px;
+  }
+}
+
+.pre-start-domain-hint {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #8c8c8c;
+  line-height: 1.6;
+
+  .anticon {
+    margin-right: 4px;
+    color: #faad14;
   }
 }
 
