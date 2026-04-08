@@ -1,6 +1,7 @@
 <template>
   <div class="schedule-with-input">
     <smart-chat
+      v-show="!simulationChromeOpen"
       ref="smartChat"
       style="height: calc(100vh - 100px)"
       @start-loading="startLoading"
@@ -19,6 +20,7 @@
       :loading-flow="loadingFlow"
       :vertical-type="verticalType"
       @import-request="handleImportRequest"
+      @simulation-ui="onSimulationUi"
     />
   </div>
 </template>
@@ -54,7 +56,9 @@ export default {
       initFlow: {},
       initServices: [],
       loadingServices: false,
-      loadingFlow: false
+      loadingFlow: false,
+      /** 与 panel 仿真构建并排时隐藏左侧聊天 */
+      simulationChromeOpen: false
     }
   },
   mounted() {
@@ -73,6 +77,9 @@ export default {
     }
   },
   methods: {
+    onSimulationUi(payload) {
+      this.simulationChromeOpen = !!(payload && payload.open)
+    },
     init() {
       this.$refs.smartChat.init()
       this.clearFlow()
