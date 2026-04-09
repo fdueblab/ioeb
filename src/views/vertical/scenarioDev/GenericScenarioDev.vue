@@ -403,7 +403,7 @@ export default {
         formData.append('file', rawFile.originFileObj || rawFile)
       }
 
-      streamAgent('/api/aml_auto_generate/generate_code', formData, {
+      streamAgent('/api/agent/aml_auto_generate', formData, {
         onStart: () => {
           this.generateProgress.description = '智能体已启动，正在生成算法模型...'
         },
