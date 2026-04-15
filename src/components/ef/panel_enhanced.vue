@@ -23,7 +23,7 @@
                   开始仿真构建
                 </a-button>
                 <transition name="tips-float">
-                  <div v-if="hasServiceNodes && !simulationPassed" class="simulation-tips-float">
+                  <div v-if="hasServiceNodes && !simulationPassed && !simulationEntryTipDismissed" class="simulation-tips-float">
                     <span>看起来还行？进入仿真构建环节</span>
                     <div class="tips-arrow"></div>
                   </div>
@@ -296,6 +296,8 @@ export default {
       simulationBuilderVisible: false,
       simulationBuilding: false,
       simulationPassed: false,
+      /** 点击「开始仿真构建」并成功打开面板后，不再显示「试试仿真构建」类浮层提示 */
+      simulationEntryTipDismissed: false,
       loadEasyFlowFinish: false,
       importLoading: false,
       fileSelectionInProgress: false,
@@ -1100,6 +1102,7 @@ export default {
     // 仿真构建
     simulationBuild() {
       if (this.data.nodeList.length > 1) {
+        this.simulationEntryTipDismissed = true
         this.simulationBuilderVisible = true
         this.$nextTick(() => {
           this.$refs.simulationBuilder.init(this.data.nodeList)

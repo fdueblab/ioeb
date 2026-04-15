@@ -70,7 +70,8 @@
       </a-tabs>
 
       <a-form-item>
-        <a-checkbox v-decorator="['rememberMe', { valuePropName: 'checked' }]">{{ $t('user.login.remember-me') }}</a-checkbox>
+        <a-checkbox v-decorator="['rememberMe', { valuePropName: 'checked', initialValue: false }]">记住密码</a-checkbox>
+        <a-checkbox v-decorator="['autoLogin', { valuePropName: 'checked', initialValue: false }]" style="margin-left: 16px">自动登录</a-checkbox>
         <router-link
           :to="{ name: 'recover', params: { user: 'aaa'} }"
           class="forge-password"
@@ -137,6 +138,29 @@ export default {
     //   })
     // this.requiredTwoStepCaptcha = true
   },
+  mounted () {
+    const remembered = localStorage.getItem('ioeb_login_remember') === '1'
+    const user = localStorage.getItem('ioeb_login_username') || ''
+    let pass = ''
+    try {
+      const enc = localStorage.getItem('ioeb_login_password')
+      if (enc) pass = decodeURIComponent(escape(atob(enc)))
+    } catch (e) {}
+    const auto = localStorage.getItem('ioeb_auto_login') === '1'
+    this.$nextTick(() => {
+      this.form.setFieldsValue({
+        username: user,
+        password: pass,
+        rememberMe: remembered && !!user,
+        autoLogin: auto
+      })
+      if (auto && user && pass) {
+        setTimeout(() => {
+          this.handleSubmit({ preventDefault: () => {} })
+        }, 100)
+      }
+    })
+  },
   methods: {
     ...mapActions(['Login', 'Logout', 'GetInfo']),
     // handler
@@ -154,6 +178,23 @@ export default {
       this.customActiveKey = key
       // this.form.resetFields()
     },
+    persistLoginPrefs (values) {
+      if (values.rememberMe) {
+        localStorage.setItem('ioeb_login_remember', '1')
+        localStorage.setItem('ioeb_login_username', values.username || '')
+        try {
+          localStorage.setItem(
+            'ioeb_login_password',
+            btoa(unescape(encodeURIComponent(values.password || '')))
+          )
+        } catch (e) {}
+      } else {
+        localStorage.removeItem('ioeb_login_remember')
+        localStorage.removeItem('ioeb_login_username')
+        localStorage.removeItem('ioeb_login_password')
+      }
+      localStorage.setItem('ioeb_auto_login', values.autoLogin ? '1' : '0')
+    },
     handleSubmit (e) {
       e.preventDefault()
       const {
@@ -165,19 +206,27 @@ export default {
 
       state.loginBtn = true
 
-      const validateFieldsKey = customActiveKey === 'tab1' ? ['username', 'password'] : ['mobile', 'captcha']
+      const validateFieldsKey =
+        customActiveKey === 'tab1'
+          ? ['username', 'password', 'rememberMe', 'autoLogin']
+          : ['mobile', 'captcha']
 
       validateFields(validateFieldsKey, { force: true }, (err, values) => {
         if (!err) {
           console.log('login form', values)
           const loginParams = { ...values }
+          delete loginParams.rememberMe
+          delete loginParams.autoLogin
           delete loginParams.username
           loginParams[!state.loginType ? 'email' : 'username'] = values.username
           loginParams.password = values.password
 
           // 直接将登录请求发送到后端进行验证
           Login(loginParams)
-            .then((res) => this.loginSuccess(res))
+            .then((res) => {
+              this.persistLoginPrefs(values)
+              this.loginSuccess(res)
+            })
             .catch(err => this.requestFailed(err))
             .finally(() => { state.loginBtn = false })
         } else {
