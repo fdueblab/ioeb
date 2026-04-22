@@ -1,6 +1,6 @@
 # 垂域元应用仿真构建机制
 
-> **版本**: v3.6 | **更新**: 2026-04-08 | **状态**: 前端工程已实现仿真构建与画布并排及页面级联动；领域知识数据在平台 `src/domain/`，仿真阶段裁剪规则在 `simulationStages.js`（与仿真构建同目录）。**后端 HTTP/SSE 接入契约** 以 `docs/dev/build-design4llm.md` 为准（压缩契约；后端可不实现领域知识增强，仅透传字段）；本文档保留完整产品说明与线框。
+> **版本**: v3.9 | **更新**: 2026-04-10 | **状态**: 前端工程已实现仿真构建与画布并排及页面级联动；领域知识数据在平台 `src/domain/`，仿真阶段裁剪规则在 `simulationStages.js`（与仿真构建同目录）。**后端 HTTP/SSE 接入契约** 以 `design_docs/build-design4llm.md` 为准（含 **ioeb_backend 与仿真路由、Micro-Agent 由前端直连、本仓库 env 与代码证据**；领域知识增强可仅透传）；本文档保留完整产品说明与线框。
 
 ---
 
@@ -356,7 +356,7 @@
 3. **页面级**：`panel_enhanced` 抛出 `simulation-ui`（`{ open: true|false }`），调度页隐藏智能聊天，元应用使用页可隐藏左侧输入/输出预览并禁用底部「返回」等与编辑冲突的控件。
 4. **画布级**：通过 `canvas-visual` 同步构建进度，便于连线动效与节点高亮；仿真进行中限制结构性编辑（见 §2.1）。
 
-详细事件与载荷与 `docs/dev/build-design4llm.md` 中 **SSE**、**complete 与 result** 两节一致；事件顺序参考该文档所列 `runStream`。
+详细事件与载荷与 `design_docs/build-design4llm.md` 中 **SSE**、**complete 与 result** 两节一致；事件顺序参考该文档所列 `runStream`。
 
 ### 6.4 构建面板内部结构（线框）
 
@@ -440,7 +440,7 @@
 
 ## 七、API接口定义
 
-> **说明**：以下为概念设计。**与当前前端 `buildStartPayload` 一致的请求体、SSE 事件名与载荷** 以 `docs/dev/build-design4llm.md` 为准；下表可作产品级速查。
+> **说明**：以下为概念设计。**与当前前端 `buildStartPayload` 一致的请求体、SSE 事件名与载荷** 以 `design_docs/build-design4llm.md` 为准；下表可作产品级速查。
 
 ### 7.1 启动仿真
 
@@ -753,3 +753,6 @@ init(nodes)     // 初始化；父级在展示嵌入区后于 $nextTick 调用
 | 2026-03-31 | v3.4 | 文首说明：`build-design4llm.md` 已压缩为 v4.0；交叉引用改为 §7（组件接口）；API 约定见该文档 §5 |
 | 2026-04-01 | v3.5 | 领域知识：`enhanceForStage` 三阶段注入（想定解析 / 调度规划 / 仿真验证）；mock 日志与 `complete.result.enhancements`；`build-design4llm.md` §2、§5 同步 |
 | 2026-04-08 | v3.6 | 文档对齐：`domain/` 与 `simulationStages.js` 拆分；`build-design4llm.md` 压缩为纯契约（后端可不实现领域知识增强）；交叉引用改为节名 |
+| 2026-04-10 | v3.7 | `build-design4llm.md` 增补双后端：[ioeb_backend](https://github.com/fdueblab/ioeb_backend)（系统）、[Micro-Agent](https://github.com/fdueblab/Micro-Agent)（Agent）；交叉引用路径统一为 `design_docs/` |
+| 2026-04-10 | v3.8 | `build-design4llm.md` 细化：本仓库 `VUE_APP_*`、simulation_builder 与 Agent 请求分流、ioeb_backend 中建议文件路径、Micro-Agent 被调用方式、`/api/api` 路径注意 |
+| 2026-04-10 | v3.9 | `build-design4llm.md`：明确 **ioeb_backend 不调用 Micro-Agent**；智能体均为 **前端直连** `VUE_APP_AGENT_BASE_URL`（例：`smart_chat`、`meta_app_builder`）；仿真接入 Agent 的扩展方式写为前端侧 |
