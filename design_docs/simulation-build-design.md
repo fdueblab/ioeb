@@ -1,7 +1,7 @@
 # 垂域元应用仿真构建机制
 
 > **读者**：自用设计文档——**可**写产品叙事、交互与线框、前端工程落点及实现路径（目录/模块级）；**与后端可对齐的 HTTP/SSE 字段与路由** 以 **`build-design4llm.md`** 为唯一契约，本文引用而不另抄一份协议表。  
-> **版本**: v3.9 | **更新**: 2026-04-10 | **状态**: 前端工程已实现仿真构建与画布并排及页面级联动；领域知识数据在平台 `src/domain/`，仿真阶段裁剪规则在 `simulationStages.js`（与仿真构建同目录）。**后端 HTTP/SSE 接入契约** 以 `design_docs/build-design4llm.md` 为准（含 **ioeb_backend 与仿真路由、Micro-Agent 由前端直连、本仓库 env 与代码证据**；领域知识增强可仅透传）；本文档保留完整产品说明与线框。
+> **版本**: v4.0 | **更新**: 2026-04-29 | **状态**: Micro-Agent 已实现真实双 Agent 仿真编排（Planner + Verifier）+ 轨迹持久化 + SSE 命名事件流；前端直连 Micro-Agent；smart_chat 多轮对话；ioeb_backend 仅系统后端。**后端 HTTP/SSE 接入契约** 以 `design_docs/build-design4llm.md` 为准。
 
 ---
 
@@ -60,9 +60,19 @@
 **数据与接口**
 - [x] `src/mock/data/simulation_builder_data.js`、`src/mock/services/simulation_builder_inmemory.js`
 
-**仿真构建后端（Micro-Agent）**
-- [x] **占位 SSE 流水线**：`api/routes/simulation.py` + `micro_agent/simulation/service.py`，会话管理 + 与前端 SSE 事件格式一致的占位事件序列。前端 `simulation_builder.js` 已改为通过 `VUE_APP_AGENT_BASE_URL` 调用 Micro-Agent，不再经 ioeb_backend。
-- [x] **ioeb_backend 回滚**：已移除 `simulation_ns.py`、`simulation_service.py`，ioeb_backend 不再包含仿真端点。
+**仿真构建后端（Micro-Agent）— 真实双 Agent 实现**
+- [x] **SimulationOrchestrator**（`micro_agent/simulation/orchestrator.py`）：4 阶段编排器。Phase 2 使用真实 Planner Agent（带 SimulatedMCPTool）+ Verifier Agent 循环，复用框架的 `Agent.run()` ReAct 引擎
+- [x] **TraceStore / FileTraceStore**（`micro_agent/simulation/trace_store.py`）：轨迹持久化接口 + JSON 文件实现（`data/traces/{sessionId}.json`），每次仿真自动保存完整事件序列
+- [x] **仿真路由**（`api/routes/simulation.py`）：`POST /start`、`GET /{id}/stream`（SSE 命名事件）、`POST /{id}/cancel`、`GET /records`、`POST /records/compare`
+- [x] **前端直连**：`simulation_builder.js` 通过 `VUE_APP_AGENT_BASE_URL` 直接调用 Micro-Agent，不经 ioeb_backend
+
+**多轮对话 session（smart_chat）**
+- [x] `mcp_service_recommendation` 端点支持 `session_id`（FileMemory 持久化）
+- [x] `smart_chat.vue` 存储 `agentSessionId`，后续请求自动附带
+- [x] `streamAgent()` 增加 `onSessionInfo` 回调捕获 session_id
+
+**ioeb_backend**
+- [x] **不参与仿真**：已移除所有仿真相关代码，仅保留系统后端职能
 
 **领域知识增强（与 §三 架构图中「想定场景解析 → 调度规划 / 仿真验证」对齐）**
 - [x] **平台知识**：`src/domain/` — `profiles/` 内置垂域模板、`KnowledgeRegistry.js`（`getKnowledge` / provider / `mergeKnowledge`）、`KnowledgeEnhancer.js`（通用 `enhanceForStage(domainKnowledge, stageRule, ctx)`，**不包含**具体流水线阶段定义）
@@ -70,25 +80,37 @@
 - [x] 前端 `simulation_builder.vue` 在 `buildStartPayload` 中通过 `getKnowledge` 附带 `domainKnowledge`
 - [x] 进程内模拟器在 **step#0**、**data phase 前**、**check phase 前** 各调用一次 `enhanceForStage(dk, SIMULATION_ENHANCEMENT_RULES[...])`，经 SSE `log` 输出；成功时 `result.enhancements` 供研究模式展示。**真实后端**可按 `build-design4llm.md` 暂不实现增强，回传 `enhancements: []` 或省略
 
-### 2.2 待实现
+### 2.2 当前可运行状态
 
-**后端核心**（按优先级）：
+```
+前端(ioeb)  ──EventSource──>  Micro-Agent(:8000)
+                              ├─ POST /api/simulation/start
+                              ├─ GET  /api/simulation/{id}/stream (SSE)
+                              ├─ POST /api/simulation/{id}/cancel
+                              ├─ GET  /api/simulation/records
+                              └─ POST /api/simulation/records/compare
 
-| 优先级 | 模块 | 说明 |
+前端(ioeb)  ──streamAgent──>  Micro-Agent(:8000)
+                              └─ POST /api/agent/mcp_service_recommendation (支持 session_id)
+
+前端(ioeb)  ──axios──>  ioeb_backend(:5000)
+                        └─ 用户/字典/微服务等系统 API（与仿真无关）
+```
+
+**已验证**：SSE 全流程事件输出（step/service/progress/iteration/phase/log/complete）、轨迹自动持久化、cancel 中断、records 查询。LLM 调用需配置 API key。
+
+### 2.3 下一步
+
+| 优先级 | 内容 | 说明 |
 |--------|------|------|
-| P0 | 仿真控制器 | 会话管理、进度推送（SSE） |
-| P0 | 服务连接检测 | 健康检查、延迟测量 |
-| P1 | 操作分类器 | 读/写判断 |
-| P1 | 模拟回执生成器 | 写操作模拟响应 |
-| P1 | 智能终止机制 | 重复问题检测、提前退出 |
-| P2 | 数据适配器 | 格式转换、类型推断 |
-| P2 | 异常修复器 | 自动修复策略 |
-| P3 | 服务替代寻优 | 备选服务推荐 |
-| P3 | 经验固化 | 调度轨迹/配置/模式的固化生成 |
-
-**待设计**：
-- 平台知识库（Skill、RAG、结构化数据）
-- 拟真数据集建设
+| P0 | **配置 LLM API key 跑通真实 Agent** | `.env` 里填 `LLM_API_KEY`，验证 Planner/Verifier 能正常推理 |
+| P0 | **评测任务集** | 设计 2-3 个具体场景（不同服务数/复杂度），作为实验基准 |
+| P1 | **SimulatedMCPTool → 真实 MCP** | `orchestrator._build_planner()` 中替换 tool 注册逻辑 |
+| P1 | **CoW 沙箱中间层** | 操作分类（读/写）+ 写操作拦截 + 沙箱状态存储 |
+| P1 | **验证标准量化** | L1-L3 各层级判定标准，当前 Verifier 仅靠 LLM 判断 |
+| P2 | **智能终止** | 连续同问题指纹检测 → 提前退出 |
+| P2 | **经验固化** | 成功轨迹 → 确定性执行配置 |
+| P3 | **指标体系真实化** | 当前研究模式指标为 mock 值，需接入真实度量 |
 
 ---
 
@@ -743,6 +765,93 @@ init(nodes)     // 初始化；父级在展示嵌入区后于 $nextTick 调用
 
 ---
 
+## 十二、傻瓜式研究路线（从 0 到出论文）
+
+> 写给未来的自己：别想太多，按顺序一步步来。
+
+### Phase 1：跑通（1-2 天）
+
+**目标**：本地三个服务全起来，点一下按钮能看到仿真全流程。
+
+```
+1. 配环境
+   cd Micro-Agent && source .venv/bin/activate
+   cp .env.example .env   # 填入 LLM_API_KEY
+   uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
+
+   cd ioeb_backend && source .venv/bin/activate
+   # PyCharm 环境变量设 FLASK_DEBUG=1, DB_HOST/DB_PORT/...
+   python wsgi.py
+
+   cd ioeb
+   # .env.development.local 里 VUE_APP_AGENT_BASE_URL=http://localhost:8000
+   npm run serve
+
+2. 打开浏览器 → 登录 → 调度页面 → 画布上拖几个服务 → 点「开始仿真构建」
+3. 看到 4 个阶段跑完 → 成功界面 → 说明跑通了
+4. 去 Micro-Agent/data/traces/ 看看有没有 JSON 文件 → 持久化也通了
+```
+
+### Phase 2：出基线数据（3-5 天）
+
+**目标**：设计 3 个评测场景，跑出第一组可对比的数据。
+
+```
+1. 设计 3 个评测场景（简单/中等/复杂）
+   - 简单：2 个服务，线性链
+   - 中等：4 个服务，有分支
+   - 复杂：6+ 个服务，有依赖
+
+2. 每个场景跑 5 次（统计方差），记录：
+   - 成功/失败
+   - 迭代轮次
+   - 耗时
+   - Planner 的 tool_call 序列（从 trace JSON 里提取）
+   - Verifier 的判定结果
+
+3. 切换策略跑消融实验
+   - 前端研究模式 → 切换 M3（验证策略）= 多Agent / 单Agent
+   - 对比数据填到表格里
+   - 这就是你的第一组实验数据
+```
+
+### Phase 3：深入一个方向（1-2 周）
+
+**选一个方向深挖**（别贪多）：
+
+| 方向 | 做什么 | 写什么 |
+|------|--------|--------|
+| **A. 双 Agent 验证** | 对比 Planner 自验证 vs Planner+Verifier 分离验证，量化验证准确率 | 多 Agent 分离验证对仿真构建可靠性的影响 |
+| **B. 沙箱保真度** | 把 SimulatedMCPTool 换成真实 MCP + CoW 沙箱，对比 mock vs 真实 | 沙箱化仿真中间层的设计与保真度评估 |
+| **C. 经验固化** | 从成功 trace 提取执行模板，在新输入上复用，测泛化率 | 基于执行轨迹的经验固化与泛化 |
+
+### Phase 4：写论文（1 周）
+
+```
+标题方向：基于双智能体仿真验证的零代码智能体应用构建方法
+
+故事线：
+1. 问题：非技术人员想用 MCP 服务组装智能体应用，但不会编排、不会调试
+2. 方案：仿真构建 = 沙箱 + Planner/Verifier 双 Agent + 迭代修复
+3. 实验：N 个场景 × M 种策略组合 → 消融表格
+4. 结论：双 Agent 分离验证比单 Agent 自验证好 X%，沙箱保真度达 Y%
+```
+
+### 关键文件速查
+
+| 要改什么 | 改哪里 |
+|----------|--------|
+| Planner 的 prompt | `Micro-Agent/micro_agent/simulation/orchestrator.py` → `_planner_system_prompt()` |
+| Verifier 的 prompt | 同上 → `_build_verifier()` |
+| mock 工具换真实 MCP | 同上 → `_build_planner()` 里把 `SimulatedMCPTool` 换成 `MCPAgent.connect()` |
+| 调整最大迭代轮次 | 前端 `simulation_builder.vue` → `maxIterations` 或请求 body |
+| 轨迹存在哪 | `Micro-Agent/data/traces/*.json` |
+| 研究模式策略 | 前端 `simulation_builder.vue` → `strategy` 对象 |
+| SSE 事件格式 | `build-design4llm.md` §5 |
+| 前端用 mock 还是真实 | `src/api/simulation_builder.js` → `SIMULATION_USE_MOCK` |
+
+---
+
 ## 更新日志
 
 | 日期 | 版本 | 更新内容 |
@@ -761,3 +870,4 @@ init(nodes)     // 初始化；父级在展示嵌入区后于 $nextTick 调用
 | 2026-04-10 | v3.7 | `build-design4llm.md` 增补双后端：[ioeb_backend](https://github.com/fdueblab/ioeb_backend)（系统）、[Micro-Agent](https://github.com/fdueblab/Micro-Agent)（Agent）；交叉引用路径统一为 `design_docs/` |
 | 2026-04-10 | v3.8 | `build-design4llm.md` 细化：本仓库 `VUE_APP_*`、simulation_builder 与 Agent 请求分流、ioeb_backend 中建议文件路径、Micro-Agent 被调用方式、`/api/api` 路径注意 |
 | 2026-04-10 | v3.9 | `build-design4llm.md`：明确 **ioeb_backend 不调用 Micro-Agent**；智能体均为 **前端直连** `VUE_APP_AGENT_BASE_URL`（例：`smart_chat`、`meta_app_builder`）；仿真接入 Agent 的扩展方式写为前端侧 |
+| 2026-04-29 | v4.0 | **真实双 Agent 实现上线**：SimulationOrchestrator（Planner+Verifier）、FileTraceStore 轨迹持久化、仿真路由直连 Micro-Agent、smart_chat 多轮 session；更新 §2 当前状态；新增 §12 傻瓜式研究路线 |

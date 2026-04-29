@@ -1,6 +1,8 @@
 # 仿真构建 · 后端接入（LLM 契约）
 
-产品叙事见 `design_docs/simulation-build-design.md`。本文约定 **HTTP + SSE**；**不要求**实现领域知识增强（`domainKnowledge` 原样收、可选回传；`enhancements` 可省略或 `[]`）。
+> **本文目的**：当你（LLM / AI 助手）需要**修改、扩展或调试**仿真构建系统时，阅读本文即可理解**所有接口约定和代码位置**。
+>
+> 产品叙事见 `design_docs/simulation-build-design.md`。本文约定 **HTTP + SSE**；**不要求**实现领域知识增强（`domainKnowledge` 原样收、可选回传；`enhancements` 可省略或 `[]`）。
 
 ---
 
@@ -112,6 +114,67 @@ interface StartSimulationRequest {
 
 **推荐顺序**：`step:0` → `service`/`log` → `step:1` → `progress(env*)` → `step:2` → `iteration` → `phase` → `iteration` → `step:3` → `progress(generate*)` → 可选 `metrics*` → **`complete`**。
 
+**实际事件流示例**（1 个服务、1 轮、生产模式）：
+
+```
+event: step
+data: {"step": 0, "name": "服务匹配"}
+
+event: log
+data: {"level": "INFO", "message": "检测服务: 数据采集服务"}
+
+event: service
+data: {"id": "s1", "status": "online", "latency": 120}
+
+event: step
+data: {"step": 1, "name": "环境准备"}
+
+event: progress
+data: {"ctx": "env", "index": 0, "text": "初始化仿真运行时", "active": true}
+
+event: progress
+data: {"ctx": "env", "index": 0, "text": "初始化仿真运行时", "done": true}
+
+event: step
+data: {"step": 2, "name": "智能构建"}
+
+event: iteration
+data: {"iteration": 1, "status": "running"}
+
+event: phase
+data: {"phase": "data", "status": "running"}
+
+event: log
+data: {"level": "INFO", "message": "规划 Agent 执行中…"}
+
+event: log
+data: {"level": "INFO", "message": "[Planner] think: 分析服务调度方案…"}
+
+event: phase
+data: {"phase": "data", "status": "done"}
+
+event: phase
+data: {"phase": "check", "status": "running"}
+
+event: log
+data: {"level": "INFO", "message": "验证 Agent 执行中…"}
+
+event: phase
+data: {"phase": "check", "status": "done"}
+
+event: iteration
+data: {"iteration": 1, "status": "passed"}
+
+event: step
+data: {"step": 3, "name": "方案生成"}
+
+event: progress
+data: {"ctx": "generate", "index": 0, "text": "编译执行方案", "done": true}
+
+event: complete
+data: {"success": true, "metrics": {"iterations": 1, "elapsedMs": 3200}, "result": {"executionPath": ["用户输入", "数据采集服务", "输出结果"], "appName": "测试"}}
+```
+
 ---
 
 ## 6. `complete` 与轨迹持久化
@@ -156,3 +219,37 @@ interface CompleteEvent {
 ## 8. `domain` 枚举
 
 `generic` `aircraft` `health` `agriculture` `evtol` `ecommerce` `homeAI` `aml`；未知按 `generic`。
+
+---
+
+## 9. 代码修改速查
+
+> LLM 接到任务后，按此表定位需要修改的文件。
+
+| 修改意图 | 涉及文件（Micro-Agent） | 涉及文件（ioeb 前端） |
+|----------|------------------------|---------------------|
+| 修改 Planner/Verifier 的 prompt | `micro_agent/simulation/orchestrator.py` → `_planner_system_prompt()`, `_build_verifier()` | — |
+| 替换 mock 工具为真实 MCP | `orchestrator.py` → `_build_planner()` 中 `SimulatedMCPTool` → `MCPAgent.connect()` | — |
+| 增加新 SSE 事件类型 | `orchestrator.py` → `yield SimulationEvent("新类型", {...})` | `simulation_builder.vue` → `subscribeSimulationStream` 里增加 handler |
+| 修改轨迹存储格式/后端 | `micro_agent/simulation/trace_store.py` → `FileTraceStore`（或新建实现类） | — |
+| 添加新仿真端点 | `api/routes/simulation.py` | `src/api/simulation_builder.js` |
+| 修改策略配置选项 | `orchestrator.py` → `__init__` 和对应 phase | `simulation_builder.vue` → 策略面板 |
+| 多轮对话 / session | `api/routes/agent.py` → `build_agent(enable_session=True, session_id=...)` | `smart_chat.vue` → `agentSessionId` |
+
+### 9.1 运行方式
+
+```bash
+# Micro-Agent（FastAPI）
+cd Micro-Agent && source .venv/bin/activate
+cp .env.example .env  # 填入 LLM_API_KEY
+uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
+
+# ioeb_backend（Flask）
+cd ioeb_backend && source .venv/bin/activate
+# 环境变量：FLASK_DEBUG=1, DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD
+python wsgi.py
+
+# ioeb（Vue）
+cd ioeb && nvm use && npm run serve
+# .env.development.local 中 VUE_APP_AGENT_BASE_URL=http://localhost:8000
+```

@@ -37,12 +37,14 @@
 
 ### 0.2 本地环境：能动手即可
 
-- [ ] Node 版本与仓库 `.nvmrc` / README 一致，`yarn install` 无报错
-- [ ] `yarn serve` 能打开平台（端口以 `vue.config.js` 为准）
-- [ ] **分辨两条路（写论用途，不写代码位置）**：
-  - **演示路**：调度页左侧聊天 + 右侧画布，工具栏上有「开始仿真构建」。元应用在页面上显示的**名称**里带默认演示关键字（如「课题」）时，推荐与仿真都在**本机浏览器内**跑通，**不依赖**仿真后端。
-  - **真实路**：同一页面把元应用**名称**改成**不含**该演示关键字（在元应用详情里改标题即可），再用聊天生成或保留画布；点「开始仿真构建」时应走 **HTTP + SSE**（需本机或环境里的 **ioeb_backend** 已按契约启动）。**目的**：联调、论文里可写「接系统后端」的测量。
-- [ ] **入口心里**：只有「带聊天 + 画布工具栏」的调度页才有仿真按钮；从使用页进元应用「跑一跑」时通常**没有**这一步——不要在那儿找仿真。
+- [ ] Node 18（`nvm use`），`npm install` 无报错
+- [ ] `npm run serve` 能打开平台（端口以 `vue.config.js` 为准）
+- [ ] Micro-Agent 虚拟环境就绪：`cd Micro-Agent && source .venv/bin/activate && uvicorn api.app:app --port 8000`
+- [ ] ioeb_backend 虚拟环境就绪：`cd ioeb_backend && source .venv/bin/activate && python wsgi.py`
+- [ ] `.env.development.local` 配好 `VUE_APP_AGENT_BASE_URL=http://localhost:8000`
+- [ ] **入口**：调度页 → 画布工具栏 → 「开始仿真构建」→ 看到 4 阶段跑完
+
+> **注意**：仿真构建直连 Micro-Agent（`VUE_APP_AGENT_BASE_URL`），**不经过** ioeb_backend。ioeb_backend 只管用户登录、字典等系统功能。
 
 ### 0.3 论文工具就绪
 
@@ -136,23 +138,29 @@
 | 能力 | 论文怎么提 |
 |------|-----------|
 | 仿真构建 UI（五步 + 生产/研究双模式） | 「系统提供生产/研究双模式仿真构建界面」 |
-| 与后端的 SSE 事件契约 | 「前后端通过具名 SSE 事件实时同步构建阶段」 |
+| SSE 命名事件全链路（前端←→Micro-Agent） | 「前后端通过具名 SSE 事件实时同步构建阶段」 |
+| 双 Agent 编排器（Planner + Verifier） | 「采用 Planner/Verifier 分离验证架构」 |
+| 轨迹持久化（FileTraceStore + records API） | 「完整事件序列自动持久化」 |
 | 策略 M1–M5 配置与研究记录视图 | 「支持模块化策略与研究记录」 |
 | 多阶段领域知识裁剪与注入 | 「在想定解析 / 规划 / 验证阶段可注入垂域知识」 |
-| 已有 Agent 运行时（独立服务） | 「规划类能力可调用已有智能体框架」 |
+| Agent 运行时（Micro-Agent, ReAct 引擎） | 「复用已有智能体框架」 |
+| smart_chat 多轮 session | 「对话具备跨请求上下文保持」 |
 
-### 3.2 缺的（这些就是你 12 周要做的）
+### 3.2 缺口清单（2026-04-29 更新）
 
-| 缺口 | 影响 | 优先级 | 对应本文章节 |
-|------|------|--------|-------------|
-| 后端仿真控制器 | 无法真实跑仿真 | **P0 最高** | §6 第 1 周 |
-| CoW 沙箱代理层 | 无读写拦截 | **P0** | §6 第 2 周 |
-| `Trace` 结构化存储 | 轨迹无法持久化/查询 | **P0** | §6 第 3 周 |
-| 轨迹编译器 | 无法从轨迹生成应用配置 | **P1 核心方法** | §6 第 4–7 周 |
-| 评测任务集 | 无法做实验 | **P1** | §6 第 8 周 |
-| 策略真分支（M1–M5） | 消融实验无效 | **P1** | §6 第 8 周 |
-| 经验固化回放 | `golden_trace` 仅为标签 | P2 | §6 第 7 周后 |
-| 自改进闭环 | 论文加分项 | P3 | §6 视余量 |
+| 缺口 | 影响 | 优先级 | 状态 |
+|------|------|--------|------|
+| ~~后端仿真控制器~~ | ~~无法真实跑仿真~~ | ~~P0~~ | **已完成** — `SimulationOrchestrator` 4 阶段 + SSE |
+| ~~Trace 结构化存储~~ | ~~轨迹无法持久化/查询~~ | ~~P0~~ | **已完成** — `FileTraceStore` JSON 文件 |
+| ~~smart_chat 多轮~~ | ~~对话无上下文~~ | ~~P0~~ | **已完成** — session_id + FileMemory |
+| CoW 沙箱代理层 | 无读写拦截 | **P0** | 待实现，§6 第 2 周 |
+| SimulatedMCPTool → 真 MCP | 当前 tool 是 mock | **P1** | 待实现，改 `orchestrator._build_planner()` |
+| 轨迹编译器 | 无法从轨迹生成应用配置 | **P1 核心方法** | 待实现，§6 第 4–7 周 |
+| 评测任务集 | 无法做实验 | **P1** | 待实现，§6 第 8 周 |
+| 策略真分支（M1–M5） | 消融实验无效 | **P1** | 待实现，§6 第 8 周 |
+| 验证标准量化 | Verifier 判断靠 LLM | P2 | 待实现 |
+| 经验固化回放 | `golden_trace` 仅为标签 | P2 | 待实现 |
+| 自改进闭环 | 论文加分项 | P3 | 待实现 |
 
 ### 3.3 不需要改的（省时间）
 
@@ -438,18 +446,9 @@ Appendix（任务集详情、完整轨迹样例）
 
 ## 6. 十二周执行日程
 
-### 第 1 周：仿真会话 + SSE 打通
+### 第 1 周：仿真会话 + SSE 打通 ✅ 已完成
 
-**做什么**：
-1. 在后端（Micro-Agent 或 ioeb_backend）新建 `/api/simulation/start` 和 `/api/simulation/{sessionId}/stream`
-2. 实现最基本的会话管理：`start` 返回 `sessionId` + `streamUrl`，`stream` 推 SSE 事件
-3. 先硬编码一个固定流程（不用真连 MCP），确保前端 mock 关掉后能完整走完 `step:0` → ... → `complete`
-
-**验收标准**：
-- [ ] 按「真实路」操作：元应用**标题**不含演示关键字、后端已启动时，从调度页点「开始仿真构建」能走完整步骤条，浏览器 Network 里能看到仿真 **HTTP + SSE**
-- [ ] `complete` 事件触发后，界面成功/失败态与预期一致
-
-**若要查协议细节**（事件顺序、字段）：只打开 **`design_docs/build-design4llm.md`**，不要在本研究文档里找实现。
+> **已实现**（2026-04-29）：`SimulationOrchestrator` 4 阶段 + 双 Agent（Planner/Verifier）+ SSE 命名事件 + `FileTraceStore` 轨迹持久化。前端 `SIMULATION_USE_MOCK=false`，直连 Micro-Agent。详见 `simulation-build-design.md` §2.1。
 
 ### 第 2 周：CoW 沙箱代理
 
@@ -465,18 +464,11 @@ Appendix（任务集详情、完整轨迹样例）
 - [ ] 一个后续读操作命中沙箱中之前的写入数据
 - [ ] 一个无关读操作穿透到真实服务
 
-### 第 3 周：轨迹落库
+### 第 3 周：轨迹落库 ✅ 已完成（基础版）
 
-**做什么**：
-1. 定义 `Trace` 数据模型（见 §7.1）
-2. 在 Planner/Verifier 的每一步记录到 trace
-3. 仿真结束时，trace 整体写入数据库/文件
-4. 实现 API：`GET /api/simulation/{sessionId}/trace`
-
-**验收标准**：
-- [ ] 一次完整仿真后，能通过 API 拿到完整 Trace JSON
-- [ ] Trace 中每条 step 有 `agent`、`tool`、`arguments`、`result`、`timestamp`
-- [ ] iteration 信息（轮次、verdict、issues）完整
+> **已实现**（2026-04-29）：`FileTraceStore` 将完整事件序列 + 元数据存为 `data/traces/{sessionId}.json`。`GET /records` 可列出、`POST /records/compare` 可对比。
+>
+> **待完善**：当前存储的是 SSE 事件流，§7.1 中定义的细粒度 `Trace` 结构（含 planner toolCalls、sandbox writes/readHits、verifier verdict）尚需补充。这是后续接真实 MCP 后的重点工作。
 
 ### 第 4 周：状态抽象
 
@@ -954,3 +946,4 @@ aml 多给 2 个，因为平台对跨境支付场景支持最完善。
 | 2026-04-15 | §4.2：新增相关工作技术详解（8 篇机制要点、迁移建议、对照总表） |
 | 2026-04-16 | §4.1.1 / §4.2.3：更正 TIM——补充 [trajectory-tips](https://github.com/adamkrawczyk/trajectory-tips) 为基于 IBM 论文的社区实现（非官方） |
 | 2026-04-29 | 文档分工：`build-design4llm.md` = LLM/工程契约；研究篇侧重傻瓜操作与目的，删附录路径表、弱化 §9 实现罗列 |
+| 2026-04-29 | **工程进展同步**：标记 W1/W3 已完成（SimulationOrchestrator + FileTraceStore）；更新 §0.2 本地环境（nvm/venv/三服务启动）；更新 §3.1 已有能力；更新 §3.2 缺口表（3 项标记完成） |
