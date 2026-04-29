@@ -128,10 +128,11 @@ export default {
       showSuggestions: false,
       messageManager: null,
       filteredSuggestions: [],
-      thinkingMessageIndex: -1, // 追踪思考消息的索引
-      stepTypewriterTimer: null, // 步骤打字机定时器
-      finalCollapseTimer: null, // 最终收起定时器
-      isTaskFinishing: false // 标记任务是否正在结束
+      thinkingMessageIndex: -1,
+      stepTypewriterTimer: null,
+      finalCollapseTimer: null,
+      isTaskFinishing: false,
+      agentSessionId: null
     }
   },
   watch: {
@@ -337,15 +338,23 @@ export default {
       }
     },
 
-    // 调用智能体获取推荐服务
     callAgentForRecommendation(input) {
       const formData = new FormData()
       formData.append('message', input)
       formData.append('service_type', this.verticalType)
+      if (this.agentSessionId) {
+        formData.append('session_id', this.agentSessionId)
+      }
 
       streamAgent('/api/agent/mcp_service_recommendation', formData, {
         onStart: () => {
           console.log('开始智能体服务推荐')
+        },
+        onSessionInfo: (info) => {
+          if (info.session_id) {
+            this.agentSessionId = info.session_id
+            console.log('会话已建立:', this.agentSessionId)
+          }
         },
         onStep: (data) => {
           console.log('智能体执行步骤:', data)
@@ -555,8 +564,9 @@ export default {
       this.isGenerated = false
       this.showSuggestions = false
       this.filteredSuggestions = this.messageManager ? this.messageManager.getSuggestions() : []
-      this.thinkingMessageIndex = -1 // 重置思考消息索引
-      this.isTaskFinishing = false // 重置任务结束标志
+      this.thinkingMessageIndex = -1
+      this.isTaskFinishing = false
+      this.agentSessionId = null
       const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '智能体未获取到必要信息，请刷新后重试'
       this.messages.push({ text: initialMessage, isUser: false })
     },

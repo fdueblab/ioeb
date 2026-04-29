@@ -160,6 +160,11 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
               return
             }
 
+            // 处理会话信息（含 session_id 的 components 事件）
+            if (data.status === 'components' && data.session_id && callbacks.onSessionInfo) {
+              callbacks.onSessionInfo(data)
+            }
+
             // 处理步骤
             if (data.step) {
               onStep(data)
