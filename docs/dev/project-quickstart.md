@@ -18,7 +18,7 @@
 
 ### 环境要求
 
-- **Node.js**: >= 16.0.0
+- **Node.js**: >= 16.0.0（推荐安装 [nvm](https://github.com/nvm-sh/nvm)，在仓库根执行 `nvm use`，与 `.nvmrc` 中版本一致）
 - **Yarn**: >= 1.22.0 (推荐)
 - **Vue CLI**: >= 5.0.8
 
