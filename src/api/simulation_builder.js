@@ -5,32 +5,27 @@
  * - 元应用**当前展示名称**（`buildStartPayload().appName`，与画布 `data.preName` 一致，含用户在元应用详情中的修改）
  *   含 `TOPIC_DEMO_KEYWORD`（见 `@/config/topicDemo`）→ 进程内仿真；否则 → HTTP + SSE。
  *
- * 路径拼接避免 base 已含 `/api` 时再出现 `/api/api/...`（build-design4llm.md §2.2）。
+ * 仿真 HTTP/SSE 端点在 Micro-Agent（`VUE_APP_AGENT_BASE_URL`），
+ * 与 ioeb_backend 解耦（build-design4llm.md §3）。
  */
-import request from '@/utils/request'
+import axios from 'axios'
 import { simulationBuildInMemory } from '@/mock/services/simulation_builder_inmemory'
 import { matchesTopicDemoKeyword } from '@/config/topicDemo'
 
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || ''
+const AGENT_BASE_URL = (process.env.VUE_APP_AGENT_BASE_URL || '').replace(/\/$/, '')
 
 function simulationApiPath(suffix) {
-  const base = API_BASE_URL.replace(/\/$/, '')
   const p = suffix.startsWith('/') ? suffix : `/${suffix}`
-  if (base.endsWith('/api')) {
-    return `${base}${p}`
-  }
-  return `${base}/api${p}`
+  return `${AGENT_BASE_URL}/api${p}`
 }
 
 function resolveSimulationStreamUrl(streamUrl) {
   if (streamUrl.startsWith('http')) return streamUrl
-  const base = API_BASE_URL.replace(/\/$/, '')
-  let path = streamUrl.startsWith('/') ? streamUrl : `/${streamUrl}`
-  if (base.endsWith('/api') && path.startsWith('/api/')) {
-    path = path.slice(4)
-  }
-  return `${base}${path}`
+  const path = streamUrl.startsWith('/') ? streamUrl : `/${streamUrl}`
+  return `${AGENT_BASE_URL}${path}`
 }
+
+const simAxios = axios.create({ timeout: 30000 })
 
 const SIMULATION_SSE_EVENTS = [
   'step',
@@ -81,34 +76,35 @@ function createMemorySimulationBuildClient() {
 }
 
 function createHttpSimulationBuildClient() {
+  const http = (cfg) => simAxios(cfg).then((r) => r.data)
   return {
     startSimulation(payload) {
-      return request({
+      return http({
         url: simulationApiPath('/simulation/start'),
         method: 'post',
         data: payload
       })
     },
     cancelSimulation(sessionId) {
-      return request({
+      return http({
         url: simulationApiPath(`/simulation/${sessionId}/cancel`),
         method: 'post'
       })
     },
     getSimulationResult(sessionId) {
-      return request({
+      return http({
         url: simulationApiPath(`/simulation/${sessionId}/result`),
         method: 'get'
       })
     },
     fetchSimulationRecords() {
-      return request({
+      return http({
         url: simulationApiPath('/simulation/records'),
         method: 'get'
       })
     },
     compareSimulationRecords(recordIds) {
-      return request({
+      return http({
         url: simulationApiPath('/simulation/records/compare'),
         method: 'post',
         data: { recordIds }

@@ -60,6 +60,10 @@
 **数据与接口**
 - [x] `src/mock/data/simulation_builder_data.js`、`src/mock/services/simulation_builder_inmemory.js`
 
+**仿真构建后端（Micro-Agent）**
+- [x] **占位 SSE 流水线**：`api/routes/simulation.py` + `micro_agent/simulation/service.py`，会话管理 + 与前端 SSE 事件格式一致的占位事件序列。前端 `simulation_builder.js` 已改为通过 `VUE_APP_AGENT_BASE_URL` 调用 Micro-Agent，不再经 ioeb_backend。
+- [x] **ioeb_backend 回滚**：已移除 `simulation_ns.py`、`simulation_service.py`，ioeb_backend 不再包含仿真端点。
+
 **领域知识增强（与 §三 架构图中「想定场景解析 → 调度规划 / 仿真验证」对齐）**
 - [x] **平台知识**：`src/domain/` — `profiles/` 内置垂域模板、`KnowledgeRegistry.js`（`getKnowledge` / provider / `mergeKnowledge`）、`KnowledgeEnhancer.js`（通用 `enhanceForStage(domainKnowledge, stageRule, ctx)`，**不包含**具体流水线阶段定义）
 - [x] **仿真专用阶段与规则**：`src/components/ef/simulationStages.js` — `SIMULATION_STAGES`、`SIMULATION_ENHANCEMENT_RULES`（想定解析 / 调度规划 / 仿真验证三阶段 `stageRule`）

@@ -2,23 +2,24 @@
 
 **读者**：实施改动的 LLM / 工程师。产品叙事与用户文档见 `design_docs/simulation-build-design.md`。本文约定 **HTTP + SSE**；**不要求**领域知识增强（`domainKnowledge` 原样收；`enhancements` 可省略或 `[]`）。
 
-**硬规则（违反即前后端不一致）**：协议路径与事件名以 **§5～§8** 为准；前端何时走 HTTP 以 **§4** 为准；URL 拼接防双 `/api` 以 **§2.2 路径注意** 为准。
+**硬规则（违反即前后端不一致）**：协议路径与事件名以 **§5～§8** 为准；前端何时走 HTTP 以 **§4** 为准。
 
 ---
 
-## 1. 双后端仓库与职责（与当前部署一致）
+## 1. 三仓库与职责
 
 | 仓库 | 技术栈 | 职责 |
 |------|--------|------|
-| [**ioeb_backend**](https://github.com/fdueblab/ioeb_backend) | Flask，`app/api` / `app/services` / `app/repositories` | **系统后端**：用户、微服务、算法微服务化、字典等。**当前代码库中不包含对 Micro-Agent 的调用**；仿真构建若接入真实 `/api/simulation/*`，会话与 SSE 由本服务（或网关）提供。Swagger 常见 `/api/docs`，开发端口多为 **5000**。 |
-| [**Micro-Agent**](https://github.com/fdueblab/Micro-Agent) | FastAPI，`uvicorn api.app:app`，**8010**，**`/docs`** | **Agent 服务**：Skills、RAG、MCP、任务流等。**与现有「智能体」能力一致：由浏览器直接请求**，不经 ioeb_backend 转发。 |
+| [**ioeb_backend**](https://github.com/fdueblab/ioeb_backend) | Flask，`app/api` / `app/services` / `app/repositories` | **系统后端**：用户、微服务、算法微服务化、字典等。**不包含仿真构建端点**。Swagger 常见 `/api/docs`，开发端口多为 **5000**。 |
+| [**Micro-Agent**](https://github.com/fdueblab/Micro-Agent) | FastAPI，`uvicorn api.app:app`，**8010**，**`/docs`** | **Agent 服务 + 仿真构建引擎**：Skills、RAG、MCP、任务流、**`/api/simulation/*`（会话 + SSE + 研究记录）**。由浏览器直接请求，不经 ioeb_backend。 |
+| [**ioeb**](https://github.com/fdueblab/ioeb) | Vue 2，前端 | **前端统一对接**：系统 API → ioeb_backend；智能体 + 仿真 → Micro-Agent。两个后端互不通信。 |
 
-**调用关系（事实）**
+**调用关系**
 
-- **系统 API**（含未来的 `VUE_APP_API_BASE_URL` + `/api/simulation/*`）→ **ioeb_backend**（axios `request`）。
-- **智能体 / LLM 流式能力** → **`VUE_APP_AGENT_BASE_URL` + `/api/agent/...`**（`fetch`/`streamAgent`），**与 ioeb_backend 解耦**。
+- **系统 API**（`VUE_APP_API_BASE_URL`）→ **ioeb_backend**（axios `request`）。
+- **智能体 / 仿真构建**（`VUE_APP_AGENT_BASE_URL`）→ **Micro-Agent**（`fetch` / `streamAgent` / `simAxios` / `EventSource`），**与 ioeb_backend 解耦**。
 
-**与本页契约的关系**：`/api/simulation/*` 描述的是 **会话与进度 SSE**（可先做规则/占位实现）；若要将「调度规划 / 验证」等步骤接到 **真实 Micro-Agent 任务**，与站内其它智能体相同，宜在 **前端** 增加对 Micro-Agent 的调用（见 §3.2），而不是假定 **ioeb_backend 已代理 Agent**。
+**仿真为什么在 Micro-Agent**：仿真构建的核心是 Agent 规划/验证 + MCP 工具调用 + CoW 沙箱拦截，这些能力全部在 Micro-Agent 的 agent 引擎与 Tool 体系内。ioeb_backend 不调用 Micro-Agent，前端统一对接两个后端。
 
 ---
 
@@ -28,66 +29,56 @@
 
 | 变量 | 用途 |
 |------|------|
-| `VUE_APP_API_BASE_URL` | axios `request` 的 `baseURL`；**仿真构建会话** 使用 `src/api/simulation_builder.js` 中对该常量的拼接（见下）。 |
-| `VUE_APP_AGENT_BASE_URL` | **智能体直连 Micro-Agent**：`streamAgent` / `callAgentApi` / `streamLLMChat`（`src/utils/request.js`），路径为 **`/api/agent/...`**。与画布同页的 MCP 推荐、元应用运行等均走此 base，**不经 ioeb_backend**。 |
+| `VUE_APP_API_BASE_URL` | axios `request` 的 `baseURL`；**系统 API**（登录、字典、服务等）。 |
+| `VUE_APP_AGENT_BASE_URL` | **智能体 + 仿真构建**均走此 base → Micro-Agent。`streamAgent` / `callAgentApi` / `streamLLMChat`（`src/utils/request.js`）用于 `/api/agent/...`；仿真构建 `simulation_builder.js` 用独立 `simAxios` 请求 `/api/simulation/...`。 |
 
-**仿真构建组件**（`simulation_builder.vue`）**未** `import streamAgent`；演示路径的进程内实现不访问 Agent。若要在「真实路径」把某步接到 Micro-Agent，须在**前端**另起 `VUE_APP_AGENT_BASE_URL` 请求（例 §3.2），**不要**假定 ioeb_backend 已代理 Agent。
-
-### 2.2 真实后端 HTTP/SSE（路径须与 Flask 注册一致）
+### 2.2 仿真 HTTP/SSE（路径须与 Micro-Agent 路由一致）
 
 当前端 **选用 HTTP 客户端**（判定见 **§4**）时，`src/api/simulation_builder.js` 会发起：
 
 ```text
-POST   <仿真 API 根>/api/simulation/start
-POST   <仿真 API 根>/api/simulation/{sessionId}/cancel
-GET    <仿真 API 根>/api/simulation/{sessionId}/result
-GET    <仿真 API 根>/api/simulation/records
-POST   <仿真 API 根>/api/simulation/records/compare
-GET    EventSource: <仿真 API 根 经 resolve 后>/api/simulation/{id}/stream
+POST   <VUE_APP_AGENT_BASE_URL>/api/simulation/start
+POST   <VUE_APP_AGENT_BASE_URL>/api/simulation/{sessionId}/cancel
+GET    <VUE_APP_AGENT_BASE_URL>/api/simulation/{sessionId}/result
+GET    <VUE_APP_AGENT_BASE_URL>/api/simulation/records
+POST   <VUE_APP_AGENT_BASE_URL>/api/simulation/records/compare
+GET    EventSource: <VUE_APP_AGENT_BASE_URL>/api/simulation/{id}/stream
 ```
 
-其中 **`<仿真 API 根>`** = `VUE_APP_API_BASE_URL` 经该文件 **`simulationApiPath` / `resolveSimulationStreamUrl`** 归一化后的前缀（避免 `baseURL` 已以 `/api` 结尾时再拼出 **`/api/api/simulation/...`**）。
+`simulationApiPath` / `resolveSimulationStreamUrl` 基于 `VUE_APP_AGENT_BASE_URL` 拼接。
 
-**路径注意**：网关与 env 二选一对齐：(a) Nginx/Flask 注册实际完整 URL；(b) 或令 `VUE_APP_API_BASE_URL` 不含末尾 `/api`，或保持前端该文件内去重逻辑。
+### 2.3 响应形状
 
-### 2.3 响应形状（axios）
-
-`request` 响应拦截器返回 **`response.data`**（`src/utils/request.js`）。故 **`POST .../start`** 的 JSON **体顶层**须含 `success`、`sessionId`、`streamUrl`，**不要**再包一层 `{ data: { ... } }`（除非你们统一改前端拦截器）。
+仿真 HTTP 客户端使用独立 `simAxios`（不经全局 `request` 拦截器），手动取 `.data`。故 **`POST .../start`** 的 JSON **体顶层**须含 `success`、`sessionId`、`streamUrl`，**不要**再包一层。
 
 ---
 
 ## 3. 在哪里实现（给 LLM 的落地清单）
 
-### 3.1 **ioeb_backend**：仅实现下文 **§5～§8** 的 `/api/simulation/*`
+### 3.1 **Micro-Agent**：仿真构建引擎
 
-在 [**ioeb_backend**](https://github.com/fdueblab/ioeb_backend) 中新增与 **§2.2 URL** 完全一致的路由（与 `app/api/namespaces/*_ns.py` 模式一致）：
+仿真构建的所有端点（§5～§8）在 [**Micro-Agent**](https://github.com/fdueblab/Micro-Agent) 中实现：
 
-| 建议位置 | 内容 |
-|----------|------|
-| `app/api/namespaces/simulation_ns.py`（或等价蓝图） | `POST /api/simulation/start`、`GET .../stream`（SSE）、`POST .../cancel`、`GET .../result`、`GET .../records`、`POST .../records/compare`。 |
-| `app/services/simulation_service.py`（新） | 会话表、取消标志、按 **§7～§8** 推送事件与 **§5** 路径约定；**不负责**调用 Micro-Agent（与当前架构一致）。 |
-
-**会话与 SSE**：内存即可联调；`streamUrl` 建议相对路径 `/api/simulation/{sessionId}/stream`。
-
-### 3.2 **Micro-Agent**：由前端直连（与现有智能体一致）
-
-**当前 ioeb_backend 不调用 Micro-Agent**；站内智能体均为 **浏览器 → `VUE_APP_AGENT_BASE_URL` → `/api/agent/...`**，例如：
-
-| 文件 | 说明 |
+| 位置 | 内容 |
 |------|------|
-| `src/components/ef/smart_chat.vue` | `streamAgent('/api/agent/mcp_service_recommendation', formData, …)` |
-| `src/components/ef/meta_app_builder.vue` | `url = '/api/agent/meta_app/run'`（经同目录内封装请求） |
-| `src/views/vertical/user/useMetaApp.vue` 等 | `streamAgent('/api/agent/meta_app/run', …)` |
-| `src/views/vertical/ms/GenericMicroService.vue` | `streamAgent('/api/agent/code_analysis' \| 'service_packaging', …)` 等 |
+| `api/routes/simulation.py` | FastAPI 路由：`POST /api/simulation/start`、`GET .../stream`（SSE）、`POST .../cancel`、`GET .../result`、`GET .../records`、`POST .../records/compare`。 |
+| `micro_agent/simulation/service.py` | 会话管理、SSE 事件生成。当前为占位流水线；后续替换为 SimulationAgent（Planner + Verifier + CoW 沙箱）。 |
 
-仿真构建若需 **真实 Agent 推理**，扩展方式应为：**在 `simulation_builder.vue`（或子模块）中** 增加对上述模式的调用，或新增 Micro-Agent 任务后在 **前端** 触发；**不是**在 ioeb_backend 内新增对 Agent 的 HTTP 客户端（除非产品另行改版）。
+**会话与 SSE**：内存即可联调；`streamUrl` 为相对路径 `/api/simulation/{sessionId}/stream`。
 
-Micro-Agent 仓库内任务定义、端口、`/docs` 见各自 README。
+**演进路线**：
+- **Week 1**（当前）：占位事件序列，验证前端 SSE 联调。
+- **Week 2**：CoW 沙箱代理层（`micro_agent/tool/sandbox/`），拦截 MCP tool 读写。
+- **Week 3+**：SimulationAgent（Planner / Verifier 分离）、Trace 结构化记录、轨迹编译器。
+
+### 3.2 **ioeb_backend**：不参与仿真
+
+ioeb_backend **不包含** `/api/simulation/*` 端点，仅负责系统 API（用户、字典、服务等）。两个后端互不通信。
 
 ### 3.3 网关（如 fdueblab.cn）
 
 - **`VUE_APP_API_BASE_URL`** → 反代到 **ioeb_backend**（Flask）。
-- **`VUE_APP_AGENT_BASE_URL`** → 反代到 **Micro-Agent**（`/api/agent/*` 等）。
+- **`VUE_APP_AGENT_BASE_URL`** → 反代到 **Micro-Agent**（`/api/agent/*`、**`/api/simulation/*`** 等）。
 - `EventSource` 无法自定义 Header：同域 Cookie 或 `streamUrl` query token。
 
 ---
