@@ -91,6 +91,7 @@ import { getMetaAppNodes, generateMockSteps } from '@/mock/data/meta_apps_data'
 import { ChatMessageManager } from './chat_messages'
 import { streamAgent } from '@/utils/request'
 import { generateServiceNodes } from './utils'
+import { matchesTopicDemoKeyword } from '@/config/topicDemo'
 
 export default {
   name: 'SmartChat',
@@ -182,15 +183,11 @@ export default {
       // 发出开始loading事件，让其他界面进入loading状态
       this.$emit('start-loading')
 
-      // 根据领域类型选择数据源
-      if (this.verticalType === 'aml') {
-        if (input.includes('课题')) {
-          this.useFakeData(input)
-        } else {
-          this.callAgentForRecommendation(input)
-        }
-      } else {
+      // 与仿真分流一致：关键字见 `@/config/topicDemo` → TOPIC_DEMO_KEYWORD
+      if (matchesTopicDemoKeyword(input)) {
         this.useFakeData(input)
+      } else {
+        this.callAgentForRecommendation(input)
       }
     },
     // 获取思考过程标题

@@ -1,6 +1,8 @@
 # 仿真构建 · 后端接入（LLM 契约）
 
-产品叙事见 `design_docs/simulation-build-design.md`。本文约定 **HTTP + SSE**；**不要求**实现领域知识增强（`domainKnowledge` 原样收、可选回传；`enhancements` 可省略或 `[]`）。
+**读者**：实施改动的 LLM / 工程师。产品叙事与用户文档见 `design_docs/simulation-build-design.md`。本文约定 **HTTP + SSE**；**不要求**领域知识增强（`domainKnowledge` 原样收；`enhancements` 可省略或 `[]`）。
+
+**硬规则（违反即前后端不一致）**：协议路径与事件名以 **§5～§8** 为准；前端何时走 HTTP 以 **§4** 为准；URL 拼接防双 `/api` 以 **§2.2 路径注意** 为准。
 
 ---
 
@@ -29,22 +31,24 @@
 | `VUE_APP_API_BASE_URL` | axios `request` 的 `baseURL`；**仿真构建会话** 使用 `src/api/simulation_builder.js` 中对该常量的拼接（见下）。 |
 | `VUE_APP_AGENT_BASE_URL` | **智能体直连 Micro-Agent**：`streamAgent` / `callAgentApi` / `streamLLMChat`（`src/utils/request.js`），路径为 **`/api/agent/...`**。与画布同页的 MCP 推荐、元应用运行等均走此 base，**不经 ioeb_backend**。 |
 
-**仿真构建组件**（`simulation_builder.vue`）当前 **未** `import streamAgent`；进程内 mock 不访问 Agent。若产品要在「非演示」路径中接入真实 Agent，与现有模式一致：**在前端**对 `VUE_APP_AGENT_BASE_URL` 发请求（例见 §3.2）。
+**仿真构建组件**（`simulation_builder.vue`）**未** `import streamAgent`；演示路径的进程内实现不访问 Agent。若要在「真实路径」把某步接到 Micro-Agent，须在**前端**另起 `VUE_APP_AGENT_BASE_URL` 请求（例 §3.2），**不要**假定 ioeb_backend 已代理 Agent。
 
-### 2.2 仿真会话 HTTP/SSE（`simulation_builder.js`，必须与后端路由一致）
+### 2.2 真实后端 HTTP/SSE（路径须与 Flask 注册一致）
 
-源码：`src/api/simulation_builder.js`，`SIMULATION_USE_MOCK === false` 时：
+当前端 **选用 HTTP 客户端**（判定见 **§4**）时，`src/api/simulation_builder.js` 会发起：
 
 ```text
-POST   ${VUE_APP_API_BASE_URL}/api/simulation/start
-POST   ${VUE_APP_API_BASE_URL}/api/simulation/{sessionId}/cancel
-GET    ${VUE_APP_API_BASE_URL}/api/simulation/{sessionId}/result
-GET    ${VUE_APP_API_BASE_URL}/api/simulation/records
-POST   ${VUE_APP_API_BASE_URL}/api/simulation/records/compare
-GET    EventSource: ${VUE_APP_API_BASE_URL}${streamUrl}   // streamUrl 多为 `/api/simulation/{id}/stream`
+POST   <仿真 API 根>/api/simulation/start
+POST   <仿真 API 根>/api/simulation/{sessionId}/cancel
+GET    <仿真 API 根>/api/simulation/{sessionId}/result
+GET    <仿真 API 根>/api/simulation/records
+POST   <仿真 API 根>/api/simulation/records/compare
+GET    EventSource: <仿真 API 根 经 resolve 后>/api/simulation/{id}/stream
 ```
 
-**路径注意**：若 `VUE_APP_API_BASE_URL` 已带后缀 `/api`（例如 `https://host/api`），则最终路径会出现 **`/api/api/simulation/...`**。接入时二选一对齐：**(a)** 网关/Flask 按实际完整 URL 注册；**(b)** 或把 `VUE_APP_API_BASE_URL` 改为不含末尾 `/api` 的根（如 `https://host`），或改前端 `simulation_builder.js` 中拼接串去掉一层 `/api`（仅此文件）。
+其中 **`<仿真 API 根>`** = `VUE_APP_API_BASE_URL` 经该文件 **`simulationApiPath` / `resolveSimulationStreamUrl`** 归一化后的前缀（避免 `baseURL` 已以 `/api` 结尾时再拼出 **`/api/api/simulation/...`**）。
+
+**路径注意**：网关与 env 二选一对齐：(a) Nginx/Flask 注册实际完整 URL；(b) 或令 `VUE_APP_API_BASE_URL` 不含末尾 `/api`，或保持前端该文件内去重逻辑。
 
 ### 2.3 响应形状（axios）
 
@@ -88,9 +92,18 @@ Micro-Agent 仓库内任务定义、端口、`/docs` 见各自 README。
 
 ---
 
-## 4. 前端开关
+## 4. 前端：演示 vs 真实（与实现对齐）
 
-`src/api/simulation_builder.js`：`SIMULATION_USE_MOCK = false` 时走真实 HTTP+SSE；`true` 时用 `src/mock/services/simulation_builder_inmemory.js`（黄金顺序见该文件 `runStream`）。
+| 项 | 约定 |
+|----|------|
+| 关键字 | `src/config/topicDemo.js` 导出 **`TOPIC_DEMO_KEYWORD`**（默认 **`课题`**）、**`matchesTopicDemoKeyword(text)`**。改演示口径主要改此处。 |
+| 仿真 | `POST .../start` 的 body 中 **`appName`** = 画布 **当前展示名称**（`data.preName`，用户可在元应用详情里改）。**含关键字** → **进程内** `simulation_builder_inmemory.js`；**否则** → **§2.2 HTTP + SSE** 调 ioeb_backend。 |
+| 会话路由 | `simulation_builder.js` 内 **`sessionUsesMemory: Map<sessionId,boolean>`**，`start` 写入，`cancel` / `subscribe teardown` 清理；`cancel`/`stream`/`result` 须与同一会话一致。 |
+| 研究记录 | `fetchSimulationRecords(appName)`、`compareSimulationRecords(ids, appName)` 与仿真使用同一 **`matchesTopicDemoKeyword(appName)`**。 |
+| 调度推荐 | `smart_chat.vue` 对用户 **输入** 用 **`matchesTopicDemoKeyword`**：**真** → `useFakeData`；**假** → `callAgentForRecommendation`。 |
+| 仿真 UI 入口 | `panel_enhanced` **仅当 `showToolbar=true`** 显示「开始仿真构建」。`GenericSchedule` 默认 `true` 且带 `smart_chat`；**`useMetaApp`** 设 **`show-toolbar=false`**，**无仿真按钮**（使用页不测画布仿真）。 |
+
+**LLM 自检**：改分流规则时须同时核对 **`topicDemo.js`**、**`simulation_builder.js`**、**`smart_chat.vue`**、**`panel_enhanced` 传入的 `app-name`**（须为当前展示名计算属性）。
 
 ---
 
@@ -191,3 +204,7 @@ interface CompleteEvent {
 ## 9. `domain` 枚举
 
 `generic` `aircraft` `health` `agriculture` `evtol` `ecommerce` `homeAI` `aml`；未知宜按 `generic`。
+
+---
+
+**说明**：个人研究用的周历、操作口诀见 `design_docs/research-guide-execution-traces-to-mcp-apps.md`；**实现与联调以本文为准**。

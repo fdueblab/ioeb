@@ -1,22 +1,18 @@
 /**
  * simulation_builder · 前端 API 统一入口（与 `simulation_builder.vue` 配套）
  *
- * 【设计】虚拟（进程内）与真实（HTTP + SSE）只在「选择实现」处分叉一次，
- * 对外导出函数签名不变，组件只 import 本文件。
+ * 演示 vs 真实：
+ * - 元应用**当前展示名称**（`buildStartPayload().appName`，与画布 `data.preName` 一致，含用户在元应用详情中的修改）
+ *   含 `TOPIC_DEMO_KEYWORD`（见 `@/config/topicDemo`）→ 进程内仿真；否则 → HTTP + SSE。
  *
- * 切换：默认 `VUE_APP_SIMULATION_USE_MOCK` 未设置时为进程内 mock；
- * 在 `.env.development` 中设 `VUE_APP_SIMULATION_USE_MOCK=false`，`VUE_APP_API_BASE_URL` 指向
- * ioeb_backend（如 `http://127.0.0.1:5000` 或反代根路径 `https://host/api`）；路径拼接已处理重复 `/api`。
+ * 路径拼接避免 base 已含 `/api` 时再出现 `/api/api/...`（build-design4llm.md §2.2）。
  */
 import request from '@/utils/request'
 import { simulationBuildInMemory } from '@/mock/services/simulation_builder_inmemory'
+import { matchesTopicDemoKeyword } from '@/config/topicDemo'
 
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || ''
 
-/**
- * 与 VUE_APP_API_BASE_URL 拼接仿真路径，避免 base 已含 `/api` 时再出现 `/api/api/...`
- * （契约：build-design4llm.md §2.2）
- */
 function simulationApiPath(suffix) {
   const base = API_BASE_URL.replace(/\/$/, '')
   const p = suffix.startsWith('/') ? suffix : `/${suffix}`
@@ -26,7 +22,6 @@ function simulationApiPath(suffix) {
   return `${base}/api${p}`
 }
 
-/** streamUrl 多为 `/api/simulation/{id}/stream`，与 axios baseURL 组合时去重 `/api` */
 function resolveSimulationStreamUrl(streamUrl) {
   if (streamUrl.startsWith('http')) return streamUrl
   const base = API_BASE_URL.replace(/\/$/, '')
@@ -37,14 +32,6 @@ function resolveSimulationStreamUrl(streamUrl) {
   return `${base}${path}`
 }
 
-const _mockEnv = process.env.VUE_APP_SIMULATION_USE_MOCK
-/** 未设置时默认 mock（true）；`.env` 中设 `VUE_APP_SIMULATION_USE_MOCK=false` 走真实后端 */
-export const SIMULATION_USE_MOCK =
-  _mockEnv === undefined || _mockEnv === ''
-    ? true
-    : String(_mockEnv).toLowerCase() === 'true'
-
-/** SSE 自定义事件名（与后端约定一致） */
 const SIMULATION_SSE_EVENTS = [
   'step',
   'iteration',
@@ -57,7 +44,6 @@ const SIMULATION_SSE_EVENTS = [
   'complete'
 ]
 
-/** 进程内实现：与 createHttpSimulationBuildClient 方法名、返回值形状一致 */
 function createMemorySimulationBuildClient() {
   return {
     startSimulation(payload) {
@@ -94,7 +80,6 @@ function createMemorySimulationBuildClient() {
   }
 }
 
-/** HTTP + SSE 实现 */
 function createHttpSimulationBuildClient() {
   return {
     startSimulation(payload) {
@@ -155,39 +140,75 @@ function createHttpSimulationBuildClient() {
   }
 }
 
-const simulationBuildClient = SIMULATION_USE_MOCK
-  ? createMemorySimulationBuildClient()
-  : createHttpSimulationBuildClient()
+const memoryClient = createMemorySimulationBuildClient()
+const httpClient = createHttpSimulationBuildClient()
+
+/** sessionId → 本次会话是否使用进程内实现（便于 cancel/stream/result 与 start 一致） */
+const sessionUsesMemory = new Map()
+
+function forgetSession(sessionId) {
+  sessionUsesMemory.delete(sessionId)
+}
+
+function clientForSessionId(sessionId) {
+  const mem = sessionUsesMemory.get(sessionId)
+  if (mem === true) return memoryClient
+  if (mem === false) return httpClient
+  return httpClient
+}
 
 /** @param {Record<string, unknown>} payload */
 export function startSimulation(payload) {
-  return simulationBuildClient.startSimulation(payload)
+  const appName = payload && payload.appName
+  const useMemory = matchesTopicDemoKeyword(appName)
+  const client = useMemory ? memoryClient : httpClient
+  return Promise.resolve(client.startSimulation(payload)).then((res) => {
+    if (res && res.sessionId) {
+      sessionUsesMemory.set(res.sessionId, useMemory)
+    }
+    return res
+  })
 }
 
 export function cancelSimulation(sessionId) {
-  return simulationBuildClient.cancelSimulation(sessionId)
+  const client = clientForSessionId(sessionId)
+  return Promise.resolve(client.cancelSimulation(sessionId)).then((r) => {
+    forgetSession(sessionId)
+    return r
+  })
 }
 
 export function getSimulationResult(sessionId) {
-  return simulationBuildClient.getSimulationResult(sessionId)
-}
-
-export function fetchSimulationRecords() {
-  return simulationBuildClient.fetchSimulationRecords()
-}
-
-export function compareSimulationRecords(recordIds) {
-  return simulationBuildClient.compareSimulationRecords(recordIds)
+  const client = clientForSessionId(sessionId)
+  return Promise.resolve(client.getSimulationResult(sessionId))
 }
 
 /**
- * 订阅仿真事件流
+ * 研究模式实验记录列表（进程内与远端分离，按当前元应用名称分流）
+ * @param {string} [appName] 当前展示名称（与画布 `data.preName` 一致）
+ */
+export function fetchSimulationRecords(appName) {
+  const client = matchesTopicDemoKeyword(appName) ? memoryClient : httpClient
+  return client.fetchSimulationRecords()
+}
+
+/**
+ * @param {string[]} recordIds
+ * @param {string} [appName]
+ */
+export function compareSimulationRecords(recordIds, appName) {
+  const client = matchesTopicDemoKeyword(appName) ? memoryClient : httpClient
+  return client.compareSimulationRecords(recordIds)
+}
+
+/**
  * @returns {() => void} 取消订阅
  */
 export function subscribeSimulationStream(sessionId, streamUrl, handlers) {
-  return simulationBuildClient.subscribeSimulationStream(
-    sessionId,
-    streamUrl,
-    handlers
-  )
+  const client = clientForSessionId(sessionId)
+  const inner = client.subscribeSimulationStream(sessionId, streamUrl, handlers)
+  return () => {
+    inner()
+    forgetSession(sessionId)
+  }
 }

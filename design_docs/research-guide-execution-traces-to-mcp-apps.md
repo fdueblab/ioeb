@@ -17,7 +17,7 @@
 - [6. 十二周执行日程](#6-十二周执行日程)
 - [7. 数据结构速查](#7-数据结构速查)
 - [8. 实验设计手册](#8-实验设计手册)
-- [9. 代码库改动地图](#9-代码库改动地图)
+- [9. 论文期要不要改前端？](#9-论文期要不要改前端)
 - [10. 论文写作模板与常见坑](#10-论文写作模板与常见坑)
 - [11. 风险与应急](#11-风险与应急)
 - [12. 每周例行清单](#12-每周例行清单)
@@ -28,18 +28,21 @@
 
 按顺序逐项确认，**缺哪项就先补哪项，不要跳着做**。
 
+- [ ] 扫一眼 **`design_docs/README.md`**（三十秒）：确认三篇文档各自分工，避免改错文件
+
 ### 0.1 文档已读
 
-- [ ] `docs/dev/simulation-build-design.md` 的 **§2 当前状态**、**§4 仿真构建机制**、**§8 研究方向**、**§9 实验设计**
-- [ ] `docs/dev/build-design4llm.md` 全文（4 页，约 10 分钟）——这是后端实现的唯一契约
+- [ ] `design_docs/simulation-build-design.md` 的 **§2 当前状态**、**§4 仿真构建机制**、**§8 研究方向**、**§9 实验设计**
+- [ ] `design_docs/build-design4llm.md` 全文（约 10 分钟）——**与工程实现一致的唯一契约**；改后端或分流时对照此文
 
-### 0.2 本地环境可用
+### 0.2 本地环境：能动手即可
 
-- [ ] Node >= 16，`yarn install` 无报错
-- [ ] `yarn serve` 后浏览器能打开前端（端口以 `vue.config.js` 中 `devServer.port: 8001` 为准）
-- [ ] 知道 mock 开关位置：`src/api/simulation_builder.js` → `SIMULATION_USE_MOCK`
-- [ ] 知道仿真构建 UI 入口文件：`src/components/ef/simulation_builder.vue`
-- [ ] 知道智能体通信方式：`src/utils/request.js` 中 `streamAgent`，路由 `/api/agent/*` 转发到 Micro-Agent 容器（`docker-compose.yml` → `agent` 服务，端口 8010）
+- [ ] Node 版本与仓库 `.nvmrc` / README 一致，`yarn install` 无报错
+- [ ] `yarn serve` 能打开平台（端口以 `vue.config.js` 为准）
+- [ ] **分辨两条路（写论用途，不写代码位置）**：
+  - **演示路**：调度页左侧聊天 + 右侧画布，工具栏上有「开始仿真构建」。元应用在页面上显示的**名称**里带默认演示关键字（如「课题」）时，推荐与仿真都在**本机浏览器内**跑通，**不依赖**仿真后端。
+  - **真实路**：同一页面把元应用**名称**改成**不含**该演示关键字（在元应用详情里改标题即可），再用聊天生成或保留画布；点「开始仿真构建」时应走 **HTTP + SSE**（需本机或环境里的 **ioeb_backend** 已按契约启动）。**目的**：联调、论文里可写「接系统后端」的测量。
+- [ ] **入口心里**：只有「带聊天 + 画布工具栏」的调度页才有仿真按钮；从使用页进元应用「跑一跑」时通常**没有**这一步——不要在那儿找仿真。
 
 ### 0.3 论文工具就绪
 
@@ -130,14 +133,13 @@
 
 ### 3.1 已有的（论文可以写「我们在已有平台基础上」）
 
-| 模块 | 位置 | 论文怎么提 |
-|------|------|-----------|
-| 仿真构建 UI（五步流程 + 双模式） | `src/components/ef/simulation_builder.vue` | 「系统提供生产/研究双模式界面」 |
-| SSE 事件契约（9 种事件） | `docs/dev/build-design4llm.md` | 「前后端通过 SSE 实时通信」 |
-| 策略 M1–M5 配置 | `src/mock/data/simulation_builder_data.js` | 「支持模块级策略切换用于消融实验」 |
-| 领域知识注入 | `src/domain/` + `src/components/ef/simulationStages.js` | 「在想定解析/规划/验证三阶段注入垂域知识」 |
-| 实验记录 + 对比视图 | simulation_builder.vue 研究模式部分 | 「内置实验记录与对比功能」 |
-| Micro-Agent 智能体运行时 | `docker-compose.yml` → agent 服务 | 「基于已有 Agent 框架」 |
+| 能力 | 论文怎么提 |
+|------|-----------|
+| 仿真构建 UI（五步 + 生产/研究双模式） | 「系统提供生产/研究双模式仿真构建界面」 |
+| 与后端的 SSE 事件契约 | 「前后端通过具名 SSE 事件实时同步构建阶段」 |
+| 策略 M1–M5 配置与研究记录视图 | 「支持模块化策略与研究记录」 |
+| 多阶段领域知识裁剪与注入 | 「在想定解析 / 规划 / 验证阶段可注入垂域知识」 |
+| 已有 Agent 运行时（独立服务） | 「规划类能力可调用已有智能体框架」 |
 
 ### 3.2 缺的（这些就是你 12 周要做的）
 
@@ -155,8 +157,8 @@
 ### 3.3 不需要改的（省时间）
 
 - 前端 UI：已有的仿真面板、画布联动、研究模式界面 → **不碰**
-- 领域知识 profile：`src/domain/profiles/` 中 8 个垂域模板 → **直接复用**
-- SSE 事件名与载荷格式 → **后端照着实现即可**
+- 领域知识 profile：仓库内垂域模板集已齐 → **直接复用**
+- SSE 事件名与载荷格式 → **以后端契约文档为准**（`design_docs/build-design4llm.md`）
 
 ---
 
@@ -444,11 +446,10 @@ Appendix（任务集详情、完整轨迹样例）
 3. 先硬编码一个固定流程（不用真连 MCP），确保前端 mock 关掉后能完整走完 `step:0` → ... → `complete`
 
 **验收标准**：
-- [ ] 前端 `SIMULATION_USE_MOCK = false` 后，点击「开始仿真构建」能看到步骤条正常推进
-- [ ] 浏览器 Network 面板能看到 SSE 事件流
-- [ ] `complete` 事件正常触发，前端显示成功/失败态
+- [ ] 按「真实路」操作：元应用**标题**不含演示关键字、后端已启动时，从调度页点「开始仿真构建」能走完整步骤条，浏览器 Network 里能看到仿真 **HTTP + SSE**
+- [ ] `complete` 事件触发后，界面成功/失败态与预期一致
 
-**参考文件**：`docs/dev/build-design4llm.md` 中 SSE 推荐顺序、`src/mock/services/simulation_builder_inmemory.js` 中 `runStream` 函数的事件发送逻辑
+**若要查协议细节**（事件顺序、字段）：只打开 **`design_docs/build-design4llm.md`**，不要在本研究文档里找实现。
 
 ### 第 2 周：CoW 沙箱代理
 
@@ -810,36 +811,26 @@ aml 多给 2 个，因为平台对跨境支付场景支持最完善。
 
 ---
 
-## 9. 代码库改动地图
+## 9. 论文期要不要改前端？
 
-### 9.1 不需要碰的文件
+**默认**：仿真面板、画布、领域规则、策略默认、编排页结构——**尽量不动**，把时间花在轨迹、沙箱、评测上。
 
-| 文件/目录 | 原因 |
-|----------|------|
-| `src/components/ef/simulation_builder.vue` | 前端 UI 已完整 |
-| `src/components/ef/simulationStages.js` | 领域知识裁剪规则已完整 |
-| `src/domain/*` | 垂域知识 profile 已完整 |
-| `src/mock/data/simulation_builder_data.js` | 策略默认值已定义 |
-| `src/components/ef/panel_enhanced.vue` | 画布集成已完成 |
+**例外**：若产品要调整「什么叫演示」（例如演示关键字从「课题」改成别的），属于**平台维护**范畴——**具体改哪些文件、怎么与后端对齐**，以 **`design_docs/build-design4llm.md` §4** 为准；本研究文档不跟踪路径。
 
-### 9.2 需要小改的文件
+### 9.1 不需要碰的（省时间）
 
-| 文件 | 改什么 |
-|------|--------|
-| `src/api/simulation_builder.js` | 将 `SIMULATION_USE_MOCK` 设为 `false`（联调时） |
-| `src/mock/services/simulation_builder_inmemory.js` | 如需在 mock 中模拟策略真分支做本地验证 |
+- 仿真五步 UI、研究模式面板、画布与仿真的联动——已可用，论文期优先不改。
+- 垂域知识 profile、策略默认值——直接复用来做实验叙事即可。
 
-### 9.3 需要新增的（不在本仓库，在后端/Micro-Agent 侧）
+### 9.2 你可能会碰的（论文核心，多在仓库外）
 
-| 模块 | 位置 | 说明 |
-|------|------|------|
-| 仿真控制器 | 后端 | 会话管理 + SSE 推送 |
-| CoW 沙箱代理 | 后端 | MCP 调用拦截层 |
-| Planner Agent | Micro-Agent | 自主规划调度 |
-| Verifier Agent | Micro-Agent | 独立验证 |
-| Trace 存储 | 后端/DB | 轨迹 CRUD |
-| 轨迹编译器 | 后端 | 状态抽象 + DAG + 异常分支 |
-| 评测脚本 | 独立 Python | 跑实验 + 收集指标 + 画图 |
+| 要做的 | 说明 |
+|--------|------|
+| 仿真控制器 / SSE | 后端会话与事件流；契约见 `design_docs/build-design4llm.md` |
+| CoW 沙箱代理 | MCP 与真实服务之间的拦截层 |
+| Planner / Verifier | 多在 Agent 侧或独立服务 |
+| Trace 存储与查询 | DB / 文件 + API |
+| 轨迹编译与评测脚本 | 后端或独立 Python |
 
 ---
 
@@ -929,24 +920,11 @@ aml 多给 2 个，因为平台对跨境支付场景支持最完善。
 
 ---
 
-## 附录 A：关键文件路径速查
+## 附录 A：技术细节去哪看
 
-| 用途 | 路径 |
-|------|------|
-| 仿真构建 UI | `src/components/ef/simulation_builder.vue` |
-| 仿真阶段规则 | `src/components/ef/simulationStages.js` |
-| 画布集成 | `src/components/ef/panel_enhanced.vue` |
-| API 层（mock 开关） | `src/api/simulation_builder.js` |
-| 内存 mock 模拟器 | `src/mock/services/simulation_builder_inmemory.js` |
-| mock 数据/默认策略 | `src/mock/data/simulation_builder_data.js` |
-| 领域知识注册 | `src/domain/KnowledgeRegistry.js` |
-| 领域知识增强 | `src/domain/KnowledgeEnhancer.js` |
-| 垂域模板 | `src/domain/profiles/*.js` |
-| 智能体通信 | `src/utils/request.js` → `streamAgent` |
-| Agent 执行面板 | `src/components/Agent/AgentExecutionPanel.vue` |
-| 后端契约文档 | `docs/dev/build-design4llm.md` |
-| 完整设计文档 | `docs/dev/simulation-build-design.md` |
-| Docker 编排 | `docker-compose.yml` |
+- **前后端仿真契约、SSE 事件、演示/真实分流规则**：只看 **`design_docs/build-design4llm.md`**（给实施者 / LLM 用，随代码更新）。
+- **产品级仿真叙事与线框**：`design_docs/simulation-build-design.md`。
+- 本篇**不再维护**「文件路径速查」类附录，避免与契约文档重复、也容易过期。
 
 ## 附录 B：论文用语对照
 
@@ -975,3 +953,4 @@ aml 多给 2 个，因为平台对跨境支付场景支持最完善。
 | 2026-04-14 | §4.1.1：补充 ReUseIt / FlowMind / TIM 与 EvolveR 的公开代码情况，及「方法复现 vs 原仓库跑分」与论文表述建议 |
 | 2026-04-15 | §4.2：新增相关工作技术详解（8 篇机制要点、迁移建议、对照总表） |
 | 2026-04-16 | §4.1.1 / §4.2.3：更正 TIM——补充 [trajectory-tips](https://github.com/adamkrawczyk/trajectory-tips) 为基于 IBM 论文的社区实现（非官方） |
+| 2026-04-29 | 文档分工：`build-design4llm.md` = LLM/工程契约；研究篇侧重傻瓜操作与目的，删附录路径表、弱化 §9 实现罗列 |

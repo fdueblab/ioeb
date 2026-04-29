@@ -599,6 +599,10 @@ export default {
       type: Array,
       default: () => []
     },
+    /**
+     * 元应用当前展示名称（画布 `data.preName`，含用户在元应用详情中的修改）。
+     * 是否含 `TOPIC_DEMO_KEYWORD` 决定仿真走进程内或 HTTP（`@/config/topicDemo`）。
+     */
     appName: {
       type: String,
       default: '元应用'
@@ -1209,7 +1213,7 @@ export default {
     async loadRecordList() {
       this.compareLoading = true
       try {
-        this.recordList = await fetchSimulationRecords()
+        this.recordList = await fetchSimulationRecords(this.appName)
       } catch (e) {
         this.recordList = []
         this.$message.error('加载实验记录失败')
@@ -1222,7 +1226,10 @@ export default {
       if (this.compareSelectedIds.length < 2) return
       this.compareLoading = true
       try {
-        const { records } = await compareSimulationRecords(this.compareSelectedIds)
+        const { records } = await compareSimulationRecords(
+          this.compareSelectedIds,
+          this.appName
+        )
         this.compareResultRows = records || []
       } catch (e) {
         this.$message.error('对比失败')
