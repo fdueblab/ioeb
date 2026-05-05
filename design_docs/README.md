@@ -6,7 +6,7 @@
 | 文件 | 给谁看 | 写什么 | 不写什么 |
 |------|--------|--------|----------|
 | **`build-design4llm.md`** | LLM / 接后端与联调的工程 | HTTP/SSE 契约、路径、事件、前端分流与实现对齐；宜短、可执行 | 周历、论文操作口诀 |
-| **`simulation-build-design.md`** | 你自用 · **设计与实现** | 产品机制、线框、领域与前端落点、工程说明（可含路径）；契约处 **指向** 4llm | 不与 4llm 重复维护两套 API 字段表 |
+| **`simulation-build-design.md`** | 你自用 · **设计与实现** | 产品机制、线框、领域在 Micro-Agent Skill 的落点、工程说明（可含路径）；契约处 **指向** 4llm | 不与 4llm 重复维护两套 API 字段表 |
 | **`research-guide-execution-traces-to-mcp-apps.md`** | 你自用 · **研究执行** | 傻瓜步骤、目的、周历、论文结构；指向契约而非抄实现 | 文件级实现地图（已迁出） |
 
 **约定**：改「协议/接口/事件」→ 只改 **`build-design4llm.md`**；改「产品长文、为什么这样设计、代码放哪」→ **`simulation-build-design.md`**；改「这周干什么、验收心里有没有数」→ **研究 guide**。

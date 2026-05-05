@@ -628,6 +628,8 @@ Appendix（任务集详情、完整轨迹样例）
 }
 ```
 
+**与当前实现对齐（2026-05）**：真链路中领域知识由 Micro-Agent 根据 `domain` 加载 `workspace/skills/domain_*/SKILL.md` 并写入 Planner/Verifier 的 system prompt，**不存在**请求/响应里的 `domainKnowledge` 大块对象。上表中的 `enhancements` 仅适用于**未来**结构化轨迹或**进程内 mock**（文案来源：`src/mock/data/simulation_builder_data.js` 的 `SIMULATION_BUILD_MOCK_ENHANCEMENTS`）；`FileTraceStore` 当前落盘格式见 `build-design4llm.md` §6。
+
 ### 7.2 编译产物 `CompiledApp`
 
 ```jsonc
@@ -676,21 +678,20 @@ Appendix（任务集详情、完整轨迹样例）
 
 ### 7.3 `complete.result` 扩展（兼容现有前端）
 
-在现有 `result` 基础上新增字段（前端不认识的字段会被忽略，不会报错）：
+与 **`build-design4llm.md` §6** 一致：`POST /api/simulation/start` **不包含** `domainKnowledge`；领域上下文只在 Micro-Agent 侧通过 Skill 注入。
+
+在现有 `result` 基础上可新增字段（前端不认识的字段会被忽略）：
 
 ```jsonc
 {
-  // 现有字段（保留）
-  "success": true,
-  "executionPath": ["用户输入", "交易查询服务", "异常检测服务", "风控规则服务", "报告生成服务", "输出结果"],
+  // 当前实现常见字段（见 build-design4llm.md §6）
+  "executionPath": ["用户输入", "交易查询服务", "...", "输出结果"],
   "strategy": { /* ... */ },
-  "scenarioDescription": "...",
   "appName": "...",
-  "domain": "...",
-  "domainKnowledge": { /* ... */ },
-  "enhancements": [ /* ... */ ],
+  "domain": "aml",
+  // "enhancements": 仅进程内 mock 可选；真链路 Micro-Agent 当前不返回
 
-  // 新增字段
+  // 以下为论文/未来扩展占位
   "traceId": "trc-20260501-a3f8",
   "compiledApp": { /* 见 §7.2 */ }
 }
