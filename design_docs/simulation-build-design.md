@@ -479,7 +479,7 @@ POST /api/simulation/start
 interface StartSimulationRequest {
   appId: string;
   appName: string;
-  domain: string;                // 业务领域
+  domain: string;                // 业务领域；Micro-Agent 映射为 Skill `domain_{domain}`（见 workspace/skills/）
   serviceIds: string[];
   maxIterations?: number;        // 默认5
   scenarioDescription?: string;
