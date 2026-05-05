@@ -2,7 +2,7 @@
 
 > **本文目的**：当你（LLM / AI 助手）需要**修改、扩展或调试**仿真构建系统时，阅读本文即可理解**所有接口约定和代码位置**。
 >
-> 产品叙事见 `design_docs/simulation-build-design.md`。本文约定 **HTTP + SSE**；**不要求**实现领域知识增强（`domainKnowledge` 原样收、可选回传；`enhancements` 可省略或 `[]`）。
+> 产品叙事见 `design_docs/simulation-build-design.md`。本文约定 **HTTP + SSE**。领域知识由 Micro-Agent 通过 Skill 机制注入（`workspace/skills/domain_*`），前端只传 `domain` 标识。
 
 ---
 
@@ -74,8 +74,7 @@
 interface StartSimulationRequest {
   appId: string
   appName: string
-  domain: string
-  domainKnowledge: object
+  domain: string                // Micro-Agent 按此值加载 workspace/skills/domain_{domain} 的 Skill
   serviceIds: string[]
   servicesMeta: { id: string; name: string }[]
   maxIterations: number
@@ -229,6 +228,7 @@ interface CompleteEvent {
 | 修改意图 | 涉及文件（Micro-Agent） | 涉及文件（ioeb 前端） |
 |----------|------------------------|---------------------|
 | 修改 Planner/Verifier 的 prompt | `micro_agent/simulation/orchestrator.py` → `_planner_system_prompt()`, `_build_verifier()` | — |
+| 修改领域知识 | `workspace/skills/domain_*/SKILL.md` | — |
 | 替换 mock 工具为真实 MCP | `orchestrator.py` → `_build_planner()` 中 `SimulatedMCPTool` → `MCPAgent.connect()` | — |
 | 增加新 SSE 事件类型 | `orchestrator.py` → `yield SimulationEvent("新类型", {...})` | `simulation_builder.vue` → `subscribeSimulationStream` 里增加 handler |
 | 修改轨迹存储格式/后端 | `micro_agent/simulation/trace_store.py` → `FileTraceStore`（或新建实现类） | — |

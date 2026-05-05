@@ -316,15 +316,6 @@
                 </div>
               </div>
 
-              <div v-if="internalMode === 'research' && resultEnhancements.length" class="strategy-summary">
-                <div class="path-label">领域知识增强</div>
-                <div class="strategy-tags">
-                  <a-tag v-for="en in resultEnhancements" :key="en.stage" color="blue">
-                    {{ enhancementStageLabel(en.stage) }} ✓
-                  </a-tag>
-                </div>
-              </div>
-
               <div v-if="internalMode === 'research' && hasModuleMetrics" class="research-metrics">
                 <div class="path-label">模块级指标</div>
                 <div class="metrics-grid">
@@ -586,7 +577,15 @@ import {
   SIMULATION_BUILD_GEN_TASKS,
   SIMULATION_BUILD_DEFAULT_STRATEGY
 } from '@/mock/data/simulation_builder_data'
-import { getKnowledge } from '@/domain'
+const DOMAIN_LABELS = {
+  aml: '跨境支付监测',
+  aircraft: '无人飞机监控',
+  health: '乡村医疗',
+  agriculture: '农业数智化',
+  ecommerce: '跨境电商',
+  homeAI: '家庭陪伴 AI',
+  evtol: '低空飞行'
+}
 
 function mapSetupItems(tasks) {
   return tasks.map((text) => ({ text, done: false, active: false }))
@@ -716,13 +715,8 @@ export default {
     },
     domainHint() {
       const d = this.domain || 'generic'
-      if (d === 'generic') return ''
-      const dk = getKnowledge(d)
-      return dk && dk.summary ? `已识别领域：${dk.summary}` : ''
-    },
-    resultEnhancements() {
-      if (!this.finalResult || !Array.isArray(this.finalResult.enhancements)) return []
-      return this.finalResult.enhancements
+      const label = DOMAIN_LABELS[d]
+      return label ? `已识别领域：${label}` : ''
     },
     /** 步骤条高亮：0=准备，1–4 对应后端 currentMainStep 0–3；完成时视为全部走完 */
     stepBarIndex() {
@@ -734,10 +728,6 @@ export default {
   methods: {
     compareModalGetContainer() {
       return document.body
-    },
-    enhancementStageLabel(stage) {
-      const m = { scenarioParsing: '想定解析', planning: '调度规划', verification: '仿真验证' }
-      return m[stage] || stage
     },
     strategyLabel(key, value) {
       const labels = {
@@ -838,19 +828,10 @@ export default {
     },
 
     buildStartPayload() {
-      const domain = this.domain || 'generic'
-      const domainKnowledge = getKnowledge(domain, {
-        appId: this.appId || 'meta-app-draft',
-        appName: this.appName,
-        scenarioDescription: this.scenarioDraft,
-        serviceNames: this.serviceStatuses.map((s) => s.name),
-        mode: this.internalMode
-      })
       return {
         appId: this.appId || 'meta-app-draft',
         appName: this.appName,
-        domain,
-        domainKnowledge,
+        domain: this.domain || 'generic',
         serviceIds: this.serviceStatuses.map((s) => String(s.id)),
         servicesMeta: this.serviceStatuses.map((s) => ({ id: String(s.id), name: s.name })),
         maxIterations: this.maxIterations,

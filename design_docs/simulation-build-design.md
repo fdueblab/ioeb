@@ -74,11 +74,11 @@
 **ioeb_backend**
 - [x] **不参与仿真**：已移除所有仿真相关代码，仅保留系统后端职能
 
-**领域知识增强（与 §三 架构图中「想定场景解析 → 调度规划 / 仿真验证」对齐）**
-- [x] **平台知识**：`src/domain/` — `profiles/` 内置垂域模板、`KnowledgeRegistry.js`（`getKnowledge` / provider / `mergeKnowledge`）、`KnowledgeEnhancer.js`（通用 `enhanceForStage(domainKnowledge, stageRule, ctx)`，**不包含**具体流水线阶段定义）
-- [x] **仿真专用阶段与规则**：`src/components/ef/simulationStages.js` — `SIMULATION_STAGES`、`SIMULATION_ENHANCEMENT_RULES`（想定解析 / 调度规划 / 仿真验证三阶段 `stageRule`）
-- [x] 前端 `simulation_builder.vue` 在 `buildStartPayload` 中通过 `getKnowledge` 附带 `domainKnowledge`
-- [x] 进程内模拟器在 **step#0**、**data phase 前**、**check phase 前** 各调用一次 `enhanceForStage(dk, SIMULATION_ENHANCEMENT_RULES[...])`，经 SSE `log` 输出；成功时 `result.enhancements` 供研究模式展示。**真实后端**可按 `build-design4llm.md` 暂不实现增强，回传 `enhancements: []` 或省略
+**领域知识注入**
+- [x] **唯一来源在 Micro-Agent**：`workspace/skills/domain_*/SKILL.md`（每个领域一份 Markdown，含术语、约束、编排建议、合规说明）
+- [x] **编排器自动加载**：`SimulationOrchestrator` 按请求中的 `domain` 字段，通过 `Agent.load_skill()` 将领域知识写入 Planner / Verifier 的 system prompt
+- [x] **前端只传标识**：`buildStartPayload` 仅发送 `domain` 字符串，不再组装 `domainKnowledge`
+- [x] **前端 `src/domain/`**：profiles / KnowledgeRegistry / KnowledgeEnhancer / simulationStages 仅供进程内 mock 离线演示使用，不参与真实仿真链路
 
 ### 2.2 当前可运行状态
 
