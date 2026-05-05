@@ -531,20 +531,22 @@ interface SimulationMetrics {
 }
 ```
 
-### 7.3 取消/获取结果
+### 7.3 取消
 
 ```
 POST /api/simulation/{sessionId}/cancel
-GET /api/simulation/{sessionId}/result
 ```
+
+仿真最终结果仅通过 SSE `complete` 事件下发，**不提供**按会话 ID 的独立 HTTP 结果查询。
 
 ### 7.4 实验记录（研究模式）
 
 ```
 GET  /api/simulation/records                  // 获取实验记录列表
-GET  /api/simulation/records/{recordId}       // 获取单条记录详情
 POST /api/simulation/records/compare          // 对比多条记录
 ```
+
+单条记录详情由列表中的 `recordId` 在对比接口或落盘轨迹中查看；当前 Agent 侧未单独暴露 `GET /records/{recordId}`。
 
 ```typescript
 interface CompareRequest {

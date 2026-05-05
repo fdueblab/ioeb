@@ -150,3 +150,16 @@ export function batchGetServices(serviceIds) {
     }
   })
 }
+
+/**
+ * 想定式开发：上传生成的 .py 并登记为垂域可检索资源（type=generated_algorithm）
+ * @param {FormData} formData 含 file、name、domain 及可选 industry/scenario/technology
+ */
+export function uploadScenarioGeneratedAlgorithm(formData) {
+  return request({
+    url: `${API_BASE_URL}/services/scenario-generated/upload`,
+    method: 'post',
+    data: formData,
+    timeout: 120000
+  })
+}

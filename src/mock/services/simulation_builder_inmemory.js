@@ -74,7 +74,6 @@ function start(body) {
     body,
     strategy: mergeStrategy(body),
     mode: body.mode || 'production',
-    result: null,
     startedAt: Date.now()
   }
   sessions.set(sessionId, session)
@@ -88,12 +87,6 @@ function start(body) {
 function cancel(sessionId) {
   const s = sessions.get(sessionId)
   if (s) s.cancelled = true
-}
-
-function getResult(sessionId) {
-  const s = sessions.get(sessionId)
-  if (!s) return { success: false, error: 'session_not_found' }
-  return s.result || { success: false, pending: true }
 }
 
 function listRecords() {
@@ -293,7 +286,7 @@ async function runStream(sessionId, emit) {
     }
 
     const executionPath = ['用户输入', ...servicesMeta.map((s) => s.name), '输出结果']
-    session.result = {
+    const successResult = {
       success: true,
       executionPath,
       strategy,
@@ -309,40 +302,38 @@ async function runStream(sessionId, emit) {
     emit('complete', {
       success: true,
       metrics,
-      result: session.result
+      result: successResult
     })
 
     pushResearchRecord(session, metrics, true)
   } catch (e) {
     if (e.code === 'cancelled') {
-      session.result = { success: false, cancelled: true }
       const mc = { iterations: 0, elapsedMs: Date.now() - session.startedAt }
       emit('complete', {
         success: false,
         cancelled: true,
         metrics: mc,
-        result: session.result
+        result: { success: false, cancelled: true }
       })
       return
     }
-    session.result = { success: false, error: e.message || String(e) }
+    const failResult = { success: false, error: e.message || String(e) }
     const me = { elapsedMs: Date.now() - session.startedAt }
     emit('complete', {
       success: false,
       metrics: me,
-      result: session.result
+      result: failResult
     })
     pushResearchRecord(session, me, false)
   }
 }
 
 /**
- * 供 API 层统一调用的进程内实现（与 createRealSimulationBuildClient 方法签名一致）
+ * 供 API 层统一调用的进程内实现（与 HTTP 客户端对外方法一致；完整结果仅经 SSE complete 推送）
  */
 export const simulationBuildInMemory = {
   start,
   cancel,
-  getResult,
   listRecords,
   getRecord,
   compare,

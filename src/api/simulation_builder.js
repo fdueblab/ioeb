@@ -26,7 +26,7 @@ const SIMULATION_SSE_EVENTS = [
   'complete'
 ]
 
-/** 进程内实现：与 createHttpSimulationBuildClient 方法名、返回值形状一致 */
+/** 进程内实现：与 createHttpSimulationBuildClient 对外方法一致（结果仅通过 SSE complete 送达） */
 function createMemorySimulationBuildClient() {
   return {
     startSimulation(payload) {
@@ -35,9 +35,6 @@ function createMemorySimulationBuildClient() {
     cancelSimulation(sessionId) {
       simulationBuildInMemory.cancel(sessionId)
       return Promise.resolve({ success: true })
-    },
-    getSimulationResult(sessionId) {
-      return Promise.resolve(simulationBuildInMemory.getResult(sessionId))
     },
     fetchSimulationRecords() {
       return Promise.resolve(simulationBuildInMemory.listRecords())
@@ -82,9 +79,6 @@ function createHttpSimulationBuildClient() {
     },
     cancelSimulation(sessionId) {
       return agentFetch(`/api/simulation/${sessionId}/cancel`, { method: 'POST' })
-    },
-    getSimulationResult(sessionId) {
-      return agentFetch(`/api/simulation/${sessionId}/result`)
     },
     fetchSimulationRecords() {
       return agentFetch('/api/simulation/records')
@@ -131,10 +125,6 @@ export function startSimulation(payload) {
 
 export function cancelSimulation(sessionId) {
   return simulationBuildClient.cancelSimulation(sessionId)
-}
-
-export function getSimulationResult(sessionId) {
-  return simulationBuildClient.getSimulationResult(sessionId)
 }
 
 export function fetchSimulationRecords() {
