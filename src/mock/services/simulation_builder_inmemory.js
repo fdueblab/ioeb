@@ -21,11 +21,11 @@ import {
   SIMULATION_BUILD_ENV_TASKS,
   SIMULATION_BUILD_GEN_TASKS,
   SIMULATION_BUILD_DELAYS_MS,
+  SIMULATION_BUILD_MOCK_STAGE,
   simulationBuildRandomBetween,
-  simulationBuildModuleMetrics
+  simulationBuildModuleMetrics,
+  simulationBuildMockEnhancementRecord
 } from '@/mock/data/simulation_builder_data'
-import { enhanceForStage } from '@/domain'
-import { SIMULATION_STAGES, SIMULATION_ENHANCEMENT_RULES } from '@/components/ef/simulationStages'
 
 const sessions = new Map()
 let idSeq = 0
@@ -142,10 +142,7 @@ async function runStream(sessionId, emit) {
   const { body, strategy, mode } = session
   const servicesMeta = body.servicesMeta || []
   const isResearch = mode === 'research'
-  const dk = body.domainKnowledge
-  const stageCtxBase = {
-    serviceNames: servicesMeta.map((s) => s.name)
-  }
+  const mockDomain = body.domain || 'generic'
 
   const pushLog = (level, message) => {
     checkCancel()
@@ -157,10 +154,9 @@ async function runStream(sessionId, emit) {
 
     emit('step', { step: 0, name: '服务匹配' })
     pushLog('INFO', '开始服务匹配')
-    const enScenario = enhanceForStage(
-      dk,
-      SIMULATION_ENHANCEMENT_RULES[SIMULATION_STAGES.scenarioParsing],
-      stageCtxBase
+    const enScenario = simulationBuildMockEnhancementRecord(
+      mockDomain,
+      SIMULATION_BUILD_MOCK_STAGE.scenarioParsing
     )
     session.enhancements.push(enScenario)
     pushLog(
@@ -210,10 +206,10 @@ async function runStream(sessionId, emit) {
       emit('phase', { phase, status: 'done' })
     }
 
-    const enPlanning = enhanceForStage(dk, SIMULATION_ENHANCEMENT_RULES[SIMULATION_STAGES.planning], {
-      ...stageCtxBase,
-      iterationIndex: iteration
-    })
+    const enPlanning = simulationBuildMockEnhancementRecord(
+      mockDomain,
+      SIMULATION_BUILD_MOCK_STAGE.planning
+    )
     session.enhancements.push(enPlanning)
     pushLog(
       'INFO',
@@ -226,10 +222,9 @@ async function runStream(sessionId, emit) {
     await runPhase('logic')
     pushLog('SUCCESS', '逻辑仿真: 业务逻辑正常')
 
-    const enVerify = enhanceForStage(
-      dk,
-      SIMULATION_ENHANCEMENT_RULES[SIMULATION_STAGES.verification],
-      { ...stageCtxBase, iterationIndex: iteration }
+    const enVerify = simulationBuildMockEnhancementRecord(
+      mockDomain,
+      SIMULATION_BUILD_MOCK_STAGE.verification
     )
     session.enhancements.push(enVerify)
     pushLog(
@@ -293,7 +288,6 @@ async function runStream(sessionId, emit) {
       scenarioDescription: body.scenarioDescription,
       appName: body.appName,
       domain: body.domain,
-      domainKnowledge: body.domainKnowledge,
       enhancements: session.enhancements || []
     }
 

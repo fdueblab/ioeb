@@ -78,7 +78,7 @@
 - [x] **唯一来源在 Micro-Agent**：`workspace/skills/domain_*/SKILL.md`（每个领域一份 Markdown，含术语、约束、编排建议、合规说明）
 - [x] **编排器自动加载**：`SimulationOrchestrator` 按请求中的 `domain` 字段，通过 `Agent.load_skill()` 将领域知识写入 Planner / Verifier 的 system prompt
 - [x] **前端只传标识**：`buildStartPayload` 仅发送 `domain` 字符串，不再组装 `domainKnowledge`
-- [x] **前端 `src/domain/`**：profiles / KnowledgeRegistry / KnowledgeEnhancer / simulationStages 仅供进程内 mock 离线演示使用，不参与真实仿真链路
+- [x] **进程内 mock**：三阶段领域增强文案集中在 `src/mock/data/simulation_builder_data.js`（`SIMULATION_BUILD_MOCK_ENHANCEMENTS`），`simulation_builder_inmemory.js` 按 `body.domain` 读取；与真链路无关
 
 ### 2.2 当前可运行状态
 
@@ -873,3 +873,4 @@ init(nodes)     // 初始化；父级在展示嵌入区后于 $nextTick 调用
 | 2026-04-10 | v3.8 | `build-design4llm.md` 细化：本仓库 `VUE_APP_*`、simulation_builder 与 Agent 请求分流、ioeb_backend 中建议文件路径、Micro-Agent 被调用方式、`/api/api` 路径注意 |
 | 2026-04-10 | v3.9 | `build-design4llm.md`：明确 **ioeb_backend 不调用 Micro-Agent**；智能体均为 **前端直连** `VUE_APP_AGENT_BASE_URL`（例：`smart_chat`、`meta_app_builder`）；仿真接入 Agent 的扩展方式写为前端侧 |
 | 2026-04-29 | v4.0 | **真实双 Agent 实现上线**：SimulationOrchestrator（Planner+Verifier）、FileTraceStore 轨迹持久化、仿真路由直连 Micro-Agent、smart_chat 多轮 session；更新 §2 当前状态；新增 §12 傻瓜式研究路线 |
+| 2026-05-06 | v4.1 | 真链路领域知识由 Micro-Agent `domain_*` Skill 注入；进程内 mock 的领域增强文案并入 `simulation_builder_data.js`；删除已无引用的 `src/domain/` 与 `simulationStages.js` |
