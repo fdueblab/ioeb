@@ -41,7 +41,7 @@
 
 | 文件 | 变更 |
 |------|------|
-| `src/api/simulation_builder.js` | `SIMULATION_USE_MOCK = false`；HTTP 客户端 URL 改指 `AGENT_BASE_URL` |
+| `src/api/simulation_builder.js` | 按 `topicDemo.js`：展示名含「课题」→ 进程内 mock，否则 `VUE_APP_AGENT_BASE_URL` |
 | `src/components/ef/smart_chat.vue` | 新增 `agentSessionId`，支持多轮对话 session |
 | `src/utils/request.js` | `streamAgent` 新增 `onSessionInfo` 回调，捕获 session_id |
 

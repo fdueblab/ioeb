@@ -448,7 +448,7 @@ Appendix（任务集详情、完整轨迹样例）
 
 ### 第 1 周：仿真会话 + SSE 打通 ✅ 已完成
 
-> **已实现**（2026-04-29）：`SimulationOrchestrator` 4 阶段 + 双 Agent（Planner/Verifier）+ SSE 命名事件 + `FileTraceStore` 轨迹持久化。前端 `SIMULATION_USE_MOCK=false`，直连 Micro-Agent。详见 `simulation-build-design.md` §2.1。
+> **已实现**（2026-04-29）：`SimulationOrchestrator` 4 阶段 + 双 Agent（Planner/Verifier）+ SSE 命名事件 + `FileTraceStore` 轨迹持久化。前端对展示名含演示关键字（见 `@/config/topicDemo`）的元应用走进程内模拟，否则直连 Micro-Agent（`SIMULATION_USE_MOCK` 常量已移除）。详见 `simulation-build-design.md` §2.1。
 
 ### 第 2 周：CoW 沙箱代理
 

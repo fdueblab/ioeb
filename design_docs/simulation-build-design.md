@@ -850,7 +850,7 @@ init(nodes)     // 初始化；父级在展示嵌入区后于 $nextTick 调用
 | 轨迹存在哪 | `Micro-Agent/data/traces/*.json` |
 | 研究模式策略 | 前端 `simulation_builder.vue` → `strategy` 对象 |
 | SSE 事件格式 | `build-design4llm.md` §5 |
-| 前端用 mock 还是真实 | `src/api/simulation_builder.js` → `SIMULATION_USE_MOCK` |
+| 前端 mock / 真实分流 | `@/config/topicDemo` 关键字 + `src/api/simulation_builder.js`（按 `appName` 选进程内或 Micro-Agent） |
 
 ---
 
@@ -874,3 +874,4 @@ init(nodes)     // 初始化；父级在展示嵌入区后于 $nextTick 调用
 | 2026-04-10 | v3.9 | `build-design4llm.md`：明确 **ioeb_backend 不调用 Micro-Agent**；智能体均为 **前端直连** `VUE_APP_AGENT_BASE_URL`（例：`smart_chat`、`meta_app_builder`）；仿真接入 Agent 的扩展方式写为前端侧 |
 | 2026-04-29 | v4.0 | **真实双 Agent 实现上线**：SimulationOrchestrator（Planner+Verifier）、FileTraceStore 轨迹持久化、仿真路由直连 Micro-Agent、smart_chat 多轮 session；更新 §2 当前状态；新增 §12 傻瓜式研究路线 |
 | 2026-05-06 | v4.1 | 真链路领域知识由 Micro-Agent `domain_*` Skill 注入；进程内 mock 的领域增强文案并入 `simulation_builder_data.js`；删除已无引用的 `src/domain/` 与 `simulationStages.js` |
+| 2026-05-06 | v4.2 | 仿真 API：`simulation_builder.js` 按 `topicDemo` 与 `appName` 分流进程内 mock / Micro-Agent；移除 `SIMULATION_USE_MOCK` |

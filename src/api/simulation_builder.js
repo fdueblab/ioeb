@@ -1,32 +1,25 @@
 /**
  * simulation_builder · 前端 API 统一入口（与 `simulation_builder.vue` 配套）
  *
- * 【设计】虚拟（进程内）与真实（HTTP + SSE）只在「选择实现」处分叉一次，
- * 对外导出函数签名不变，组件只 import 本文件。
+ * 【分流】元应用展示名 `appName`（与画布 `data.preName` 一致）是否含演示关键字
+ * `TOPIC_DEMO_KEYWORD`（见 `@/config/topicDemo`）决定：
+ * - **含关键字** → 进程内模拟（不请求 Micro-Agent）
+ * - **不含** → HTTP + EventSource → `VUE_APP_AGENT_BASE_URL`
  *
- * 切换：`SIMULATION_USE_MOCK`。对接真实后端时置为 false，并保证 `VUE_APP_API_BASE_URL` 指向可访问的网关。
+ * `fetchSimulationRecords` / `compareSimulationRecords` 须传入同一上下文的 `appName`（与 prop 一致），以便对比面板与真链路列表分流正确。
  */
 import { simulationBuildInMemory } from '@/mock/services/simulation_builder_inmemory'
+import { matchesTopicDemoKeyword } from '@/config/topicDemo'
 
 const AGENT_BASE_URL = process.env.VUE_APP_AGENT_BASE_URL || ''
 
-/** 为 false 时使用 HTTP + EventSource 连接 Micro-Agent */
-export const SIMULATION_USE_MOCK = false
+/** 由「含课题关键字的 start」创建的 sessionId，subscribe/cancel 须走同一实现 */
+const memoryRouteSessionIds = new Set()
 
-/** SSE 自定义事件名（与后端约定一致） */
-const SIMULATION_SSE_EVENTS = [
-  'step',
-  'iteration',
-  'phase',
-  'issue',
-  'service',
-  'log',
-  'metrics',
-  'progress',
-  'complete'
-]
+function useMemoryForAppName(appName) {
+  return matchesTopicDemoKeyword(appName)
+}
 
-/** 进程内实现：与 createHttpSimulationBuildClient 对外方法一致（结果仅通过 SSE complete 送达） */
 function createMemorySimulationBuildClient() {
   return {
     startSimulation(payload) {
@@ -71,7 +64,6 @@ async function agentFetch(path, options = {}) {
   return resp.json()
 }
 
-/** HTTP + SSE 实现（连接 Micro-Agent） */
 function createHttpSimulationBuildClient() {
   return {
     startSimulation(payload) {
@@ -84,7 +76,10 @@ function createHttpSimulationBuildClient() {
       return agentFetch('/api/simulation/records')
     },
     compareSimulationRecords(recordIds) {
-      return agentFetch('/api/simulation/records/compare', { method: 'POST', body: { recordIds } })
+      return agentFetch('/api/simulation/records/compare', {
+        method: 'POST',
+        body: { recordIds }
+      })
     },
     subscribeSimulationStream(sessionId, streamUrl, handlers = {}) {
       const url = streamUrl.startsWith('http')
@@ -100,7 +95,18 @@ function createHttpSimulationBuildClient() {
           }
         })
       }
-      SIMULATION_SSE_EVENTS.forEach((name) => {
+      const events = [
+        'step',
+        'iteration',
+        'phase',
+        'issue',
+        'service',
+        'log',
+        'metrics',
+        'progress',
+        'complete'
+      ]
+      events.forEach((name) => {
         if (handlers[name]) on(name, handlers[name])
       })
       es.onerror = () => {
@@ -114,35 +120,58 @@ function createHttpSimulationBuildClient() {
   }
 }
 
-const simulationBuildClient = SIMULATION_USE_MOCK
-  ? createMemorySimulationBuildClient()
-  : createHttpSimulationBuildClient()
-
 /** @param {Record<string, unknown>} payload */
 export function startSimulation(payload) {
-  return simulationBuildClient.startSimulation(payload)
+  const memory = useMemoryForAppName(payload && payload.appName)
+  const client = memory
+    ? createMemorySimulationBuildClient()
+    : createHttpSimulationBuildClient()
+  return client.startSimulation(payload).then((res) => {
+    if (memory && res && res.sessionId) memoryRouteSessionIds.add(res.sessionId)
+    return res
+  })
 }
 
 export function cancelSimulation(sessionId) {
-  return simulationBuildClient.cancelSimulation(sessionId)
-}
-
-export function fetchSimulationRecords() {
-  return simulationBuildClient.fetchSimulationRecords()
-}
-
-export function compareSimulationRecords(recordIds) {
-  return simulationBuildClient.compareSimulationRecords(recordIds)
+  const memory = memoryRouteSessionIds.has(sessionId)
+  const client = memory
+    ? createMemorySimulationBuildClient()
+    : createHttpSimulationBuildClient()
+  const p = client.cancelSimulation(sessionId)
+  memoryRouteSessionIds.delete(sessionId)
+  return p
 }
 
 /**
- * 订阅仿真事件流
- * @returns {() => void} 取消订阅
+ * @param {string} [appName] 与仿真面板 prop 一致；缺省则走 HTTP（真实记录列表）
+ */
+export function fetchSimulationRecords(appName) {
+  const memory = useMemoryForAppName(appName)
+  const client = memory
+    ? createMemorySimulationBuildClient()
+    : createHttpSimulationBuildClient()
+  return client.fetchSimulationRecords()
+}
+
+/**
+ * @param {string[]} recordIds
+ * @param {string} [appName] 与仿真面板 prop 一致
+ */
+export function compareSimulationRecords(recordIds, appName) {
+  const memory = useMemoryForAppName(appName)
+  const client = memory
+    ? createMemorySimulationBuildClient()
+    : createHttpSimulationBuildClient()
+  return client.compareSimulationRecords(recordIds)
+}
+
+/**
+ * @returns {() => void} 取消订阅（EventSource close / 停止 inmemory emit）
  */
 export function subscribeSimulationStream(sessionId, streamUrl, handlers) {
-  return simulationBuildClient.subscribeSimulationStream(
-    sessionId,
-    streamUrl,
-    handlers
-  )
+  const memory = memoryRouteSessionIds.has(sessionId)
+  const client = memory
+    ? createMemorySimulationBuildClient()
+    : createHttpSimulationBuildClient()
+  return client.subscribeSimulationStream(sessionId, streamUrl, handlers)
 }
