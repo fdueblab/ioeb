@@ -60,7 +60,191 @@
                 </a-upload>
               </a-form-item>
             </a-col>
+            <a-col :span="12">
+              <a-form-item>
+                <span slot="label">数据集文件<span class="label-optional">（选填）</span></span>
+                <div class="dataset-upload-row">
+                  <a-upload
+                    accept=".csv,.xlsx,.xls,.json,.txt,.pdf"
+                    :file-list="datasetFiles"
+                    :remove="removeDatasetFile"
+                    :customRequest="customDatasetFileChose"
+                    :multiple="false">
+                    <a-button icon="database"> 选择数据集 </a-button>
+                  </a-upload>
+                  <span class="upload-hint">支持 CSV / Excel / JSON / TXT / PDF 格式的数据集文件</span>
+                </div>
+              </a-form-item>
+            </a-col>
           </a-row>
+
+          <!-- 算法类别选择 -->
+          <a-row :gutter="20" style="margin-top: 8px;">
+            <a-col :span="8">
+              <a-form-item>
+                <span slot="label">算法类别<span class="label-optional">（选填）</span></span>
+                <a-select
+                  v-model="algorithmCategory"
+                  placeholder="请选择算法类别"
+                  allow-clear
+                  @change="onCategoryChange"
+                >
+                  <a-select-option v-for="(item, index) in algorithmCategoryOptions" :key="index" :value="item.code">
+                    {{ item.text }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+          </a-row>
+
+          <!-- 类别特定参数面板 -->
+          <a-collapse
+            v-if="currentCategoryConfig"
+            :bordered="false"
+            :activeKey="categoryParamsPanelActive"
+            @change="(keys) => categoryParamsPanelActive = keys"
+            class="spec-collapse"
+            style="margin-top: 12px;"
+          >
+            <a-collapse-panel key="params" :header="currentCategoryConfig.label + '（选填）'">
+              <a-row :gutter="20">
+                <template v-for="field in currentCategoryConfig.fields">
+                  <a-col :span="field.type === 'constraint_group' ? 24 : 8" :key="field.key">
+
+                    <!-- 多选下拉 -->
+                    <a-form-item v-if="field.type === 'multi_select'">
+                      <span slot="label">{{ field.label }}</span>
+                      <a-select
+                        :value="getCategoryFieldValue(field.key, [])"
+                        @change="(val) => setCategoryFieldValue(field.key, val)"
+                        mode="multiple"
+                        :placeholder="'请选择' + field.label"
+                        allow-clear
+                      >
+                        <a-select-option
+                          v-for="opt in (categoryDictCache[field.dictCategory] || [])"
+                          :key="opt.code"
+                          :value="opt.code"
+                        >
+                          {{ opt.text }}
+                        </a-select-option>
+                      </a-select>
+                    </a-form-item>
+
+                    <!-- 单选下拉 -->
+                    <a-form-item v-else-if="field.type === 'single_select'">
+                      <span slot="label">{{ field.label }}</span>
+                      <a-select
+                        :value="getCategoryFieldValue(field.key, undefined)"
+                        @change="(val) => setCategoryFieldValue(field.key, val)"
+                        :placeholder="'请选择' + field.label"
+                        allow-clear
+                      >
+                        <a-select-option
+                          v-for="opt in (categoryDictCache[field.dictCategory] || [])"
+                          :key="opt.code"
+                          :value="opt.code"
+                        >
+                          {{ opt.text }}
+                        </a-select-option>
+                      </a-select>
+                    </a-form-item>
+
+                    <!-- 标签输入 -->
+                    <a-form-item v-else-if="field.type === 'tag_input'">
+                      <span slot="label">{{ field.label }}</span>
+                      <div class="label-tags-container">
+                        <a-tag
+                          v-for="(tag, idx) in (categoryParams.labels || [])"
+                          :key="idx"
+                          closable
+                          @close="removeLabel(idx)"
+                          color="blue"
+                        >
+                          {{ tag }}
+                        </a-tag>
+                        <a-input
+                          v-if="labelInputVisible"
+                          ref="labelInput"
+                          size="small"
+                          style="width: 120px;"
+                          v-model="labelInputValue"
+                          @blur="handleLabelInputConfirm"
+                          @keyup.enter="handleLabelInputConfirm"
+                          placeholder="输入标签名"
+                        />
+                        <a-tag v-else style="border-style: dashed; cursor: pointer;" @click="showLabelInput">
+                          <a-icon type="plus" /> 添加标签
+                        </a-tag>
+                      </div>
+                    </a-form-item>
+
+                    <!-- 开关 -->
+                    <a-form-item v-else-if="field.type === 'switch'">
+                      <span slot="label">{{ field.label }}</span>
+                      <a-switch
+                        :checked="getCategoryFieldValue(field.key, false)"
+                        @change="(val) => setCategoryFieldValue(field.key, val)"
+                      />
+                    </a-form-item>
+
+                    <!-- 文本输入 -->
+                    <a-form-item v-else-if="field.type === 'text_input'">
+                      <span slot="label">{{ field.label }}</span>
+                      <a-input
+                        :value="getCategoryFieldValue(field.key, '')"
+                        @change="(e) => setCategoryFieldValue(field.key, e.target.value)"
+                        :placeholder="field.placeholder || ''"
+                      />
+                    </a-form-item>
+
+                    <!-- 数字输入 -->
+                    <a-form-item v-else-if="field.type === 'number_input'">
+                      <span slot="label">{{ field.label }}</span>
+                      <a-input-number
+                        :value="getCategoryFieldValue(field.key, undefined)"
+                        @change="(val) => setCategoryFieldValue(field.key, val)"
+                        :min="field.min !== undefined ? field.min : 0"
+                        :placeholder="field.placeholder || ''"
+                        style="width: 100%;"
+                      />
+                    </a-form-item>
+
+                    <!-- 技术约束复选框组 -->
+                    <a-form-item v-else-if="field.type === 'constraint_group'">
+                      <span slot="label">{{ field.label }}</span>
+                      <a-checkbox-group
+                        :value="getCategoryFieldValue(field.key, [])"
+                        @change="(val) => setCategoryFieldValue(field.key, val)"
+                        class="constraints-group"
+                      >
+                        <a-row :gutter="[16, 8]">
+                          <a-col
+                            :span="6"
+                            v-for="opt in (categoryDictCache[field.dictCategory] || [])"
+                            :key="opt.code"
+                          >
+                            <a-checkbox :value="opt.code">{{ opt.text }}</a-checkbox>
+                          </a-col>
+                          <a-col :span="12">
+                            <a-checkbox value="custom_constraint">其他约束：</a-checkbox>
+                            <a-input
+                              v-if="(getCategoryFieldValue(field.key, []) || []).includes('custom_constraint')"
+                              v-model="customConstraintText"
+                              size="small"
+                              style="width: 280px; margin-left: 8px;"
+                              placeholder="请输入自定义约束"
+                            />
+                          </a-col>
+                        </a-row>
+                      </a-checkbox-group>
+                    </a-form-item>
+
+                  </a-col>
+                </template>
+              </a-row>
+            </a-collapse-panel>
+          </a-collapse>
 
           <a-row :gutter="20" style="margin-top: 16px;">
             <a-col :span="24">
@@ -263,6 +447,165 @@ import { streamAgent } from '@/utils/request'
 import dictionaryCache from '@/utils/dictionaryCache'
 import { uploadScenarioGeneratedAlgorithm } from '@/api/service'
 
+const ALGORITHM_CATEGORY_FALLBACK = [
+  { code: 'classification', text: '分类算法' },
+  { code: 'detection', text: '检测算法' },
+  { code: 'regression', text: '回归/预测算法' },
+  { code: 'clustering', text: '聚类算法' },
+  { code: 'generation', text: '生成算法' },
+  { code: 'recommendation', text: '推荐算法' },
+]
+
+const ALGO_DICT_FALLBACK = {
+  algo_input_type: [
+    { code: 'video_url', text: '视频 URL' },
+    { code: 'image_url', text: '图像 URL' },
+    { code: 'text', text: '文本' },
+    { code: 'file_path', text: '文件路径' },
+    { code: 'api_response', text: 'API 响应' },
+    { code: 'binary_data', text: '二进制数据' },
+    { code: 'structured_data', text: '结构化数据' },
+    { code: 'time_series', text: '时序数据' },
+    { code: 'custom', text: '自定义' },
+  ],
+  algo_constraint: [
+    { code: 'no_llm', text: '不使用 LLM / 大语言模型' },
+    { code: 'no_training', text: '不需要训练或微调' },
+    { code: 'no_gpu', text: '不需要 GPU' },
+    { code: 'pretrained_only', text: '仅使用预训练模型（推理模式）' },
+    { code: 'rule_based', text: '纯规则 / 启发式方法' },
+    { code: 'single_file', text: '单文件实现' },
+  ],
+  algo_classification_output_type: [
+    { code: 'classification_label', text: '分类标签' },
+    { code: 'confidence_list', text: '置信度列表' },
+    { code: 'json_structure', text: 'JSON 结构' },
+    { code: 'text_report', text: '文本报告' },
+  ],
+  algo_detection_target_type: [
+    { code: 'object', text: '物体检测' },
+    { code: 'anomaly', text: '异常值检测' },
+    { code: 'event', text: '事件检测' },
+    { code: 'defect', text: '缺陷检测' },
+    { code: 'face', text: '人脸检测' },
+    { code: 'text_region', text: '文本区域检测' },
+  ],
+  algo_detection_output_format: [
+    { code: 'bounding_box', text: '边界框坐标' },
+    { code: 'confidence_score', text: '置信度分数' },
+    { code: 'anomaly_score', text: '异常分数' },
+    { code: 'detection_report', text: '检测报告' },
+  ],
+  algo_regression_time_granularity: [
+    { code: 'second', text: '秒级' },
+    { code: 'minute', text: '分钟级' },
+    { code: 'hour', text: '小时级' },
+    { code: 'day', text: '天级' },
+    { code: 'week', text: '周级' },
+    { code: 'month', text: '月级' },
+    { code: 'none', text: '不涉及时序' },
+  ],
+  algo_regression_metric: [
+    { code: 'mae', text: 'MAE' },
+    { code: 'rmse', text: 'RMSE' },
+    { code: 'r2', text: 'R²' },
+    { code: 'mape', text: 'MAPE' },
+  ],
+  algo_clustering_method: [
+    { code: 'distance_based', text: '基于距离' },
+    { code: 'density_based', text: '基于密度' },
+    { code: 'hierarchical', text: '基于层次' },
+    { code: 'model_based', text: '基于模型' },
+  ],
+  algo_clustering_output_format: [
+    { code: 'cluster_labels', text: '簇标签' },
+    { code: 'cluster_centers', text: '聚类中心' },
+    { code: 'visualization', text: '可视化图表' },
+    { code: 'cluster_report', text: '聚类报告' },
+  ],
+  algo_generation_target_type: [
+    { code: 'text', text: '文本' },
+    { code: 'image', text: '图像' },
+    { code: 'audio', text: '音频' },
+    { code: 'structured_data', text: '结构化数据' },
+    { code: 'code', text: '代码' },
+  ],
+  algo_generation_quality: [
+    { code: 'diversity_first', text: '多样性优先' },
+    { code: 'quality_first', text: '质量优先' },
+    { code: 'speed_first', text: '速度优先' },
+  ],
+  algo_recommendation_strategy: [
+    { code: 'collaborative_filtering', text: '协同过滤' },
+    { code: 'content_based', text: '基于内容' },
+    { code: 'hybrid', text: '混合推荐' },
+    { code: 'knowledge_graph', text: '基于知识图谱' },
+  ],
+}
+
+const CATEGORY_PARAMS_CONFIG = {
+  classification: {
+    label: '分类算法参数',
+    fields: [
+      { key: 'inputTypes', label: '输入数据类型', type: 'multi_select', dictCategory: 'algo_input_type', required: false },
+      { key: 'outputTypes', label: '输出数据类型', type: 'multi_select', dictCategory: 'algo_classification_output_type', required: false },
+      { key: 'labels', label: '分类标签定义', type: 'tag_input', required: false },
+      { key: 'multiLabel', label: '是否多标签分类', type: 'switch', required: false },
+      { key: 'constraints', label: '技术约束', type: 'constraint_group', dictCategory: 'algo_constraint', required: false },
+    ]
+  },
+  detection: {
+    label: '检测算法参数',
+    fields: [
+      { key: 'inputTypes', label: '输入数据类型', type: 'multi_select', dictCategory: 'algo_input_type', required: false },
+      { key: 'targetTypes', label: '检测目标类型', type: 'multi_select', dictCategory: 'algo_detection_target_type', required: false },
+      { key: 'outputFormats', label: '输出格式', type: 'multi_select', dictCategory: 'algo_detection_output_format', required: false },
+      { key: 'realtime', label: '是否需要实时检测', type: 'switch', required: false },
+      { key: 'constraints', label: '技术约束', type: 'constraint_group', dictCategory: 'algo_constraint', required: false },
+    ]
+  },
+  regression: {
+    label: '回归/预测算法参数',
+    fields: [
+      { key: 'inputTypes', label: '输入数据类型', type: 'multi_select', dictCategory: 'algo_input_type', required: false },
+      { key: 'predictionTarget', label: '预测目标', type: 'text_input', placeholder: '请描述预测的目标变量', required: false },
+      { key: 'timeGranularity', label: '时间粒度', type: 'single_select', dictCategory: 'algo_regression_time_granularity', required: false },
+      { key: 'metrics', label: '评估指标偏好', type: 'multi_select', dictCategory: 'algo_regression_metric', required: false },
+      { key: 'constraints', label: '技术约束', type: 'constraint_group', dictCategory: 'algo_constraint', required: false },
+    ]
+  },
+  clustering: {
+    label: '聚类算法参数',
+    fields: [
+      { key: 'inputTypes', label: '输入数据类型', type: 'multi_select', dictCategory: 'algo_input_type', required: false },
+      { key: 'clusterCount', label: '期望聚类数', type: 'number_input', placeholder: '0 表示自动确定', min: 0, required: false },
+      { key: 'methods', label: '聚类方法偏好', type: 'multi_select', dictCategory: 'algo_clustering_method', required: false },
+      { key: 'outputFormats', label: '输出格式', type: 'multi_select', dictCategory: 'algo_clustering_output_format', required: false },
+      { key: 'constraints', label: '技术约束', type: 'constraint_group', dictCategory: 'algo_constraint', required: false },
+    ]
+  },
+  generation: {
+    label: '生成算法参数',
+    fields: [
+      { key: 'inputTypes', label: '输入数据类型', type: 'multi_select', dictCategory: 'algo_input_type', required: false },
+      { key: 'targetTypes', label: '生成目标类型', type: 'multi_select', dictCategory: 'algo_generation_target_type', required: false },
+      { key: 'generateCount', label: '生成数量控制', type: 'number_input', placeholder: '单次生成数量', min: 1, required: false },
+      { key: 'qualityPreference', label: '质量控制偏好', type: 'multi_select', dictCategory: 'algo_generation_quality', required: false },
+      { key: 'constraints', label: '技术约束', type: 'constraint_group', dictCategory: 'algo_constraint', required: false },
+    ]
+  },
+  recommendation: {
+    label: '推荐算法参数',
+    fields: [
+      { key: 'inputTypes', label: '输入数据类型', type: 'multi_select', dictCategory: 'algo_input_type', required: false },
+      { key: 'recommendTarget', label: '推荐目标', type: 'text_input', placeholder: '请描述推荐的目标对象', required: false },
+      { key: 'strategies', label: '推荐策略偏好', type: 'multi_select', dictCategory: 'algo_recommendation_strategy', required: false },
+      { key: 'topK', label: 'Top-K 推荐数量', type: 'number_input', placeholder: '返回的推荐结果数', min: 1, required: false },
+      { key: 'constraints', label: '技术约束', type: 'constraint_group', dictCategory: 'algo_constraint', required: false },
+    ]
+  }
+}
+
 export default {
   name: 'GenericScenarioDev',
   props: {
@@ -276,6 +619,8 @@ export default {
       domainTitle: '',
       programFiles: [],
       uploadFiles: [],
+      datasetFiles: [],
+      uploadDatasetFiles: [],
       freeNarrative: '',
       form: {
         serviceName: undefined
@@ -285,6 +630,14 @@ export default {
         scenario: undefined,
         technology: undefined
       },
+      algorithmCategory: undefined,
+      algorithmCategoryOptions: [],
+      categoryParams: {},
+      categoryDictCache: {},
+      labelInputVisible: false,
+      labelInputValue: '',
+      customConstraintText: '',
+      categoryParamsPanelActive: ['params'],
       industryOptions: [],
       scenarioOptions: [],
       technologyOptions: [],
@@ -319,6 +672,10 @@ export default {
     },
     testPassedCount() {
       return this.generateResult.testResults.filter(t => t.status === 'passed').length
+    },
+    currentCategoryConfig() {
+      if (!this.algorithmCategory) return null
+      return CATEGORY_PARAMS_CONFIG[this.algorithmCategory] || null
     }
   },
   created() {
@@ -339,6 +696,10 @@ export default {
         this.scenarioOptions = []
         this.technologyOptions = []
       }
+      const catFromApi = await dictionaryCache.loadDict('algorithm_category').catch(() => [])
+      this.algorithmCategoryOptions = (catFromApi && catFromApi.length > 0)
+        ? catFromApi
+        : ALGORITHM_CATEGORY_FALLBACK
     },
 
     customProgramFilesChose(options) {
@@ -356,6 +717,82 @@ export default {
     removeProgramFile() {
       this.uploadFiles = []
       this.programFiles = []
+    },
+
+    customDatasetFileChose(options) {
+      const { file } = options
+      if (!file) return false
+      this.uploadDatasetFiles = [file]
+      this.datasetFiles = [{
+        uid: file.uid,
+        name: file.name,
+        status: 'done',
+        url: URL.createObjectURL(file)
+      }]
+    },
+
+    removeDatasetFile() {
+      this.uploadDatasetFiles = []
+      this.datasetFiles = []
+    },
+
+    async onCategoryChange(category) {
+      this.categoryParams = {}
+      this.customConstraintText = ''
+      this.labelInputVisible = false
+      this.labelInputValue = ''
+      if (!category) return
+      const config = CATEGORY_PARAMS_CONFIG[category]
+      if (!config) return
+      for (const field of config.fields) {
+        if (field.dictCategory && !this.categoryDictCache[field.dictCategory]) {
+          let items = []
+          try {
+            items = await dictionaryCache.loadDict(field.dictCategory) || []
+          } catch (e) {
+            console.warn(`字典 API 不可用 (${field.dictCategory})，使用本地 fallback`)
+          }
+          if (!items || items.length === 0) {
+            items = ALGO_DICT_FALLBACK[field.dictCategory] || []
+          }
+          this.categoryDictCache[field.dictCategory] = items
+        }
+      }
+      this.categoryDictCache = { ...this.categoryDictCache }
+    },
+
+    getCategoryFieldValue(key, defaultVal) {
+      return this.categoryParams[key] !== undefined ? this.categoryParams[key] : defaultVal
+    },
+
+    setCategoryFieldValue(key, value) {
+      this.$set(this.categoryParams, key, value)
+    },
+
+    removeLabel(idx) {
+      const labels = this.categoryParams.labels || []
+      labels.splice(idx, 1)
+      this.$set(this.categoryParams, 'labels', [...labels])
+    },
+
+    showLabelInput() {
+      this.labelInputVisible = true
+      this.$nextTick(() => {
+        if (this.$refs.labelInput) {
+          this.$refs.labelInput.focus()
+        }
+      })
+    },
+
+    handleLabelInputConfirm() {
+      const val = (this.labelInputValue || '').trim()
+      const labels = this.categoryParams.labels || []
+      if (val && !labels.includes(val)) {
+        labels.push(val)
+        this.$set(this.categoryParams, 'labels', [...labels])
+      }
+      this.labelInputVisible = false
+      this.labelInputValue = ''
     },
 
     onGenerateClick() {
@@ -401,6 +838,25 @@ export default {
       if (this.uploadFiles.length > 0) {
         const rawFile = this.uploadFiles[0]
         formData.append('file', rawFile.originFileObj || rawFile)
+      }
+      if (this.uploadDatasetFiles.length > 0) {
+        const rawDataset = this.uploadDatasetFiles[0]
+        formData.append('dataset_file', rawDataset.originFileObj || rawDataset)
+      }
+      if (this.algorithmCategory) {
+        formData.append('algorithm_category', this.algorithmCategory)
+      }
+      if (this.algorithmCategory && Object.keys(this.categoryParams).length > 0) {
+        const params = { ...this.categoryParams }
+        if (Array.isArray(params.constraints) && params.constraints.length > 0) {
+          params.constraints = params.constraints.map(c => {
+            if (c === 'custom_constraint' && this.customConstraintText) {
+              return 'custom: ' + this.customConstraintText
+            }
+            return c
+          })
+        }
+        formData.append('category_params', JSON.stringify(params))
       }
 
       streamAgent('/api/agent/aml_auto_generate', formData, {
@@ -589,6 +1045,14 @@ export default {
           this.programInfo = { industry: undefined, scenario: undefined, technology: undefined }
           this.programFiles = []
           this.uploadFiles = []
+          this.datasetFiles = []
+          this.uploadDatasetFiles = []
+          this.algorithmCategory = undefined
+          this.categoryParams = {}
+          this.customConstraintText = ''
+          this.labelInputVisible = false
+          this.labelInputValue = ''
+          this.categoryParamsPanelActive = ['params']
           this.generateLoading = false
           this.generateProgress = {
             show: false,
@@ -650,6 +1114,50 @@ export default {
 .narrative-textarea {
   width: 100%;
   max-width: 960px;
+}
+
+.dataset-upload-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 32px;
+  white-space: nowrap;
+}
+
+.spec-collapse {
+  background: transparent;
+
+  /deep/ .ant-collapse-header {
+    font-weight: 600;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.85);
+    background: transparent;
+  }
+
+  /deep/ .ant-collapse-item {
+    border-bottom: none;
+  }
+
+  /deep/ .ant-collapse-content-box {
+    padding-top: 8px;
+  }
+}
+
+.label-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  min-height: 32px;
+}
+
+.constraints-group {
+  width: 100%;
 }
 
 // 代码预览
