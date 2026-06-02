@@ -613,7 +613,7 @@ export default {
     },
     /**
      * 元应用当前展示名称（画布 `data.preName`，含用户在元应用详情中的修改）。
-     * 演示分流见 `meta_apps_data`（课题→inmemory，MCP演示→9017）。
+     * 演示分流见 `meta_apps_data`（课题→inmemory，【本地MCP】(n)→9017）。
      */
     appName: {
       type: String,
@@ -858,7 +858,7 @@ export default {
     buildSimulationStrategy() {
       const base =
         this.internalMode === 'research' ? { ...this.strategy } : {}
-      if (resolveScheduleDemoKind(this.appName) === SCHEDULE_DEMO_KIND.MCP) {
+      if (resolveScheduleDemoKind(this.appName) === SCHEDULE_DEMO_KIND.LOCAL_MCP) {
         return { ...base, minIterations: 2 }
       }
       return Object.keys(base).length ? base : undefined

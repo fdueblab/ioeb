@@ -1,7 +1,7 @@
 # 垂域元应用仿真构建机制
 
 > **读者**：自用设计文档——**可**写产品叙事、交互与线框、前端工程落点及实现路径（目录/模块级）；**与后端可对齐的 HTTP/SSE 字段与路由** 以 **`build-design4llm.md`** 为唯一契约，本文引用而不另抄一份协议表。  
-> **版本**: v4.0 | **更新**: 2026-04-29 | **状态**: Micro-Agent 已实现真实双 Agent 仿真编排（Planner + Verifier）+ 轨迹持久化 + SSE 命名事件流；前端直连 Micro-Agent；smart_chat 多轮对话；ioeb_backend 仅系统后端。**后端 HTTP/SSE 接入契约** 以 `design_docs/build-design4llm.md` 为准。
+> **版本**: v4.3 | **更新**: 2026-06-03 | **状态**: Micro-Agent 已实现真实双 Agent 仿真编排（Planner + Verifier）+ 轨迹持久化 + SSE 命名事件流；前端直连 Micro-Agent；smart_chat 多轮对话；ioeb_backend 仅系统后端。**后端 HTTP/SSE 接入契约** 以 `design_docs/build-design4llm.md` 为准。
 
 ---
 
@@ -79,6 +79,18 @@
 - [x] **编排器自动加载**：`SimulationOrchestrator` 按请求中的 `domain` 字段，通过 `Agent.load_skill()` 将领域知识写入 Planner / Verifier 的 system prompt
 - [x] **前端只传标识**：`buildStartPayload` 仅发送 `domain` 字符串，不再组装 `domainKnowledge`
 - [x] **进程内 mock**：三阶段领域增强文案集中在 `src/mock/data/simulation_builder_data.js`（`SIMULATION_BUILD_MOCK_ENHANCEMENTS`），`simulation_builder_inmemory.js` 按 `body.domain` 读取；与真链路无关
+
+**SmartChat 演示与仿真分流**（`src/mock/data/meta_apps_data.js`）
+
+| 用户输入 / 元应用 `preName` | SmartChat | 仿真 API |
+|---------------------------|-----------|----------|
+| 含 **「课题」** | 进程内 mock 推荐（`getMetaAppNodes`） | **inmemory**（`simulation_builder_inmemory.js`） |
+| 含 **`【本地MCP】(n)`**（n 为画布节点数） | 本机 external-mcp 场景 flow；仅 **health** 垂域 | **Micro-Agent**（`VUE_APP_AGENT_BASE_URL`，真 MCP / 失败回退 Sandbox） |
+| 其他 | 可走 Agent API（若可用） | Micro-Agent |
+
+- **识别规则**：正则 `【本地MCP】\(\d+\)`（`LOCAL_MCP_MARK_RE`），与下拉样例前缀一致；`preName` 形如 `【本地MCP】(3) 肾功能减退肺炎患者用药`。
+- **样例场景**（health 下拉，均为临床叙述，非「全链路/五服务」类工程话术）：(1) 利奈唑胺给药、(1) SOFA、(1) 说明书查询、(1) 靶点 MDT、(2) 脓毒症评分+给药、(3) 肾衰肺炎三联、(5) 重症感染多学科（五类本机 MCP）。
+- **本机依赖**：节点 URL / stdio 命令指向 `workspace/fdueblab/external-mcp/`；仿真前需启动对应 MCP 进程。
 
 ### 2.2 当前可运行状态
 
@@ -850,7 +862,8 @@ init(nodes)     // 初始化；父级在展示嵌入区后于 $nextTick 调用
 | 轨迹存在哪 | `Micro-Agent/data/traces/*.json` |
 | 研究模式策略 | 前端 `simulation_builder.vue` → `strategy` 对象 |
 | SSE 事件格式 | `build-design4llm.md` §5 |
-| 前端 mock / 真实分流 | `@/config/topicDemo` 关键字 + `src/api/simulation_builder.js`（按 `appName` 选进程内或 Micro-Agent） |
+| 前端 mock / 真实分流 | `meta_apps_data.js`（「课题」/ `【本地MCP】(n)`）+ `simulation_builder.js` 的 `useMemorySimulation(appName)` |
+| SmartChat 本地 MCP 样例 | `meta_apps_data.js` → `LOCAL_MCP_SUGGESTIONS`、`LOCAL_MCP_SCENARIOS` |
 
 ---
 
@@ -874,4 +887,5 @@ init(nodes)     // 初始化；父级在展示嵌入区后于 $nextTick 调用
 | 2026-04-10 | v3.9 | `build-design4llm.md`：明确 **ioeb_backend 不调用 Micro-Agent**；智能体均为 **前端直连** `VUE_APP_AGENT_BASE_URL`（例：`smart_chat`、`meta_app_builder`）；仿真接入 Agent 的扩展方式写为前端侧 |
 | 2026-04-29 | v4.0 | **真实双 Agent 实现上线**：SimulationOrchestrator（Planner+Verifier）、FileTraceStore 轨迹持久化、仿真路由直连 Micro-Agent、smart_chat 多轮 session；更新 §2 当前状态；新增 §12 傻瓜式研究路线 |
 | 2026-05-06 | v4.1 | 真链路领域知识由 Micro-Agent `domain_*` Skill 注入；进程内 mock 的领域增强文案并入 `simulation_builder_data.js`；删除已无引用的 `src/domain/` 与 `simulationStages.js` |
-| 2026-05-06 | v4.2 | 仿真 API：`simulation_builder.js` 按 `topicDemo` 与 `appName` 分流进程内 mock / Micro-Agent；移除 `SIMULATION_USE_MOCK` |
+| 2026-05-06 | v4.2 | 仿真 API：`simulation_builder.js` 按 `appName` 分流进程内 mock / Micro-Agent；移除 `SIMULATION_USE_MOCK` |
+| 2026-06-03 | v4.3 | SmartChat 本机 MCP 演示：关键字改为 `【本地MCP】(n)`；样例改为真实临床场景；配置与 flow 统一在 `meta_apps_data.js` |

@@ -450,7 +450,7 @@ export default {
     },
     useScheduleDemoData(input) {
       if (
-        resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.MCP &&
+        resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.LOCAL_MCP &&
         this.verticalType !== 'health'
       ) {
         this.$emit('stop-loading')
@@ -459,7 +459,7 @@ export default {
         const i = this.messages.findIndex((msg) => msg.text === 'agentLoading')
         if (i !== -1) {
           this.$set(this.messages, i, {
-            text: '【MCP演示】样例仅在 <b>health</b> 调度页可用。',
+            text: '【本地MCP】样例仅在 <b>health</b> 调度页可用。',
             isUser: false
           })
         }
@@ -479,7 +479,7 @@ export default {
     finishScheduleDemo(input) {
       this.isTaskFinishing = true
       this.handleFinalStep()
-      const isMcp = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.MCP
+      const isMcp = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.LOCAL_MCP
       getMetaAppNodes(this.verticalType, input)
         .then((flowData) => {
           const { chosenServices, serviceNodes } = generateServiceNodes(
@@ -488,7 +488,7 @@ export default {
           )
           this.$emit('update-services', serviceNodes)
           this.$emit('update-flow', flowData)
-          this.placeholder = isMcp ? '已生成本机 MCP 演示元应用' : '已智能生成元应用'
+          this.placeholder = isMcp ? '已生成本地 MCP 元应用' : '已智能生成元应用'
           this.isGenerated = true
           this.agentTypeWriter(
             this.messageManager.generateSuccessReply(chosenServices)

@@ -1,19 +1,27 @@
 // 调度页演示：元应用 flow、SmartChat 推理步骤、关键字与仿真分流
 // - 课题 → getMetaAppNodes / generateMockSteps + 仿真 inmemory
-// - 【MCP演示】→ 同上 + 仿真 Micro-Agent（preName 含 MCP演示）
+// - 【本地MCP】(n) → 同上 + 仿真 Micro-Agent（preName 含同标记，n=节点数）
 
 export const TOPIC_DEMO_KEYWORD = '课题'
-export const MCP_DEMO_INPUT_PREFIX = '【MCP演示】'
-export const MCP_DEMO_APP_MARK = 'MCP演示'
 
-export const SCHEDULE_DEMO_KIND = { TOPIC: 'topic', MCP: 'mcp' }
+/** 匹配 SmartChat 输入与元应用 preName 中的【本地MCP】(节点数) */
+export const LOCAL_MCP_MARK_RE = /【本地MCP】\(\d+\)/
+
+export function localMcpPrefix(nodeCount) {
+  return `【本地MCP】(${nodeCount})`
+}
+
+export function isLocalMcpDemo(text) {
+  return LOCAL_MCP_MARK_RE.test(String(text || ''))
+}
+
+export const SCHEDULE_DEMO_KIND = { TOPIC: 'topic', LOCAL_MCP: 'local_mcp' }
 
 export function resolveScheduleDemoKind(text) {
-  const s = String(text || '')
-  if (s.includes(MCP_DEMO_INPUT_PREFIX) || s.includes(MCP_DEMO_APP_MARK)) {
-    return SCHEDULE_DEMO_KIND.MCP
+  if (isLocalMcpDemo(text)) return SCHEDULE_DEMO_KIND.LOCAL_MCP
+  if (String(text || '').includes(TOPIC_DEMO_KEYWORD)) {
+    return SCHEDULE_DEMO_KIND.TOPIC
   }
-  if (s.includes(TOPIC_DEMO_KEYWORD)) return SCHEDULE_DEMO_KIND.TOPIC
   return null
 }
 
@@ -26,29 +34,47 @@ export function useMemorySimulation(appName) {
   return resolveScheduleDemoKind(appName) === SCHEDULE_DEMO_KIND.TOPIC
 }
 
-export const MCP_DEMO_SUGGESTIONS = [
-  { value: `${MCP_DEMO_INPUT_PREFIX}五服务全链路：编排本机 5 个 external-mcp 一并上画布` },
-  { value: `${MCP_DEMO_INPUT_PREFIX}65岁男性肺炎患者，请制定利奈唑胺个性化给药方案` },
-  { value: `${MCP_DEMO_INPUT_PREFIX}评估 ICU 患者 SOFA 评分并调用医学计算器` },
-  { value: `${MCP_DEMO_INPUT_PREFIX}查询 linezolid 药品标签（openFDA）` },
-  { value: `${MCP_DEMO_INPUT_PREFIX}检索靶点 BRAF 关联疾病（OpenTargets）` },
-  { value: `${MCP_DEMO_INPUT_PREFIX}查询 ACA 开放注册日期（healthcovered）` },
-  { value: `${MCP_DEMO_INPUT_PREFIX}临床用药三联：SOFA + 利奈唑胺 + openFDA 标签` },
-  { value: `${MCP_DEMO_INPUT_PREFIX}重症感染联合决策：SOFA 评估后优化利奈唑胺剂量` }
+export const LOCAL_MCP_SUGGESTIONS = [
+  {
+    value: `${localMcpPrefix(1)}65岁男性院内获得性肺炎，合并肾功能不全，请制定利奈唑胺给药方案`
+  },
+  {
+    value: `${localMcpPrefix(1)}ICU脓毒症患者需计算SOFA评分并选用相应医学计算器`
+  },
+  {
+    value: `${localMcpPrefix(1)}处方前查询利奈唑胺（linezolid）说明书、黑框警告与药物相互作用`
+  },
+  {
+    value: `${localMcpPrefix(1)}肿瘤MDT：检索BRAF靶点相关疾病与在研药物证据`
+  },
+  {
+    value: `${localMcpPrefix(2)}脓毒症休克患者：先完成SOFA评估，再优化利奈唑胺静脉给药方案`
+  },
+  {
+    value: `${localMcpPrefix(3)}肾功能减退的肺炎患者：SOFA评分、利奈唑胺剂量计算并查阅药品标签`
+  },
+  {
+    value: `${localMcpPrefix(5)}重症医院感染患者：病情评分、抗菌药给药、查说明书与靶点证据、出院医保与随访安排`
+  }
 ]
 
 export function resolveMcpDemoScenario(userInput) {
   const t = String(userInput || '')
-  if (/五服务|全链路|5个|五个|一并编排/.test(t)) return 'all5'
-  if (/三联|临床用药|标签对照/.test(t)) return 'clinical_triad'
-  if (/靶点.*参保|OpenTargets.*ACA|research/i.test(t)) return 'research_triad'
-  if (/openfda|药品标签|fda|不良事件/i.test(t)) return 'openfda'
-  if (/opentargets|靶点|BRAF|基因检索/i.test(t)) return 'opentargets'
-  if (/healthcovered|ACA|开放注册|参保日期/i.test(t)) return 'healthcovered'
-  if (/联合|综合|重症感染|SOFA.*利奈|利奈.*SOFA/.test(t)) return 'combo'
+  const countMatch = t.match(/【本地MCP】\((\d+)\)/)
+  const n = countMatch ? parseInt(countMatch[1], 10) : null
+
+  if (n === 5 || /重症医院感染|出院.*医保|随访安排/.test(t)) return 'all5'
+  if (n === 3 || /肾功能.*肺炎|评分.*剂量.*标签/.test(t)) return 'clinical_triad'
+  if (n === 2 || /脓毒症|休克|SOFA.*利奈/.test(t)) return 'combo'
+  if (/说明书|黑框|相互作用|openfda|fda|药品标签/.test(t)) return 'openfda'
+  if (/BRAF|MDT|靶点|opentargets|基因/.test(t)) return 'opentargets'
+  if (/医保|参保|healthcovered|ACA/.test(t)) return 'healthcovered'
   if (/SOFA|医学计算|计算器|discover|medical-calc/i.test(t)) return 'medical_calc'
-  if (/利奈唑胺|给药|linezolid|剂量/i.test(t)) return 'linezolid'
-  return 'all5'
+  if (/利奈唑胺|给药|linezolid|剂量|肺炎/.test(t)) return 'linezolid'
+  if (n === 2) return 'combo'
+  if (n === 3) return 'clinical_triad'
+  if (n === 5) return 'all5'
+  return 'linezolid'
 }
 
 // 金融欺诈检测推理元应用
@@ -662,7 +688,7 @@ const bidRiggingDetectionApp = {
 }
 
 // ---------------------------------------------------------------------------
-// 本机 external-mcp 演示（health · SmartChat 输入含【MCP演示】）
+// 本机 external-mcp 演示（health · SmartChat 输入含【本地MCP】(n)）
 // ---------------------------------------------------------------------------
 
 const MCP_ROOT = '/home/lyx/workspace/fdueblab/external-mcp'
@@ -739,9 +765,9 @@ const MCP_NODES = {
   }
 }
 
-function mcpDemoApp(preName, preDes, preInput, preOutput, nodes) {
+function mcpDemoApp(nodeCount, title, preDes, preInput, preOutput, nodes) {
   return {
-    preName,
+    preName: `${localMcpPrefix(nodeCount)} ${title}`,
     preDes,
     preInputName: preInput,
     preOutputName: preOutput,
@@ -751,59 +777,101 @@ function mcpDemoApp(preName, preDes, preInput, preOutput, nodes) {
   }
 }
 
-const MCP_DEMO_SCENARIOS = {
-  linezolid: mcpDemoApp('利奈唑胺给药优化（MCP演示）', '利奈唑胺剂量', '患者数据', '给药方案', [
-    MCP_NODES.linezolid
-  ]),
-  medical_calc: mcpDemoApp('医学计算器辅助（MCP演示）', 'SOFA 等评分', '临床数据', '计算结果', [
-    MCP_NODES.medicalCalc
-  ]),
-  openfda: mcpDemoApp('药品标签检索（MCP演示）', 'openFDA', '药品名', '标签摘要', [MCP_NODES.openfda]),
-  opentargets: mcpDemoApp('靶点检索（MCP演示）', 'OpenTargets', '查询', '关联知识', [
-    MCP_NODES.opentargets
-  ]),
-  healthcovered: mcpDemoApp('ACA 参保日期（MCP演示）', 'healthcovered', '场景', '日期说明', [
-    MCP_NODES.healthcovered
-  ]),
-  combo: mcpDemoApp('重症感染用药（MCP演示）', '评分+给药', '综合数据', '联合方案', [
-    MCP_NODES.medicalCalc,
-    MCP_NODES.linezolid
-  ]),
-  clinical_triad: mcpDemoApp('临床用药三联（MCP演示）', 'calc+linezolid+openFDA', '用药问题', '报告', [
-    MCP_NODES.medicalCalc,
-    MCP_NODES.linezolid,
-    MCP_NODES.openfda
-  ]),
-  research_triad: mcpDemoApp('靶点与参保三联（MCP演示）', '靶点+ACA+calc', '查询', '摘要', [
-    MCP_NODES.opentargets,
-    MCP_NODES.healthcovered,
-    MCP_NODES.medicalCalc
-  ]),
-  all5: mcpDemoApp('五服务全链路（MCP演示）', 'external-mcp 五服务', '综合需求', '多源结果', [
-    MCP_NODES.medicalCalc,
-    MCP_NODES.linezolid,
-    MCP_NODES.openfda,
-    MCP_NODES.opentargets,
-    MCP_NODES.healthcovered
-  ])
+const LOCAL_MCP_SCENARIOS = {
+  linezolid: mcpDemoApp(
+    1,
+    '院内肺炎利奈唑胺给药优化',
+    '老年院内获得性肺炎，合并肾功能减退',
+    '体征、检验与用药史',
+    '给药方案与监测建议',
+    [MCP_NODES.linezolid]
+  ),
+  medical_calc: mcpDemoApp(
+    1,
+    'ICU严重程度评分辅助',
+    '脓毒症/重症患者需量化病情',
+    '生命体征与实验室指标',
+    'SOFA等评分结果',
+    [MCP_NODES.medicalCalc]
+  ),
+  openfda: mcpDemoApp(
+    1,
+    '抗菌药处方前说明书查询',
+    '处方前核对药品标签与安全性信息',
+    '药品名称',
+    '标签摘要与警示',
+    [MCP_NODES.openfda]
+  ),
+  opentargets: mcpDemoApp(
+    1,
+    '肿瘤靶点证据检索',
+    'MDT前检索靶点相关疾病与药物',
+    '靶点/基因名',
+    '关联疾病与药物证据',
+    [MCP_NODES.opentargets]
+  ),
+  healthcovered: mcpDemoApp(
+    1,
+    '出院患者医保与参保咨询',
+    '慢病或出院患者咨询参保与报销窗口',
+    '患者参保场景',
+    '开放注册与资格说明',
+    [MCP_NODES.healthcovered]
+  ),
+  combo: mcpDemoApp(
+    2,
+    '脓毒症休克抗菌治疗',
+    '先评估严重程度，再制定利奈唑胺给药方案',
+    'ICU监测数据',
+    '评分与给药方案',
+    [MCP_NODES.medicalCalc, MCP_NODES.linezolid]
+  ),
+  clinical_triad: mcpDemoApp(
+    3,
+    '肾功能减退肺炎患者用药',
+    '评分、剂量计算与说明书核对',
+    '肾功能、感染指标',
+    '综合用药建议',
+    [MCP_NODES.medicalCalc, MCP_NODES.linezolid, MCP_NODES.openfda]
+  ),
+  all5: mcpDemoApp(
+    5,
+    '重症医院感染多学科用药辅助',
+    '重症感染：评分、给药、查说明书与靶点、出院医保与随访',
+    '住院病历摘要',
+    '多学科辅助决策材料',
+    [
+      MCP_NODES.medicalCalc,
+      MCP_NODES.linezolid,
+      MCP_NODES.openfda,
+      MCP_NODES.opentargets,
+      MCP_NODES.healthcovered
+    ]
+  )
 }
 
 function getMcpDemoFlowData(userInput) {
   const key = resolveMcpDemoScenario(userInput)
-  const flow = MCP_DEMO_SCENARIOS[key]
-  if (!flow) throw new Error('未找到 MCP 演示场景')
+  const flow = LOCAL_MCP_SCENARIOS[key]
+  if (!flow) throw new Error('未找到本地 MCP 演示场景')
   return JSON.parse(JSON.stringify(flow))
 }
 
 function generateMcpDemoMockSteps(userInput) {
   const key = resolveMcpDemoScenario(userInput)
-  const scenario = MCP_DEMO_SCENARIOS[key]
+  const scenario = LOCAL_MCP_SCENARIOS[key]
   const n = (scenario.nodeList || []).length
   const names = scenario.nodeList.map((x) => x.name).join('、')
   return [
-    { step: 1, thought: `MCP 演示「${key}」：编排 ${n} 个本机节点。` },
-    { step: 2, thought: `节点：${names}。仿真走 Micro-Agent（preName 含 MCP演示）。` },
-    { step: 3, thought: '请先启动 external-mcp，再运行仿真构建。' }
+    {
+      step: 1,
+      thought: `识别${localMcpPrefix(n)}场景「${key}」：将编排 ${n} 个本机 MCP 服务。`
+    },
+    {
+      step: 2,
+      thought: `服务：${names}。仿真走 Micro-Agent（元应用名含${localMcpPrefix(n)}）。`
+    },
+    { step: 3, thought: '请先启动 external-mcp 对应进程，再运行仿真构建。' }
   ]
 }
 
@@ -816,7 +884,7 @@ function generateMcpDemoMockSteps(userInput) {
  * @returns {Array} - 返回推理步骤数组
  */
 export function generateMockSteps(serviceType, userInput) {
-  if (resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.MCP) {
+  if (resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.LOCAL_MCP) {
     return generateMcpDemoMockSteps(userInput)
   }
   return [
@@ -860,7 +928,7 @@ export function generateMockSteps(serviceType, userInput) {
  * @returns {Promise<Object>} - 返回flowData对象
  */
 export function getMetaAppNodes(serviceType, userInput) {
-  if (resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.MCP) {
+  if (resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.LOCAL_MCP) {
     return Promise.resolve(getMcpDemoFlowData(userInput))
   }
   return new Promise((resolve, reject) => {

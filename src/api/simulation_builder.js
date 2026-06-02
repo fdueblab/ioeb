@@ -3,7 +3,7 @@
  *
  * 【分流】元应用展示名 `appName`（与画布 `data.preName` 一致）见 `@/mock/data/meta_apps_data`：
  * - **课题** → 进程内 inmemory
- * - **MCP演示** → HTTP Micro-Agent（真 MCP）
+ * - **【本地MCP】(n)** → HTTP Micro-Agent（真 MCP，n 见元应用名）
  * - **其他** → HTTP + EventSource → `VUE_APP_AGENT_BASE_URL`
  *
  * `fetchSimulationRecords` / `compareSimulationRecords` 须传入同一上下文的 `appName`（与 prop 一致）。
