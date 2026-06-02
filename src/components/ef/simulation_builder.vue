@@ -613,7 +613,7 @@ export default {
     },
     /**
      * 元应用当前展示名称（画布 `data.preName`，含用户在元应用详情中的修改）。
-     * 是否含 `TOPIC_DEMO_KEYWORD` 决定仿真走进程内或 HTTP（`@/config/topicDemo`）。
+     * 演示分流见 `@/config/scheduleDemo`（课题→inmemory，MCP演示→9017）。
      */
     appName: {
       type: String,

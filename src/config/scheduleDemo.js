@@ -1,60 +1,32 @@
 /**
- * 调度页演示 · 统一配置（SmartChat 推荐 + 仿真分流）
- *
- * | 类型   | SmartChat 触发              | 画布/元应用名标记     | 仿真           |
- * |--------|-----------------------------|----------------------|----------------|
- * | topic  | 输入含「课题」               | preName 含「课题」    | 进程内 inmemory |
- * | mcp    | 输入含「【MCP演示】」        | preName 含「MCP演示」 | HTTP Micro-Agent |
- *
- * MCP 演示仅 health 垂域；topic 以 aml 为主，亦支持 meta_apps_data 内各垂域。
+ * 调度页演示：SmartChat 推荐 + 仿真分流
+ * - 课题 → inmemory mock
+ * - MCP演示 → Micro-Agent 真 MCP
  */
 
 export const TOPIC_DEMO_KEYWORD = '课题'
-
-/** 用户输入前缀（下拉样例） */
 export const MCP_DEMO_INPUT_PREFIX = '【MCP演示】'
-
-/** 写入 preName 后用于仿真 API 分流（与输入前缀一致，无括号） */
 export const MCP_DEMO_APP_MARK = 'MCP演示'
 
-export const SCHEDULE_DEMO_KIND = {
-  TOPIC: 'topic',
-  MCP: 'mcp'
-}
+export const SCHEDULE_DEMO_KIND = { TOPIC: 'topic', MCP: 'mcp' }
 
-/** @returns {'topic'|'mcp'|null} */
 export function resolveScheduleDemoKind(text) {
   const s = String(text || '')
   if (s.includes(MCP_DEMO_INPUT_PREFIX) || s.includes(MCP_DEMO_APP_MARK)) {
     return SCHEDULE_DEMO_KIND.MCP
   }
-  if (s.includes(TOPIC_DEMO_KEYWORD)) {
-    return SCHEDULE_DEMO_KIND.TOPIC
-  }
+  if (s.includes(TOPIC_DEMO_KEYWORD)) return SCHEDULE_DEMO_KIND.TOPIC
   return null
 }
 
-/** SmartChat：是否走演示推荐（不请求 Agent API） */
 export function matchesScheduleDemoInput(text) {
   return resolveScheduleDemoKind(text) != null
 }
 
-/** @deprecated 使用 resolveScheduleDemoKind；保留兼容 */
-export function matchesTopicDemoKeyword(text) {
-  return String(text || '').includes(TOPIC_DEMO_KEYWORD)
-}
-
-export function matchesMcpDemoInput(text) {
-  return resolveScheduleDemoKind(text) === SCHEDULE_DEMO_KIND.MCP
-}
-
-/** 仿真 start：是否走进程内 mock */
 export function useMemorySimulation(appName) {
-  const kind = resolveScheduleDemoKind(appName)
-  return kind === SCHEDULE_DEMO_KIND.TOPIC
+  return resolveScheduleDemoKind(appName) === SCHEDULE_DEMO_KIND.TOPIC
 }
 
-/** health · SmartChat 下拉样例（与 mcp_demo_flows 场景对应） */
 export const MCP_DEMO_SUGGESTIONS = [
   { value: `${MCP_DEMO_INPUT_PREFIX}五服务全链路：编排本机 5 个 external-mcp 一并上画布` },
   { value: `${MCP_DEMO_INPUT_PREFIX}65岁男性肺炎患者，请制定利奈唑胺个性化给药方案` },
@@ -66,7 +38,6 @@ export const MCP_DEMO_SUGGESTIONS = [
   { value: `${MCP_DEMO_INPUT_PREFIX}重症感染联合决策：SOFA 评估后优化利奈唑胺剂量` }
 ]
 
-/** health：根据样例文案选择 MCP 场景 id */
 export function resolveMcpDemoScenario(userInput) {
   const t = String(userInput || '')
   if (/五服务|全链路|5个|五个|一并编排/.test(t)) return 'all5'

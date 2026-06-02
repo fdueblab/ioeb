@@ -451,63 +451,54 @@ export default {
       }
     },
     useScheduleDemoData(input) {
-      const kind = resolveScheduleDemoKind(input)
-      if (kind === SCHEDULE_DEMO_KIND.MCP && this.verticalType !== 'health') {
+      if (
+        resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.MCP &&
+        this.verticalType !== 'health'
+      ) {
         this.$emit('stop-loading')
         this.isInputLoading = false
         this.isInputEnabled = true
-        const loadingIndex = this.messages.findIndex((msg) => msg.text === 'agentLoading')
-        if (loadingIndex !== -1) {
-          this.$set(this.messages, loadingIndex, {
-            text: '【MCP演示】样例仅在 <b>health</b> 调度页可用，请切换到乡村医疗领域。',
+        const i = this.messages.findIndex((msg) => msg.text === 'agentLoading')
+        if (i !== -1) {
+          this.$set(this.messages, i, {
+            text: '【MCP演示】样例仅在 <b>health</b> 调度页可用。',
             isUser: false
           })
         }
         return
       }
-      this.scheduleDemoThinkingProcess(input)
-    },
-    scheduleDemoThinkingProcess(input) {
-      const mockSteps = generateScheduleDemoSteps(this.verticalType, input)
-      let currentStepIndex = 0
-      const executeNextStep = () => {
-        if (currentStepIndex < mockSteps.length) {
-          const step = mockSteps[currentStepIndex]
-          setTimeout(() => {
-            this.updateThinkingMessage(step.thought, step.step)
-            currentStepIndex++
-            executeNextStep()
-          }, 800 + Math.random() * 900)
-        } else {
-          this.handleScheduleDemoFinalResult(input)
-        }
+      const steps = generateScheduleDemoSteps(this.verticalType, input)
+      const runStep = (idx) => {
+        if (idx >= steps.length) return this.finishScheduleDemo(input)
+        const step = steps[idx]
+        setTimeout(() => {
+          this.updateThinkingMessage(step.thought, step.step)
+          runStep(idx + 1)
+        }, 800 + Math.random() * 900)
       }
-      executeNextStep()
+      runStep(0)
     },
-    handleScheduleDemoFinalResult(input) {
+    finishScheduleDemo(input) {
       this.isTaskFinishing = true
       this.handleFinalStep()
-      const kind = resolveScheduleDemoKind(input)
+      const isMcp = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.MCP
       getScheduleDemoFlow(this.verticalType, input)
         .then((flowData) => {
           const { chosenServices, serviceNodes } = generateServiceNodes(
             flowData,
             this.verticalType
           )
-          const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
           this.$emit('update-services', serviceNodes)
           this.$emit('update-flow', flowData)
-          this.placeholder =
-            kind === SCHEDULE_DEMO_KIND.MCP
-              ? '已生成本机 MCP 演示元应用'
-              : '已智能生成元应用'
+          this.placeholder = isMcp ? '已生成本机 MCP 演示元应用' : '已智能生成元应用'
           this.isGenerated = true
-          this.agentTypeWriter(outputMessage)
+          this.agentTypeWriter(
+            this.messageManager.generateSuccessReply(chosenServices)
+          )
         })
         .catch(() => {
           this.$emit('stop-loading')
-          const outputMessage = this.messageManager.getErrorReply()
-          this.agentTypeWriter(outputMessage)
+          this.agentTypeWriter(this.messageManager.getErrorReply())
           this.isInputEnabled = true
         })
     },

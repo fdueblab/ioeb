@@ -286,7 +286,7 @@ export default {
       return this.loadingFlow || this.simulationChromeLocked
     },
     /**
-     * 仿真构建用：当前展示名称（`data.preName`，含用户在元应用详情中的修改；演示关键字见 `@/config/topicDemo`）。
+     * 仿真构建用：当前展示名称（`data.preName`；演示分流见 `@/config/scheduleDemo`）。
      */
     metaAppDisplayNameForSimulation() {
       return this.data.preName || ''
