@@ -588,7 +588,6 @@ import {
 } from '@/mock/data/simulation_builder_data'
 import { getKnowledge } from '@/domain'
 
-
 function mapSetupItems(tasks) {
   return tasks.map((text) => ({ text, done: false, active: false }))
 }

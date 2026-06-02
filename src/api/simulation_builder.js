@@ -4,7 +4,7 @@
  * 【分流】元应用展示名 `appName`（与画布 `data.preName` 一致）是否含演示关键字
  * `TOPIC_DEMO_KEYWORD`（见 `@/config/topicDemo`）决定：
  * - **含关键字** → 进程内模拟（不请求后端）
- * - **不含** → HTTP + EventSource → `VUE_APP_API_BASE_URL`
+ * - **不含** → HTTP + EventSource → `VUE_APP_AGENT_BASE_URL`（缺省回退 `VUE_APP_API_BASE_URL`）
  *
  * `fetchSimulationRecords` / `compareSimulationRecords` 须传入同一上下文的 `appName`（与 prop 一致）。
  */
@@ -12,7 +12,8 @@ import request from '@/utils/request'
 import { simulationBuildInMemory } from '@/mock/services/simulation_builder_inmemory'
 import { matchesTopicDemoKeyword } from '@/config/topicDemo'
 
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || ''
+const SIMULATION_BASE_URL =
+  process.env.VUE_APP_AGENT_BASE_URL || process.env.VUE_APP_API_BASE_URL || ''
 
 /** SSE 自定义事件名（与后端约定一致） */
 const SIMULATION_SSE_EVENTS = [
@@ -75,32 +76,32 @@ function createHttpSimulationBuildClient() {
   return {
     startSimulation(payload) {
       return request({
-        url: `${API_BASE_URL}/api/simulation/start`,
+        url: `${SIMULATION_BASE_URL}/api/simulation/start`,
         method: 'post',
         data: payload
       })
     },
     cancelSimulation(sessionId) {
       return request({
-        url: `${API_BASE_URL}/api/simulation/${sessionId}/cancel`,
+        url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/cancel`,
         method: 'post'
       })
     },
     getSimulationResult(sessionId) {
       return request({
-        url: `${API_BASE_URL}/api/simulation/${sessionId}/result`,
+        url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/result`,
         method: 'get'
       })
     },
     fetchSimulationRecords() {
       return request({
-        url: `${API_BASE_URL}/api/simulation/records`,
+        url: `${SIMULATION_BASE_URL}/api/simulation/records`,
         method: 'get'
       })
     },
     compareSimulationRecords(recordIds) {
       return request({
-        url: `${API_BASE_URL}/api/simulation/records/compare`,
+        url: `${SIMULATION_BASE_URL}/api/simulation/records/compare`,
         method: 'post',
         data: { recordIds }
       })
@@ -108,7 +109,7 @@ function createHttpSimulationBuildClient() {
     subscribeSimulationStream(sessionId, streamUrl, handlers = {}) {
       const url = streamUrl.startsWith('http')
         ? streamUrl
-        : `${API_BASE_URL}${streamUrl}`
+        : `${SIMULATION_BASE_URL}${streamUrl}`
       const es = new EventSource(url)
       const on = (eventName, cb) => {
         es.addEventListener(eventName, (ev) => {
