@@ -587,9 +587,21 @@ import {
   SIMULATION_BUILD_DEFAULT_STRATEGY
 } from '@/mock/data/simulation_builder_data'
 import { getKnowledge } from '@/domain'
+import {
+  resolveScheduleDemoKind,
+  SCHEDULE_DEMO_KIND
+} from '@/config/scheduleDemo'
 
 function mapSetupItems(tasks) {
   return tasks.map((text) => ({ text, done: false, active: false }))
+}
+
+/** 开发：fdueblab mcp-proxy → 本机同端口（需 .env 中 VUE_APP_LOCAL_MCP_REWRITE=true） */
+function rewriteMcpUrlForLocalDev(url) {
+  if (process.env.VUE_APP_LOCAL_MCP_REWRITE !== 'true' || !url) return url
+  const m = String(url).match(/^https?:\/\/fdueblab\.cn\/mcp-proxy\/(\d+)(\/.*)?$/i)
+  if (!m) return url
+  return `http://127.0.0.1:${m[1]}${m[2] || '/sse'}`
 }
 
 export default {
@@ -835,10 +847,21 @@ export default {
           tools: node.tools || [],
           isFake: !!node.isFake,
           mcpMethod: node.mcpMethod || 'sse',
+          mcpCommand: node.mcpCommand || '',
+          mcpArgs: node.mcpArgs || [],
           status: 'pending',
           statusText: '等待中',
           latency: null
         }))
+    },
+
+    buildSimulationStrategy() {
+      const base =
+        this.internalMode === 'research' ? { ...this.strategy } : {}
+      if (resolveScheduleDemoKind(this.appName) === SCHEDULE_DEMO_KIND.MCP) {
+        return { ...base, minIterations: 2 }
+      }
+      return Object.keys(base).length ? base : undefined
     },
 
     buildStartPayload() {
@@ -859,15 +882,17 @@ export default {
         servicesMeta: this.serviceStatuses.map((s) => ({
           id: String(s.id),
           name: s.name,
-          mcpUrl: s.mcpUrl || '',
+          mcpUrl: rewriteMcpUrlForLocalDev(s.mcpUrl || ''),
           tools: s.tools || [],
           isFake: !!s.isFake,
-          mcpMethod: s.mcpMethod || 'sse'
+          mcpMethod: s.mcpMethod || 'sse',
+          mcpCommand: s.mcpCommand || '',
+          mcpArgs: s.mcpArgs || []
         })),
         maxIterations: this.maxIterations,
         scenarioDescription: this.scenarioDraft,
         mode: this.internalMode,
-        strategy: this.internalMode === 'research' ? { ...this.strategy } : undefined
+        strategy: this.buildSimulationStrategy()
       }
     },
 

@@ -1,16 +1,16 @@
 /**
  * simulation_builder · 前端 API 统一入口（与 `simulation_builder.vue` 配套）
  *
- * 【分流】元应用展示名 `appName`（与画布 `data.preName` 一致）是否含演示关键字
- * `TOPIC_DEMO_KEYWORD`（见 `@/config/topicDemo`）决定：
- * - **含关键字** → 进程内模拟（不请求后端）
- * - **不含** → HTTP + EventSource → `VUE_APP_AGENT_BASE_URL`（缺省回退 `VUE_APP_API_BASE_URL`）
+ * 【分流】元应用展示名 `appName`（与画布 `data.preName` 一致）演示类型见 `@/config/scheduleDemo`：
+ * - **课题** → 进程内 inmemory
+ * - **MCP演示** → HTTP Micro-Agent（真 MCP）
+ * - **其他** → HTTP + EventSource → `VUE_APP_AGENT_BASE_URL`
  *
  * `fetchSimulationRecords` / `compareSimulationRecords` 须传入同一上下文的 `appName`（与 prop 一致）。
  */
 import request from '@/utils/request'
 import { simulationBuildInMemory } from '@/mock/services/simulation_builder_inmemory'
-import { matchesTopicDemoKeyword } from '@/config/topicDemo'
+import { useMemorySimulation } from '@/config/scheduleDemo'
 
 const SIMULATION_BASE_URL =
   process.env.VUE_APP_AGENT_BASE_URL || process.env.VUE_APP_API_BASE_URL || ''
@@ -32,7 +32,7 @@ const SIMULATION_SSE_EVENTS = [
 const memoryRouteSessionIds = new Set()
 
 function useMemoryForAppName(appName) {
-  return matchesTopicDemoKeyword(appName)
+  return useMemorySimulation(appName)
 }
 
 function createMemorySimulationBuildClient() {

@@ -43,6 +43,10 @@ export const NODE_SCHEMA = {
   des: { required: false, default: '' },
   apiName: { required: false, default: '' },
   tools: { required: false, default: () => [] },
+  isFake: { required: false, default: false },
+  mcpMethod: { required: false, default: 'sse' },
+  mcpCommand: { required: false, default: '' },
+  mcpArgs: { required: false, default: () => [] },
   status: { required: false, default: null },
   state: { required: false, default: '未知状态' },
   stateStyle: { required: false, default: 'default' }

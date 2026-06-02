@@ -200,11 +200,7 @@ async function runStream(sessionId, emit) {
     emit('step', { step: 2, name: '智能构建' })
     pushLog('INFO', '开始智能构建')
 
-    const iteration = 1
-    checkCancel()
-    emit('iteration', { iteration, status: 'running' })
-    pushLog('INFO', `开始第 ${iteration} 轮验证`)
-
+    const demoRounds = 2
     const runPhase = async (phase) => {
       checkCancel()
       emit('phase', { phase, status: 'running' })
@@ -212,37 +208,54 @@ async function runStream(sessionId, emit) {
       emit('phase', { phase, status: 'done' })
     }
 
-    const enPlanning = simulationBuildMockEnhancementRecord(
-      mockDomain,
-      SIMULATION_BUILD_MOCK_STAGE.planning
-    )
-    session.enhancements.push(enPlanning)
-    pushLog(
-      'INFO',
-      `[调度规划] 领域知识增强: ${truncateForLog(enPlanning.promptFragment)}`
-    )
+    for (let iteration = 1; iteration <= demoRounds; iteration++) {
+      checkCancel()
+      emit('iteration', { iteration, status: 'running' })
+      pushLog('INFO', `开始第 ${iteration} 轮验证`)
 
-    await runPhase('data')
-    pushLog('SUCCESS', '数据仿真: 数据流转正常')
+      const enPlanning = simulationBuildMockEnhancementRecord(
+        mockDomain,
+        SIMULATION_BUILD_MOCK_STAGE.planning
+      )
+      session.enhancements.push(enPlanning)
+      pushLog(
+        'INFO',
+        `[调度规划] 领域知识增强: ${truncateForLog(enPlanning.promptFragment)}`
+      )
 
-    await runPhase('logic')
-    pushLog('SUCCESS', '逻辑仿真: 业务逻辑正常')
+      await runPhase('data')
+      pushLog('SUCCESS', '数据仿真: 数据流转正常')
 
-    const enVerify = simulationBuildMockEnhancementRecord(
-      mockDomain,
-      SIMULATION_BUILD_MOCK_STAGE.verification
-    )
-    session.enhancements.push(enVerify)
-    pushLog(
-      'INFO',
-      `[仿真验证] 领域知识增强: ${truncateForLog(enVerify.promptFragment)}`
-    )
+      await runPhase('logic')
+      pushLog('SUCCESS', '逻辑仿真: 业务逻辑正常')
 
-    await runPhase('check')
-    pushLog('INFO', '链路检视: 检查偏差和冗余')
-    pushLog('SUCCESS', '链路检视: 未发现偏差')
+      const enVerify = simulationBuildMockEnhancementRecord(
+        mockDomain,
+        SIMULATION_BUILD_MOCK_STAGE.verification
+      )
+      session.enhancements.push(enVerify)
+      pushLog(
+        'INFO',
+        `[仿真验证] 领域知识增强: ${truncateForLog(enVerify.promptFragment)}`
+      )
 
-    emit('iteration', { iteration, status: 'passed' })
+      await runPhase('check')
+      pushLog('INFO', '链路检视: 检查偏差和冗余')
+
+      if (iteration < demoRounds) {
+        pushLog('WARN', '链路检视: 发现可优化项，进入下一轮自动修复')
+        emit('issue', {
+          message: '演示：服务调用顺序可优化，将自动调整后重试',
+          fix: '重新规划调度顺序'
+        })
+        emit('iteration', { iteration, status: 'retry' })
+      } else {
+        pushLog('SUCCESS', '链路检视: 未发现偏差')
+        emit('iteration', { iteration, status: 'passed' })
+      }
+    }
+
+    const iteration = demoRounds
 
     const elapsedMs = Date.now() - session.startedAt
     const metrics = simulationBuildModuleMetrics(iteration, elapsedMs)

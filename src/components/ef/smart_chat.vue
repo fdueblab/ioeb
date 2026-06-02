@@ -87,11 +87,18 @@
 </template>
 
 <script>
-import { getMetaAppNodes, generateMockSteps } from '@/mock/data/meta_apps_data'
 import { ChatMessageManager } from './chat_messages'
 import { streamAgent } from '@/utils/request'
 import { generateServiceNodes } from './utils'
-import { matchesTopicDemoKeyword } from '@/config/topicDemo'
+import {
+  matchesScheduleDemoInput,
+  resolveScheduleDemoKind,
+  SCHEDULE_DEMO_KIND
+} from '@/config/scheduleDemo'
+import {
+  getScheduleDemoFlow,
+  generateScheduleDemoSteps
+} from '@/mock/data/schedule_demo'
 
 export default {
   name: 'SmartChat',
@@ -184,9 +191,9 @@ export default {
       // 发出开始loading事件，让其他界面进入loading状态
       this.$emit('start-loading')
 
-      // 与仿真分流一致：关键字见 `@/config/topicDemo` → TOPIC_DEMO_KEYWORD
-      if (matchesTopicDemoKeyword(input)) {
-        this.useFakeData(input)
+      // 调度演示（课题 / MCP）→ 统一 mock 推荐；否则 Agent API
+      if (matchesScheduleDemoInput(input)) {
+        this.useScheduleDemoData(input)
       } else {
         this.callAgentForRecommendation(input)
       }
@@ -443,58 +450,66 @@ export default {
         this.isInputEnabled = true
       }
     },
-    // 使用假数据的逻辑
-    useFakeData(input) {
-      // 开始模拟推理过程
-      this.fakeThinkingProcess(input)
+    useScheduleDemoData(input) {
+      const kind = resolveScheduleDemoKind(input)
+      if (kind === SCHEDULE_DEMO_KIND.MCP && this.verticalType !== 'health') {
+        this.$emit('stop-loading')
+        this.isInputLoading = false
+        this.isInputEnabled = true
+        const loadingIndex = this.messages.findIndex((msg) => msg.text === 'agentLoading')
+        if (loadingIndex !== -1) {
+          this.$set(this.messages, loadingIndex, {
+            text: '【MCP演示】样例仅在 <b>health</b> 调度页可用，请切换到乡村医疗领域。',
+            isUser: false
+          })
+        }
+        return
+      }
+      this.scheduleDemoThinkingProcess(input)
     },
-    // 模拟推理过程
-    fakeThinkingProcess(input) {
-      // 从meta_apps_data中获取模拟的推理步骤数据
-      const mockSteps = generateMockSteps(this.verticalType, input)
-      // 模拟步骤执行
+    scheduleDemoThinkingProcess(input) {
+      const mockSteps = generateScheduleDemoSteps(this.verticalType, input)
       let currentStepIndex = 0
       const executeNextStep = () => {
         if (currentStepIndex < mockSteps.length) {
           const step = mockSteps[currentStepIndex]
-          // 模拟延迟
           setTimeout(() => {
             this.updateThinkingMessage(step.thought, step.step)
             currentStepIndex++
-            // 继续下一步
             executeNextStep()
-          }, 1000 + Math.random() * 1500) // 随机延迟1-2.5秒
+          }, 800 + Math.random() * 900)
         } else {
-          this.handleMockFinalResult(input)
+          this.handleScheduleDemoFinalResult(input)
         }
       }
-      // 开始执行第一步
       executeNextStep()
     },
-
-    // 处理模拟的最终结果
-    handleMockFinalResult(input) {
-      // 标记任务结束并处理最后一步
+    handleScheduleDemoFinalResult(input) {
       this.isTaskFinishing = true
       this.handleFinalStep()
-      // 获取原始数据并处理
-      getMetaAppNodes(this.verticalType, input).then((flowData) => {
-        // 使用utils中的方法生成服务节点
-        const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
-        const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
-        // 向父组件发送数据
-        this.$emit('update-services', serviceNodes)
-        this.$emit('update-flow', flowData)
-        this.placeholder = '已智能生成元应用'
-        this.isGenerated = true
-        // 使用agentTypeWriter在智能体消息中显示结果
-        this.agentTypeWriter(outputMessage)
-      }).catch(() => {
-        this.$emit('stop-loading') // 停止loading状态
-        const outputMessage = this.messageManager.getErrorReply()
-        this.agentTypeWriter(outputMessage)
-        this.isInputEnabled = true
-      })
+      const kind = resolveScheduleDemoKind(input)
+      getScheduleDemoFlow(this.verticalType, input)
+        .then((flowData) => {
+          const { chosenServices, serviceNodes } = generateServiceNodes(
+            flowData,
+            this.verticalType
+          )
+          const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
+          this.$emit('update-services', serviceNodes)
+          this.$emit('update-flow', flowData)
+          this.placeholder =
+            kind === SCHEDULE_DEMO_KIND.MCP
+              ? '已生成本机 MCP 演示元应用'
+              : '已智能生成元应用'
+          this.isGenerated = true
+          this.agentTypeWriter(outputMessage)
+        })
+        .catch(() => {
+          this.$emit('stop-loading')
+          const outputMessage = this.messageManager.getErrorReply()
+          this.agentTypeWriter(outputMessage)
+          this.isInputEnabled = true
+        })
     },
     typeWriter(text) {
       if (this.currentIndex < text.length) {
