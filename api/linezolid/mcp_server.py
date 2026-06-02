@@ -4,9 +4,10 @@ from starlette.requests import Request
 from starlette.routing import Mount, Route
 from mcp.server.sse import SseServerTransport
 from mcp.server import Server
+import json
 import uvicorn
 from datetime import datetime
-from typing import Tuple
+from typing import Any, Tuple
 from api.calculator import _calculate_linezolid_dose_impl
 
 # 创建 MCP 服务器
@@ -36,9 +37,12 @@ async def calculate_linezolid_dose(
         auc_range: 目标AUC24h范围(min, max), 默认[160,240]
         
     Returns:
-        dict: 包含计算结果的字典
+        JSON 字符串，包含计算结果
     """
-    return _calculate_linezolid_dose_impl(sex, age, height, weight, scr, tb, auc_range)
+    result: Any = _calculate_linezolid_dose_impl(
+        sex, age, height, weight, scr, tb, auc_range
+    )
+    return json.dumps(result, ensure_ascii=False)
 
 # 创建支持SSE的Starlette应用
 def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlette:

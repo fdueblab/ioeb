@@ -9,6 +9,8 @@ docs/.vitepress/dist
 docs/.vitepress/cache
 
 # python
+.venv/
+**/.venv/
 **/__pycache__
 **/.DS_Store
 **/.env

@@ -831,6 +831,10 @@ export default {
         .map((node) => ({
           id: node.id,
           name: node.name,
+          mcpUrl: node.url || node.mcpUrl || '',
+          tools: node.tools || [],
+          isFake: !!node.isFake,
+          mcpMethod: node.mcpMethod || 'sse',
           status: 'pending',
           statusText: '等待中',
           latency: null
@@ -852,7 +856,14 @@ export default {
         domain,
         domainKnowledge,
         serviceIds: this.serviceStatuses.map((s) => String(s.id)),
-        servicesMeta: this.serviceStatuses.map((s) => ({ id: String(s.id), name: s.name })),
+        servicesMeta: this.serviceStatuses.map((s) => ({
+          id: String(s.id),
+          name: s.name,
+          mcpUrl: s.mcpUrl || '',
+          tools: s.tools || [],
+          isFake: !!s.isFake,
+          mcpMethod: s.mcpMethod || 'sse'
+        })),
         maxIterations: this.maxIterations,
         scenarioDescription: this.scenarioDraft,
         mode: this.internalMode,

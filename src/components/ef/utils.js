@@ -577,6 +577,9 @@ export function transformApiServiceToNodeFormat(apiService) {
     des: serverInfo ? serverInfo.des : '',
     apiName: serverInfo ? serverInfo.name : '',
     tools: serverInfo && serverInfo.tools ? serverInfo.tools : [],
+    /** 平台目录：false=真实 MCP，true=演示/剧本（仿真走模拟通道） */
+    isFake: !!(serverInfo && serverInfo.isFake),
+    mcpMethod: serverInfo && serverInfo.method ? serverInfo.method : '',
     status: apiService.status,
     // 这些字段会在parseInitialFlow中被statusFilter和statusStyleFilter处理
     state: '未知状态',
