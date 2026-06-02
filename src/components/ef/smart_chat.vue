@@ -95,10 +95,7 @@ import {
   resolveScheduleDemoKind,
   SCHEDULE_DEMO_KIND
 } from '@/config/scheduleDemo'
-import {
-  getScheduleDemoFlow,
-  generateScheduleDemoSteps
-} from '@/mock/data/schedule_demo'
+import { getMetaAppNodes, generateMockSteps } from '@/mock/data/meta_apps_data'
 
 export default {
   name: 'SmartChat',
@@ -467,7 +464,7 @@ export default {
         }
         return
       }
-      const steps = generateScheduleDemoSteps(this.verticalType, input)
+      const steps = generateMockSteps(this.verticalType, input)
       const runStep = (idx) => {
         if (idx >= steps.length) return this.finishScheduleDemo(input)
         const step = steps[idx]
@@ -482,7 +479,7 @@ export default {
       this.isTaskFinishing = true
       this.handleFinalStep()
       const isMcp = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.MCP
-      getScheduleDemoFlow(this.verticalType, input)
+      getMetaAppNodes(this.verticalType, input)
         .then((flowData) => {
           const { chosenServices, serviceNodes } = generateServiceNodes(
             flowData,
