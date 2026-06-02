@@ -1,7 +1,7 @@
 // 聊天消息管理模块
 // 统一管理各个领域的建议输入、成功回复和错误回复
 
-import { MCP_DEMO_SUGGESTIONS } from '@/config/scheduleDemo'
+import { MCP_DEMO_SUGGESTIONS } from '@/mock/data/meta_apps_data'
 
 // 各领域的建议输入
 const DOMAIN_SUGGESTIONS = {

@@ -91,11 +91,12 @@ import { ChatMessageManager } from './chat_messages'
 import { streamAgent } from '@/utils/request'
 import { generateServiceNodes } from './utils'
 import {
+  getMetaAppNodes,
+  generateMockSteps,
   matchesScheduleDemoInput,
   resolveScheduleDemoKind,
   SCHEDULE_DEMO_KIND
-} from '@/config/scheduleDemo'
-import { getMetaAppNodes, generateMockSteps } from '@/mock/data/meta_apps_data'
+} from '@/mock/data/meta_apps_data'
 
 export default {
   name: 'SmartChat',

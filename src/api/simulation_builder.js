@@ -1,7 +1,7 @@
 /**
  * simulation_builder · 前端 API 统一入口（与 `simulation_builder.vue` 配套）
  *
- * 【分流】元应用展示名 `appName`（与画布 `data.preName` 一致）演示类型见 `@/config/scheduleDemo`：
+ * 【分流】元应用展示名 `appName`（与画布 `data.preName` 一致）见 `@/mock/data/meta_apps_data`：
  * - **课题** → 进程内 inmemory
  * - **MCP演示** → HTTP Micro-Agent（真 MCP）
  * - **其他** → HTTP + EventSource → `VUE_APP_AGENT_BASE_URL`
@@ -10,7 +10,7 @@
  */
 import request from '@/utils/request'
 import { simulationBuildInMemory } from '@/mock/services/simulation_builder_inmemory'
-import { useMemorySimulation } from '@/config/scheduleDemo'
+import { useMemorySimulation } from '@/mock/data/meta_apps_data'
 
 const SIMULATION_BASE_URL =
   process.env.VUE_APP_AGENT_BASE_URL || process.env.VUE_APP_API_BASE_URL || ''

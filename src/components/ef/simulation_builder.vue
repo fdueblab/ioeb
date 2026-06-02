@@ -590,7 +590,7 @@ import { getKnowledge } from '@/domain'
 import {
   resolveScheduleDemoKind,
   SCHEDULE_DEMO_KIND
-} from '@/config/scheduleDemo'
+} from '@/mock/data/meta_apps_data'
 
 function mapSetupItems(tasks) {
   return tasks.map((text) => ({ text, done: false, active: false }))
@@ -613,7 +613,7 @@ export default {
     },
     /**
      * 元应用当前展示名称（画布 `data.preName`，含用户在元应用详情中的修改）。
-     * 演示分流见 `@/config/scheduleDemo`（课题→inmemory，MCP演示→9017）。
+     * 演示分流见 `meta_apps_data`（课题→inmemory，MCP演示→9017）。
      */
     appName: {
       type: String,
