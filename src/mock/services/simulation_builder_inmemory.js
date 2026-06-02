@@ -89,6 +89,12 @@ function cancel(sessionId) {
   if (s) s.cancelled = true
 }
 
+function getResult(sessionId) {
+  const s = sessions.get(sessionId)
+  if (!s) return { success: false, error: 'session_not_found' }
+  return s.result || { success: false, pending: true }
+}
+
 function listRecords() {
   return experimentRecords.map((r) => ({
     recordId: r.recordId,
@@ -291,6 +297,8 @@ async function runStream(sessionId, emit) {
       enhancements: session.enhancements || []
     }
 
+    session.result = successResult
+
     pushLog('SUCCESS', '方案生成完成')
 
     emit('complete', {
@@ -312,6 +320,7 @@ async function runStream(sessionId, emit) {
       return
     }
     const failResult = { success: false, error: e.message || String(e) }
+    session.result = failResult
     const me = { elapsedMs: Date.now() - session.startedAt }
     emit('complete', {
       success: false,
@@ -328,6 +337,7 @@ async function runStream(sessionId, emit) {
 export const simulationBuildInMemory = {
   start,
   cancel,
+  getResult,
   listRecords,
   getRecord,
   compare,

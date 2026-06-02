@@ -18,6 +18,9 @@ const request = axios.create({
   timeout: 10000 // 请求超时时间
 })
 
+// 流式智能体：首包前可能长时间阻塞（如 MCP 建连），需单独超时
+const STREAM_AGENT_FETCH_TIMEOUT_MS = 120000
+
 // 异常拦截处理器
 const errorHandler = (error) => {
   if (error.response) {
@@ -35,10 +38,6 @@ const errorHandler = (error) => {
       })
     }
     if (error.response.status === 401 && !(data.result && data.result.isLogin)) {
-      // notification.error({
-      //   message: 'Unauthorized',
-      //   description: 'Authorization verification failed'
-      // })
       if (token) {
         store.dispatch('Logout').then(() => {
           setTimeout(() => {
@@ -55,8 +54,6 @@ const errorHandler = (error) => {
 request.interceptors.request.use(
   (config) => {
     const token = storage.get(ACCESS_TOKEN)
-    // 如果 token 存在
-    // 让每个请求携带自定义 token 请根据实际情况自行修改
     if (token) {
       config.headers[ACCESS_TOKEN] = token
     }
@@ -88,10 +85,8 @@ const installer = {
 
 // 修改流式SSE响应处理函数，使用AGENT_BASE_URL
 export const streamAgent = async (path, formData, callbacks = {}) => {
-  // 构建完整URL
   const url = `${AGENT_BASE_URL}${path}`
 
-  // 设置默认回调函数
   const {
     onStart = () => {},
     onStep = (step) => {},
@@ -102,26 +97,41 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
     onDataProcessError = (error) => {}
   } = callbacks
 
+  const abortController = new AbortController()
+  const fetchTimeoutId = setTimeout(() => {
+    abortController.abort()
+  }, STREAM_AGENT_FETCH_TIMEOUT_MS)
+
   try {
-    // 调用开始回调
     onStart()
 
-    // 发送请求
     const response = await fetch(url, {
       method: 'POST',
-      body: formData
+      body: formData,
+      signal: abortController.signal
     })
 
+    clearTimeout(fetchTimeoutId)
+
     if (!response.ok) {
-      throw new Error(`HTTP错误! 状态码: ${response.status}`)
+      let msg = `HTTP错误! 状态码: ${response.status}`
+      try {
+        const errBody = await response.json()
+        if (errBody && errBody.detail) {
+          msg = typeof errBody.detail === 'string' ? errBody.detail : JSON.stringify(errBody.detail)
+        } else if (errBody && errBody.message) {
+          msg = errBody.message
+        }
+      } catch (_) {
+        /* 非 JSON 错误体 */
+      }
+      throw new Error(msg)
     }
 
-    // 处理流式响应
     const reader = response.body.getReader()
     const decoder = new TextDecoder('utf-8')
     let buffer = ''
 
-    // 读取和处理数据流
     while (true) {
       const { done, value } = await reader.read()
 
@@ -130,49 +140,37 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
         break
       }
 
-      // 解码数据并添加到缓冲区
       buffer += decoder.decode(value, { stream: true })
 
-      // 处理缓冲区中的每一行数据
       const lines = buffer.split('\n\n')
-      buffer = lines.pop() // 保留可能不完整的最后一行
+      buffer = lines.pop()
 
       for (const line of lines) {
         if (line.startsWith('data: ')) {
           try {
             const data = JSON.parse(line.substring(6))
 
-            // 处理错误
             if (data.error) {
               onError(data.error)
               return
             }
 
-            // 处理警告
             if (data.warning) {
               onWarning(data.warning)
               return
             }
 
-            // 处理最终结果
             if (data.is_final_result && data.final_results) {
               onFinalResult(data.final_results)
               return
             }
 
-            // 处理会话信息（含 session_id 的 components 事件）
             if (data.status === 'components' && data.session_id && callbacks.onSessionInfo) {
               callbacks.onSessionInfo(data)
             }
 
-            // 处理步骤
             if (data.step) {
               onStep(data)
-            }
-
-            // 最后一步（但没有最终结果）
-            if (data.is_last && !data.is_final_result && !data.warning) {
-              onComplete()
             }
           } catch (e) {
             onDataProcessError(e, line)
@@ -181,7 +179,12 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
       }
     }
   } catch (error) {
-    onError(`请求错误: ${error.message}`)
+    clearTimeout(fetchTimeoutId)
+    if (error && error.name === 'AbortError') {
+      onError('连接智能体超时，请检查网关服务或稍后重试')
+    } else {
+      onError(`请求错误: ${error.message}`)
+    }
   }
 }
 

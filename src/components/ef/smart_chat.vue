@@ -386,6 +386,12 @@ export default {
         },
         onComplete: () => {
           console.log('智能体推荐完成')
+          this.$emit('stop-loading')
+          if (this.isInputLoading) {
+            this.isInputEnabled = true
+            const outputMessage = this.messageManager.getErrorReply()
+            this.agentTypeWriter(outputMessage)
+          }
         },
         onDataProcessError: (error) => {
           console.error('智能体数据处理错误:', error)
