@@ -871,6 +871,7 @@ export default {
       const data = this.detailEvidence && this.detailEvidence.data
       if (!data) return []
       const failed = Array.isArray(data.failedChecks) ? data.failedChecks : []
+      const dims = data.dimensions || {}
       const defs = [
         {
           key: 'data',
@@ -885,12 +886,21 @@ export default {
       ]
       return defs.map((def) => {
         const issues = failed.filter((c) => this.classifyEvidenceDimension(c) === def.key)
-        const status = this.dimensionStatusFromIssues(issues)
+        const roll = dims[def.key] || {}
+        const status = roll.status || this.dimensionStatusFromIssues(issues)
+        let summaryLine = '未发现异常'
+        if (roll.total != null) {
+          summaryLine = `共 ${roll.total} 项 · 通过 ${roll.passed || 0}`
+          if (roll.warnings) summaryLine += ` · 警告 ${roll.warnings}`
+          if (roll.failed) summaryLine += ` · 失败 ${roll.failed}`
+        } else if (issues.length) {
+          summaryLine = `${issues.length} 项需关注`
+        }
         return {
           ...def,
           status,
           issues,
-          summaryLine: issues.length ? `${issues.length} 项需关注` : '未发现异常'
+          summaryLine
         }
       })
     },
