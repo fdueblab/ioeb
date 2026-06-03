@@ -184,30 +184,19 @@
                   <span>{{ dispatchStatus }}</span>
                 </div>
 
-                <!-- 三阶段进度 -->
-                <div class="phase-progress">
+                <!-- 执行 → 验收（数据/逻辑合并为调度执行） -->
+                <div class="phase-progress phase-progress-dual">
                   <div
                     class="phase-item"
-                    :class="{ done: phases.data === 'done', active: phases.data === 'running' }"
+                    :class="{ done: phases.exec === 'done', active: phases.exec === 'running' }"
                   >
                     <div class="phase-icon">
-                      <a-icon v-if="phases.data === 'done'" type="check" />
-                      <a-icon v-else-if="phases.data === 'running'" type="loading" />
+                      <a-icon v-if="phases.exec === 'done'" type="check" />
+                      <a-icon v-else-if="phases.exec === 'running'" type="loading" />
                       <span v-else>1</span>
                     </div>
-                    <span class="phase-label">数据仿真</span>
-                  </div>
-                  <div class="phase-connector"></div>
-                  <div
-                    class="phase-item"
-                    :class="{ done: phases.logic === 'done', active: phases.logic === 'running' }"
-                  >
-                    <div class="phase-icon">
-                      <a-icon v-if="phases.logic === 'done'" type="check" />
-                      <a-icon v-else-if="phases.logic === 'running'" type="loading" />
-                      <span v-else>2</span>
-                    </div>
-                    <span class="phase-label">逻辑仿真</span>
+                    <span class="phase-label">调度执行</span>
+                    <span class="phase-hint">规划 Agent · 工具调用</span>
                   </div>
                   <div class="phase-connector"></div>
                   <div
@@ -217,9 +206,10 @@
                     <div class="phase-icon">
                       <a-icon v-if="phases.check === 'done'" type="check" />
                       <a-icon v-else-if="phases.check === 'running'" type="loading" />
-                      <span v-else>3</span>
+                      <span v-else>2</span>
                     </div>
-                    <span class="phase-label">链路检视</span>
+                    <span class="phase-label">目标验收</span>
+                    <span class="phase-hint">验证 Agent · 场景目标</span>
                   </div>
                 </div>
 
@@ -309,6 +299,19 @@
                 </div>
               </div>
 
+              <div v-if="buildDimensionCards.length" class="dimension-cards">
+                <div
+                  v-for="card in buildDimensionCards"
+                  :key="card.key"
+                  class="dimension-card"
+                  :class="'dimension-card--' + card.tone"
+                >
+                  <div class="dimension-card-label">{{ card.label }}</div>
+                  <div class="dimension-card-value">{{ card.value }}</div>
+                  <div class="dimension-card-hint">{{ card.hint }}</div>
+                </div>
+              </div>
+
               <div v-if="internalMode === 'research'" class="strategy-summary">
                 <div class="path-label">策略摘要</div>
                 <div class="strategy-tags">
@@ -344,16 +347,6 @@
                     <span class="m-v">{{ formatPct(finalMetrics.repairEffectiveness) }}</span>
                     <span class="m-l">修复有效率</span>
                   </div>
-                </div>
-              </div>
-
-              <div v-if="executionPath.length" class="execution-path">
-                <div class="path-label">执行路径</div>
-                <div class="path-nodes">
-                  <span v-for="(node, index) in executionPath" :key="index" class="path-node">
-                    {{ node }}
-                    <a-icon v-if="index < executionPath.length - 1" type="arrow-right" class="path-arrow" />
-                  </span>
                 </div>
               </div>
 
@@ -397,33 +390,180 @@
 
         <transition name="slide-fade">
           <div class="tech-details" v-if="hasStarted && showTechDetails">
-            <!-- 轮次详情 -->
-            <div class="detail-section" v-if="iterationDetails.length > 0">
+            <template v-if="isCompleted">
+              <div class="detail-section detail-section-card">
+                <div class="detail-title">轨迹</div>
+
+                <div v-if="callChainSteps.length" class="detail-subsection">
+                  <div class="detail-subtitle">调用链</div>
+                  <div class="path-nodes path-nodes-block">
+                    <span v-for="(node, index) in callChainSteps" :key="'path-' + index" class="path-node">
+                      {{ node }}
+                      <a-icon v-if="index < callChainSteps.length - 1" type="arrow-right" class="path-arrow" />
+                    </span>
+                  </div>
+                </div>
+
+                <div v-if="detailTrace.skipped" class="detail-muted detail-subsection">进程内演示无落盘轨迹</div>
+                <div v-else-if="detailTrace.loading" class="detail-muted detail-subsection">
+                  <a-icon type="loading" /> 轨迹加载中…
+                </div>
+                <div v-else-if="detailTrace.error" class="detail-error detail-subsection">{{ detailTrace.error }}</div>
+                <template v-else-if="detailTrace.view">
+                  <div class="detail-subsection">
+                    <div class="detail-subtitle">轨迹概况</div>
+                    <p class="detail-summary-line">
+                      版本 {{ detailTrace.view.traceVersion || '—' }} ·
+                      共 {{ detailTrace.view.toolCallCount }} 次工具调用
+                      <template v-if="detailTrace.view.mcpCallCount != null">
+                        （真实 MCP {{ detailTrace.view.mcpCallCount }} 次）
+                      </template>
+                    </p>
+                  </div>
+
+                  <div v-if="detailTrace.view.toolCalls.length" class="detail-subsection">
+                    <div class="detail-subtitle">工具调用清单</div>
+                    <div class="trace-mini-table">
+                      <div
+                        v-for="(row, idx) in detailTrace.view.toolCalls"
+                        :key="idx"
+                        class="trace-mini-row"
+                      >
+                        <span class="trace-col-tool">{{ row.toolName }}</span>
+                        <span class="trace-col-svc">{{ row.serviceName || row.serviceId }}</span>
+                        <a-tag size="small" :color="row.channel === 'real_mcp' ? 'green' : 'default'">
+                          {{ row.channel }}
+                        </a-tag>
+                        <span class="trace-col-ms">{{ row.latencyMs }}ms</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="detailTrace.view.plannerDecisions.length"
+                    class="detail-subsection"
+                  >
+                    <div class="detail-subtitle">规划决策</div>
+                    <div
+                      v-for="(p, i) in detailTrace.view.plannerDecisions"
+                      :key="'p' + i"
+                      class="trace-text-block"
+                    >
+                      第{{ p.iteration }}轮 · 选中 {{ (p.selectedTools || []).join(', ') || '—' }}
+                      <div v-if="p.reason" class="trace-sub">{{ p.reason }}</div>
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="detailTrace.view.verifierResults.length"
+                    class="detail-subsection"
+                  >
+                    <div class="detail-subtitle">验证结果</div>
+                    <div
+                      v-for="(v, i) in detailTrace.view.verifierResults"
+                      :key="'v' + i"
+                      class="trace-text-block"
+                    >
+                      <a-tag size="small" :color="v.status === 'PASSED' ? 'green' : 'red'">
+                        {{ v.status }}
+                      </a-tag>
+                      {{ v.summary || v.reason || '—' }}
+                    </div>
+                  </div>
+
+                  <div v-if="detailTrace.rawJson" class="detail-subsection">
+                    <div class="detail-subtitle">原始轨迹数据</div>
+                    <a-collapse :bordered="false" class="detail-collapse">
+                      <a-collapse-panel key="raw" header="展开 JSON">
+                        <pre class="trace-raw-json">{{ detailTrace.rawJson }}</pre>
+                      </a-collapse-panel>
+                    </a-collapse>
+                  </div>
+                </template>
+              </div>
+
+              <div class="detail-section detail-section-card">
+                <div class="detail-title">证据</div>
+                <div v-if="detailEvidence.skipped" class="detail-muted">进程内演示无证据分析</div>
+                <div v-else-if="detailEvidence.loading" class="detail-muted"><a-icon type="loading" /> 分析中…</div>
+                <div v-else-if="detailEvidence.error" class="detail-error">{{ detailEvidence.error }}</div>
+                <template v-else-if="detailEvidence.data">
+                  <div class="detail-subsection">
+                    <div class="detail-subtitle">总体结论</div>
+                    <div class="evidence-head">
+                      <a-tag :color="evidenceStatusColor(detailEvidence.data.overallStatus)">
+                        {{ detailEvidence.data.overallStatus }}
+                      </a-tag>
+                      <span class="evidence-id">{{ detailEvidence.data.evidenceId }}</span>
+                    </div>
+                    <p v-if="detailEvidence.data.summary" class="detail-summary-line detail-summary-line--tight">
+                      共 {{ detailEvidence.data.summary.total_checks }} 项检查 ·
+                      通过 {{ detailEvidence.data.summary.passed }}
+                      <template v-if="detailEvidence.data.summary.failed">
+                        · 失败 {{ detailEvidence.data.summary.failed }}
+                      </template>
+                      <template v-if="detailEvidence.data.summary.warnings">
+                        · 警告 {{ detailEvidence.data.summary.warnings }}
+                      </template>
+                    </p>
+                  </div>
+
+                  <div
+                    v-for="dim in evidenceDimensionPanels"
+                    :key="dim.key"
+                    class="detail-subsection evidence-dimension-panel"
+                  >
+                    <div class="evidence-dimension-head">
+                      <div>
+                        <div class="detail-subtitle">{{ dim.title }}</div>
+                        <p class="detail-summary-line detail-summary-line--tight">{{ dim.subtitle }}</p>
+                      </div>
+                      <a-tag :color="evidenceStatusColor(dim.status)">{{ dim.status }}</a-tag>
+                    </div>
+                    <p class="detail-summary-line">{{ dim.summaryLine }}</p>
+                    <div v-if="dim.issues.length" class="evidence-fails">
+                      <div v-for="(c, i) in dim.issues" :key="dim.key + '-' + i" class="evidence-fail-row">
+                        <a-tag size="small" :color="c.status === 'FAIL' ? 'red' : 'orange'">{{ c.status }}</a-tag>
+                        {{ c.checkName }}：{{ c.detail }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="detailEvidence.data.missingEvidence && detailEvidence.data.missingEvidence.length"
+                    class="detail-subsection"
+                  >
+                    <div class="detail-subtitle">证据缺口</div>
+                    <p class="detail-summary-line">{{ detailEvidence.data.missingEvidence.join('、') }}</p>
+                  </div>
+                </template>
+              </div>
+            </template>
+
+            <div class="detail-section detail-section-card" v-if="iterationDetails.length > 0">
               <div class="detail-title">轮次详情</div>
               <div class="iteration-details">
-                <div
-                  v-for="iter in iterationDetails"
-                  :key="iter.iteration"
-                  class="iter-detail-item"
-                >
+                <div v-for="iter in iterationDetails" :key="iter.iteration" class="iter-detail-item">
                   <div class="iter-header">
                     <span class="iter-num">第{{ iter.iteration }}轮</span>
                     <a-tag v-if="iter.success" color="green">通过</a-tag>
                     <a-tag v-else-if="iter.completed" color="orange">需优化</a-tag>
                     <a-tag v-else color="blue">进行中</a-tag>
                   </div>
-                  <div class="iter-phases">
-                    <div class="iter-phase" :class="{ done: iter.dataPhase === 'done' }">
-                      <a-icon :type="iter.dataPhase === 'done' ? 'check-circle' : 'minus-circle'" />
-                      数据仿真
+                  <div class="iter-phases iter-phases-dual">
+                    <div
+                      class="iter-phase"
+                      :class="{ done: iter.execPhase === 'done', active: iter.execPhase === 'running' }"
+                    >
+                      <a-icon :type="iter.execPhase === 'done' ? 'check-circle' : (iter.execPhase === 'running' ? 'loading' : 'minus-circle')" />
+                      调度执行
                     </div>
-                    <div class="iter-phase" :class="{ done: iter.logicPhase === 'done' }">
-                      <a-icon :type="iter.logicPhase === 'done' ? 'check-circle' : 'minus-circle'" />
-                      逻辑仿真
-                    </div>
-                    <div class="iter-phase" :class="{ done: iter.checkPhase === 'done', warning: iter.hasIssue }">
-                      <a-icon :type="iter.checkPhase === 'done' ? (iter.hasIssue ? 'warning' : 'check-circle') : 'minus-circle'" />
-                      链路检视
+                    <div
+                      class="iter-phase"
+                      :class="{ done: iter.checkPhase === 'done', warning: iter.hasIssue, active: iter.checkPhase === 'running' }"
+                    >
+                      <a-icon :type="iter.checkPhase === 'done' ? (iter.hasIssue ? 'warning' : 'check-circle') : (iter.checkPhase === 'running' ? 'loading' : 'minus-circle')" />
+                      目标验收
                     </div>
                   </div>
                   <div class="iter-issue" v-if="iter.issue">
@@ -436,15 +576,10 @@
               </div>
             </div>
 
-            <!-- 服务状态 -->
-            <div class="detail-section">
+            <div class="detail-section detail-section-card">
               <div class="detail-title">服务状态</div>
               <div class="service-detail-list">
-                <div
-                  v-for="service in serviceStatuses"
-                  :key="service.id"
-                  class="service-detail-item"
-                >
+                <div v-for="service in serviceStatuses" :key="service.id" class="service-detail-item">
                   <span class="service-name">{{ service.name }}</span>
                   <span class="service-status" :class="'status-' + service.status">
                     <a-icon v-if="service.status === 'online'" type="check-circle" theme="filled" />
@@ -457,8 +592,7 @@
               </div>
             </div>
 
-            <!-- 运行日志 -->
-            <div class="detail-section">
+            <div class="detail-section detail-section-card">
               <div class="detail-title">
                 运行日志
                 <a-button type="link" size="small" @click="clearLogs" class="clear-btn">清空</a-button>
@@ -579,7 +713,9 @@ import {
   cancelSimulation,
   subscribeSimulationStream,
   fetchSimulationRecords,
-  compareSimulationRecords
+  compareSimulationRecords,
+  fetchSimulationTrace,
+  fetchSimulationEvidence
 } from '@/api/simulation_builder'
 import {
   SIMULATION_BUILD_ENV_TASKS,
@@ -589,7 +725,8 @@ import {
 import { getKnowledge } from '@/domain'
 import {
   resolveScheduleDemoKind,
-  SCHEDULE_DEMO_KIND
+  SCHEDULE_DEMO_KIND,
+  useMemorySimulation
 } from '@/mock/data/meta_apps_data'
 
 function mapSetupItems(tasks) {
@@ -679,8 +816,7 @@ export default {
       maxIterations: 5,
       totalIterations: 0,
       phases: {
-        data: 'pending',
-        logic: 'pending',
+        exec: 'pending',
         check: 'pending'
       },
       dispatchStatus: '智能体调度执行中',
@@ -689,9 +825,10 @@ export default {
       iterationHistory: [],
       iterationDetails: [],
 
-      executionPath: [],
-
       failureMessage: '',
+
+      detailTrace: { loading: false, skipped: false, error: null, view: null, rawJson: '' },
+      detailEvidence: { loading: false, skipped: false, error: null, data: null },
       failureSuggestion: '',
 
       serviceStatuses: [],
@@ -722,6 +859,95 @@ export default {
         m.verificationAccuracy != null ||
         m.repairEffectiveness != null
       )
+    },
+    callChainSteps() {
+      const path = this.finalResult && this.finalResult.executionPath
+      if (Array.isArray(path) && path.length) return path
+      const fromTrace = this.detailTrace.view && this.detailTrace.view.callChain
+      if (Array.isArray(fromTrace) && fromTrace.length) return fromTrace
+      return []
+    },
+    evidenceDimensionPanels() {
+      const data = this.detailEvidence && this.detailEvidence.data
+      if (!data) return []
+      const failed = Array.isArray(data.failedChecks) ? data.failedChecks : []
+      const defs = [
+        {
+          key: 'data',
+          title: '数据保真',
+          subtitle: '通道真实性、工具返回完整性、结果可信度'
+        },
+        {
+          key: 'logic',
+          title: '逻辑规划',
+          subtitle: '服务覆盖、调用顺序、阶段完整性与目标达成'
+        }
+      ]
+      return defs.map((def) => {
+        const issues = failed.filter((c) => this.classifyEvidenceDimension(c) === def.key)
+        const status = this.dimensionStatusFromIssues(issues)
+        return {
+          ...def,
+          status,
+          issues,
+          summaryLine: issues.length ? `${issues.length} 项需关注` : '未发现异常'
+        }
+      })
+    },
+    buildDimensionCards() {
+      if (!this.isCompleted) return []
+      const cards = []
+      const m = this.finalMetrics || {}
+      const evidence = this.detailEvidence.data
+      const dataPanel = this.evidenceDimensionPanels.find((p) => p.key === 'data')
+      const logicPanel = this.evidenceDimensionPanels.find((p) => p.key === 'logic')
+
+      if (m.sandboxFidelity != null) {
+        cards.push({
+          key: 'data',
+          label: '数据保真',
+          value: this.formatPct(m.sandboxFidelity),
+          hint: '沙箱/返回保真度',
+          tone: m.sandboxFidelity >= 0.8 ? 'ok' : 'warn'
+        })
+      } else if (dataPanel) {
+        cards.push({
+          key: 'data',
+          label: '数据保真',
+          value: dataPanel.status,
+          hint: dataPanel.issues.length ? `${dataPanel.issues.length} 项待关注` : '证据检查通过',
+          tone: dataPanel.status === 'PASS' ? 'ok' : 'warn'
+        })
+      }
+
+      const logicMetric = m.verificationAccuracy != null ? m.verificationAccuracy : m.planningAccuracy
+      if (logicMetric != null) {
+        cards.push({
+          key: 'logic',
+          label: '逻辑规划',
+          value: this.formatPct(logicMetric),
+          hint: m.verificationAccuracy != null ? '验证准确率' : '规划合理率',
+          tone: logicMetric >= 0.8 ? 'ok' : 'warn'
+        })
+      } else if (logicPanel) {
+        cards.push({
+          key: 'logic',
+          label: '逻辑规划',
+          value: logicPanel.status,
+          hint: logicPanel.issues.length ? `${logicPanel.issues.length} 项待关注` : '证据检查通过',
+          tone: logicPanel.status === 'PASS' ? 'ok' : 'warn'
+        })
+      } else if (this.hasFailed === false && evidence) {
+        cards.push({
+          key: 'logic',
+          label: '逻辑规划',
+          value: evidence.overallStatus || '—',
+          hint: '验收结论',
+          tone: evidence.overallStatus === 'PASS' ? 'ok' : 'warn'
+        })
+      }
+
+      return cards
     },
     showPreStart() {
       return !this.hasStarted && !this.isCompleted
@@ -811,13 +1037,14 @@ export default {
       this.currentMainStep = 0
       this.currentIteration = 1
       this.totalIterations = 0
-      this.phases = { data: 'pending', logic: 'pending', check: 'pending' }
+      this.phases = { exec: 'pending', check: 'pending' }
       this.dispatchStatus = '智能体调度执行中'
       this.currentActionText = '初始化中...'
       this.iterationHistory = []
       this.iterationDetails = []
-      this.executionPath = []
       this.failureMessage = ''
+      this.detailTrace = { loading: false, skipped: false, error: null, view: null, rawJson: '' }
+      this.detailEvidence = { loading: false, skipped: false, error: null, data: null }
       this.failureSuggestion = ''
       this.logs = []
       this.elapsedTime = 0
@@ -912,6 +1139,184 @@ export default {
       this.logs = []
     },
 
+    evidenceStatusColor(status) {
+      if (status === 'PASS') return 'green'
+      if (status === 'WARN') return 'orange'
+      return 'red'
+    },
+
+    classifyEvidenceDimension(check) {
+      if (!check) return 'logic'
+      if (check.category === 'data' || check.category === 'logic') return check.category
+      const name = String(check.checkName || '').toLowerCase()
+      const dataKeys = [
+        'channel',
+        'tool_io',
+        'confidence',
+        'evidence_source',
+        'tool_channels',
+        'tool_call_details',
+        'result_hash',
+        'sandbox',
+        'fidelity',
+        'schema',
+        'latency',
+        'mcp'
+      ]
+      if (dataKeys.some((k) => name.includes(k))) return 'data'
+      return 'logic'
+    },
+
+    dimensionStatusFromIssues(issues) {
+      if (!issues || !issues.length) return 'PASS'
+      if (issues.some((c) => c.status === 'FAIL')) return 'FAIL'
+      return 'WARN'
+    },
+
+    buildTraceView(trace) {
+      const events = Array.isArray(trace.events) ? trace.events : []
+      const meta = trace.metadata || {}
+      const toolCalls = []
+      const plannerDecisions = []
+      const verifierResults = []
+      let mcpCallCount = 0
+      events.forEach((ev) => {
+        if (!ev || !ev.data) return
+        const t = ev.type
+        const d = ev.data
+        if (t === 'tool_call_record') {
+          if (d.channel === 'real_mcp') mcpCallCount += 1
+          const resultPreview = d.result
+            ? String(d.result).replace(/\s+/g, ' ').slice(0, 60)
+            : ''
+          toolCalls.push({
+            toolName: d.tool_name || '—',
+            serviceId: d.service_id || '—',
+            serviceName: d.service_name || '',
+            channel: d.channel || 'unknown',
+            latencyMs: d.latency_ms != null ? d.latency_ms : '—',
+            resultPreview
+          })
+        } else if (t === 'planner_decision') {
+          plannerDecisions.push({
+            iteration: d.iteration,
+            selectedTools: d.selected_tools || [],
+            reason: d.reason || ''
+          })
+        } else if (t === 'verifier_result') {
+          verifierResults.push({
+            status: d.status || 'UNKNOWN',
+            summary: d.summary || '',
+            reason: d.reason || ''
+          })
+        }
+      })
+      const ver =
+        meta.trace_version ||
+        (meta.runtime && meta.runtime.trace_version) ||
+        ''
+      return {
+        traceVersion: ver,
+        toolCallCount: meta.tool_call_count != null ? meta.tool_call_count : toolCalls.length,
+        mcpCallCount,
+        toolCalls,
+        callChain: this.buildCallChainFromToolCalls(toolCalls),
+        plannerDecisions,
+        verifierResults
+      }
+    },
+
+    buildCallChainFromToolCalls(toolCalls) {
+      if (!toolCalls || !toolCalls.length) return []
+      const steps = ['用户输入']
+      toolCalls.forEach((tc) => {
+        const svc = tc.serviceName || tc.serviceId || '—'
+        const label =
+          tc.toolName && tc.toolName !== svc ? `${svc} · ${tc.toolName}` : svc
+        steps.push(label)
+      })
+      steps.push('输出结果')
+      return steps
+    },
+
+    resolveServiceNodeIdFromTool(toolName) {
+      const t = String(toolName || '').toLowerCase()
+      for (const s of this.serviceStatuses) {
+        const sid = String(s.id)
+        const prefix = sid.replace(/-/g, '_').toLowerCase()
+        if (t.startsWith(prefix) || t.includes(sid.toLowerCase())) {
+          return sid
+        }
+      }
+      return null
+    },
+
+    resolveActiveServiceNodeFromLog(message) {
+      let m = String(message || '').match(/\[Planner\] 调用工具:\s*(.+)/)
+      if (m) return this.resolveServiceNodeIdFromTool(m[1].trim())
+      m = String(message || '').match(/逻辑核验 \[([^\]]+)\]/)
+      if (m) {
+        const name = m[1].trim()
+        const s = this.serviceStatuses.find((x) => x.name === name)
+        if (s) return String(s.id)
+      }
+      return null
+    },
+
+    async fetchTraceWithRetry(sessionId, attempts = 8) {
+      let lastErr = null
+      for (let i = 0; i < attempts; i += 1) {
+        try {
+          return await fetchSimulationTrace(sessionId)
+        } catch (e) {
+          lastErr = e
+          await new Promise((resolve) => setTimeout(resolve, 300))
+        }
+      }
+      throw lastErr || new Error('轨迹加载失败')
+    },
+
+    async loadDetailArtifacts() {
+      if (!this.sessionId) return
+      if (useMemorySimulation(this.appName)) {
+        this.detailTrace = { loading: false, skipped: true, error: null, view: null, rawJson: '' }
+        this.detailEvidence = { loading: false, skipped: true, error: null, data: null }
+        return
+      }
+      this.detailTrace = { loading: true, skipped: false, error: null, view: null, rawJson: '' }
+      this.detailEvidence = { loading: false, skipped: false, error: null, data: null }
+      try {
+        const trace = await this.fetchTraceWithRetry(this.sessionId)
+        const view = this.buildTraceView(trace)
+        let rawJson = ''
+        try {
+          rawJson = JSON.stringify(trace, null, 2)
+          if (rawJson.length > 12000) {
+            rawJson = `${rawJson.slice(0, 12000)}\n…`
+          }
+        } catch (e) {
+          rawJson = ''
+        }
+        this.detailTrace = { loading: false, skipped: false, error: null, view, rawJson }
+        this.detailEvidence = { loading: true, skipped: false, error: null, data: null }
+        const data = await fetchSimulationEvidence(this.sessionId)
+        this.detailEvidence = { loading: false, skipped: false, error: null, data }
+      } catch (e) {
+        const msg = (e && e.message) || '加载失败'
+        if (!this.detailTrace.view) {
+          this.detailTrace = { loading: false, skipped: false, error: msg, view: null, rawJson: '' }
+        } else {
+          this.detailTrace = { ...this.detailTrace, loading: false }
+        }
+        this.detailEvidence = {
+          loading: false,
+          skipped: false,
+          error: msg,
+          data: null
+        }
+      }
+    },
+
     startTimer() {
       this.elapsedTime = 0
       this.timerInterval = setInterval(() => {
@@ -943,8 +1348,7 @@ export default {
       if (!this.iterationDetails.find((d) => d.iteration === iteration)) {
         this.iterationDetails.push({
           iteration,
-          dataPhase: 'pending',
-          logicPhase: 'pending',
+          execPhase: 'pending',
           checkPhase: 'pending',
           hasIssue: false,
           issue: '',
@@ -999,27 +1403,36 @@ export default {
     },
 
     onStreamPhase({ phase, status }) {
-      const key = phase
-      if (!['data', 'logic', 'check'].includes(key)) return
-      this.syncCanvasVisual({ type: 'simulatePhase', phase: key, status })
-      if (status === 'running') {
-        this.phases[key] = 'running'
-        const map = { data: '数据流转', logic: '业务逻辑', check: '调度链路' }
-        this.currentActionText = `正在进行：${map[key]}`
-        this.dispatchStatus = '智能体调度执行中'
-      } else if (status === 'done') {
-        this.phases[key] = 'done'
-        const d = this.currentDetail()
-        if (d) {
-          const f = `${key}Phase`
-          if (f in d) d[f] = 'done'
+      if (!['data', 'logic', 'check'].includes(phase)) return
+      this.syncCanvasVisual({ type: 'simulatePhase', phase, status })
+
+      const d = this.currentDetail()
+      if (phase === 'data' || phase === 'logic') {
+        if (status === 'running') {
+          this.phases.exec = 'running'
+          this.currentActionText =
+            phase === 'data'
+              ? '正在进行：规划 Agent 调度服务…'
+              : '正在进行：核对工具调用与返回…'
+          this.dispatchStatus = '智能体调度执行中'
+          if (d) d.execPhase = 'running'
+        } else if (status === 'done' && phase === 'logic') {
+          this.phases.exec = 'done'
+          this.syncCanvasVisual({ type: 'activeCall', targetNodeId: null })
+          if (d) d.execPhase = 'done'
         }
+        return
       }
-      if (status === 'running') {
-        const d = this.currentDetail()
-        if (d) {
-          const f = `${key}Phase`
-          if (f in d) d[f] = 'running'
+
+      if (phase === 'check') {
+        if (status === 'running') {
+          this.phases.check = 'running'
+          this.currentActionText = '正在进行：验证 Agent 审查目标达成…'
+          this.dispatchStatus = '目标验收中'
+          if (d) d.checkPhase = 'running'
+        } else if (status === 'done') {
+          this.phases.check = 'done'
+          if (d) d.checkPhase = 'done'
         }
       }
     },
@@ -1037,7 +1450,7 @@ export default {
     onStreamIteration({ iteration, status }) {
       this.currentIteration = iteration
       if (status === 'running') {
-        this.phases = { data: 'pending', logic: 'pending', check: 'pending' }
+        this.phases = { exec: 'pending', check: 'pending' }
         this.ensureIterationRows(iteration)
       }
       if (status === 'retry') {
@@ -1078,6 +1491,10 @@ export default {
 
     onStreamLog({ level, message }) {
       this.addLog(message, level, this.logLevelToType(level))
+      const targetId = this.resolveActiveServiceNodeFromLog(message)
+      if (targetId) {
+        this.syncCanvasVisual({ type: 'activeCall', targetNodeId: targetId })
+      }
     },
 
     onStreamMetrics({ metric, value }) {
@@ -1125,14 +1542,14 @@ export default {
 
       if (result) {
         this.finalResult = result
-        if (result.executionPath && result.executionPath.length) {
-          this.executionPath = result.executionPath
-        }
         if (result.error) this.failureMessage = result.error
         if (result.suggestion) this.failureSuggestion = result.suggestion
       }
+      this.showTechDetails = true
+      this.syncCanvasVisual({ type: 'activeCall', targetNodeId: null })
       this.syncCanvasVisual({ type: 'build', active: false })
       this.syncCanvasVisual({ type: 'clear' })
+      this.loadDetailArtifacts()
     },
 
     onStreamError(err) {
@@ -1638,13 +2055,19 @@ export default {
   }
 }
 
-// 三阶段进度
+// 执行 → 验收 两阶段进度
 .phase-progress {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: 8px;
   margin-bottom: 16px;
+
+  &.phase-progress-dual .phase-connector {
+    width: 56px;
+    margin-top: 16px;
+    margin-bottom: 0;
+  }
 }
 
 .phase-item {
@@ -1671,7 +2094,18 @@ export default {
     color: #8c8c8c;
   }
 
+  .phase-hint {
+    font-size: 10px;
+    color: #bfbfbf;
+    max-width: 88px;
+    text-align: center;
+    line-height: 1.3;
+  }
+
   &.active {
+    .phase-hint {
+      color: #91d5ff;
+    }
     .phase-icon {
       background: #1890ff;
       color: #fff;
@@ -1801,6 +2235,52 @@ export default {
   }
 }
 
+.dimension-cards {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0 4px;
+  width: 100%;
+}
+
+.dimension-card {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  background: #fafafa;
+  text-align: left;
+
+  &--ok {
+    border-color: #b7eb8f;
+    background: #f6ffed;
+  }
+
+  &--warn {
+    border-color: #ffe58f;
+    background: #fffbe6;
+  }
+}
+
+.dimension-card-label {
+  font-size: 11px;
+  color: #8c8c8c;
+  margin-bottom: 4px;
+}
+
+.dimension-card-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #262626;
+  line-height: 1.2;
+}
+
+.dimension-card-hint {
+  font-size: 10px;
+  color: #bfbfbf;
+  margin-top: 4px;
+}
+
 .stats-row {
   display: flex;
   justify-content: center;
@@ -1898,8 +2378,197 @@ export default {
   border-top: 1px solid #f0f0f0;
   background: #fafafa;
   padding: 16px;
-  max-height: 320px;
+  max-height: 480px;
   overflow-y: auto;
+}
+
+.detail-muted {
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.detail-error {
+  font-size: 12px;
+  color: #cf1322;
+}
+
+.detail-kv {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: 12px;
+  color: #595959;
+  margin-bottom: 8px;
+}
+
+.trace-mini-table {
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+}
+
+.trace-mini-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f5f5f5;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.trace-col-tool {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #262626;
+}
+
+.trace-col-svc {
+  max-width: 88px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #8c8c8c;
+}
+
+.trace-col-ms {
+  flex-shrink: 0;
+  color: #8c8c8c;
+  font-size: 11px;
+}
+
+.detail-collapse {
+  background: transparent;
+  margin-bottom: 4px;
+
+  /deep/ .ant-collapse-header {
+    padding: 4px 0 !important;
+    font-size: 12px;
+    color: #595959;
+  }
+
+  /deep/ .ant-collapse-content-box {
+    padding: 4px 0 8px !important;
+  }
+}
+
+.trace-text-block {
+  font-size: 12px;
+  color: #262626;
+  margin-bottom: 6px;
+
+  .trace-sub {
+    color: #8c8c8c;
+    margin-top: 2px;
+  }
+}
+
+.trace-raw-json {
+  font-size: 11px;
+  max-height: 140px;
+  overflow: auto;
+  margin: 0;
+  padding: 8px;
+  background: #fff;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.evidence-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.evidence-id {
+  font-size: 11px;
+  color: #8c8c8c;
+  font-family: monospace;
+}
+
+.evidence-fails {
+  margin-top: 6px;
+}
+
+.evidence-fail-row {
+  font-size: 12px;
+  color: #595959;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.path-nodes-block {
+  padding: 8px 10px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
+}
+
+.detail-summary-line {
+  font-size: 12px;
+  color: #595959;
+  line-height: 1.5;
+  margin: 0;
+
+  &--tight {
+    margin-top: 6px;
+  }
+}
+
+.evidence-dimension-panel {
+  background: #fcfcfc;
+  border-radius: 6px;
+  padding: 10px 12px;
+  border: 1px solid #f0f0f0;
+}
+
+.evidence-dimension-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.detail-section-card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.detail-subsection {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+
+  &:first-of-type {
+    margin-top: 8px;
+    padding-top: 0;
+    border-top: none;
+  }
+}
+
+.detail-subtitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: #8c8c8c;
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
 }
 
 .detail-section {
@@ -1955,6 +2624,10 @@ export default {
     color: #8c8c8c;
     margin-bottom: 6px;
 
+    &.iter-phases-dual {
+      gap: 24px;
+    }
+
     .iter-phase {
       display: flex;
       align-items: center;
@@ -1962,6 +2635,7 @@ export default {
 
       &.done { color: #52c41a; }
       &.warning { color: #faad14; }
+      &.active { color: #1890ff; }
     }
   }
 

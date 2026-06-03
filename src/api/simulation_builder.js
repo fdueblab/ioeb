@@ -189,3 +189,21 @@ export function subscribeSimulationStream(sessionId, streamUrl, handlers) {
     handlers
   )
 }
+
+/** 构建结束后读取落盘轨迹（仅 HTTP / Micro-Agent） */
+export function fetchSimulationTrace(sessionId) {
+  return request({
+    url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/trace`,
+    method: 'get',
+    timeout: 60000
+  })
+}
+
+/** 对轨迹跑 trace_evidence 管道，返回证据摘要 */
+export function fetchSimulationEvidence(sessionId) {
+  return request({
+    url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/evidence`,
+    method: 'post',
+    timeout: 120000
+  })
+}
