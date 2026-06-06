@@ -630,7 +630,7 @@
         </template>
 
         <template v-else-if="isRunning">
-          <a-button @click="handleCancel">取消构建</a-button>
+          <a-button type="danger" @click="handleCancel">取消构建</a-button>
         </template>
 
         <template v-else-if="isCompleted && hasFailed">
@@ -790,6 +790,8 @@ export default {
 
       sessionId: null,
       unsubscribeStream: null,
+      /** 用户主动返回编辑 / 取消，或已确认离开页面 */
+      intentionalClose: false,
 
       finalMetrics: {},
       finalResult: null,
@@ -1005,6 +1007,7 @@ export default {
 
     init(nodes) {
       this.visible = true
+      this.intentionalClose = false
       this.internalMode = this.mode === 'research' ? 'research' : 'production'
       this.scenarioDraft = this.scenarioDescription || ''
       this.strategy = { ...SIMULATION_BUILD_DEFAULT_STRATEGY }
@@ -1637,13 +1640,34 @@ export default {
       this.handleClose()
     },
 
+    isActiveBuild() {
+      return this.isRunning && !!this.sessionId && !this.intentionalClose
+    },
+
+    /** 用户确认离开调度页后调用 */
+    cancelBuildForLeave() {
+      this.intentionalClose = true
+      if (this.sessionId) {
+        cancelSimulation(this.sessionId)
+      }
+      this.teardownStream()
+      this.stopTimer()
+      this.isRunning = false
+      this.syncCanvasVisual({ type: 'build', active: false })
+      this.syncCanvasVisual({ type: 'clear' })
+      this.visible = false
+      this.$emit('close')
+    },
+
     handleCancel() {
       this.$confirm('取消后当前进度将丢失', '确定要取消构建吗？', {
         confirmButtonText: '取消构建',
         cancelButtonText: '继续构建',
+        confirmButtonClass: 'el-button--danger',
         type: 'warning',
         closeOnClickModal: false
       }).then(() => {
+        this.intentionalClose = true
         this.aborted = true
         if (this.sessionId) {
           cancelSimulation(this.sessionId)
@@ -1656,6 +1680,7 @@ export default {
     },
 
     handleClose() {
+      this.intentionalClose = true
       this.syncCanvasVisual({ type: 'build', active: false })
       this.syncCanvasVisual({ type: 'clear' })
       if (this.isRunning && this.sessionId) {
