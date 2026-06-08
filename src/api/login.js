@@ -31,6 +31,14 @@ export function getSmsCaptcha (parameter) {
   })
 }
 
+export function register (parameter) {
+  return request({
+    url: userApi.Register,
+    method: 'post',
+    data: parameter
+  })
+}
+
 export function getInfo (parameter) {
   let url = ''
   if (parameter === 'user') {
