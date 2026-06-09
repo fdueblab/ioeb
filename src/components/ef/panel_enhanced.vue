@@ -54,8 +54,14 @@
               <a-tooltip title="元应用详情">
                 <a-button shape="circle" :disabled="toolbarDisabled" icon="file-text" @click="showDataInfo" />
               </a-tooltip>
-              <a-tooltip title="重置元应用">
-                <a-button shape="circle" :disabled="toolbarDisabled" icon="reload" @click="dataReloadClear" />
+              <a-tooltip title="清空服务">
+                <a-button
+                  type="danger"
+                  shape="circle"
+                  icon="delete"
+                  :disabled="toolbarDisabled || !hasServiceNodes"
+                  @click="confirmClearCanvasServices"
+                />
               </a-tooltip>
               <a-tooltip title="添加服务">
                 <a-button type="primary" :disabled="toolbarDisabled" shape="circle" icon="plus" @click="addServices" />
@@ -79,10 +85,12 @@
           :app-name="metaAppDisplayNameForSimulation"
           :app-id="data.name || 'meta-app-draft'"
           :domain="verticalType"
-          :scenario-description="data.preDes"
+          :scenario-description="simulationScenarioText"
+          :parsed-intent="data.parsedIntent || {}"
           @success="handleSimulationSuccess"
           @prePublish="previewAndPublish"
           @canvas-visual="onSimulationCanvasVisual"
+          @parsed-intent-update="onParsedIntentUpdate"
           @close="simulationBuilderVisible = false"
         />
       </div>
@@ -290,6 +298,10 @@ export default {
      */
     metaAppDisplayNameForSimulation() {
       return this.data.preName || ''
+    },
+    /** 仿真用完整想定摘要；preDes 仅作用户可改备注 */
+    simulationScenarioText() {
+      return this.data.scenarioSummary || this.data.preDes || ''
     }
   },
   data() {
@@ -316,6 +328,8 @@ export default {
         name: '新元应用',
         preName: '元应用名称',
         preDes: '以支持独立运行和柔性集成的大模型智能体为软件载体的最小粒度应用',
+        scenarioSummary: '',
+        parsedIntent: null,
         preInputName: '输入内容',
         preOutputName: '输出内容',
         inputType: 0,
@@ -987,12 +1001,34 @@ export default {
         })
       })
     },
+    onParsedIntentUpdate(intent) {
+      if (!intent || typeof intent !== 'object') return
+      this.data.parsedIntent = intent
+    },
+    applyScenarioIntake(payload) {
+      if (!payload) return
+      if (payload.scenarioSummary) {
+        this.data.scenarioSummary = payload.scenarioSummary
+      }
+      if (payload.parsedIntent) {
+        this.data.parsedIntent = payload.parsedIntent
+      }
+      if (payload.userRemark) {
+        this.data.preDes = payload.userRemark
+      }
+    },
     updateInitialFlow(newFlow) {
       console.log('updateInitialFlow 被调用，newFlow:', newFlow)
       // 导入新流程后需要重新进行仿真验证
       this.simulationPassed = false
       const parsedFlow = parseInitialFlow(newFlow, this.statusDict, this.statusStyleDict)
       if (parsedFlow) {
+        if (newFlow.scenarioSummary) {
+          parsedFlow.scenarioSummary = newFlow.scenarioSummary
+        }
+        if (newFlow.parsedIntent) {
+          parsedFlow.parsedIntent = newFlow.parsedIntent
+        }
         // 同步初始节点到左侧服务列表
         const initNodes = parsedFlow.nodeList.filter(node => node.name !== 'metaAppAgent')
         this.syncInitialNodesToServices(initNodes)
@@ -1011,6 +1047,23 @@ export default {
       // 创建默认数据，包含智能体节点
       const defaultData = createDefaultFlowData()
       this.dataReload(defaultData)
+    },
+
+    confirmClearCanvasServices() {
+      if (this.toolbarDisabled) return
+      this.$confirm(
+        '将移除当前所有服务节点，左侧对话记录会保留。',
+        '清空画布服务？',
+        {
+          confirmButtonText: '清空',
+          cancelButtonText: '取消',
+          confirmButtonClass: 'el-button--danger',
+          type: 'warning',
+          closeOnClickModal: false
+        }
+      ).then(() => {
+        this.dataReloadClear()
+      }).catch(() => {})
     },
     async loadDictionaryData() {
       try {

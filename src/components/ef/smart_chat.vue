@@ -53,7 +53,6 @@
         <div v-else class="message-content" v-html="message.text" />
       </div>
     </div>
-    <a-button v-if="isGenerated && !isInputLoading" class="retry-button" icon="sync" @click="refresh">重新生成</a-button>
     <div class="chat-input">
       <div class="input-wrapper" style="width: 100%; position: relative;" ref="inputWrapper">
         <a-input
@@ -67,7 +66,14 @@
           @keydown.enter="handleUserInput"
           ref="inputElement"
         />
-        <a-button type="primary" icon="deployment-unit" @click="handleUserInput" :loading="isInputLoading" :disabled="!userInput" class="submit-button" />
+        <a-button
+          type="primary"
+          icon="deployment-unit"
+          @click="handleUserInput"
+          :loading="isInputLoading"
+          :disabled="!userInput || !isInputEnabled"
+          class="submit-button"
+        />
         <div
           class="suggestion-dropdown"
           v-if="showSuggestions && filteredSuggestions.length > 0 && isInputEnabled"
@@ -88,7 +94,7 @@
 
 <script>
 import { ChatMessageManager } from './chat_messages'
-import { streamAgent } from '@/utils/request'
+import { streamAgent, callAgentApi } from '@/utils/request'
 import { generateServiceNodes } from './utils'
 import {
   getMetaAppNodes,
@@ -97,6 +103,13 @@ import {
   resolveScheduleDemoKind,
   SCHEDULE_DEMO_KIND
 } from '@/mock/data/meta_apps_data'
+import { toScenarioIntakeEvent } from '@/mock/data/local_mcp_scenario_intake'
+import {
+  LOCAL_MCP_FAKE_QUESTION,
+  buildLocalMcpCombinedInput,
+  generateLocalMcpIntakeMockSteps,
+  validateLocalMcpFollowUp
+} from '@/mock/data/local_mcp_intake_dialog'
 
 export default {
   name: 'SmartChat',
@@ -129,7 +142,6 @@ export default {
       currentIndex: 0,
       isInputEnabled: true,
       isInputLoading: false,
-      isGenerated: false,
       showSuggestions: false,
       messageManager: null,
       filteredSuggestions: [],
@@ -137,7 +149,13 @@ export default {
       stepTypewriterTimer: null,
       finalCollapseTimer: null,
       isTaskFinishing: false,
-      agentSessionId: null
+      receivedFinalResult: false,
+      agentSessionId: null,
+      intakeSessionId: null,
+      scenarioSummary: '',
+      parsedIntent: null,
+      userRemark: '',
+      localMcpIntakePending: null
     }
   },
   watch: {
@@ -176,8 +194,28 @@ export default {
         this.showSuggestions = false
       }, 200)
     },
+    beginAgentTurn() {
+      if (this.stepTypewriterTimer) {
+        clearTimeout(this.stepTypewriterTimer)
+        this.stepTypewriterTimer = null
+      }
+      this.thinkingMessageIndex = -1
+      this.isTaskFinishing = false
+      this.receivedFinalResult = false
+      this.currentIndex = 0
+    },
+
+    finishAgentTurn() {
+      this.isInputLoading = false
+      this.isInputEnabled = true
+      this.isTaskFinishing = false
+      this.thinkingMessageIndex = -1
+      this.currentIndex = 0
+    },
+
     handleUserInput() {
-      if (!this.userInput.trim()) return
+      if (!this.userInput.trim() || !this.isInputEnabled || this.isInputLoading) return
+      this.beginAgentTurn()
       this.isInputLoading = true
       this.isInputEnabled = false
       this.messages.push({ text: this.userInput, isUser: true })
@@ -186,14 +224,137 @@ export default {
       const input = this.userInput
       this.userInput = ''
 
-      // 发出开始loading事件，让其他界面进入loading状态
-      this.$emit('start-loading')
+      if (this.localMcpIntakePending) {
+        this.handleLocalMcpIntakeFollowUp(input)
+        return
+      }
 
-      // 调度演示（课题 / MCP）→ 统一 mock 推荐；否则 Agent API
+      // 调度演示（课题 / MCP）→ 统一 mock 推荐；否则先想定追问再推荐
       if (matchesScheduleDemoInput(input)) {
+        if (resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.LOCAL_MCP) {
+          this.beginLocalMcpIntake(input)
+          return
+        }
+        this.$emit('start-loading')
         this.useScheduleDemoData(input)
       } else {
-        this.callAgentForRecommendation(input)
+        this.callScenarioIntake(input)
+      }
+    },
+
+    beginLocalMcpIntake(input) {
+      if (this.verticalType !== 'health') {
+        this.removeAgentLoadingMessage()
+        this.messages.push({
+          text: '【本地MCP】样例仅在 <b>health</b> 调度页可用。',
+          isUser: false
+        })
+        this.finishAgentTurn()
+        return
+      }
+      this.localMcpIntakePending = { initialInput: input }
+      const steps = generateLocalMcpIntakeMockSteps(input)
+      const runStep = (idx) => {
+        if (idx >= steps.length) return this.finishLocalMcpIntakeQuestion()
+        const step = steps[idx]
+        setTimeout(() => {
+          this.updateThinkingMessage(step.thought, step.step)
+          runStep(idx + 1)
+        }, 800 + Math.random() * 900)
+      }
+      runStep(0)
+    },
+
+    finishLocalMcpIntakeQuestion() {
+      this.isTaskFinishing = true
+      this.handleFinalStep()
+      if (this.thinkingMessageIndex !== -1) {
+        const thinking = this.messages[this.thinkingMessageIndex].thinking
+        if (thinking) {
+          this.$set(thinking, 'title', '想定澄清')
+        }
+      }
+      this.placeholder = '请补充想定信息（需含场景关键词）…'
+      this.agentTypeWriter(LOCAL_MCP_FAKE_QUESTION)
+    },
+
+    handleLocalMcpIntakeFollowUp(followUpText) {
+      const { initialInput } = this.localMcpIntakePending
+      const validation = validateLocalMcpFollowUp(followUpText)
+      if (!validation.ok) {
+        this.removeAgentLoadingMessage()
+        this.messages.push({ text: validation.message, isUser: false })
+        this.finishAgentTurn()
+        this.scrollToBottom()
+        return
+      }
+      this.localMcpIntakePending = null
+      this.$emit('start-loading')
+      this.useScheduleDemoData(buildLocalMcpCombinedInput(initialInput, followUpText))
+    },
+
+    removeAgentLoadingMessage() {
+      const idx = this.messages.findIndex((m) => m.text === 'agentLoading')
+      if (idx !== -1) this.messages.splice(idx, 1)
+    },
+
+    async callScenarioIntake(input) {
+      const formData = new FormData()
+      formData.append('message', input)
+      formData.append('domain', this.verticalType)
+      if (this.intakeSessionId) {
+        formData.append('session_id', this.intakeSessionId)
+      }
+
+      try {
+        const res = await callAgentApi('/api/agent/scenario_intake', formData)
+        if (!res.success) {
+          throw new Error('想定追问失败')
+        }
+        if (res.session_id) {
+          this.intakeSessionId = res.session_id
+        }
+
+        this.removeAgentLoadingMessage()
+
+        if (res.status === 'question') {
+          const text = res.hint ? `${res.text}<br/><span style="color:#888;font-size:12px;">提示：${res.hint}</span>` : res.text
+          this.messages.push({ text, isUser: false })
+          this.placeholder = '请补充想定信息（可继续澄清结构化想定）…'
+          this.finishAgentTurn()
+          this.scrollToBottom()
+          return
+        }
+
+        if (res.status === 'ready') {
+          this.scenarioSummary = res.scenarioSummary || ''
+          this.parsedIntent = res.parsedIntent || null
+          this.userRemark = res.userRemark || ''
+          this.$emit('scenario-intake', {
+            parsedIntent: this.parsedIntent,
+            scenarioSummary: this.scenarioSummary,
+            userRemark: this.userRemark,
+            intakeSessionId: this.intakeSessionId
+          })
+          if (res.text) {
+            this.messages.push({ text: res.text, isUser: false })
+            this.scrollToBottom()
+          }
+          this.messages.push({ text: 'agentLoading', isUser: false })
+          this.scrollToBottom()
+          this.$emit('start-loading')
+          this.callAgentForRecommendation(input)
+          return
+        }
+
+        throw new Error('想定追问返回未知状态')
+      } catch (error) {
+        console.error('想定追问失败:', error)
+        this.removeAgentLoadingMessage()
+        this.$emit('stop-loading')
+        const outputMessage = this.messageManager.getErrorReply()
+        this.messages.push({ text: outputMessage, isUser: false })
+        this.finishAgentTurn()
       }
     },
     // 获取思考过程标题
@@ -347,6 +508,15 @@ export default {
       const formData = new FormData()
       formData.append('message', input)
       formData.append('service_type', this.verticalType)
+      if (this.scenarioSummary) {
+        formData.append('scenario_summary', this.scenarioSummary)
+      }
+      if (this.parsedIntent) {
+        formData.append('parsed_intent', JSON.stringify(this.parsedIntent))
+      }
+      if (this.userRemark) {
+        formData.append('user_remark', this.userRemark)
+      }
       if (this.agentSessionId) {
         formData.append('session_id', this.agentSessionId)
       }
@@ -370,21 +540,19 @@ export default {
         },
         onError: (error) => {
           console.error('智能体推荐失败:', error)
-          this.$emit('stop-loading') // 停止loading状态
+          this.$emit('stop-loading')
           const outputMessage = this.messageManager.getErrorReply()
           this.agentTypeWriter(outputMessage)
-          this.isInputEnabled = true
         },
         onWarning: (warning) => {
           console.warn('智能体推荐警告:', warning)
-          this.$emit('stop-loading') // 停止loading状态
+          this.$emit('stop-loading')
           const outputMessage = this.messageManager.getErrorReply()
           this.agentTypeWriter(outputMessage)
-          this.isInputEnabled = true
         },
         onFinalResult: (results) => {
           console.log('智能体推荐结果:', results)
-          // 标记任务结束并处理最后一步
+          this.receivedFinalResult = true
           this.isTaskFinishing = true
           this.handleFinalStep()
           this.handleAgentResponse(results)
@@ -392,18 +560,16 @@ export default {
         onComplete: () => {
           console.log('智能体推荐完成')
           this.$emit('stop-loading')
-          if (this.isInputLoading) {
-            this.isInputEnabled = true
+          if (this.isInputLoading && !this.receivedFinalResult) {
             const outputMessage = this.messageManager.getErrorReply()
             this.agentTypeWriter(outputMessage)
           }
         },
         onDataProcessError: (error) => {
           console.error('智能体数据处理错误:', error)
-          this.$emit('stop-loading') // 停止loading状态
+          this.$emit('stop-loading')
           const outputMessage = this.messageManager.getErrorReply()
           this.agentTypeWriter(outputMessage)
-          this.isInputEnabled = true
         }
       })
     },
@@ -419,9 +585,12 @@ export default {
           // 转换数据格式以适配现有系统
           const flowData = {
             preName: result.preName,
+            preDes: result.preDes || this.userRemark || '',
             preInputName: result.preInputName,
             preOutputName: result.preOutputName,
-            nodeList: result.nodeList
+            nodeList: result.nodeList,
+            scenarioSummary: this.scenarioSummary || '',
+            parsedIntent: this.parsedIntent || null
           }
           // 生成服务节点和选中服务列表
           const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
@@ -430,22 +599,18 @@ export default {
           // 向父组件发送数据
           this.$emit('update-services', serviceNodes)
           this.$emit('update-flow', flowData)
-          this.placeholder = '已智能生成元应用'
-          this.isGenerated = true
-          // 使用agentTypeWriter在智能体消息中显示结果
+          this.placeholder = '可继续对话补充想定，或打开仿真构建前在准备页编辑'
           this.agentTypeWriter(outputMessage)
         } else {
-          this.$emit('stop-loading') // 停止loading状态
+          this.$emit('stop-loading')
           const outputMessage = this.messageManager.getErrorReply()
           this.agentTypeWriter(outputMessage)
-          this.isInputEnabled = true
         }
       } catch (error) {
         console.error('处理智能体返回数据失败:', error)
-        this.$emit('stop-loading') // 停止loading状态
+        this.$emit('stop-loading')
         const outputMessage = this.messageManager.getErrorReply(true)
         this.agentTypeWriter(outputMessage)
-        this.isInputEnabled = true
       }
     },
     useScheduleDemoData(input) {
@@ -455,7 +620,6 @@ export default {
       ) {
         this.$emit('stop-loading')
         this.isInputLoading = false
-        this.isInputEnabled = true
         const i = this.messages.findIndex((msg) => msg.text === 'agentLoading')
         if (i !== -1) {
           this.$set(this.messages, i, {
@@ -463,6 +627,7 @@ export default {
             isUser: false
           })
         }
+        this.finishAgentTurn()
         return
       }
       const steps = generateMockSteps(this.verticalType, input)
@@ -482,14 +647,27 @@ export default {
       const isMcp = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.LOCAL_MCP
       getMetaAppNodes(this.verticalType, input)
         .then((flowData) => {
+          if (isMcp && flowData.parsedIntent) {
+            const intakeEvent = toScenarioIntakeEvent({
+              parsedIntent: flowData.parsedIntent,
+              scenarioSummary: flowData.scenarioSummary,
+              userRemark: flowData.preDes,
+              intakeSessionId: null
+            })
+            this.scenarioSummary = intakeEvent.scenarioSummary || ''
+            this.parsedIntent = intakeEvent.parsedIntent || null
+            this.userRemark = intakeEvent.userRemark || ''
+            this.$emit('scenario-intake', intakeEvent)
+          }
           const { chosenServices, serviceNodes } = generateServiceNodes(
             flowData,
             this.verticalType
           )
           this.$emit('update-services', serviceNodes)
           this.$emit('update-flow', flowData)
-          this.placeholder = isMcp ? '已生成本地 MCP 元应用' : '已智能生成元应用'
-          this.isGenerated = true
+          this.placeholder = isMcp
+            ? '可继续对话补充想定，或打开仿真构建前在准备页编辑'
+            : '继续补充或调整需求…'
           this.agentTypeWriter(
             this.messageManager.generateSuccessReply(chosenServices)
           )
@@ -497,7 +675,6 @@ export default {
         .catch(() => {
           this.$emit('stop-loading')
           this.agentTypeWriter(this.messageManager.getErrorReply())
-          this.isInputEnabled = true
         })
     },
     typeWriter(text) {
@@ -506,9 +683,7 @@ export default {
         this.currentIndex++
         setTimeout(() => this.typeWriter(text), 20)
       } else {
-        this.userInput = ''
-        this.isInputLoading = false
-        this.currentIndex = 0
+        this.finishAgentTurn()
         this.scrollToBottom()
       }
     },
@@ -521,10 +696,7 @@ export default {
           this.currentIndex++
           setTimeout(() => this.agentTypeWriter(text), 20)
         } else {
-          this.userInput = ''
-          this.isInputLoading = false
-          this.currentIndex = 0
-          this.thinkingMessageIndex = -1 // 完成后重置索引
+          this.finishAgentTurn()
           this.scrollToBottom()
         }
       } else {
@@ -537,12 +709,9 @@ export default {
             result: text,
             isUser: false
           })
-          this.userInput = ''
-          this.isInputLoading = false
-          this.currentIndex = 0
+          this.finishAgentTurn()
           this.scrollToBottom()
         } else {
-          // 回退到普通消息处理
           this.messages.push({ text: '', isUser: false })
           this.typeWriter(text)
         }
@@ -571,18 +740,19 @@ export default {
       this.messages = []
       this.isInputEnabled = true
       this.isInputLoading = false
-      this.isGenerated = false
       this.showSuggestions = false
       this.filteredSuggestions = this.messageManager ? this.messageManager.getSuggestions() : []
       this.thinkingMessageIndex = -1
       this.isTaskFinishing = false
+      this.receivedFinalResult = false
       this.agentSessionId = null
+      this.intakeSessionId = null
+      this.scenarioSummary = ''
+      this.parsedIntent = null
+      this.userRemark = ''
+      this.localMcpIntakePending = null
       const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '智能体未获取到必要信息，请刷新后重试'
       this.messages.push({ text: initialMessage, isUser: false })
-    },
-    refresh() {
-      this.init()
-      this.$emit('clear-flow')
     }
   }
 }
@@ -688,16 +858,6 @@ export default {
 .loading-text-wrapper {
   padding-right: 15px;
   width: auto;
-}
-
-.retry-button {
-  position: absolute;
-  bottom: 75px;
-  left: 50%;
-  transform: translateX(-50%);
-  border: none;
-  border-radius: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* 智能体消息容器样式 */

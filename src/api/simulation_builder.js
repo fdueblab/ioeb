@@ -25,6 +25,9 @@ const SIMULATION_SSE_EVENTS = [
   'log',
   'metrics',
   'progress',
+  'planner_decision',
+  'verifier_result',
+  'scenario_parsed',
   'complete'
 ]
 

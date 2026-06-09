@@ -56,6 +56,71 @@
                 <a-icon type="bulb" /> {{ domainHint }}
               </div>
 
+              <div v-if="hasParsedIntentDraft" class="pre-start-parsed-intent">
+                <div class="pre-start-parsed-title">
+                  结构化想定
+                  <span class="pre-start-parsed-hint">经追问收敛；可在此或左侧对话继续补充，开始构建后锁定</span>
+                </div>
+                <div class="parsed-intent-form">
+                  <div class="parsed-intent-field">
+                    <span class="parsed-intent-field-label">目标</span>
+                    <a-input
+                      v-model="parsedIntentDraft.goal"
+                      size="small"
+                      placeholder="核心业务目标"
+                      @change="emitParsedIntentUpdate"
+                    />
+                  </div>
+                  <div class="parsed-intent-field">
+                    <span class="parsed-intent-field-label">业务情境</span>
+                    <a-textarea
+                      v-model="parsedIntentDraft.situationBrief"
+                      :auto-size="{ minRows: 2, maxRows: 4 }"
+                      placeholder="必要的业务情境摘要（可空）"
+                      @change="emitParsedIntentUpdate"
+                    />
+                  </div>
+                  <div class="parsed-intent-field">
+                    <span class="parsed-intent-field-label">约束</span>
+                    <a-textarea
+                      v-model="parsedIntentListDraft.constraints"
+                      :auto-size="{ minRows: 2, maxRows: 5 }"
+                      placeholder="每行一条"
+                      @change="onParsedIntentListChange('constraints')"
+                    />
+                  </div>
+                  <div class="parsed-intent-field">
+                    <span class="parsed-intent-field-label">验收标准</span>
+                    <a-textarea
+                      v-model="parsedIntentListDraft.acceptanceCriteria"
+                      :auto-size="{ minRows: 2, maxRows: 5 }"
+                      placeholder="每行一条（可检查，非最终成败判定）"
+                      @change="onParsedIntentListChange('acceptanceCriteria')"
+                    />
+                  </div>
+                  <div class="parsed-intent-field parsed-intent-field--io">
+                    <div>
+                      <span class="parsed-intent-field-label">预期输入</span>
+                      <a-textarea
+                        v-model="parsedIntentListDraft.inputs"
+                        :auto-size="{ minRows: 2, maxRows: 4 }"
+                        placeholder="每行一条"
+                        @change="onParsedIntentListChange('inputs')"
+                      />
+                    </div>
+                    <div>
+                      <span class="parsed-intent-field-label">预期输出</span>
+                      <a-textarea
+                        v-model="parsedIntentListDraft.outputs"
+                        :auto-size="{ minRows: 2, maxRows: 4 }"
+                        placeholder="每行一条"
+                        @change="onParsedIntentListChange('outputs')"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="pre-start-config">
                 <div class="toolbar-row">
                   <span class="toolbar-label">研究模式</span>
@@ -353,6 +418,7 @@
               <div v-if="internalMode === 'research'" class="research-actions">
                 <a-button size="small" @click="openCompareModal">实验记录对比</a-button>
               </div>
+
             </div>
           </template>
 
@@ -450,6 +516,9 @@
                       class="trace-text-block"
                     >
                       第{{ p.iteration }}轮 · 选中 {{ (p.selectedTools || []).join(', ') || '—' }}
+                      <div v-if="p.executionPath && p.executionPath.length" class="trace-sub">
+                        路径：{{ p.executionPath.join(' → ') }}
+                      </div>
                       <div v-if="p.reason" class="trace-sub">{{ p.reason }}</div>
                     </div>
                   </div>
@@ -468,6 +537,12 @@
                         {{ v.status }}
                       </a-tag>
                       {{ v.summary || v.reason || '—' }}
+                      <div
+                        v-if="v.plannerDecision && v.plannerDecision.executionPath && v.plannerDecision.executionPath.length"
+                        class="trace-sub"
+                      >
+                        基于规划：{{ v.plannerDecision.executionPath.join(' → ') }}
+                      </div>
                     </div>
                   </div>
 
@@ -555,6 +630,9 @@
                   <div class="detail-subtitle">场景解析</div>
                   <template v-if="parsedIntentView.hasContent">
                     <p v-if="parsedIntentView.goal" class="parsed-intent-goal">{{ parsedIntentView.goal }}</p>
+                    <p v-if="parsedIntentView.situationBrief" class="detail-summary-line parsed-intent-situation">
+                      {{ parsedIntentView.situationBrief }}
+                    </p>
                     <div v-if="parsedIntentView.constraints.length" class="parsed-intent-block">
                       <span class="parsed-intent-label">约束</span>
                       <a-tag
@@ -563,10 +641,10 @@
                         class="parsed-intent-tag"
                       >{{ item }}</a-tag>
                     </div>
-                    <div v-if="parsedIntentView.successCriteria.length" class="parsed-intent-block">
-                      <span class="parsed-intent-label">验证标准</span>
+                    <div v-if="parsedIntentView.acceptanceCriteria.length" class="parsed-intent-block">
+                      <span class="parsed-intent-label">验收标准</span>
                       <ul class="parsed-intent-list">
-                        <li v-for="(item, idx) in parsedIntentView.successCriteria" :key="'s-' + idx">{{ item }}</li>
+                        <li v-for="(item, idx) in parsedIntentView.acceptanceCriteria" :key="'a-' + idx">{{ item }}</li>
                       </ul>
                     </div>
                     <div
@@ -708,6 +786,23 @@
                       <a-icon :type="iter.checkPhase === 'done' ? (iter.hasIssue ? 'warning' : 'check-circle') : (iter.checkPhase === 'running' ? 'loading' : 'minus-circle')" />
                       目标验收
                     </div>
+                  </div>
+                  <div class="iter-plan" v-if="iter.plannerDecision">
+                    <span class="plan-label">本轮规划：</span>
+                    <span>{{ formatPlannerTools(iter.plannerDecision) }}</span>
+                    <div
+                      v-if="iter.plannerDecision.executionPath && iter.plannerDecision.executionPath.length"
+                      class="iter-exec-path"
+                    >
+                      {{ iter.plannerDecision.executionPath.join(' → ') }}
+                    </div>
+                  </div>
+                  <div class="iter-verifier" v-if="iter.verifierResult && iter.verifierResult.status">
+                    <span class="verifier-label">验证：</span>
+                    <a-tag size="small" :color="iter.verifierResult.status === 'PASSED' ? 'green' : 'red'">
+                      {{ iter.verifierResult.status }}
+                    </a-tag>
+                    {{ iter.verifierResult.reason || iter.verifierResult.summary || '' }}
                   </div>
                   <div class="iter-issue" v-if="iter.issue">
                     <span class="issue-label">问题：</span>{{ iter.issue }}
@@ -915,6 +1010,10 @@ export default {
     scenarioDescription: {
       type: String,
       default: ''
+    },
+    parsedIntent: {
+      type: Object,
+      default: () => ({})
     }
   },
   data() {
@@ -930,6 +1029,19 @@ export default {
 
       internalMode: 'production',
       scenarioDraft: '',
+      parsedIntentDraft: {
+        goal: '',
+        situationBrief: '',
+        constraints: [],
+        acceptanceCriteria: [],
+        ioExpectation: { inputs: [], outputs: [] }
+      },
+      parsedIntentListDraft: {
+        constraints: '',
+        acceptanceCriteria: '',
+        inputs: '',
+        outputs: ''
+      },
       strategy: { ...SIMULATION_BUILD_DEFAULT_STRATEGY },
 
       sessionId: null,
@@ -1031,21 +1143,38 @@ export default {
         return { hasContent: false }
       }
       const constraints = Array.isArray(pi.constraints) ? pi.constraints.filter(Boolean) : []
-      const successCriteria = Array.isArray(pi.successCriteria) ? pi.successCriteria.filter(Boolean) : []
+      const acceptanceRaw = pi.acceptanceCriteria != null ? pi.acceptanceCriteria : pi.successCriteria
+      const acceptanceCriteria = Array.isArray(acceptanceRaw) ? acceptanceRaw.filter(Boolean) : []
       const io = pi.ioExpectation && typeof pi.ioExpectation === 'object' ? pi.ioExpectation : {}
       const inputs = Array.isArray(io.inputs) ? io.inputs.filter(Boolean) : []
       const outputs = Array.isArray(io.outputs) ? io.outputs.filter(Boolean) : []
       const goal = pi.goal ? String(pi.goal).trim() : ''
+      const situationBrief = pi.situationBrief ? String(pi.situationBrief).trim() : ''
       return {
-        hasContent: Boolean(goal || constraints.length || successCriteria.length || inputs.length || outputs.length),
+        hasContent: Boolean(
+          goal || situationBrief || constraints.length || acceptanceCriteria.length || inputs.length || outputs.length
+        ),
         goal,
+        situationBrief,
         constraints,
-        successCriteria,
+        acceptanceCriteria,
         inputs,
         outputs,
         parserModel: pi.parserModel ? String(pi.parserModel) : '',
         parsedAt: pi.parsedAt ? String(pi.parsedAt) : ''
       }
+    },
+    hasParsedIntentDraft() {
+      const d = this.parsedIntentDraft || {}
+      const io = d.ioExpectation || {}
+      return Boolean(
+        (d.goal && String(d.goal).trim()) ||
+        (d.situationBrief && String(d.situationBrief).trim()) ||
+        (d.constraints && d.constraints.length) ||
+        (d.acceptanceCriteria && d.acceptanceCriteria.length) ||
+        (io.inputs && io.inputs.length) ||
+        (io.outputs && io.outputs.length)
+      )
     },
     serviceContractRows() {
       const data = this.detailArtifact && this.detailArtifact.data
@@ -1189,6 +1318,16 @@ export default {
       return 1 + this.currentMainStep
     }
   },
+  watch: {
+    parsedIntent: {
+      deep: true,
+      handler() {
+        if (!this.hasStarted) {
+          this.initParsedIntentDraftFromProp()
+        }
+      }
+    }
+  },
   methods: {
     compareModalGetContainer() {
       return document.body
@@ -1218,9 +1357,78 @@ export default {
       this.intentionalClose = false
       this.internalMode = this.mode === 'research' ? 'research' : 'production'
       this.scenarioDraft = this.scenarioDescription || ''
+      this.initParsedIntentDraftFromProp()
       this.strategy = { ...SIMULATION_BUILD_DEFAULT_STRATEGY }
       this.resetState()
       this.initServiceStatuses(nodes || this.serviceNodes)
+    },
+
+    linesToList(text) {
+      return String(text || '')
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    },
+
+    listToLines(list) {
+      return Array.isArray(list) ? list.filter(Boolean).join('\n') : ''
+    },
+
+    initParsedIntentDraftFromProp() {
+      const pi = this.parsedIntent && typeof this.parsedIntent === 'object' ? this.parsedIntent : {}
+      const acceptanceRaw = pi.acceptanceCriteria != null ? pi.acceptanceCriteria : pi.successCriteria
+      const io = pi.ioExpectation && typeof pi.ioExpectation === 'object' ? pi.ioExpectation : {}
+      this.parsedIntentDraft = {
+        goal: pi.goal ? String(pi.goal) : '',
+        situationBrief: pi.situationBrief ? String(pi.situationBrief) : '',
+        constraints: Array.isArray(pi.constraints) ? [...pi.constraints] : [],
+        acceptanceCriteria: Array.isArray(acceptanceRaw) ? [...acceptanceRaw] : [],
+        ioExpectation: {
+          inputs: Array.isArray(io.inputs) ? [...io.inputs] : [],
+          outputs: Array.isArray(io.outputs) ? [...io.outputs] : []
+        }
+      }
+      this.parsedIntentListDraft = {
+        constraints: this.listToLines(this.parsedIntentDraft.constraints),
+        acceptanceCriteria: this.listToLines(this.parsedIntentDraft.acceptanceCriteria),
+        inputs: this.listToLines(this.parsedIntentDraft.ioExpectation.inputs),
+        outputs: this.listToLines(this.parsedIntentDraft.ioExpectation.outputs)
+      }
+    },
+
+    onParsedIntentListChange(field) {
+      if (field === 'inputs' || field === 'outputs') {
+        if (!this.parsedIntentDraft.ioExpectation) {
+          this.parsedIntentDraft.ioExpectation = { inputs: [], outputs: [] }
+        }
+        this.parsedIntentDraft.ioExpectation[field] = this.linesToList(this.parsedIntentListDraft[field])
+      } else {
+        this.parsedIntentDraft[field] = this.linesToList(this.parsedIntentListDraft[field])
+      }
+      this.emitParsedIntentUpdate()
+    },
+
+    getParsedIntentForStart() {
+      const draft = {
+        goal: String(this.parsedIntentDraft.goal || '').trim(),
+        situationBrief: String(this.parsedIntentDraft.situationBrief || '').trim(),
+        constraints: [...(this.parsedIntentDraft.constraints || [])],
+        acceptanceCriteria: [...(this.parsedIntentDraft.acceptanceCriteria || [])],
+        ioExpectation: {
+          inputs: [...((this.parsedIntentDraft.ioExpectation && this.parsedIntentDraft.ioExpectation.inputs) || [])],
+          outputs: [...((this.parsedIntentDraft.ioExpectation && this.parsedIntentDraft.ioExpectation.outputs) || [])]
+        }
+      }
+      const meta = this.parsedIntent && typeof this.parsedIntent === 'object' ? this.parsedIntent : {}
+      if (meta.parserModel) draft.parserModel = meta.parserModel
+      if (meta.parsedAt) draft.parsedAt = meta.parsedAt
+      if (meta.intakeSessionId) draft.intakeSessionId = meta.intakeSessionId
+      return draft
+    },
+
+    emitParsedIntentUpdate() {
+      if (this.hasStarted) return
+      this.$emit('parsed-intent-update', this.getParsedIntentForStart())
     },
 
     confirmStartBuild() {
@@ -1340,9 +1548,17 @@ export default {
         })),
         maxIterations: this.maxIterations,
         scenarioDescription: this.scenarioDraft,
+        scenarioSummary: this.scenarioDraft,
+        parsedIntent: this.hasParsedIntentDraft ? this.getParsedIntentForStart() : undefined,
         mode: this.internalMode,
         strategy: this.buildSimulationStrategy()
       }
+    },
+
+    formatPlannerTools(plannerDecision) {
+      if (!plannerDecision) return '—'
+      const tools = plannerDecision.selected_tools || plannerDecision.selectedTools || []
+      return tools.length ? tools.join(' → ') : '—'
     },
 
     addLog(message, level = 'INFO', type = 'info') {
@@ -1423,13 +1639,16 @@ export default {
           plannerDecisions.push({
             iteration: d.iteration,
             selectedTools: d.selected_tools || [],
+            executionPath: d.executionPath || [],
             reason: d.reason || ''
           })
         } else if (t === 'verifier_result') {
           verifierResults.push({
+            iteration: d.iteration,
             status: d.status || 'UNKNOWN',
             summary: d.summary || '',
-            reason: d.reason || ''
+            reason: d.reason || '',
+            plannerDecision: d.plannerDecision || null
           })
         }
       })
@@ -1590,6 +1809,8 @@ export default {
           hasIssue: false,
           issue: '',
           fix: '',
+          plannerDecision: null,
+          verifierResult: null,
           completed: false,
           success: false
         })
@@ -1674,14 +1895,50 @@ export default {
       }
     },
 
-    onStreamIssue({ message, fix }) {
-      const d = this.currentDetail()
+    onStreamIssue(payload) {
+      const {
+        message,
+        fix,
+        plannerDecision,
+        iteration,
+        phase
+      } = payload || {}
+      if (iteration) {
+        this.currentIteration = iteration
+        this.ensureIterationRows(iteration)
+      }
+      const d = iteration
+        ? this.iterationDetails.find((x) => x.iteration === iteration)
+        : this.currentDetail()
       if (!d) return
       d.hasIssue = true
       d.issue = message
       d.fix = fix || ''
-      this.dispatchStatus = '自动修复中'
+      if (phase) d.phase = phase
+      if (plannerDecision) d.plannerDecision = plannerDecision
+      this.dispatchStatus = phase === 'planning' ? '规划失败，准备重试' : '自动修复中'
       this.currentActionText = `发现: ${message}，正在修复...`
+    },
+
+    onStreamPlannerDecision(payload) {
+      const iteration = payload && payload.iteration
+      if (!iteration) return
+      this.ensureIterationRows(iteration)
+      const d = this.iterationDetails.find((x) => x.iteration === iteration)
+      if (d) d.plannerDecision = payload
+    },
+
+    onStreamVerifierResult(payload) {
+      const iteration = payload && payload.iteration
+      if (iteration) {
+        this.ensureIterationRows(iteration)
+        const d = this.iterationDetails.find((x) => x.iteration === iteration)
+        if (d) {
+          d.verifierResult = payload
+          if (payload.plannerDecision) d.plannerDecision = payload.plannerDecision
+          if (payload.status === 'FAILED') d.hasIssue = true
+        }
+      }
     },
 
     onStreamIteration({ iteration, status }) {
@@ -1802,6 +2059,24 @@ export default {
       this.addLog(this.failureMessage, 'ERROR', 'error')
     },
 
+    subscribeToStream(sessionId, streamUrl) {
+      this.sessionId = sessionId
+      this.unsubscribeStream = subscribeSimulationStream(sessionId, streamUrl, {
+        step: this.onStreamStep,
+        iteration: this.onStreamIteration,
+        phase: this.onStreamPhase,
+        issue: this.onStreamIssue,
+        planner_decision: this.onStreamPlannerDecision,
+        verifier_result: this.onStreamVerifierResult,
+        service: this.onStreamService,
+        log: this.onStreamLog,
+        metrics: this.onStreamMetrics,
+        progress: this.onStreamProgress,
+        complete: this.onStreamComplete,
+        error: this.onStreamError
+      })
+    },
+
     async startSimulation() {
       if (!this.serviceStatuses.length) {
         this.$message.warning('请先添加至少一个服务节点')
@@ -1830,19 +2105,7 @@ export default {
         return
       }
 
-      this.sessionId = res.sessionId
-      this.unsubscribeStream = subscribeSimulationStream(res.sessionId, res.streamUrl, {
-        step: this.onStreamStep,
-        iteration: this.onStreamIteration,
-        phase: this.onStreamPhase,
-        issue: this.onStreamIssue,
-        service: this.onStreamService,
-        log: this.onStreamLog,
-        metrics: this.onStreamMetrics,
-        progress: this.onStreamProgress,
-        complete: this.onStreamComplete,
-        error: this.onStreamError
-      })
+      this.subscribeToStream(res.sessionId, res.streamUrl)
     },
 
     retrySimulation() {
@@ -2127,6 +2390,52 @@ export default {
     margin-right: 4px;
     color: #faad14;
   }
+}
+
+.pre-start-parsed-intent {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+}
+
+.pre-start-parsed-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 10px;
+}
+
+.pre-start-parsed-hint {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #8c8c8c;
+}
+
+.parsed-intent-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.parsed-intent-field-label {
+  display: block;
+  font-size: 12px;
+  color: #8c8c8c;
+  margin-bottom: 4px;
+}
+
+.parsed-intent-field--io {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.parsed-intent-situation {
+  color: #595959;
+  margin-bottom: 8px;
 }
 
 .pre-start-config {
@@ -2998,13 +3307,22 @@ export default {
     }
   }
 
-  .iter-issue, .iter-fix {
+  .iter-plan, .iter-verifier, .iter-issue, .iter-fix {
     font-size: 12px;
     color: #595959;
     margin-top: 4px;
 
+    .plan-label { color: #1890ff; }
+    .verifier-label { color: #722ed1; }
     .issue-label { color: #faad14; }
     .fix-label { color: #52c41a; }
+  }
+
+  .iter-exec-path {
+    margin-top: 2px;
+    color: #8c8c8c;
+    font-size: 11px;
+    word-break: break-all;
   }
 }
 

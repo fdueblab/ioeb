@@ -1,6 +1,8 @@
+import { enrichLocalMcpFlowWithScenarioIntake } from './local_mcp_scenario_intake'
+
 // 调度页演示：元应用 flow、SmartChat 推理步骤、关键字与仿真分流
 // - 课题 → getMetaAppNodes / generateMockSteps + 仿真 inmemory
-// - 【本地MCP】(n) → 同上 + 仿真 Micro-Agent（preName 含同标记，n=节点数）
+// - 【本地MCP】(n) → 同上 + 仿真 Micro-Agent；结构化想定见 local_mcp_scenario_intake.js
 
 export const TOPIC_DEMO_KEYWORD = '课题'
 
@@ -854,7 +856,8 @@ function getMcpDemoFlowData(userInput) {
   const key = resolveMcpDemoScenario(userInput)
   const flow = LOCAL_MCP_SCENARIOS[key]
   if (!flow) throw new Error('未找到本地 MCP 演示场景')
-  return JSON.parse(JSON.stringify(flow))
+  const base = JSON.parse(JSON.stringify(flow))
+  return enrichLocalMcpFlowWithScenarioIntake(base, userInput, key)
 }
 
 function generateMcpDemoMockSteps(userInput) {
@@ -869,9 +872,12 @@ function generateMcpDemoMockSteps(userInput) {
     },
     {
       step: 2,
-      thought: `服务：${names}。仿真走 Micro-Agent（元应用名含${localMcpPrefix(n)}）。`
+      thought: `已生成本地 MCP 结构化想定（演示数据）。服务：${names}。`
     },
-    { step: 3, thought: '请先启动 external-mcp 对应进程，再运行仿真构建。' }
+    {
+      step: 3,
+      thought: `仿真走 Micro-Agent（元应用名含${localMcpPrefix(n)}）；请先启动 external-mcp 对应进程。`
+    }
   ]
 }
 

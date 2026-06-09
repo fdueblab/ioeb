@@ -8,7 +8,7 @@
       @stop-loading="stopLoading"
       @update-services="updateServices"
       @update-flow="updateFlow"
-      @clear-flow="clearFlow"
+      @scenario-intake="onScenarioIntake"
       :vertical-type="verticalType"
     />
     <flow-panel
@@ -132,6 +132,12 @@ export default {
         this.initServices = newServices
         this.loadingServices = false
       }, 800)
+    },
+
+    onScenarioIntake(payload) {
+      if (this.$refs.flowPanel && this.$refs.flowPanel.applyScenarioIntake) {
+        this.$refs.flowPanel.applyScenarioIntake(payload)
+      }
     },
 
     updateFlow(newFlow) {
