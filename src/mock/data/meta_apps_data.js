@@ -1,17 +1,17 @@
 import { enrichLocalMcpFlowWithScenarioIntake } from './local_mcp_scenario_intake'
+import {
+  LOCAL_MCP_MARK_RE,
+  localMcpPrefix,
+  resolveMcpDemoScenario
+} from './local_mcp_scenario_resolve'
+
+export { LOCAL_MCP_MARK_RE, localMcpPrefix, resolveMcpDemoScenario }
 
 // 调度页演示：元应用 flow、SmartChat 推理步骤、关键字与仿真分流
 // - 课题 → getMetaAppNodes / generateMockSteps + 仿真 inmemory
 // - 【本地MCP】(n) → 同上 + 仿真 Micro-Agent；结构化想定见 local_mcp_scenario_intake.js
 
 export const TOPIC_DEMO_KEYWORD = '课题'
-
-/** 匹配 SmartChat 输入与元应用 preName 中的【本地MCP】(节点数) */
-export const LOCAL_MCP_MARK_RE = /【本地MCP】\(\d+\)/
-
-export function localMcpPrefix(nodeCount) {
-  return `【本地MCP】(${nodeCount})`
-}
 
 export function isLocalMcpDemo(text) {
   return LOCAL_MCP_MARK_RE.test(String(text || ''))
@@ -59,25 +59,6 @@ export const LOCAL_MCP_SUGGESTIONS = [
     value: `${localMcpPrefix(5)}重症医院感染患者：病情评分、抗菌药给药、查说明书与靶点证据、出院医保与随访安排`
   }
 ]
-
-export function resolveMcpDemoScenario(userInput) {
-  const t = String(userInput || '')
-  const countMatch = t.match(/【本地MCP】\((\d+)\)/)
-  const n = countMatch ? parseInt(countMatch[1], 10) : null
-
-  if (n === 5 || /重症医院感染|出院.*医保|随访安排/.test(t)) return 'all5'
-  if (n === 3 || /肾功能.*肺炎|评分.*剂量.*标签/.test(t)) return 'clinical_triad'
-  if (n === 2 || /脓毒症|休克|SOFA.*利奈/.test(t)) return 'combo'
-  if (/说明书|黑框|相互作用|openfda|fda|药品标签/.test(t)) return 'openfda'
-  if (/BRAF|MDT|靶点|opentargets|基因/.test(t)) return 'opentargets'
-  if (/医保|参保|healthcovered|ACA/.test(t)) return 'healthcovered'
-  if (/SOFA|医学计算|计算器|discover|medical-calc/i.test(t)) return 'medical_calc'
-  if (/利奈唑胺|给药|linezolid|剂量|肺炎/.test(t)) return 'linezolid'
-  if (n === 2) return 'combo'
-  if (n === 3) return 'clinical_triad'
-  if (n === 5) return 'all5'
-  return 'linezolid'
-}
 
 // 金融欺诈检测推理元应用
 const fraudDetectionApp = {

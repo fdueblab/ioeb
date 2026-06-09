@@ -271,7 +271,7 @@ export default {
       if (this.thinkingMessageIndex !== -1) {
         const thinking = this.messages[this.thinkingMessageIndex].thinking
         if (thinking) {
-          this.$set(thinking, 'title', '想定澄清')
+          this.$set(thinking, 'title', '需要追问场景')
         }
       }
       this.placeholder = '请补充想定信息（需含场景关键词）…'
@@ -282,10 +282,12 @@ export default {
       const { initialInput } = this.localMcpIntakePending
       const validation = validateLocalMcpFollowUp(followUpText)
       if (!validation.ok) {
-        this.removeAgentLoadingMessage()
-        this.messages.push({ text: validation.message, isUser: false })
-        this.finishAgentTurn()
-        this.scrollToBottom()
+        setTimeout(() => {
+          this.removeAgentLoadingMessage()
+          this.messages.push({ text: validation.message, isUser: false })
+          this.finishAgentTurn()
+          this.scrollToBottom()
+        }, 500)
         return
       }
       this.localMcpIntakePending = null
