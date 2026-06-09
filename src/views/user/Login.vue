@@ -87,6 +87,7 @@
           :loading="state.loginBtn"
           :disabled="state.loginBtn"
         >{{ $t('user.login.login') }}</a-button>
+        <router-link class="register" :to="{ name: 'register' }">{{ $t('user.login.signup') }}</router-link>
       </a-form-item>
     </a-form>
 
@@ -275,6 +276,11 @@ export default {
     font-size: 16px;
     height: 40px;
     width: 100%;
+  }
+
+  .register {
+    float: right;
+    line-height: 40px;
   }
 
   .user-login-other {
