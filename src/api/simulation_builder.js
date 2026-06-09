@@ -44,9 +44,6 @@ function createMemorySimulationBuildClient() {
       simulationBuildInMemory.cancel(sessionId)
       return Promise.resolve({ success: true })
     },
-    getSimulationResult(sessionId) {
-      return Promise.resolve(simulationBuildInMemory.getResult(sessionId))
-    },
     fetchSimulationRecords() {
       return Promise.resolve(simulationBuildInMemory.listRecords())
     },
@@ -87,16 +84,12 @@ function createHttpSimulationBuildClient() {
         method: 'post'
       })
     },
-    getSimulationResult(sessionId) {
-      return request({
-        url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/result`,
-        method: 'get'
-      })
-    },
-    fetchSimulationRecords() {
+    fetchSimulationRecords(appName) {
+      const params = appName ? { appName } : {}
       return request({
         url: `${SIMULATION_BASE_URL}/api/simulation/records`,
-        method: 'get'
+        method: 'get',
+        params
       })
     },
     compareSimulationRecords(recordIds) {
@@ -111,6 +104,8 @@ function createHttpSimulationBuildClient() {
         ? streamUrl
         : `${SIMULATION_BASE_URL}${streamUrl}`
       const es = new EventSource(url)
+      let closedByClient = false
+      let sawComplete = false
       const on = (eventName, cb) => {
         es.addEventListener(eventName, (ev) => {
           try {
@@ -120,14 +115,34 @@ function createHttpSimulationBuildClient() {
           }
         })
       }
+      if (handlers.complete) {
+        es.addEventListener('complete', (ev) => {
+          sawComplete = true
+          try {
+            handlers.complete(JSON.parse(ev.data))
+          } catch (e) {
+            if (handlers.error) handlers.error(e)
+          }
+        })
+      } else {
+        es.addEventListener('complete', () => {
+          sawComplete = true
+        })
+      }
       SIMULATION_SSE_EVENTS.forEach((name) => {
-        if (handlers[name]) on(name, handlers[name])
+        if (name === 'complete' || !handlers[name]) return
+        on(name, handlers[name])
       })
       es.onerror = () => {
+        if (closedByClient || sawComplete) {
+          es.close()
+          return
+        }
         if (handlers.error) handlers.error(new Error('EventSource error'))
         es.close()
       }
       return () => {
+        closedByClient = true
         es.close()
       }
     }
@@ -160,15 +175,11 @@ export function cancelSimulation(sessionId) {
   return p
 }
 
-export function getSimulationResult(sessionId) {
-  return pickClient(undefined, sessionId).getSimulationResult(sessionId)
-}
-
 /**
  * @param {string} [appName] 与仿真面板 prop 一致；缺省则走 HTTP
  */
 export function fetchSimulationRecords(appName) {
-  return pickClient(appName).fetchSimulationRecords()
+  return pickClient(appName).fetchSimulationRecords(appName)
 }
 
 /**
@@ -205,5 +216,14 @@ export function fetchSimulationEvidence(sessionId) {
     url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/evidence`,
     method: 'post',
     timeout: 120000
+  })
+}
+
+/** 获取 ArtifactSpec v0 产物（编译自 trace，确定性输出） */
+export function fetchSimulationArtifact(sessionId) {
+  return request({
+    url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/artifact`,
+    method: 'get',
+    timeout: 60000
   })
 }

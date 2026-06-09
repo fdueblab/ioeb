@@ -540,6 +540,149 @@
               </div>
             </template>
 
+            <!-- ArtifactSpec v0 产物 -->
+            <div class="detail-section detail-section-card" v-if="isCompleted && !detailArtifact.skipped">
+              <div class="detail-title">固化产物 (ArtifactSpec v0)</div>
+              <div v-if="detailArtifact.loading" class="detail-muted detail-subsection">
+                <a-icon type="loading" /> 产物编译中…
+              </div>
+              <div v-else-if="detailArtifact.error" class="detail-error detail-subsection">
+                {{ detailArtifact.error }}
+              </div>
+              <template v-else-if="detailArtifact.data">
+                <!-- 场景解析 -->
+                <div class="detail-subsection detail-subsection--first">
+                  <div class="detail-subtitle">场景解析</div>
+                  <template v-if="parsedIntentView.hasContent">
+                    <p v-if="parsedIntentView.goal" class="parsed-intent-goal">{{ parsedIntentView.goal }}</p>
+                    <div v-if="parsedIntentView.constraints.length" class="parsed-intent-block">
+                      <span class="parsed-intent-label">约束</span>
+                      <a-tag
+                        v-for="(item, idx) in parsedIntentView.constraints"
+                        :key="'c-' + idx"
+                        class="parsed-intent-tag"
+                      >{{ item }}</a-tag>
+                    </div>
+                    <div v-if="parsedIntentView.successCriteria.length" class="parsed-intent-block">
+                      <span class="parsed-intent-label">验证标准</span>
+                      <ul class="parsed-intent-list">
+                        <li v-for="(item, idx) in parsedIntentView.successCriteria" :key="'s-' + idx">{{ item }}</li>
+                      </ul>
+                    </div>
+                    <div
+                      v-if="parsedIntentView.inputs.length || parsedIntentView.outputs.length"
+                      class="parsed-intent-io"
+                    >
+                      <div v-if="parsedIntentView.inputs.length" class="parsed-intent-io-col">
+                        <span class="parsed-intent-label">预期输入</span>
+                        <span class="detail-summary-line">{{ parsedIntentView.inputs.join('、') }}</span>
+                      </div>
+                      <div v-if="parsedIntentView.outputs.length" class="parsed-intent-io-col">
+                        <span class="parsed-intent-label">预期输出</span>
+                        <span class="detail-summary-line">{{ parsedIntentView.outputs.join('、') }}</span>
+                      </div>
+                    </div>
+                    <p
+                      v-if="parsedIntentView.parserModel || parsedIntentView.parsedAt"
+                      class="detail-summary-line detail-summary-line--tight parsed-intent-meta"
+                    >
+                      <template v-if="parsedIntentView.parserModel">解析模型 {{ parsedIntentView.parserModel }}</template>
+                      <template v-if="parsedIntentView.parsedAt"> · {{ parsedIntentView.parsedAt }}</template>
+                    </p>
+                  </template>
+                  <p v-else class="detail-muted detail-subsection-flush">未生成结构化场景（可能无场景描述，或 LLM 解析未执行）</p>
+                </div>
+
+                <!-- 服务契约 -->
+                <div class="detail-subsection">
+                  <div class="detail-subtitle">服务契约</div>
+                  <div v-if="serviceContractRows.length" class="contract-list">
+                    <div
+                      v-for="row in serviceContractRows"
+                      :key="row.serviceId || row.serviceName"
+                      class="contract-card"
+                    >
+                      <div class="contract-head">
+                        <span class="contract-name">{{ row.serviceName }}</span>
+                        <a-tag size="small">{{ row.channelLabel }}</a-tag>
+                      </div>
+                      <p class="detail-summary-line detail-summary-line--tight">
+                        <template v-if="row.uncalled">本次未调用</template>
+                        <template v-else>调用 {{ row.totalCalls }} 次 · 成功率 {{ row.successRate }}</template>
+                      </p>
+                      <p v-if="row.declaredToolNames.length" class="detail-summary-line">
+                        <span class="contract-field-label">声明工具</span>
+                        {{ row.declaredToolNames.join('、') }}
+                      </p>
+                      <p v-if="row.observedSummaries.length" class="detail-summary-line">
+                        <span class="contract-field-label">实测调用</span>
+                        {{ row.observedSummaries.join('；') }}
+                      </p>
+                    </div>
+                  </div>
+                  <p v-else class="detail-muted detail-subsection-flush">无服务契约数据</p>
+                </div>
+
+                <!-- 固化结论 -->
+                <div class="detail-subsection">
+                  <div class="detail-subtitle">固化门禁</div>
+                  <div class="evidence-head">
+                    <a-tag :color="detailArtifact.data.solidifiable ? 'green' : 'red'">
+                      {{ detailArtifact.data.solidifiable ? '可固化' : '不可固化' }}
+                    </a-tag>
+                    <span class="evidence-id">{{ detailArtifact.data.artifactId }}</span>
+                  </div>
+                </div>
+                <!-- 六道 gate -->
+                <div class="detail-subsection" v-if="detailArtifact.data.solidificationReport && detailArtifact.data.solidificationReport.gates">
+                  <div class="detail-subtitle">质量检查</div>
+                  <div class="gate-list">
+                    <div
+                      v-for="gate in detailArtifact.data.solidificationReport.gates"
+                      :key="gate.gate"
+                      class="gate-row"
+                    >
+                      <a-tag :color="gate.passed ? 'green' : 'red'" size="small">
+                        {{ gate.passed ? '通过' : '未通过' }}
+                      </a-tag>
+                      <span class="gate-name">{{ gate.gate }}</span>
+                      <span class="gate-detail">{{ gate.detail }}</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 状态机概要 -->
+                <div class="detail-subsection" v-if="detailArtifact.data.stateMachineTrace">
+                  <div class="detail-subtitle">构建轨迹</div>
+                  <p class="detail-summary-line">
+                    共 {{ detailArtifact.data.stateMachineTrace.totalIterations }} 轮迭代 ·
+                    {{ detailArtifact.data.stateMachineTrace.states ? detailArtifact.data.stateMachineTrace.states.length : 0 }} 个状态节点 ·
+                    状态 {{ detailArtifact.data.stateMachineTrace.finalStatus }}
+                    <template v-if="detailArtifact.data.stateMachineTrace.elapsedMs">
+                      · {{ (detailArtifact.data.stateMachineTrace.elapsedMs / 1000).toFixed(1) }}s
+                    </template>
+                  </p>
+                </div>
+                <!-- 溯源 -->
+                <div class="detail-subsection" v-if="detailArtifact.data.provenance">
+                  <div class="detail-subtitle">溯源信息</div>
+                  <p class="detail-summary-line">
+                    会话 {{ detailArtifact.data.provenance.sourceSessionId }} ·
+                    Hash {{ detailArtifact.data.provenance.artifactHash
+                      ? detailArtifact.data.provenance.artifactHash.slice(0, 16)
+                      : '—' }}
+                  </p>
+                </div>
+                <!-- 展开完整 JSON -->
+                <div class="detail-subsection">
+                  <a-collapse :bordered="false">
+                    <a-collapse-panel key="artifact-json" header="完整 ArtifactSpec JSON">
+                      <pre class="trace-raw-json">{{ artifactJsonPreview }}</pre>
+                    </a-collapse-panel>
+                  </a-collapse>
+                </div>
+              </template>
+            </div>
+
             <div class="detail-section detail-section-card" v-if="iterationDetails.length > 0">
               <div class="detail-title">轮次详情</div>
               <div class="iteration-details">
@@ -715,7 +858,8 @@ import {
   fetchSimulationRecords,
   compareSimulationRecords,
   fetchSimulationTrace,
-  fetchSimulationEvidence
+  fetchSimulationEvidence,
+  fetchSimulationArtifact
 } from '@/api/simulation_builder'
 import {
   SIMULATION_BUILD_ENV_TASKS,
@@ -831,6 +975,7 @@ export default {
 
       detailTrace: { loading: false, skipped: false, error: null, view: null, rawJson: '' },
       detailEvidence: { loading: false, skipped: false, error: null, data: null },
+      detailArtifact: { loading: false, skipped: false, error: null, data: null },
       failureSuggestion: '',
 
       serviceStatuses: [],
@@ -868,6 +1013,69 @@ export default {
       const fromTrace = this.detailTrace.view && this.detailTrace.view.callChain
       if (Array.isArray(fromTrace) && fromTrace.length) return fromTrace
       return []
+    },
+    artifactJsonPreview() {
+      const data = this.detailArtifact && this.detailArtifact.data
+      if (!data) return ''
+      try {
+        const raw = JSON.stringify(data, null, 2)
+        return raw.length > 8000 ? raw.slice(0, 8000) + '\n…' : raw
+      } catch (e) {
+        return ''
+      }
+    },
+    parsedIntentView() {
+      const data = this.detailArtifact && this.detailArtifact.data
+      const pi = data && data.scenario && data.scenario.parsedIntent
+      if (!pi || typeof pi !== 'object') {
+        return { hasContent: false }
+      }
+      const constraints = Array.isArray(pi.constraints) ? pi.constraints.filter(Boolean) : []
+      const successCriteria = Array.isArray(pi.successCriteria) ? pi.successCriteria.filter(Boolean) : []
+      const io = pi.ioExpectation && typeof pi.ioExpectation === 'object' ? pi.ioExpectation : {}
+      const inputs = Array.isArray(io.inputs) ? io.inputs.filter(Boolean) : []
+      const outputs = Array.isArray(io.outputs) ? io.outputs.filter(Boolean) : []
+      const goal = pi.goal ? String(pi.goal).trim() : ''
+      return {
+        hasContent: Boolean(goal || constraints.length || successCriteria.length || inputs.length || outputs.length),
+        goal,
+        constraints,
+        successCriteria,
+        inputs,
+        outputs,
+        parserModel: pi.parserModel ? String(pi.parserModel) : '',
+        parsedAt: pi.parsedAt ? String(pi.parsedAt) : ''
+      }
+    },
+    serviceContractRows() {
+      const data = this.detailArtifact && this.detailArtifact.data
+      const contracts = data && Array.isArray(data.serviceContracts) ? data.serviceContracts : []
+      return contracts.map((c) => {
+        const declared = Array.isArray(c.declaredTools) ? c.declaredTools : []
+        const observed = Array.isArray(c.observedTools) ? c.observedTools : []
+        const channelParts = [c.channel, c.transport].filter(Boolean)
+        const totalCalls = typeof c.totalCalls === 'number' ? c.totalCalls : 0
+        const successRate = c.overallSuccessRate != null
+          ? `${Math.round(c.overallSuccessRate * 100)}%`
+          : '—'
+        return {
+          serviceId: c.serviceId || '',
+          serviceName: c.serviceName || '未命名服务',
+          channelLabel: channelParts.length ? channelParts.join(' · ') : '—',
+          totalCalls,
+          successRate,
+          declaredToolNames: declared.map((t) => t.name).filter(Boolean),
+          observedSummaries: observed.map((o) => {
+            const parts = [`${o.toolName || '?'}×${o.callCount || 0}`]
+            if (o.avgLatencyMs != null) parts.push(`${Math.round(o.avgLatencyMs)}ms`)
+            if (o.successRate != null && o.successRate < 1) {
+              parts.push(`${Math.round(o.successRate * 100)}%`)
+            }
+            return parts.join(' · ')
+          }),
+          uncalled: totalCalls === 0
+        }
+      })
     },
     evidenceDimensionPanels() {
       const data = this.detailEvidence && this.detailEvidence.data
@@ -1058,6 +1266,7 @@ export default {
       this.failureMessage = ''
       this.detailTrace = { loading: false, skipped: false, error: null, view: null, rawJson: '' }
       this.detailEvidence = { loading: false, skipped: false, error: null, data: null }
+      this.detailArtifact = { loading: false, skipped: false, error: null, data: null }
       this.failureSuggestion = ''
       this.logs = []
       this.elapsedTime = 0
@@ -1099,7 +1308,7 @@ export default {
       const base =
         this.internalMode === 'research' ? { ...this.strategy } : {}
       if (resolveScheduleDemoKind(this.appName) === SCHEDULE_DEMO_KIND.LOCAL_MCP) {
-        return { ...base, minIterations: 2 }
+        return { ...base, stabilityPasses: 2 }
       }
       return Object.keys(base).length ? base : undefined
     },
@@ -1294,6 +1503,7 @@ export default {
       if (useMemorySimulation(this.appName)) {
         this.detailTrace = { loading: false, skipped: true, error: null, view: null, rawJson: '' }
         this.detailEvidence = { loading: false, skipped: true, error: null, data: null }
+        this.detailArtifact = { loading: false, skipped: true, error: null, data: null }
         return
       }
       this.detailTrace = { loading: true, skipped: false, error: null, view: null, rawJson: '' }
@@ -1314,6 +1524,14 @@ export default {
         this.detailEvidence = { loading: true, skipped: false, error: null, data: null }
         const data = await fetchSimulationEvidence(this.sessionId)
         this.detailEvidence = { loading: false, skipped: false, error: null, data }
+        // 加载 ArtifactSpec
+        this.detailArtifact = { loading: true, skipped: false, error: null, data: null }
+        try {
+          const artifact = await fetchSimulationArtifact(this.sessionId)
+          this.detailArtifact = { loading: false, skipped: false, error: null, data: artifact }
+        } catch (e2) {
+          this.detailArtifact = { loading: false, skipped: false, error: (e2 && e2.message) || 'Artifact 加载失败', data: null }
+        }
       } catch (e) {
         const msg = (e && e.message) || '加载失败'
         if (!this.detailTrace.view) {
@@ -1322,6 +1540,12 @@ export default {
           this.detailTrace = { ...this.detailTrace, loading: false }
         }
         this.detailEvidence = {
+          loading: false,
+          skipped: false,
+          error: msg,
+          data: null
+        }
+        this.detailArtifact = {
           loading: false,
           skipped: false,
           error: msg,
@@ -1634,7 +1858,14 @@ export default {
         iterations: this.totalIterations,
         executionTime: this.elapsedTime,
         metrics: { ...this.finalMetrics },
-        result: this.finalResult
+        result: this.finalResult,
+        artifactRef: this.detailArtifact.data ? {
+          artifactId: this.detailArtifact.data.artifactId,
+          solidifiable: this.detailArtifact.data.solidifiable,
+          artifactHash: this.detailArtifact.data.provenance && this.detailArtifact.data.provenance.artifactHash
+            ? this.detailArtifact.data.provenance.artifactHash.slice(0, 16)
+            : null
+        } : null
       })
       this.$emit('prePublish')
       this.handleClose()
@@ -1687,6 +1918,8 @@ export default {
         cancelSimulation(this.sessionId)
       }
       this.teardownStream()
+      this.stopTimer()
+      this.isRunning = false
       this.visible = false
       this.$emit('close')
     },
@@ -2586,6 +2819,97 @@ export default {
   }
 }
 
+.detail-subsection--first {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.detail-subsection-flush {
+  margin: 6px 0 0;
+}
+
+.parsed-intent-goal {
+  font-size: 13px;
+  font-weight: 500;
+  color: #262626;
+  line-height: 1.5;
+  margin: 6px 0 0;
+}
+
+.parsed-intent-block {
+  margin-top: 10px;
+}
+
+.parsed-intent-label {
+  display: block;
+  font-size: 11px;
+  color: #8c8c8c;
+  margin-bottom: 4px;
+}
+
+.parsed-intent-tag {
+  margin-bottom: 4px;
+}
+
+.parsed-intent-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #595959;
+  line-height: 1.5;
+}
+
+.parsed-intent-io {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.parsed-intent-io-col {
+  flex: 1;
+  min-width: 120px;
+}
+
+.parsed-intent-meta {
+  color: #8c8c8c;
+  font-size: 11px;
+}
+
+.contract-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.contract-card {
+  padding: 10px 12px;
+  background: #fcfcfc;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+}
+
+.contract-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.contract-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #262626;
+}
+
+.contract-field-label {
+  color: #8c8c8c;
+  margin-right: 4px;
+}
+
 .detail-subsection {
   margin-top: 12px;
   padding-top: 12px;
@@ -2909,5 +3233,32 @@ export default {
     background: #fafafa;
     color: #595959;
   }
+}
+
+// ArtifactSpec 门禁列表
+.gate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gate-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.gate-name {
+  color: #262626;
+  font-weight: 500;
+  min-width: 140px;
+  word-break: break-all;
+}
+
+.gate-detail {
+  color: #8c8c8c;
+  flex: 1;
 }
 </style>
