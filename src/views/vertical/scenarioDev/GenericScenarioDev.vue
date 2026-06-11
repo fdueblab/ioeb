@@ -3,15 +3,20 @@
     <a-card :bordered="false" size="small" title="想定式开发配置">
       <div class="table-page-search-wrapper">
         <a-form layout="inline">
+          <!-- 第一行：领域 / 算法模型名称 / 行业 / 场景 / 技术 -->
           <a-row :gutter="20">
             <a-col :span="4">
               <a-form-item label="领域">
                 <span style="margin-left: 5px; font-size: 14px">{{ domainTitle }}</span>
               </a-form-item>
             </a-col>
-            <a-col :span="5">
-              <a-form-item>
-                <span slot="label">行业<span class="label-optional">（选填）</span></span>
+            <a-col :span="8">
+              <a-form-item label="算法模型名称" required>
+                <a-input v-model="form.serviceName" placeholder="请输入算法模型名称"/>
+              </a-form-item>
+            </a-col>
+            <a-col :span="4">
+              <a-form-item label="行业">
                 <a-select v-model="programInfo.industry" placeholder="请选择行业" allow-clear>
                   <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
                     {{ item.text }}
@@ -19,9 +24,8 @@
                 </a-select>
               </a-form-item>
             </a-col>
-            <a-col :span="5">
-              <a-form-item>
-                <span slot="label">场景<span class="label-optional">（选填）</span></span>
+            <a-col :span="4">
+              <a-form-item label="场景">
                 <a-select v-model="programInfo.scenario" placeholder="请选择场景" allow-clear>
                   <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="item.code">
                     {{ item.text }}
@@ -29,9 +33,8 @@
                 </a-select>
               </a-form-item>
             </a-col>
-            <a-col :span="5">
-              <a-form-item>
-                <span slot="label">技术<span class="label-optional">（选填）</span></span>
+            <a-col :span="4">
+              <a-form-item label="技术">
                 <a-select v-model="programInfo.technology" placeholder="请选择技术" allow-clear>
                   <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="item.code">
                     {{ item.text }}
@@ -39,30 +42,12 @@
                 </a-select>
               </a-form-item>
             </a-col>
-            <a-col :span="5">
-              <a-form-item required>
-                <span slot="label">算法模型名称<span class="label-required-tip">（必填）</span></span>
-                <a-input v-model="form.serviceName" placeholder="请输入算法模型名称"/>
-              </a-form-item>
-            </a-col>
           </a-row>
-          <a-row :gutter="20" style="margin-top: 8px;">
+
+          <!-- 第二行：数据集文件 / 算法类别 -->
+          <a-row :gutter="20">
             <a-col :span="12">
-              <a-form-item>
-                <span slot="label">想定式描述文件<span class="label-optional">（选填）</span></span>
-                <a-upload
-                  accept=".pdf,.doc,.docx"
-                  :file-list="programFiles"
-                  :remove="removeProgramFile"
-                  :customRequest="customProgramFilesChose"
-                  :multiple="false">
-                  <a-button icon="file-add"> 选择文件 </a-button>
-                </a-upload>
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item>
-                <span slot="label">数据集文件<span class="label-optional">（选填）</span></span>
+              <a-form-item label="数据集文件">
                 <div class="dataset-upload-row">
                   <a-upload
                     accept=".csv,.xlsx,.xls,.json,.txt,.pdf"
@@ -72,17 +57,12 @@
                     :multiple="false">
                     <a-button icon="database"> 选择数据集 </a-button>
                   </a-upload>
-                  <span class="upload-hint">支持 CSV / Excel / JSON / TXT / PDF 格式的数据集文件</span>
+                  <span class="upload-hint">支持 CSV / Excel / JSON / TXT / PDF</span>
                 </div>
               </a-form-item>
             </a-col>
-          </a-row>
-
-          <!-- 算法类别选择 -->
-          <a-row :gutter="20" style="margin-top: 8px;">
             <a-col :span="8">
-              <a-form-item>
-                <span slot="label">算法类别<span class="label-optional">（选填）</span></span>
+              <a-form-item label="算法类别">
                 <a-select
                   v-model="algorithmCategory"
                   placeholder="请选择算法类别"
@@ -104,7 +84,7 @@
             :activeKey="categoryParamsPanelActive"
             @change="(keys) => categoryParamsPanelActive = keys"
             class="spec-collapse"
-            style="margin-top: 12px;"
+            style="margin-top: 4px;"
           >
             <a-collapse-panel key="params" :header="currentCategoryConfig.label + '（选填）'">
               <a-row :gutter="20">
@@ -246,7 +226,35 @@
             </a-collapse-panel>
           </a-collapse>
 
-          <a-row :gutter="20" style="margin-top: 16px;">
+          <!-- 相关资料（算法优化参考） -->
+          <a-row :gutter="20" style="margin-top: 8px;">
+            <a-col :span="24">
+              <div class="reference-block">
+                <div class="reference-title">
+                  相关资料<span class="label-optional">（选填）</span>
+                </div>
+                <a-alert
+                  type="warning"
+                  show-icon
+                  class="reference-hint"
+                  message="可提交论文、专利、程序、开源代码或网址作为算法优化参考。智能体将参考这些资料，并在生成时进行差异化创新以规避知识产权争议。"
+                />
+                <div class="reference-upload-row">
+                  <a-upload
+                    accept=".pdf,.doc,.docx,.txt,.md,.py,.ipynb,.zip"
+                    :file-list="referenceFiles"
+                    :remove="removeReferenceFile"
+                    :customRequest="customReferenceFileChose"
+                    :multiple="true">
+                    <a-button icon="paper-clip"> 上传论文/专利/代码 </a-button>
+                  </a-upload>
+                  <span class="upload-hint">支持 PDF / Word / TXT / 代码(.py/.ipynb) / ZIP，可多选</span>
+                </div>
+              </div>
+            </a-col>
+          </a-row>
+
+          <a-row :gutter="20" style="margin-top: 8px;">
             <a-col :span="24">
               <div class="narrative-block">
                 <div class="narrative-title">
@@ -275,7 +283,7 @@
             </a-col>
           </a-row>
 
-          <a-row :gutter="20" style="margin-top: 16px;">
+          <a-row :gutter="20" style="margin-top: 8px;">
             <a-col :span="24">
               <a-form-item label="操作">
                 <a-button
@@ -422,19 +430,62 @@
           <a-list
             :data-source="generateResult.references"
             :locale="{ emptyText: '暂无参考资料' }"
+            item-layout="vertical"
           >
             <a-list-item slot="renderItem" slot-scope="item">
               <a-list-item-meta>
                 <span slot="title">
-                  <a-tag :color="item.type === 'paper' ? 'blue' : 'purple'">
-                    {{ item.type === 'paper' ? '论文' : '模型' }}
-                  </a-tag>
+                  <a-tag :color="refTypeColor(item.type)">{{ refTypeLabel(item.type) }}</a-tag>
                   {{ item.title }}
+                  <a-tag v-if="item.source" color="default" style="margin-left: 4px;">{{ item.source }}</a-tag>
                 </span>
                 <span slot="description">{{ item.summary }}</span>
               </a-list-item-meta>
+              <div v-if="item.what_referenced || item.what_added || item.what_improved || item.advantages_vs_existing || item.ip_considerations" class="ref-detail">
+                <p v-if="item.what_referenced"><b>参考了：</b>{{ item.what_referenced }}</p>
+                <p v-if="item.what_added"><b>新增了：</b>{{ item.what_added }}</p>
+                <p v-if="item.what_improved"><b>提升了：</b>{{ item.what_improved }}</p>
+                <p v-if="item.advantages_vs_existing"><b>对比优势：</b>{{ item.advantages_vs_existing }}</p>
+                <p v-if="item.ip_considerations"><b>知识产权规避：</b>{{ item.ip_considerations }}</p>
+              </div>
             </a-list-item>
           </a-list>
+        </a-tab-pane>
+
+        <!-- 差异化说明 -->
+        <a-tab-pane v-if="generateResult.differentiationSummary" key="differentiation" tab="差异化说明">
+          <div class="differentiation-block">
+            <a-alert
+              v-if="diff.overall_strategy"
+              type="success"
+              show-icon
+              :message="'整体策略：' + diff.overall_strategy"
+              style="margin-bottom: 16px;"
+            />
+            <a-descriptions bordered :column="1" size="middle">
+              <a-descriptions-item label="关键创新（新增了什么）">
+                <ul v-if="diff.key_innovations && diff.key_innovations.length" class="diff-list">
+                  <li v-for="(it, i) in diff.key_innovations" :key="'k' + i">{{ it }}</li>
+                </ul>
+                <span v-else class="diff-empty">—</span>
+              </a-descriptions-item>
+              <a-descriptions-item label="提升了什么">
+                <ul v-if="diff.improvements && diff.improvements.length" class="diff-list">
+                  <li v-for="(it, i) in diff.improvements" :key="'i' + i">{{ it }}</li>
+                </ul>
+                <span v-else class="diff-empty">—</span>
+              </a-descriptions-item>
+              <a-descriptions-item label="对比现有算法的特点与优势">
+                <ul v-if="diff.advantages && diff.advantages.length" class="diff-list">
+                  <li v-for="(it, i) in diff.advantages" :key="'a' + i">{{ it }}</li>
+                </ul>
+                <span v-else class="diff-empty">—</span>
+              </a-descriptions-item>
+              <a-descriptions-item v-if="diff.ip_risk_notes" label="知识产权风险规避">
+                {{ diff.ip_risk_notes }}
+              </a-descriptions-item>
+            </a-descriptions>
+          </div>
         </a-tab-pane>
       </a-tabs>
     </a-card>
@@ -617,10 +668,10 @@ export default {
   data() {
     return {
       domainTitle: '',
-      programFiles: [],
-      uploadFiles: [],
       datasetFiles: [],
       uploadDatasetFiles: [],
+      referenceFiles: [],
+      uploadReferenceFiles: [],
       freeNarrative: '',
       form: {
         serviceName: undefined
@@ -654,7 +705,8 @@ export default {
         generatedCode: '',
         codeFilename: '',
         testResults: [],
-        references: []
+        references: [],
+        differentiationSummary: null
       },
       testColumns: [
         { title: '测试维度', dataIndex: 'name', key: 'name', width: 120 },
@@ -676,6 +728,9 @@ export default {
     currentCategoryConfig() {
       if (!this.algorithmCategory) return null
       return CATEGORY_PARAMS_CONFIG[this.algorithmCategory] || null
+    },
+    diff() {
+      return this.generateResult.differentiationSummary || {}
     }
   },
   created() {
@@ -702,23 +757,6 @@ export default {
         : ALGORITHM_CATEGORY_FALLBACK
     },
 
-    customProgramFilesChose(options) {
-      const { file } = options
-      if (!file) return false
-      this.uploadFiles = [file]
-      this.programFiles = [{
-        uid: file.uid,
-        name: file.name,
-        status: 'done',
-        url: URL.createObjectURL(file)
-      }]
-    },
-
-    removeProgramFile() {
-      this.uploadFiles = []
-      this.programFiles = []
-    },
-
     customDatasetFileChose(options) {
       const { file } = options
       if (!file) return false
@@ -734,6 +772,33 @@ export default {
     removeDatasetFile() {
       this.uploadDatasetFiles = []
       this.datasetFiles = []
+    },
+
+    customReferenceFileChose(options) {
+      const { file } = options
+      if (!file) return false
+      this.uploadReferenceFiles.push(file)
+      this.referenceFiles.push({
+        uid: file.uid,
+        name: file.name,
+        status: 'done'
+      })
+    },
+
+    removeReferenceFile(file) {
+      this.referenceFiles = this.referenceFiles.filter(f => f.uid !== file.uid)
+      this.uploadReferenceFiles = this.uploadReferenceFiles.filter(f => (f.uid || (f.originFileObj && f.originFileObj.uid)) !== file.uid)
+      return true
+    },
+
+    refTypeLabel(type) {
+      const map = { paper: '论文', patent: '专利', code: '代码', model: '模型', url: '网址', repo: '开源' }
+      return map[type] || '资料'
+    },
+
+    refTypeColor(type) {
+      const map = { paper: 'blue', patent: 'red', code: 'green', model: 'purple', url: 'cyan', repo: 'geekblue' }
+      return map[type] || 'default'
     },
 
     async onCategoryChange(category) {
@@ -835,13 +900,15 @@ export default {
       if (this.programInfo.technology) {
         formData.append('technology', this.programInfo.technology)
       }
-      if (this.uploadFiles.length > 0) {
-        const rawFile = this.uploadFiles[0]
-        formData.append('file', rawFile.originFileObj || rawFile)
-      }
       if (this.uploadDatasetFiles.length > 0) {
         const rawDataset = this.uploadDatasetFiles[0]
         formData.append('dataset_file', rawDataset.originFileObj || rawDataset)
+      }
+      // 相关资料：多文件
+      if (this.uploadReferenceFiles.length > 0) {
+        this.uploadReferenceFiles.forEach(f => {
+          formData.append('reference_files', f.originFileObj || f)
+        })
       }
       if (this.algorithmCategory) {
         formData.append('algorithm_category', this.algorithmCategory)
@@ -916,7 +983,8 @@ export default {
           generatedCode: '',
           codeFilename: '',
           testResults: [],
-          references: []
+          references: [],
+          differentiationSummary: null
         }
         this.$message.warning('未获取到生成结果文件')
         return
@@ -932,7 +1000,8 @@ export default {
             generatedCode: data,
             codeFilename: 'generated_code.py',
             testResults: [],
-            references: []
+            references: [],
+            differentiationSummary: null
           }
           return
         }
@@ -943,7 +1012,8 @@ export default {
         generatedCode: parsed.generated_code || '',
         codeFilename: parsed.code_filename || `${parsed.model_name || 'algorithm'}.py`,
         testResults: Array.isArray(parsed.test_results) ? parsed.test_results : [],
-        references: Array.isArray(parsed.references) ? parsed.references : []
+        references: Array.isArray(parsed.references) ? parsed.references : [],
+        differentiationSummary: parsed.differentiation_summary || null
       }
     },
 
@@ -1043,10 +1113,10 @@ export default {
           this.form.serviceName = undefined
           this.freeNarrative = ''
           this.programInfo = { industry: undefined, scenario: undefined, technology: undefined }
-          this.programFiles = []
-          this.uploadFiles = []
           this.datasetFiles = []
           this.uploadDatasetFiles = []
+          this.referenceFiles = []
+          this.uploadReferenceFiles = []
           this.algorithmCategory = undefined
           this.categoryParams = {}
           this.customConstraintText = ''
@@ -1079,6 +1149,52 @@ export default {
 .ant-form-item {
   margin-bottom: 0;
 }
+.reference-block {
+  width: 100%;
+}
+.reference-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.85);
+  margin-bottom: 4px;
+}
+.reference-hint {
+  margin-bottom: 6px;
+}
+.reference-control {
+  width: 100%;
+  margin-top: 8px;
+}
+.reference-upload-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ref-detail {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fafafa;
+  border-radius: 4px;
+  font-size: 13px;
+
+  p {
+    margin-bottom: 4px;
+  }
+}
+.differentiation-block {
+  .diff-list {
+    margin: 0;
+    padding-left: 18px;
+
+    li {
+      margin-bottom: 4px;
+    }
+  }
+  .diff-empty {
+    color: #bfbfbf;
+  }
+}
 .label-optional {
   color: #8c8c8c;
   font-weight: normal;
@@ -1096,10 +1212,10 @@ export default {
   font-weight: 600;
   font-size: 14px;
   color: rgba(0, 0, 0, 0.85);
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 .narrative-hint {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .example-title {
   font-weight: 600;

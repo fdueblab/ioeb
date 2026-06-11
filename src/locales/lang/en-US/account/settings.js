@@ -1,5 +1,6 @@
 export default {
   'account.settings.menuMap.basic': 'Basic Settings',
+  'account.settings.menuMap.profile': 'User Profile',
   'account.settings.menuMap.security': 'Security Settings',
   'account.settings.menuMap.custom': 'Custom Settings',
   'account.settings.menuMap.binding': 'Account Binding',
@@ -58,5 +59,24 @@ export default {
   'account.settings.notification.todo-description':
     'The to-do list will be notified in the form of a letter from the station',
   'account.settings.settings.open': 'Open',
-  'account.settings.settings.close': 'Close'
+  'account.settings.settings.close': 'Close',
+  'account.settings.profile.completion': 'Profile Completion',
+  'account.settings.profile.domain': 'Domain',
+  'account.settings.profile.major': 'Major',
+  'account.settings.profile.occupation': 'Occupation',
+  'account.settings.profile.tech-needs': 'Technical Needs',
+  'account.settings.profile.bio': 'Bio',
+  'account.settings.profile.bio-placeholder': 'Briefly describe your research direction, technical background or interests',
+  'account.settings.profile.select-placeholder': 'Please select',
+  'account.settings.profile.multi-placeholder': 'Multiple choices allowed',
+  'account.settings.profile.save': 'Save Profile',
+  'account.settings.profile.save-success': 'User profile saved',
+  'account.settings.profile.upload-resume': 'Upload resume to auto-fill',
+  'account.settings.profile.resume-tip': 'Upload your resume (PDF/DOCX/TXT) and the system will try to extract your domain, major, occupation and technical needs. You can confirm or edit them below.',
+  'account.settings.profile.survey-title': 'Complete Your Profile',
+  'account.settings.profile.survey-intro': 'Take a moment to complete your profile so the platform can recommend more relevant algorithm models and services. You can also skip and complete it later in Settings - User Profile.',
+  'account.settings.profile.survey-upload': 'Upload resume to fill quickly',
+  'account.settings.profile.survey-skip': 'Skip',
+  'account.settings.profile.survey-save': 'Save & Finish',
+  'account.settings.profile.survey-save-success': 'Thanks! Your profile has been saved'
 }

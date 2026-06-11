@@ -37,6 +37,7 @@
       <right-content :top-menu="settings.layout === 'topmenu'" :is-mobile="isMobile" :theme="settings.theme" />
     </template>
     <router-view />
+    <user-profile-survey :visible="surveyVisible" @close="surveyVisible = false" @done="surveyVisible = false" />
   </pro-layout>
 </template>
 
@@ -48,12 +49,15 @@ import { CONTENT_WIDTH_TYPE, SIDEBAR_TYPE, TOGGLE_MOBILE_TYPE } from '@/store/mu
 
 import defaultSettings from '@/config/defaultSettings'
 import RightContent from '@/components/GlobalHeader/RightContent'
+import UserProfileSurvey from '@/components/UserProfileSurvey'
+import { isSurveyDone } from '@/api/userProfile'
 // import { asyncRouterMap } from '@/config/router.config.js'
 export default {
   name: 'BasicLayout',
   components: {
     SettingDrawer,
-    RightContent
+    RightContent,
+    UserProfileSurvey
   },
   data() {
     return {
@@ -89,7 +93,9 @@ export default {
       title: '面向垂域应用',
       subTitle: '的算法模型智能体平台',
       // 是否手机模式
-      isMobile: false
+      isMobile: false,
+      // 登录后用户画像问卷弹窗
+      surveyVisible: false
     }
   },
   computed: {
@@ -131,9 +137,26 @@ export default {
     if (process.env.NODE_ENV !== 'production' && process.env.VUE_APP_PREVIEW === 'true') {
       updateTheme(this.settings.primaryColor)
     }
+    // 登录后若未完成/跳过过问卷，且画像为空，则弹出用户画像问卷（可跳过）
+    this.maybeShowSurvey()
   },
   methods: {
     i18nRender,
+    maybeShowSurvey() {
+      // 已完成或跳过过则不再弹出
+      if (isSurveyDone()) {
+        return
+      }
+      // 确保画像已加载后再判断是否为空
+      this.$store.dispatch('LoadProfile').then(() => {
+        if (!isSurveyDone() && this.$store.getters.profileCompletion === 0) {
+          // 略微延迟，等待主界面渲染完成，体验更平滑
+          setTimeout(() => {
+            this.surveyVisible = true
+          }, 800)
+        }
+      })
+    },
     handleMediaQuery(val) {
       this.query = val
       if (this.isMobile && !val['screen-xs']) {

@@ -1,5 +1,6 @@
 export default {
   'account.settings.menuMap.basic': '基本设置',
+  'account.settings.menuMap.profile': '用户画像',
   'account.settings.menuMap.security': '安全设置',
   'account.settings.menuMap.custom': '个性化',
   'account.settings.menuMap.binding': '账号绑定',
@@ -53,5 +54,24 @@ export default {
   'account.settings.notification.todo': '待办任务',
   'account.settings.notification.todo-description': '待办任务将以站内信的形式通知',
   'account.settings.settings.open': '开',
-  'account.settings.settings.close': '关'
+  'account.settings.settings.close': '关',
+  'account.settings.profile.completion': '画像完善度',
+  'account.settings.profile.domain': '领域',
+  'account.settings.profile.major': '专业',
+  'account.settings.profile.occupation': '职业',
+  'account.settings.profile.tech-needs': '技术需求',
+  'account.settings.profile.bio': '个人简介',
+  'account.settings.profile.bio-placeholder': '简要介绍您的研究方向、技术背景或关注点',
+  'account.settings.profile.select-placeholder': '请选择',
+  'account.settings.profile.multi-placeholder': '可多选',
+  'account.settings.profile.save': '保存画像',
+  'account.settings.profile.save-success': '用户画像已保存',
+  'account.settings.profile.upload-resume': '上传简历自动填充',
+  'account.settings.profile.resume-tip': '支持上传简历（PDF/DOCX/TXT），系统将尝试自动提取您的领域、专业、职业与技术需求，您可在下方确认或修改。',
+  'account.settings.profile.survey-title': '完善用户画像',
+  'account.settings.profile.survey-intro': '花一点时间完善您的画像，帮助平台为您提供更精准的算法模型与服务推荐。您也可以选择跳过，稍后在「个人设置-用户画像」中补充。',
+  'account.settings.profile.survey-upload': '上传简历快速填充',
+  'account.settings.profile.survey-skip': '跳过',
+  'account.settings.profile.survey-save': '保存并完成',
+  'account.settings.profile.survey-save-success': '感谢完善，您的用户画像已保存'
 }
