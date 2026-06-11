@@ -15,6 +15,11 @@
                 {{ $t('account.settings.menuMap.basic') }}
               </router-link>
             </a-menu-item>
+            <a-menu-item key="/account/settings/profile">
+              <router-link :to="{ name: 'ProfileSettings' }">
+                {{ $t('account.settings.menuMap.profile') }}
+              </router-link>
+            </a-menu-item>
             <a-menu-item key="/account/settings/security">
               <router-link :to="{ name: 'SecuritySettings' }">
                 {{ $t('account.settings.menuMap.security') }}

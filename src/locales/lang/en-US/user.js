@@ -1,8 +1,8 @@
 export default {
   'user.login.userName': 'userName',
   'user.login.password': 'password',
-  'user.login.username.placeholder': 'Account: issuer',
-  'user.login.password.placeholder': 'password: admin',
+  'user.login.username.placeholder': 'Please enter your username',
+  'user.login.password.placeholder': 'Please enter your password',
   'user.login.message-invalid-credentials':
     'Invalid username or password',
   'user.login.message-invalid-verification-code': 'Invalid verification code',
