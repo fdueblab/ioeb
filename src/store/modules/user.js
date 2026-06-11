@@ -52,7 +52,7 @@ const user = {
       })
     },
     // 获取用户信息
-    GetInfo ({ commit }) {
+    GetInfo ({ commit, dispatch }) {
       const username = localStorage.getItem('username')
       return new Promise((resolve, reject) => {
         // 请求后端获取用户信息 /api/user/info
@@ -77,6 +77,8 @@ const user = {
             commit('SET_INFO', result)
             commit('SET_NAME', { name: result.name, welcome: welcome() })
             commit('SET_AVATAR', result.avatar)
+            // 加载用户画像（前端优先：localStorage）
+            dispatch('LoadProfile', null, { root: true })
             // 下游
             resolve(result)
           } else {
@@ -88,11 +90,12 @@ const user = {
       })
     },
     // 登出
-    Logout ({ commit, state }) {
+    Logout ({ commit, state, dispatch }) {
       return new Promise((resolve) => {
         logout(state.token).then(() => {
           commit('SET_TOKEN', '')
           commit('SET_ROLES', [])
+          dispatch('ResetProfile', null, { root: true })
           storage.remove(ACCESS_TOKEN)
           resolve()
         }).catch((err) => {

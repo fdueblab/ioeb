@@ -41,6 +41,17 @@ const assetsCDN = {
 // vue.config.js
 const vueConfig = {
   configureWebpack: {
+    // webpack5 不再为 node 核心模块提供 polyfill，简历解析等浏览器侧库无需这些模块
+    resolve: {
+      fallback: {
+        path: false,
+        fs: false,
+        stream: false,
+        util: false,
+        crypto: false,
+        zlib: false
+      }
+    },
     // webpack plugins
     plugins: [
       // Ignore all locale files of moment.js

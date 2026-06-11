@@ -931,6 +931,17 @@ export const asyncRouterMap = [
                 }
               },
               {
+                path: '/account/settings/profile',
+                name: 'ProfileSettings',
+                component: () => import('@/views/account/settings/UserProfile'),
+                meta: {
+                  title: 'account.settings.menuMap.profile',
+                  hidden: true,
+                  keepAlive: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
+              },
+              {
                 path: '/account/settings/security',
                 name: 'SecuritySettings',
                 component: () => import('@/views/account/settings/Security'),

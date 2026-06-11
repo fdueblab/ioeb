@@ -6,9 +6,9 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import AvatarDropdown from './AvatarDropdown'
 import SelectLang from '@/components/SelectLang'
-import store from '@/store/index'
 export default {
   name: 'RightContent',
   components: {
@@ -35,25 +35,24 @@ export default {
   },
   data () {
     return {
-      showMenu: true,
-      currentUser: {}
+      showMenu: true
     }
   },
   computed: {
+    ...mapGetters(['nickname', 'avatar', 'profileCompletion']),
+    currentUser () {
+      return {
+        name: this.nickname,
+        avatar: this.avatar,
+        completion: this.profileCompletion
+      }
+    },
     wrpCls () {
       return {
         'ant-pro-global-header-index-right': true,
         [`ant-pro-global-header-index-${(this.isMobile || !this.topMenu) ? 'light' : this.theme}`]: true
       }
     }
-  },
-  mounted () {
-    setTimeout(() => {
-      // console.log(store.getters.nickname)
-      this.currentUser = {
-        name: store.getters.nickname
-      }
-    }, 1500)
   }
 }
 </script>
