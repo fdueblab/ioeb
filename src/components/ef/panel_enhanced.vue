@@ -23,7 +23,7 @@
                   开始仿真构建
                 </a-button>
                 <transition name="tips-float">
-                  <div v-if="hasServiceNodes && !simulationPassed" class="simulation-tips-float">
+                  <div v-if="hasServiceNodes && !simulationPassed && !simulationEntryTipDismissed" class="simulation-tips-float">
                     <span>看起来还行？进入仿真构建环节</span>
                     <div class="tips-arrow"></div>
                   </div>
@@ -76,7 +76,7 @@
         <simulation-builder
           ref="simulationBuilder"
           :service-nodes="data.nodeList"
-          :app-name="data.preName"
+          :app-name="metaAppDisplayNameForSimulation"
           :app-id="data.name || 'meta-app-draft'"
           :domain="verticalType"
           :scenario-description="data.preDes"
@@ -127,7 +127,7 @@
           v-for="node in data.nodeList"
           :key="node.id"
           :node="node"
-          :app-name="data.preName"
+          :app-name="metaAppDisplayNameForSimulation"
           :sim-visual="simulationVisualForNode(node)"
           :chrome-locked="simulationChromeLocked"
           @nodeRightMenu="nodeRightMenu"
@@ -284,6 +284,12 @@ export default {
     },
     toolbarDisabled() {
       return this.loadingFlow || this.simulationChromeLocked
+    },
+    /**
+     * 仿真构建用：当前展示名称（`data.preName`；演示分流见 `meta_apps_data`）。
+     */
+    metaAppDisplayNameForSimulation() {
+      return this.data.preName || ''
     }
   },
   data() {
@@ -296,6 +302,8 @@ export default {
       simulationBuilderVisible: false,
       simulationBuilding: false,
       simulationPassed: false,
+      /** 点击「开始仿真构建」并成功打开面板后，不再显示「试试仿真构建」类浮层提示 */
+      simulationEntryTipDismissed: false,
       loadEasyFlowFinish: false,
       importLoading: false,
       fileSelectionInProgress: false,
@@ -1100,6 +1108,7 @@ export default {
     // 仿真构建
     simulationBuild() {
       if (this.data.nodeList.length > 1) {
+        this.simulationEntryTipDismissed = true
         this.simulationBuilderVisible = true
         this.$nextTick(() => {
           this.$refs.simulationBuilder.init(this.data.nodeList)

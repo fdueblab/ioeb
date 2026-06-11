@@ -21,11 +21,11 @@ import {
   SIMULATION_BUILD_ENV_TASKS,
   SIMULATION_BUILD_GEN_TASKS,
   SIMULATION_BUILD_DELAYS_MS,
+  SIMULATION_BUILD_MOCK_STAGE,
   simulationBuildRandomBetween,
-  simulationBuildModuleMetrics
+  simulationBuildModuleMetrics,
+  simulationBuildMockEnhancementRecord
 } from '@/mock/data/simulation_builder_data'
-import { enhanceForStage } from '@/domain'
-import { SIMULATION_STAGES, SIMULATION_ENHANCEMENT_RULES } from '@/components/ef/simulationStages'
 
 const sessions = new Map()
 let idSeq = 0
@@ -74,7 +74,6 @@ function start(body) {
     body,
     strategy: mergeStrategy(body),
     mode: body.mode || 'production',
-    result: null,
     startedAt: Date.now()
   }
   sessions.set(sessionId, session)
@@ -149,10 +148,7 @@ async function runStream(sessionId, emit) {
   const { body, strategy, mode } = session
   const servicesMeta = body.servicesMeta || []
   const isResearch = mode === 'research'
-  const dk = body.domainKnowledge
-  const stageCtxBase = {
-    serviceNames: servicesMeta.map((s) => s.name)
-  }
+  const mockDomain = body.domain || 'generic'
 
   const pushLog = (level, message) => {
     checkCancel()
@@ -164,10 +160,9 @@ async function runStream(sessionId, emit) {
 
     emit('step', { step: 0, name: '服务匹配' })
     pushLog('INFO', '开始服务匹配')
-    const enScenario = enhanceForStage(
-      dk,
-      SIMULATION_ENHANCEMENT_RULES[SIMULATION_STAGES.scenarioParsing],
-      stageCtxBase
+    const enScenario = simulationBuildMockEnhancementRecord(
+      mockDomain,
+      SIMULATION_BUILD_MOCK_STAGE.scenarioParsing
     )
     session.enhancements.push(enScenario)
     pushLog(
@@ -205,11 +200,7 @@ async function runStream(sessionId, emit) {
     emit('step', { step: 2, name: '智能构建' })
     pushLog('INFO', '开始智能构建')
 
-    const iteration = 1
-    checkCancel()
-    emit('iteration', { iteration, status: 'running' })
-    pushLog('INFO', `开始第 ${iteration} 轮验证`)
-
+    const demoRounds = 2
     const runPhase = async (phase) => {
       checkCancel()
       emit('phase', { phase, status: 'running' })
@@ -217,38 +208,54 @@ async function runStream(sessionId, emit) {
       emit('phase', { phase, status: 'done' })
     }
 
-    const enPlanning = enhanceForStage(dk, SIMULATION_ENHANCEMENT_RULES[SIMULATION_STAGES.planning], {
-      ...stageCtxBase,
-      iterationIndex: iteration
-    })
-    session.enhancements.push(enPlanning)
-    pushLog(
-      'INFO',
-      `[调度规划] 领域知识增强: ${truncateForLog(enPlanning.promptFragment)}`
-    )
+    for (let iteration = 1; iteration <= demoRounds; iteration++) {
+      checkCancel()
+      emit('iteration', { iteration, status: 'running' })
+      pushLog('INFO', `开始第 ${iteration} 轮验证`)
 
-    await runPhase('data')
-    pushLog('SUCCESS', '数据仿真: 数据流转正常')
+      const enPlanning = simulationBuildMockEnhancementRecord(
+        mockDomain,
+        SIMULATION_BUILD_MOCK_STAGE.planning
+      )
+      session.enhancements.push(enPlanning)
+      pushLog(
+        'INFO',
+        `[调度规划] 领域知识增强: ${truncateForLog(enPlanning.promptFragment)}`
+      )
 
-    await runPhase('logic')
-    pushLog('SUCCESS', '逻辑仿真: 业务逻辑正常')
+      await runPhase('data')
+      pushLog('SUCCESS', '数据仿真: 数据流转正常')
 
-    const enVerify = enhanceForStage(
-      dk,
-      SIMULATION_ENHANCEMENT_RULES[SIMULATION_STAGES.verification],
-      { ...stageCtxBase, iterationIndex: iteration }
-    )
-    session.enhancements.push(enVerify)
-    pushLog(
-      'INFO',
-      `[仿真验证] 领域知识增强: ${truncateForLog(enVerify.promptFragment)}`
-    )
+      await runPhase('logic')
+      pushLog('SUCCESS', '逻辑仿真: 业务逻辑正常')
 
-    await runPhase('check')
-    pushLog('INFO', '链路检视: 检查偏差和冗余')
-    pushLog('SUCCESS', '链路检视: 未发现偏差')
+      const enVerify = simulationBuildMockEnhancementRecord(
+        mockDomain,
+        SIMULATION_BUILD_MOCK_STAGE.verification
+      )
+      session.enhancements.push(enVerify)
+      pushLog(
+        'INFO',
+        `[仿真验证] 领域知识增强: ${truncateForLog(enVerify.promptFragment)}`
+      )
 
-    emit('iteration', { iteration, status: 'passed' })
+      await runPhase('check')
+      pushLog('INFO', '链路检视: 检查偏差和冗余')
+
+      if (iteration < demoRounds) {
+        pushLog('WARN', '链路检视: 发现可优化项，进入下一轮自动修复')
+        emit('issue', {
+          message: '演示：服务调用顺序可优化，将自动调整后重试',
+          fix: '重新规划调度顺序'
+        })
+        emit('iteration', { iteration, status: 'retry' })
+      } else {
+        pushLog('SUCCESS', '链路检视: 未发现偏差')
+        emit('iteration', { iteration, status: 'passed' })
+      }
+    }
+
+    const iteration = demoRounds
 
     const elapsedMs = Date.now() - session.startedAt
     const metrics = simulationBuildModuleMetrics(iteration, elapsedMs)
@@ -293,51 +300,52 @@ async function runStream(sessionId, emit) {
     }
 
     const executionPath = ['用户输入', ...servicesMeta.map((s) => s.name), '输出结果']
-    session.result = {
+    const successResult = {
       success: true,
       executionPath,
       strategy,
       scenarioDescription: body.scenarioDescription,
       appName: body.appName,
       domain: body.domain,
-      domainKnowledge: body.domainKnowledge,
       enhancements: session.enhancements || []
     }
+
+    session.result = successResult
 
     pushLog('SUCCESS', '方案生成完成')
 
     emit('complete', {
       success: true,
       metrics,
-      result: session.result
+      result: successResult
     })
 
     pushResearchRecord(session, metrics, true)
   } catch (e) {
     if (e.code === 'cancelled') {
-      session.result = { success: false, cancelled: true }
       const mc = { iterations: 0, elapsedMs: Date.now() - session.startedAt }
       emit('complete', {
         success: false,
         cancelled: true,
         metrics: mc,
-        result: session.result
+        result: { success: false, cancelled: true }
       })
       return
     }
-    session.result = { success: false, error: e.message || String(e) }
+    const failResult = { success: false, error: e.message || String(e) }
+    session.result = failResult
     const me = { elapsedMs: Date.now() - session.startedAt }
     emit('complete', {
       success: false,
       metrics: me,
-      result: session.result
+      result: failResult
     })
     pushResearchRecord(session, me, false)
   }
 }
 
 /**
- * 供 API 层统一调用的进程内实现（与 createRealSimulationBuildClient 方法签名一致）
+ * 供 API 层统一调用的进程内实现（与 HTTP 客户端对外方法一致；完整结果仅经 SSE complete 推送）
  */
 export const simulationBuildInMemory = {
   start,

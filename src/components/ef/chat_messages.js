@@ -1,6 +1,8 @@
 // 聊天消息管理模块
 // 统一管理各个领域的建议输入、成功回复和错误回复
 
+import { LOCAL_MCP_SUGGESTIONS } from '@/mock/data/meta_apps_data'
+
 // 各领域的建议输入
 const DOMAIN_SUGGESTIONS = {
   aml: [
@@ -16,7 +18,8 @@ const DOMAIN_SUGGESTIONS = {
     { value: '请帮我构建一个智能飞行控制应用' }
   ],
   health: [
-    { value: '我想开发一个乡村医疗AI辅助诊断系统' }
+    { value: '我想开发一个乡村医疗AI辅助诊断系统' },
+    ...LOCAL_MCP_SUGGESTIONS
   ],
   agriculture: [
     { value: '请帮我构建一个智能农业分析应用' }
@@ -70,7 +73,7 @@ const PLACEHOLDERS = {
 const INITIAL_MESSAGES = {
   aml: '请告诉我您对跨境支付应用的需求，我将根据您的需求尝试生成元应用',
   aircraft: '请告诉我您对无人飞机应用的需求，我将根据您的需求尝试生成元应用',
-  health: '请告诉我您对乡村医疗应用的需求，我将根据您的需求尝试生成元应用',
+  health: '请描述医疗元应用需求；输入含【本地MCP】(n) 可一键编排本机 external-mcp 节点（n 为服务数）',
   agriculture: '请告诉我您对数字农业应用的需求，我将根据您的需求尝试生成元应用',
   evtol: '请告诉我您对低空飞行应用的需求，我将根据您的需求尝试生成元应用',
   ecommerce: '请告诉我您对跨境电商应用的需求，我将根据您的需求尝试生成元应用',

@@ -134,7 +134,9 @@ export default {
             status: service.status,
             apiName: apiInfo.name,
             apiUrl: apiInfo.url,
-            tools: tools
+            tools: tools,
+            isFake: !!apiInfo.isFake,
+            mcpMethod: apiInfo.method || ''
           },
           children: tools.map((tool, index) => ({
             id: `${service.name}_tool_${index}`,
@@ -264,6 +266,8 @@ export default {
         apiName: service._serviceData.apiName,
         url: service._serviceData.apiUrl,
         tools: service._serviceData.tools,
+        isFake: service._serviceData.isFake,
+        mcpMethod: service._serviceData.mcpMethod,
         status: service._serviceData.status
       }))
 

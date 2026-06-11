@@ -87,10 +87,16 @@
 </template>
 
 <script>
-import { getMetaAppNodes, generateMockSteps } from '@/mock/data/meta_apps_data'
 import { ChatMessageManager } from './chat_messages'
 import { streamAgent } from '@/utils/request'
 import { generateServiceNodes } from './utils'
+import {
+  getMetaAppNodes,
+  generateMockSteps,
+  matchesScheduleDemoInput,
+  resolveScheduleDemoKind,
+  SCHEDULE_DEMO_KIND
+} from '@/mock/data/meta_apps_data'
 
 export default {
   name: 'SmartChat',
@@ -127,10 +133,11 @@ export default {
       showSuggestions: false,
       messageManager: null,
       filteredSuggestions: [],
-      thinkingMessageIndex: -1, // 追踪思考消息的索引
-      stepTypewriterTimer: null, // 步骤打字机定时器
-      finalCollapseTimer: null, // 最终收起定时器
-      isTaskFinishing: false // 标记任务是否正在结束
+      thinkingMessageIndex: -1,
+      stepTypewriterTimer: null,
+      finalCollapseTimer: null,
+      isTaskFinishing: false,
+      agentSessionId: null
     }
   },
   watch: {
@@ -182,15 +189,11 @@ export default {
       // 发出开始loading事件，让其他界面进入loading状态
       this.$emit('start-loading')
 
-      // 根据领域类型选择数据源
-      if (this.verticalType === 'aml') {
-        if (input.includes('课题')) {
-          this.useFakeData(input)
-        } else {
-          this.callAgentForRecommendation(input)
-        }
+      // 调度演示（课题 / MCP）→ 统一 mock 推荐；否则 Agent API
+      if (matchesScheduleDemoInput(input)) {
+        this.useScheduleDemoData(input)
       } else {
-        this.useFakeData(input)
+        this.callAgentForRecommendation(input)
       }
     },
     // 获取思考过程标题
@@ -340,15 +343,23 @@ export default {
       }
     },
 
-    // 调用智能体获取推荐服务
     callAgentForRecommendation(input) {
       const formData = new FormData()
       formData.append('message', input)
       formData.append('service_type', this.verticalType)
+      if (this.agentSessionId) {
+        formData.append('session_id', this.agentSessionId)
+      }
 
       streamAgent('/api/agent/mcp_service_recommendation', formData, {
         onStart: () => {
           console.log('开始智能体服务推荐')
+        },
+        onSessionInfo: (info) => {
+          if (info.session_id) {
+            this.agentSessionId = info.session_id
+            console.log('会话已建立:', this.agentSessionId)
+          }
         },
         onStep: (data) => {
           console.log('智能体执行步骤:', data)
@@ -380,6 +391,12 @@ export default {
         },
         onComplete: () => {
           console.log('智能体推荐完成')
+          this.$emit('stop-loading')
+          if (this.isInputLoading) {
+            this.isInputEnabled = true
+            const outputMessage = this.messageManager.getErrorReply()
+            this.agentTypeWriter(outputMessage)
+          }
         },
         onDataProcessError: (error) => {
           console.error('智能体数据处理错误:', error)
@@ -431,58 +448,57 @@ export default {
         this.isInputEnabled = true
       }
     },
-    // 使用假数据的逻辑
-    useFakeData(input) {
-      // 开始模拟推理过程
-      this.fakeThinkingProcess(input)
-    },
-    // 模拟推理过程
-    fakeThinkingProcess(input) {
-      // 从meta_apps_data中获取模拟的推理步骤数据
-      const mockSteps = generateMockSteps(this.verticalType, input)
-      // 模拟步骤执行
-      let currentStepIndex = 0
-      const executeNextStep = () => {
-        if (currentStepIndex < mockSteps.length) {
-          const step = mockSteps[currentStepIndex]
-          // 模拟延迟
-          setTimeout(() => {
-            this.updateThinkingMessage(step.thought, step.step)
-            currentStepIndex++
-            // 继续下一步
-            executeNextStep()
-          }, 1000 + Math.random() * 1500) // 随机延迟1-2.5秒
-        } else {
-          this.handleMockFinalResult(input)
+    useScheduleDemoData(input) {
+      if (
+        resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.LOCAL_MCP &&
+        this.verticalType !== 'health'
+      ) {
+        this.$emit('stop-loading')
+        this.isInputLoading = false
+        this.isInputEnabled = true
+        const i = this.messages.findIndex((msg) => msg.text === 'agentLoading')
+        if (i !== -1) {
+          this.$set(this.messages, i, {
+            text: '【本地MCP】样例仅在 <b>health</b> 调度页可用。',
+            isUser: false
+          })
         }
+        return
       }
-      // 开始执行第一步
-      executeNextStep()
+      const steps = generateMockSteps(this.verticalType, input)
+      const runStep = (idx) => {
+        if (idx >= steps.length) return this.finishScheduleDemo(input)
+        const step = steps[idx]
+        setTimeout(() => {
+          this.updateThinkingMessage(step.thought, step.step)
+          runStep(idx + 1)
+        }, 800 + Math.random() * 900)
+      }
+      runStep(0)
     },
-
-    // 处理模拟的最终结果
-    handleMockFinalResult(input) {
-      // 标记任务结束并处理最后一步
+    finishScheduleDemo(input) {
       this.isTaskFinishing = true
       this.handleFinalStep()
-      // 获取原始数据并处理
-      getMetaAppNodes(this.verticalType, input).then((flowData) => {
-        // 使用utils中的方法生成服务节点
-        const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
-        const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
-        // 向父组件发送数据
-        this.$emit('update-services', serviceNodes)
-        this.$emit('update-flow', flowData)
-        this.placeholder = '已智能生成元应用'
-        this.isGenerated = true
-        // 使用agentTypeWriter在智能体消息中显示结果
-        this.agentTypeWriter(outputMessage)
-      }).catch(() => {
-        this.$emit('stop-loading') // 停止loading状态
-        const outputMessage = this.messageManager.getErrorReply()
-        this.agentTypeWriter(outputMessage)
-        this.isInputEnabled = true
-      })
+      const isMcp = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.LOCAL_MCP
+      getMetaAppNodes(this.verticalType, input)
+        .then((flowData) => {
+          const { chosenServices, serviceNodes } = generateServiceNodes(
+            flowData,
+            this.verticalType
+          )
+          this.$emit('update-services', serviceNodes)
+          this.$emit('update-flow', flowData)
+          this.placeholder = isMcp ? '已生成本地 MCP 元应用' : '已智能生成元应用'
+          this.isGenerated = true
+          this.agentTypeWriter(
+            this.messageManager.generateSuccessReply(chosenServices)
+          )
+        })
+        .catch(() => {
+          this.$emit('stop-loading')
+          this.agentTypeWriter(this.messageManager.getErrorReply())
+          this.isInputEnabled = true
+        })
     },
     typeWriter(text) {
       if (this.currentIndex < text.length) {
@@ -558,8 +574,9 @@ export default {
       this.isGenerated = false
       this.showSuggestions = false
       this.filteredSuggestions = this.messageManager ? this.messageManager.getSuggestions() : []
-      this.thinkingMessageIndex = -1 // 重置思考消息索引
-      this.isTaskFinishing = false // 重置任务结束标志
+      this.thinkingMessageIndex = -1
+      this.isTaskFinishing = false
+      this.agentSessionId = null
       const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '智能体未获取到必要信息，请刷新后重试'
       this.messages.push({ text: initialMessage, isUser: false })
     },

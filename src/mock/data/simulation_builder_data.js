@@ -17,6 +17,7 @@
  *   - 只改「节奏」→ 改 SIMULATION_BUILD_DELAYS_MS
  *   - 只改「成功率/迭代次数观感」→ 改 SIMULATION_BUILD_PROB、failBias 相关系数
  *   - 只改「失败原因文案」→ 改 SIMULATION_BUILD_ISSUE_TEMPLATES
+ *   - 只改「离线 mock 的领域增强日志/result.enhancements」→ 改 SIMULATION_BUILD_MOCK_ENHANCEMENTS
  *   - 不要在本文件引用 Vue / DOM
  *
  * 【命名前缀】SIMULATION_BUILD_*：与仿真构建领域字段一致，避免与其它 mock/data 混淆。
@@ -112,6 +113,123 @@ export const SIMULATION_BUILD_METRIC_RANGES = {
   sandboxFidelity: [0.78, 0.96],
   verificationAccuracy: [0.82, 0.97],
   repairEffectiveness: [0.75, 0.95]
+}
+
+// ---------------------------------------------------------------------------
+// 进程内 mock 专用：三阶段「领域增强」文案（形状对齐已弃用的 enhanceForStage 返回值）
+// 仅 simulation_builder_inmemory.js 使用；与真链路 Micro-Agent Skill 无关。
+// stageId：scenarioParsing | planning | verification
+// ---------------------------------------------------------------------------
+
+const _MOCK_KNOWN_DOMAINS = new Set([
+  'generic',
+  'aml',
+  'aircraft',
+  'health',
+  'agriculture',
+  'ecommerce',
+  'homeAI',
+  'evtol'
+])
+
+/** @param {string} [domain] */
+export function simulationBuildNormalizeMockDomain(domain) {
+  const d = (domain && String(domain).trim()) || 'generic'
+  return _MOCK_KNOWN_DOMAINS.has(d) ? d : 'generic'
+}
+
+/** 三阶段 stageId，供 inmemory 引用，避免依赖 @/components */
+export const SIMULATION_BUILD_MOCK_STAGE = {
+  scenarioParsing: 'scenarioParsing',
+  planning: 'planning',
+  verification: 'verification'
+}
+
+/**
+ * @type {Record<string, Record<'scenarioParsing'|'planning'|'verification', string>>}
+ */
+export const SIMULATION_BUILD_MOCK_ENHANCEMENTS = {
+  generic: {
+    scenarioParsing:
+      '【领域摘要】通用元应用编排：强调服务契约、数据流与可观测性。术语：元应用、链路检视。约束：接口稳定；跨服务数据可序列化且体积可控。',
+    planning:
+      '编排建议：先澄清输入输出与失败语义再定序；关键路径保留日志与可重试边界。术语速查：元应用、链路检视。',
+    verification:
+      '校验：接口契约与数据形态一致。合规：按部署环境补充行业要求。术语参照：元应用、链路检视。'
+  },
+  aml: {
+    scenarioParsing:
+      '【领域摘要】跨境支付监测：交易筛查、名单与案例。术语：可疑交易、名单。约束：输出可审计；误报漏报可配置。',
+    planning:
+      '编排建议：先名单与规则命中再模型排序；案例闭环留痕。约束：模型与规则需可审计。',
+    verification:
+      '校验：决策依据可追溯。合规：反洗钱与制裁要求因法域而异，需对接权威名单源。'
+  },
+  aircraft: {
+    scenarioParsing:
+      '【领域摘要】无人飞机监控：态势、航线与告警。术语：态势、告警。约束：时空数据统一坐标系与时间戳；仿真与实飞边界（如适用）。',
+    planning:
+      '编排建议：先接入遥测与视频/点云再推理；关键告警追踪到传感器源。',
+    verification:
+      '校验：时空上下文完整。合规：空域与隐私法规处理影像与轨迹。'
+  },
+  health: {
+    scenarioParsing:
+      '【领域摘要】乡村医疗：问诊辅助、转诊与慢病随访。术语：分诊、随访。约束：不替代执业诊断；患者信息最小化与脱敏。',
+    planning:
+      '编排建议：优先结构化主诉与生命体征；转诊路径可解释。',
+    verification:
+      '校验：免责声明与不确定性说明。合规：医疗数据安全与隐私规范。'
+  },
+  agriculture: {
+    scenarioParsing:
+      '【领域摘要】农业数智：墒情、虫害与灌溉施肥决策。术语：墒情、处方图。约束：数据标注时间站点；农艺建议符合当地规范。',
+    planning:
+      '编排建议：先数据质检再推理；输出对接农机或执行系统。',
+    verification:
+      '校验：时空与地块标注一致。合规：农资与环保法规因地可配置。'
+  },
+  ecommerce: {
+    scenarioParsing:
+      '【领域摘要】跨境电商：清关、物流与多语言客服。术语：HS 编码、SLA。约束：价格税费分站点币种；跨境传输符合目的地法规。',
+    planning:
+      '编排建议：订单状态机与物流事件对齐；退换货与工单可追溯。',
+    verification:
+      '校验：税费与币种展示一致。合规：消费者保护与个人信息保护。'
+  },
+  homeAI: {
+    scenarioParsing:
+      '【领域摘要】家庭陪伴：多模态交互、家居控制与一老一小场景。术语：场景、技能。约束：儿老建议保守且可人工确认；敏感数据优先本地。',
+    planning:
+      '编排建议：先意图识别再设备控制；异常联动通知监护人。',
+    verification:
+      '校验：本地与云端边界可配置。合规：影像与语音明示同意与留存策略。'
+  },
+  evtol: {
+    scenarioParsing:
+      '【领域摘要】低空飞行：航路、空域容量与运行风险。术语：航路、容量。约束：高度速度与禁飞区一致；多机冲突显式解脱或告警。',
+    planning:
+      '编排建议：先静态航路再动态冲突消解；与监视数据时间对齐。',
+    verification:
+      '校验：航路与容量约束与监视数据一致。合规：低空运行与噪声监管。'
+  }
+}
+
+/**
+ * @param {string} domain
+ * @param {'scenarioParsing'|'planning'|'verification'} stageId
+ * @returns {{ stage: string, promptFragment: string, sections: Record<string, never> }}
+ */
+export function simulationBuildMockEnhancementRecord(domain, stageId) {
+  const id = simulationBuildNormalizeMockDomain(domain)
+  const row = SIMULATION_BUILD_MOCK_ENHANCEMENTS[id] || SIMULATION_BUILD_MOCK_ENHANCEMENTS.generic
+  const fallback = SIMULATION_BUILD_MOCK_ENHANCEMENTS.generic
+  const promptFragment = row[stageId] || fallback[stageId] || '（mock 无增强文案）'
+  return {
+    stage: stageId,
+    promptFragment,
+    sections: {}
+  }
 }
 
 export function simulationBuildRandomBetween(min, max) {

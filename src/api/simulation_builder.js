@@ -1,18 +1,19 @@
 /**
  * simulation_builder · 前端 API 统一入口（与 `simulation_builder.vue` 配套）
  *
- * 【设计】虚拟（进程内）与真实（HTTP + SSE）只在「选择实现」处分叉一次，
- * 对外导出函数签名不变，组件只 import 本文件。
+ * 【分流】元应用展示名 `appName`（与画布 `data.preName` 一致）见 `@/mock/data/meta_apps_data`：
+ * - **课题** → 进程内 inmemory
+ * - **【本地MCP】(n)** → HTTP Micro-Agent（真 MCP，n 见元应用名）
+ * - **其他** → HTTP + EventSource → `VUE_APP_AGENT_BASE_URL`
  *
- * 切换：`SIMULATION_USE_MOCK`。对接真实后端时置为 false，并保证 `VUE_APP_API_BASE_URL` 指向可访问的网关。
+ * `fetchSimulationRecords` / `compareSimulationRecords` 须传入同一上下文的 `appName`（与 prop 一致）。
  */
 import request from '@/utils/request'
 import { simulationBuildInMemory } from '@/mock/services/simulation_builder_inmemory'
+import { useMemorySimulation } from '@/mock/data/meta_apps_data'
 
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || ''
-
-/** 为 false 时使用 HTTP + EventSource 订阅 `streamUrl` */
-export const SIMULATION_USE_MOCK = true
+const SIMULATION_BASE_URL =
+  process.env.VUE_APP_AGENT_BASE_URL || process.env.VUE_APP_API_BASE_URL || ''
 
 /** SSE 自定义事件名（与后端约定一致） */
 const SIMULATION_SSE_EVENTS = [
@@ -27,7 +28,13 @@ const SIMULATION_SSE_EVENTS = [
   'complete'
 ]
 
-/** 进程内实现：与 createHttpSimulationBuildClient 方法名、返回值形状一致 */
+/** 由「含课题关键字的 start」创建的 sessionId，subscribe/cancel 须走同一实现 */
+const memoryRouteSessionIds = new Set()
+
+function useMemoryForAppName(appName) {
+  return useMemorySimulation(appName)
+}
+
 function createMemorySimulationBuildClient() {
   return {
     startSimulation(payload) {
@@ -64,37 +71,37 @@ function createMemorySimulationBuildClient() {
   }
 }
 
-/** HTTP + SSE 实现 */
+/** HTTP + SSE 实现（走 ioeb 网关 API） */
 function createHttpSimulationBuildClient() {
   return {
     startSimulation(payload) {
       return request({
-        url: `${API_BASE_URL}/api/simulation/start`,
+        url: `${SIMULATION_BASE_URL}/api/simulation/start`,
         method: 'post',
         data: payload
       })
     },
     cancelSimulation(sessionId) {
       return request({
-        url: `${API_BASE_URL}/api/simulation/${sessionId}/cancel`,
+        url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/cancel`,
         method: 'post'
       })
     },
     getSimulationResult(sessionId) {
       return request({
-        url: `${API_BASE_URL}/api/simulation/${sessionId}/result`,
+        url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/result`,
         method: 'get'
       })
     },
     fetchSimulationRecords() {
       return request({
-        url: `${API_BASE_URL}/api/simulation/records`,
+        url: `${SIMULATION_BASE_URL}/api/simulation/records`,
         method: 'get'
       })
     },
     compareSimulationRecords(recordIds) {
       return request({
-        url: `${API_BASE_URL}/api/simulation/records/compare`,
+        url: `${SIMULATION_BASE_URL}/api/simulation/records/compare`,
         method: 'post',
         data: { recordIds }
       })
@@ -102,7 +109,7 @@ function createHttpSimulationBuildClient() {
     subscribeSimulationStream(sessionId, streamUrl, handlers = {}) {
       const url = streamUrl.startsWith('http')
         ? streamUrl
-        : `${API_BASE_URL}${streamUrl}`
+        : `${SIMULATION_BASE_URL}${streamUrl}`
       const es = new EventSource(url)
       const on = (eventName, cb) => {
         es.addEventListener(eventName, (ev) => {
@@ -127,39 +134,76 @@ function createHttpSimulationBuildClient() {
   }
 }
 
-const simulationBuildClient = SIMULATION_USE_MOCK
-  ? createMemorySimulationBuildClient()
-  : createHttpSimulationBuildClient()
+function pickClient(appName, sessionId) {
+  const memory = sessionId != null
+    ? memoryRouteSessionIds.has(sessionId)
+    : useMemoryForAppName(appName)
+  return memory
+    ? createMemorySimulationBuildClient()
+    : createHttpSimulationBuildClient()
+}
 
 /** @param {Record<string, unknown>} payload */
 export function startSimulation(payload) {
-  return simulationBuildClient.startSimulation(payload)
+  const memory = useMemoryForAppName(payload && payload.appName)
+  const client = pickClient(payload && payload.appName)
+  return client.startSimulation(payload).then((res) => {
+    if (memory && res && res.sessionId) memoryRouteSessionIds.add(res.sessionId)
+    return res
+  })
 }
 
 export function cancelSimulation(sessionId) {
-  return simulationBuildClient.cancelSimulation(sessionId)
+  const client = pickClient(undefined, sessionId)
+  const p = client.cancelSimulation(sessionId)
+  memoryRouteSessionIds.delete(sessionId)
+  return p
 }
 
 export function getSimulationResult(sessionId) {
-  return simulationBuildClient.getSimulationResult(sessionId)
-}
-
-export function fetchSimulationRecords() {
-  return simulationBuildClient.fetchSimulationRecords()
-}
-
-export function compareSimulationRecords(recordIds) {
-  return simulationBuildClient.compareSimulationRecords(recordIds)
+  return pickClient(undefined, sessionId).getSimulationResult(sessionId)
 }
 
 /**
- * 订阅仿真事件流
- * @returns {() => void} 取消订阅
+ * @param {string} [appName] 与仿真面板 prop 一致；缺省则走 HTTP
+ */
+export function fetchSimulationRecords(appName) {
+  return pickClient(appName).fetchSimulationRecords()
+}
+
+/**
+ * @param {string[]} recordIds
+ * @param {string} [appName] 与仿真面板 prop 一致
+ */
+export function compareSimulationRecords(recordIds, appName) {
+  return pickClient(appName).compareSimulationRecords(recordIds)
+}
+
+/**
+ * @returns {() => void} 取消订阅（EventSource close / 停止 inmemory emit）
  */
 export function subscribeSimulationStream(sessionId, streamUrl, handlers) {
-  return simulationBuildClient.subscribeSimulationStream(
+  return pickClient(undefined, sessionId).subscribeSimulationStream(
     sessionId,
     streamUrl,
     handlers
   )
+}
+
+/** 构建结束后读取落盘轨迹（仅 HTTP / Micro-Agent） */
+export function fetchSimulationTrace(sessionId) {
+  return request({
+    url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/trace`,
+    method: 'get',
+    timeout: 60000
+  })
+}
+
+/** 对轨迹跑 trace_evidence 管道，返回证据摘要 */
+export function fetchSimulationEvidence(sessionId) {
+  return request({
+    url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/evidence`,
+    method: 'post',
+    timeout: 120000
+  })
 }
