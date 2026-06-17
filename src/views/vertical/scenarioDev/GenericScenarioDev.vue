@@ -12,7 +12,7 @@
             </a-col>
             <a-col :span="8">
               <a-form-item label="算法模型名称" required>
-                <a-input v-model="form.serviceName" placeholder="请输入算法模型名称"/>
+                <a-input v-model="form.serviceName" placeholder="请输入算法模型名称" @change="onServiceNameInput"/>
               </a-form-item>
             </a-col>
             <a-col :span="4">
@@ -330,41 +330,31 @@
               <div class="step-description">{{ generateProgress.description }}</div>
             </div>
             <a-icon
-              v-if="generateProgress.agentSteps.length > 0"
+              v-if="generateProgress.friendlySteps.length > 0"
               :type="generateProgress.expanded ? 'up' : 'down'"
               class="expand-icon"
             />
           </div>
 
-          <div v-if="generateProgress.expanded && generateProgress.agentSteps.length > 0" class="agent-steps">
+          <div v-if="generateProgress.expanded && generateProgress.friendlySteps.length > 0" class="agent-steps friendly-steps">
             <div
-              v-for="(agentStep, agentIndex) in generateProgress.agentSteps"
+              v-for="(friendlyStep, agentIndex) in generateProgress.friendlySteps"
               :key="agentIndex"
-              class="agent-step-item"
+              :class="['agent-step-item', {
+                'done': friendlyStep.status === 'done',
+                'active': friendlyStep.status === 'active',
+                'pending': friendlyStep.status === 'pending',
+                'warning': friendlyStep.status === 'warning'
+              }]"
             >
-              <div class="agent-step-header" @click="toggleAgentStepDetail(agentIndex)">
-                <span class="agent-step-number">步骤 {{ agentStep.step }}</span>
-                <span class="agent-step-summary">{{ getAgentStepSummary(agentStep) }}</span>
-                <a-icon
-                  :type="agentStep.expanded ? 'up' : 'down'"
-                  class="expand-icon-small"
-                />
+              <div class="agent-step-header">
+                <span class="agent-step-number">步骤 {{ friendlyStep.step }}</span>
+                <span class="agent-step-summary">{{ friendlyStep.title }}</span>
+                <a-tag :color="friendlyStep.status === 'done' ? 'green' : friendlyStep.status === 'active' ? 'blue' : friendlyStep.status === 'warning' ? 'orange' : 'default'">
+                  {{ friendlyStep.statusText }}
+                </a-tag>
               </div>
-
-              <div v-if="agentStep.expanded" class="agent-step-details">
-                <div v-if="agentStep.thought" class="detail-section thought">
-                  <div class="detail-label">💭 思考</div>
-                  <div class="detail-content">{{ agentStep.thought }}</div>
-                </div>
-                <div v-if="agentStep.action" class="detail-section action">
-                  <div class="detail-label">⚙️ 行动</div>
-                  <div class="detail-content">{{ agentStep.action }}</div>
-                </div>
-                <div v-if="agentStep.action_result" class="detail-section observation">
-                  <div class="detail-label">👁️ 结果</div>
-                  <div class="detail-content">{{ agentStep.action_result }}</div>
-                </div>
-              </div>
+              <div class="friendly-step-desc">{{ friendlyStep.description }}</div>
             </div>
           </div>
         </div>
@@ -379,8 +369,34 @@
       </div>
 
       <a-tabs default-active-key="code">
-        <!-- 下载与资源库（不展示源码全文） -->
-        <a-tab-pane key="code" tab="下载与资源库">
+        <!-- 算法模型说明及源文件（不展示源码全文） -->
+        <a-tab-pane key="code" tab="算法模型说明及源文件">
+          <div class="model-summary-block">
+            <a-descriptions bordered :column="1" size="small">
+              <a-descriptions-item label="模型用途">
+                {{ generateResult.modelSummary.purpose }}
+              </a-descriptions-item>
+              <a-descriptions-item label="需要提供的数据">
+                {{ generateResult.modelSummary.inputDescription }}
+              </a-descriptions-item>
+              <a-descriptions-item label="输出结果">
+                {{ generateResult.modelSummary.outputDescription }}
+              </a-descriptions-item>
+              <a-descriptions-item label="适用场景">
+                <a-tag v-for="(scene, idx) in generateResult.modelSummary.usageScenarios" :key="idx" color="blue">
+                  {{ scene }}
+                </a-tag>
+              </a-descriptions-item>
+              <a-descriptions-item label="使用提示">
+                {{ generateResult.modelSummary.limitations }}
+              </a-descriptions-item>
+              <a-descriptions-item v-if="generateResult.modelSummary.nextSteps && generateResult.modelSummary.nextSteps.length" label="后续建议">
+                <ul class="summary-list">
+                  <li v-for="(step, idx) in generateResult.modelSummary.nextSteps" :key="idx">{{ step }}</li>
+                </ul>
+              </a-descriptions-item>
+            </a-descriptions>
+          </div>
           <div class="code-header">
             <span class="code-filename">
               <a-icon type="file-text" style="margin-right: 4px;" />
@@ -393,7 +409,7 @@
           <a-alert
             type="info"
             show-icon
-            message="可在「垂域应用AI资源检索」模块查看并下载"
+            message="源文件已准备好，可下载后交给技术人员部署，也可在「垂域应用AI资源检索」模块查看并下载。"
             style="margin-top: 12px;"
           />
         </a-tab-pane>
@@ -594,6 +610,15 @@ const ALGO_DICT_FALLBACK = {
   ],
 }
 
+const DEFAULT_MODEL_SUMMARY = {
+  purpose: '根据您填写的应用场景，生成一个可下载、可交给技术人员进一步部署的算法模型源文件。',
+  inputDescription: '可使用您填写的需求描述、数据集文件以及相关资料作为生成依据。',
+  outputDescription: '输出算法模型源文件、基础检查结果、参考资料说明和差异化说明。',
+  usageScenarios: ['业务初步验证', '算法方案原型', '后续技术开发参考'],
+  limitations: '如果场景描述、输入样例或评价标准不够完整，生成结果可能还需要进一步补充和人工校核。',
+  nextSteps: ['补充更具体的输入输出样例', '明确业务规则和评价指标', '由技术人员结合真实数据进行测试']
+}
+
 const CATEGORY_PARAMS_CONFIG = {
   classification: {
     label: '分类算法参数',
@@ -676,6 +701,8 @@ export default {
       form: {
         serviceName: undefined
       },
+      serviceNameAutoValue: '',
+      serviceNameTouched: false,
       programInfo: {
         industry: undefined,
         scenario: undefined,
@@ -698,12 +725,14 @@ export default {
         status: 'process',
         description: '',
         expanded: true,
-        agentSteps: []
+        agentSteps: [],
+        friendlySteps: []
       },
       generateResult: {
         show: false,
         generatedCode: '',
         codeFilename: '',
+        modelSummary: { ...DEFAULT_MODEL_SUMMARY },
         testResults: [],
         references: [],
         differentiationSummary: null
@@ -755,6 +784,111 @@ export default {
       this.algorithmCategoryOptions = (catFromApi && catFromApi.length > 0)
         ? catFromApi
         : ALGORITHM_CATEGORY_FALLBACK
+      await this.applyScenarioDefaults()
+    },
+
+    async applyScenarioDefaults() {
+      if (!this.programInfo.industry && this.industryOptions.length) {
+        this.$set(this.programInfo, 'industry', this.industryOptions[0].code)
+      }
+      if (!this.programInfo.scenario && this.scenarioOptions.length) {
+        this.$set(this.programInfo, 'scenario', this.scenarioOptions[0].code)
+      }
+      if (!this.programInfo.technology && this.technologyOptions.length) {
+        this.$set(this.programInfo, 'technology', this.technologyOptions[0].code)
+      }
+
+      if (!this.algorithmCategory && this.algorithmCategoryOptions.length) {
+        const preferred = this.algorithmCategoryOptions.find(item => item.code === 'classification')
+        this.algorithmCategory = (preferred || this.algorithmCategoryOptions[0]).code
+      }
+      if (this.algorithmCategory) {
+        await this.onCategoryChange(this.algorithmCategory, true)
+        this.applyCategoryParamDefaults()
+      }
+
+      if (!this.freeNarrative) {
+        this.freeNarrative = this.buildDefaultNarrative()
+      }
+      if (!this.serviceNameTouched && (!this.form.serviceName || this.form.serviceName === this.serviceNameAutoValue)) {
+        this.serviceNameAutoValue = this.buildDefaultModelName()
+        this.form.serviceName = this.serviceNameAutoValue
+      }
+    },
+
+    onServiceNameInput() {
+      this.serviceNameTouched = (this.form.serviceName || '') !== this.serviceNameAutoValue
+    },
+
+    getOptionText(options, code, fallback = '') {
+      const hit = (options || []).find(item => item.code === code)
+      return (hit && hit.text) || fallback || code || ''
+    },
+
+    getUserPrefix() {
+      const raw = this.$store.getters.nickname || localStorage.getItem('username') || 'USR'
+      const cleaned = String(raw).replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+      return (cleaned || 'USR').substring(0, 3).padEnd(3, 'X')
+    },
+
+    getDateSegment() {
+      const now = new Date()
+      const yy = String(now.getFullYear()).slice(-2)
+      const mm = String(now.getMonth() + 1).padStart(2, '0')
+      const dd = String(now.getDate()).padStart(2, '0')
+      return `${yy}${mm}${dd}`
+    },
+
+    getNameSequence(dateSegment) {
+      const key = `scenario_dev_name_seq_${this.getUserPrefix()}_${dateSegment}`
+      const next = Number(localStorage.getItem(key) || '0') + 1
+      localStorage.setItem(key, String(next))
+      return String(next).padStart(3, '0')
+    },
+
+    sanitizeNameSegment(text, fallback = '算法') {
+      const value = String(text || fallback).replace(/[\\/:*?"<>|\s]/g, '')
+      return value.substring(0, 8) || fallback
+    },
+
+    buildDefaultModelName() {
+      const dateSegment = this.getDateSegment()
+      const domainHint = this.domainTitle || (this.$store.getters.userProfile && this.$store.getters.userProfile.domain) || this.verticalType
+      return `${this.getUserPrefix()}-${this.sanitizeNameSegment(domainHint)}-${this.getNameSequence(dateSegment)}-${dateSegment}`
+    },
+
+    buildDefaultNarrative() {
+      const industry = this.getOptionText(this.industryOptions, this.programInfo.industry, '当前行业')
+      const scenario = this.getOptionText(this.scenarioOptions, this.programInfo.scenario, '当前业务场景')
+      const technology = this.getOptionText(this.technologyOptions, this.programInfo.technology, '智能分析技术')
+      const category = this.getOptionText(this.algorithmCategoryOptions, this.algorithmCategory, '算法模型')
+      return `请面向${this.domainTitle || '当前领域'}中的${industry}和${scenario}场景，生成一个${category}。该模型需要结合${technology}方向，能够接收实际业务数据作为输入，输出清晰、可解释、便于业务人员理解的结果，并尽量满足平台提交、后续部署和资源库复用要求。`
+    },
+
+    applyCategoryParamDefaults() {
+      const config = this.currentCategoryConfig
+      if (!config) return
+      config.fields.forEach(field => {
+        if (this.categoryParams[field.key] !== undefined) return
+        const val = this.getDefaultCategoryFieldValue(field)
+        if (val !== undefined) {
+          this.$set(this.categoryParams, field.key, val)
+        }
+      })
+    },
+
+    getDefaultCategoryFieldValue(field) {
+      const options = field.dictCategory ? (this.categoryDictCache[field.dictCategory] || ALGO_DICT_FALLBACK[field.dictCategory] || []) : []
+      if (field.type === 'multi_select') return options.slice(0, 2).map(item => item.code)
+      if (field.type === 'single_select') return options[0] ? options[0].code : undefined
+      if (field.type === 'switch') return false
+      if (field.type === 'number_input') return field.min !== undefined ? field.min : 1
+      if (field.type === 'text_input') return field.placeholder || `请结合${this.domainTitle || '当前领域'}填写${field.label}`
+      if (field.type === 'constraint_group') {
+        const preferred = options.find(item => item.code === 'single_file')
+        return preferred ? [preferred.code] : (options[0] ? [options[0].code] : [])
+      }
+      return undefined
     },
 
     customDatasetFileChose(options) {
@@ -801,11 +935,14 @@ export default {
       return map[type] || 'default'
     },
 
-    async onCategoryChange(category) {
-      this.categoryParams = {}
-      this.customConstraintText = ''
-      this.labelInputVisible = false
-      this.labelInputValue = ''
+    async onCategoryChange(category, keepParams = false) {
+      const shouldKeepParams = keepParams === true
+      if (!shouldKeepParams) {
+        this.categoryParams = {}
+        this.customConstraintText = ''
+        this.labelInputVisible = false
+        this.labelInputValue = ''
+      }
       if (!category) return
       const config = CATEGORY_PARAMS_CONFIG[category]
       if (!config) return
@@ -824,6 +961,9 @@ export default {
         }
       }
       this.categoryDictCache = { ...this.categoryDictCache }
+      if (!shouldKeepParams) {
+        this.applyCategoryParamDefaults()
+      }
     },
 
     getCategoryFieldValue(key, defaultVal) {
@@ -881,9 +1021,10 @@ export default {
       this.generateProgress = {
         show: true,
         status: 'process',
-        description: '正在初始化智能体...',
+        description: '正在准备生成任务，预计需要 2-5 分钟，请稍候...',
         expanded: true,
-        agentSteps: []
+        agentSteps: [],
+        friendlySteps: this.buildFriendlySteps(1)
       }
       this.generateResult.show = false
 
@@ -928,7 +1069,7 @@ export default {
 
       streamAgent('/api/agent/aml_auto_generate', formData, {
         onStart: () => {
-          this.generateProgress.description = '智能体已启动，正在生成算法模型...'
+          this.updateFriendlyProgress(1, '已开始理解您的需求和应用场景。')
         },
         onStep: (data) => {
           this.generateProgress.agentSteps.push({
@@ -938,23 +1079,29 @@ export default {
             action_result: data.action_result || '',
             expanded: false
           })
-          this.generateProgress.description = this.getAgentStepSummary(data)
+          const friendly = this.getFriendlyProgressMessage(data)
+          this.updateFriendlyProgress(friendly.step, friendly.message)
         },
         onError: (error) => {
           this.generateProgress.status = 'error'
-          this.generateProgress.description = '生成失败: ' + error
+          this.generateProgress.description = '生成过程遇到异常，已为您提供备用说明和后续完善建议。'
+          this.generateProgress.friendlySteps = this.buildFriendlySteps(5, 'warning')
           this.generateLoading = false
-          this.$message.error('算法模型生成失败：' + error)
+          this.generateResult = this.buildFallbackResult('生成过程遇到异常：' + error)
+          this.$message.warning('生成未完全完成，已展示备用说明。')
         },
         onWarning: (warning) => {
-          this.generateProgress.status = 'error'
-          this.generateProgress.description = '生成警告: ' + warning
+          this.generateProgress.status = 'finish'
+          this.generateProgress.description = '生成过程返回警告，已为您提供备用说明和后续完善建议。'
+          this.generateProgress.friendlySteps = this.buildFriendlySteps(5, 'warning')
           this.generateLoading = false
-          this.$message.warning('算法模型生成警告：' + warning)
+          this.generateResult = this.buildFallbackResult('生成过程返回警告：' + warning)
+          this.$message.warning('生成返回警告，已展示备用说明。')
         },
         onFinalResult: (results) => {
           this.generateProgress.status = 'finish'
-          this.generateProgress.description = '算法模型生成完成'
+          this.generateProgress.description = '算法模型已顺利生成，可查看说明并下载源文件。'
+          this.generateProgress.friendlySteps = this.buildFriendlySteps(5)
           this.generateLoading = false
           this.processFinalResult(results)
           this.$message.success('算法模型生成成功！')
@@ -966,7 +1113,7 @@ export default {
           this.generateLoading = false
           if (this.generateProgress.status === 'process') {
             this.generateProgress.status = 'finish'
-            this.generateProgress.description = '执行完成'
+            this.generateProgress.description = '执行完成，正在整理结果展示。'
           }
         },
         onDataProcessError: (e, line) => {
@@ -978,14 +1125,7 @@ export default {
     processFinalResult(results) {
       const data = results.aml_generate_result
       if (!data) {
-        this.generateResult = {
-          show: false,
-          generatedCode: '',
-          codeFilename: '',
-          testResults: [],
-          references: [],
-          differentiationSummary: null
-        }
+        this.generateResult = this.buildFallbackResult('未获取到生成结果文件')
         this.$message.warning('未获取到生成结果文件')
         return
       }
@@ -995,25 +1135,163 @@ export default {
         try {
           parsed = JSON.parse(data)
         } catch (e) {
-          this.generateResult = {
-            show: true,
-            generatedCode: data,
-            codeFilename: 'generated_code.py',
-            testResults: [],
-            references: [],
-            differentiationSummary: null
-          }
+          this.generateResult = this.buildFallbackResult('生成结果格式不完整，已保留可下载内容。', data)
           return
         }
       }
 
+      const code = parsed.generated_code || ''
+      if (!code || !String(code).trim()) {
+        this.generateResult = this.buildFallbackResult('生成结果未包含可下载的算法源文件。')
+        return
+      }
+
       this.generateResult = {
         show: true,
-        generatedCode: parsed.generated_code || '',
+        generatedCode: code,
         codeFilename: parsed.code_filename || `${parsed.model_name || 'algorithm'}.py`,
+        modelSummary: this.normalizeModelSummary(parsed.model_summary, parsed),
         testResults: Array.isArray(parsed.test_results) ? parsed.test_results : [],
         references: Array.isArray(parsed.references) ? parsed.references : [],
         differentiationSummary: parsed.differentiation_summary || null
+      }
+    },
+
+    buildFriendlySteps(activeStep = 1, overrideStatus = '') {
+      const hasDataset = this.uploadDatasetFiles.length > 0
+      const hasReferences = this.uploadReferenceFiles.length > 0
+      const narrativeShort = (this.freeNarrative || '').trim().length < 60
+      const descriptions = [
+        '已开始理解您填写的领域、行业、场景和技术方向。',
+        hasReferences
+          ? '正在结合您提交的相关资料进行强化，并尽量做出差异化设计。'
+          : '正在结合平台知识和您填写的信息完善算法方案。',
+        hasDataset
+          ? '正在参考您上传的数据集，整理输入格式和处理要求。'
+          : '正在根据当前描述生成算法模型源文件。',
+        narrativeShort
+          ? '说明：当前场景描述较简略，结果可能需要后续补充业务规则、输入样例和评价指标。'
+          : '正在检查生成结果是否包含源文件、测试说明和参考资料说明。',
+        overrideStatus === 'warning'
+          ? '生成过程未完全顺利完成，已提供备用说明和后续完善建议。'
+          : '已顺利生成，可查看算法模型说明并下载源文件。'
+      ]
+      const titles = [
+        '理解需求和应用场景',
+        '强化算法方案',
+        '生成算法模型源文件',
+        '检查结果完整性',
+        '整理说明与源文件'
+      ]
+      return titles.map((title, index) => {
+        const step = index + 1
+        let status = 'pending'
+        if (overrideStatus === 'warning' && step === 5) {
+          status = 'warning'
+        } else if (step < activeStep || activeStep >= 5) {
+          status = 'done'
+        } else if (step === activeStep) {
+          status = 'active'
+        }
+        return {
+          step,
+          title,
+          description: descriptions[index],
+          status,
+          statusText: status === 'done' ? '已完成' : status === 'active' ? '进行中' : status === 'warning' ? '需完善' : '待处理'
+        }
+      })
+    },
+
+    updateFriendlyProgress(activeStep, message) {
+      this.generateProgress.friendlySteps = this.buildFriendlySteps(activeStep)
+      this.generateProgress.description = message
+    },
+
+    getFriendlyProgressMessage(data) {
+      const rawStep = Number(data.step || 1)
+      const step = Math.min(5, Math.max(1, rawStep))
+      const messages = {
+        1: '已完成需求理解，正在梳理应用场景和输入输出要求。',
+        2: this.uploadReferenceFiles.length > 0
+          ? '正在根据您提交的相关资料进行强化，尽量形成差异化方案。'
+          : '正在结合平台知识完善算法思路，预计还需要几分钟。',
+        3: '正在生成算法模型源文件，请保持页面打开。',
+        4: '正在检查生成结果是否完整、可下载、可继续完善。',
+        5: '正在整理算法模型说明、参考资料和源文件。'
+      }
+      return { step, message: messages[step] || '正在稳步推进生成任务，请稍候。' }
+    },
+
+    normalizeModelSummary(summary, parsed = {}) {
+      const fallback = this.buildModelSummary(parsed)
+      if (!summary || typeof summary !== 'object') return fallback
+      return {
+        purpose: summary.purpose || fallback.purpose,
+        inputDescription: summary.input_description || summary.inputDescription || fallback.inputDescription,
+        outputDescription: summary.output_description || summary.outputDescription || fallback.outputDescription,
+        usageScenarios: Array.isArray(summary.usage_scenarios)
+          ? summary.usage_scenarios
+          : Array.isArray(summary.usageScenarios) ? summary.usageScenarios : fallback.usageScenarios,
+        limitations: summary.limitations || fallback.limitations,
+        nextSteps: Array.isArray(summary.next_steps)
+          ? summary.next_steps
+          : Array.isArray(summary.nextSteps) ? summary.nextSteps : fallback.nextSteps
+      }
+    },
+
+    buildModelSummary(parsed = {}) {
+      const industry = this.getOptionText(this.industryOptions, this.programInfo.industry, '当前行业')
+      const scenario = this.getOptionText(this.scenarioOptions, this.programInfo.scenario, '当前场景')
+      const technology = this.getOptionText(this.technologyOptions, this.programInfo.technology, '智能分析')
+      const category = this.getOptionText(this.algorithmCategoryOptions, this.algorithmCategory, '算法模型')
+      const narrativeShort = (this.freeNarrative || '').trim().length < 60
+      return {
+        purpose: `该${category}面向${this.domainTitle || '当前领域'}中的${industry}和${scenario}，用于帮助用户完成业务数据的自动分析、识别或辅助判断。`,
+        inputDescription: this.uploadDatasetFiles.length > 0
+          ? '主要使用您上传的数据集，并结合页面中填写的领域、行业、场景、技术方向和自由描述。'
+          : '主要使用页面中填写的领域、行业、场景、技术方向和自由描述；如有真实数据，建议后续补充上传。',
+        outputDescription: parsed.model_name
+          ? `输出名为“${parsed.model_name}”的算法模型源文件，并提供测试结果、参考资料和差异化说明。`
+          : '输出算法模型源文件，并提供测试结果、参考资料和差异化说明。',
+        usageScenarios: [scenario, `${technology}辅助分析`, '算法原型验证'],
+        limitations: narrativeShort
+          ? '鉴于本次想定场景描述较简略，目前生成算法可能还不够完善，建议补充更明确的业务规则、输入样例和评价指标。'
+          : '当前结果适合作为算法原型和技术人员二次开发基础，上线前仍建议结合真实数据做进一步测试。',
+        nextSteps: [
+          '用真实数据样例验证输入输出是否符合预期',
+          '补充业务规则、异常情况和评价指标',
+          '由技术人员进行部署前安全性和性能检查'
+        ]
+      }
+    },
+
+    buildFallbackResult(reason, generatedCode = '') {
+      return {
+        show: true,
+        generatedCode: generatedCode || '# 本次未获取到完整算法源文件，请补充需求后重新生成。\n',
+        codeFilename: `${(this.form.serviceName || 'algorithm')}_draft.py`,
+        modelSummary: {
+          ...this.buildModelSummary(),
+          limitations: `${reason}。鉴于所想定场景或生成过程信息不完整，目前结果仅作为初步说明，建议补充资料后重新生成。`,
+          nextSteps: [
+            '补充更完整的场景描述、输入数据样例和期望输出',
+            '上传相关资料或数据集以帮助智能体强化方案',
+            '重新点击“生成算法模型”获取完整源文件'
+          ]
+        },
+        testResults: [
+          { name: '需求完整性', status: 'warning', description: '建议补充', details: reason },
+          { name: '源文件状态', status: generatedCode ? 'passed' : 'warning', description: generatedCode ? '已保留可下载内容' : '未获取完整源文件', details: '请根据页面提示重新生成或补充资料。' }
+        ],
+        references: [],
+        differentiationSummary: {
+          overall_strategy: '当前仅提供备用说明，完整差异化内容需要在补充资料并重新生成后形成。',
+          key_innovations: [],
+          improvements: ['建议补充业务规则和真实数据后重新生成，以获得更可靠的改进说明。'],
+          advantages: [],
+          ip_risk_notes: '因参考资料或生成结果不完整，暂不能形成完整的知识产权规避说明。'
+        }
       }
     },
 
@@ -1107,10 +1385,11 @@ export default {
   },
   watch: {
     verticalType: {
-      handler(newVal) {
+      async handler(newVal) {
         if (newVal) {
-          this.initData()
           this.form.serviceName = undefined
+          this.serviceNameAutoValue = ''
+          this.serviceNameTouched = false
           this.freeNarrative = ''
           this.programInfo = { industry: undefined, scenario: undefined, technology: undefined }
           this.datasetFiles = []
@@ -1129,15 +1408,19 @@ export default {
             status: 'process',
             description: '',
             expanded: true,
-            agentSteps: []
+            agentSteps: [],
+            friendlySteps: []
           }
           this.generateResult = {
             show: false,
             generatedCode: '',
             codeFilename: '',
+            modelSummary: { ...DEFAULT_MODEL_SUMMARY },
             testResults: [],
-            references: []
+            references: [],
+            differentiationSummary: null
           }
+          await this.initData()
         }
       }
     }
@@ -1293,6 +1576,23 @@ export default {
     color: #333;
   }
 }
+.model-summary-block {
+  margin-bottom: 12px;
+
+  /deep/ .ant-descriptions-item-label {
+    width: 140px;
+    font-weight: 600;
+  }
+
+  .summary-list {
+    margin: 0;
+    padding-left: 18px;
+
+    li {
+      margin-bottom: 4px;
+    }
+  }
+}
 .code-preview {
   margin: 0;
   padding: 16px;
@@ -1423,10 +1723,25 @@ export default {
           box-shadow: 0 2px 4px rgba(24, 144, 255, 0.1);
         }
 
+        &.done {
+          border-color: #b7eb8f;
+          background: #fcfff6;
+        }
+
+        &.active {
+          border-color: #91d5ff;
+          background: #f0f8ff;
+        }
+
+        &.warning {
+          border-color: #ffd591;
+          background: #fffbe6;
+        }
+
         .agent-step-header {
           display: flex;
           align-items: center;
-          cursor: pointer;
+          cursor: default;
           user-select: none;
 
           .agent-step-number {
@@ -1450,6 +1765,14 @@ export default {
             color: #999;
             margin-left: 8px;
           }
+        }
+
+        .friendly-step-desc {
+          margin-top: 6px;
+          padding-left: 58px;
+          font-size: 13px;
+          line-height: 1.6;
+          color: rgba(0, 0, 0, 0.65);
         }
 
         .agent-step-details {

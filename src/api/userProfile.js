@@ -8,6 +8,7 @@
 
 const PROFILE_PREFIX = 'user_profile_'
 const SURVEY_DONE_PREFIX = 'profile_survey_done_'
+const DEFAULT_VERTICAL = 'aml'
 
 function currentUsername () {
   return localStorage.getItem('username') || 'anonymous'
@@ -48,6 +49,26 @@ export function saveProfile (profile) {
   })
 }
 
+export function getPreferredVertical () {
+  try {
+    const raw = localStorage.getItem(profileKey())
+    const profile = raw ? JSON.parse(raw) : {}
+    return profile.preferredVertical || DEFAULT_VERTICAL
+  } catch (e) {
+    return DEFAULT_VERTICAL
+  }
+}
+
+export function setPreferredVertical (verticalCode) {
+  return getProfile().then(profile => {
+    const nextProfile = {
+      ...(profile || {}),
+      preferredVertical: verticalCode || DEFAULT_VERTICAL
+    }
+    return saveProfile(nextProfile)
+  })
+}
+
 /**
  * 问卷是否已完成 / 跳过
  */
@@ -80,6 +101,8 @@ export function extractFromResume (text) {
 export default {
   getProfile,
   saveProfile,
+  getPreferredVertical,
+  setPreferredVertical,
   isSurveyDone,
   markSurveyDone,
   extractFromResume
