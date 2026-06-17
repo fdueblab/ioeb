@@ -39,9 +39,10 @@
         :dataSource="dataSource"
         :loading="loading"
         :pagination="pagination"
+        @change="handleTableChange"
       >
         <span slot="serial" slot-scope="text, record, index">
-          {{ index + 1 }}
+          {{ (pagination.current - 1) * pagination.pageSize + index + 1 }}
         </span>
         <span slot="avatar" slot-scope="text, record">
           <a-avatar :src="record.avatar" :alt="record.name" size="small">
@@ -213,7 +214,7 @@ export default {
             lastLoginTimeDisplay: user.lastLoginTime ? this.formatTime(user.lastLoginTime) : '-' // 格式化时间
           }))
           this.dataSource = [...this.originalData]
-          this.pagination.total = this.originalData.length
+          this.syncPaginationTotal(this.originalData.length)
         } else {
           this.$message.error('获取用户数据失败')
         }
@@ -245,15 +246,30 @@ export default {
         filteredData = filteredData.filter(user => user.status === statusValue)
       }
       this.dataSource = filteredData
-      this.pagination.total = filteredData.length
-      this.pagination.current = 1 // 重置到第一页
+      this.syncPaginationTotal(filteredData.length, 1)
     },
     // 重置搜索
     handleReset() {
       this.queryParam = {}
       this.dataSource = [...this.originalData]
-      this.pagination.total = this.originalData.length
-      this.pagination.current = 1
+      this.syncPaginationTotal(this.originalData.length, 1)
+    },
+    syncPaginationTotal(total, current) {
+      const pageSize = this.pagination.pageSize
+      const maxPage = Math.max(1, Math.ceil(total / pageSize))
+      const nextCurrent = current || Math.min(this.pagination.current, maxPage)
+      this.pagination = {
+        ...this.pagination,
+        total,
+        current: nextCurrent
+      }
+    },
+    handleTableChange(pagination) {
+      this.pagination = {
+        ...this.pagination,
+        current: pagination.current,
+        pageSize: pagination.pageSize
+      }
     },
     handleAdd () {
       this.$refs.userManageModal.showAddUserModal()
