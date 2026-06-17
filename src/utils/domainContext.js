@@ -68,6 +68,10 @@ export function getDomainModuleEntryPath(basePath, domainCode = getCurrentDomain
   }
 }
 
+export function getDefaultLandingPath(domainCode = getCurrentDomainCode()) {
+  return getDomainModuleEntryPath('/vertical-user', domainCode)
+}
+
 export function replaceDomainInPath(path, domainCode, permissionList = []) {
   if (!path || !domainCode) {
     return path
