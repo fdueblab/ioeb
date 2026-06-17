@@ -37,7 +37,7 @@
       <right-content :top-menu="settings.layout === 'topmenu'" :is-mobile="isMobile" :theme="settings.theme" />
     </template>
     <router-view />
-    <user-profile-survey :visible="surveyVisible" @close="surveyVisible = false" @done="surveyVisible = false" />
+    <user-profile-survey :visible="surveyVisible" @close="surveyVisible = false" @done="handleSurveyDone" />
   </pro-layout>
 </template>
 
@@ -162,6 +162,10 @@ export default {
           }, 800)
         }
       })
+    },
+    handleSurveyDone() {
+      this.surveyVisible = false
+      window.location.reload()
     },
     handleMediaQuery(val) {
       this.query = val
