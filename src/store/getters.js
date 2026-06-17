@@ -11,6 +11,8 @@ const getters = {
   userInfo: state => state.user.info,
   userProfile: state => state.userProfile.profile,
   profileCompletion: state => state.userProfile.completion,
+  currentDomain: state => state.app.currentDomain,
+  currentDomainCode: state => state.app.currentDomain && state.app.currentDomain.code,
   addRouters: state => state.permission.addRouters,
   multiTab: state => state.app.multiTab
 }

@@ -1,5 +1,6 @@
 <template>
   <div :class="wrpCls">
+    <domain-selector :class="prefixCls" />
     <avatar-dropdown :menu="showMenu" :current-user="currentUser" :class="prefixCls" />
     <select-lang :class="prefixCls" />
   </div>
@@ -8,11 +9,13 @@
 <script>
 import { mapGetters } from 'vuex'
 import AvatarDropdown from './AvatarDropdown'
+import DomainSelector from './DomainSelector'
 import SelectLang from '@/components/SelectLang'
 export default {
   name: 'RightContent',
   components: {
     AvatarDropdown,
+    DomainSelector,
     SelectLang
   },
   props: {
