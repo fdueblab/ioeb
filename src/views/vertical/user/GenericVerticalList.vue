@@ -4,8 +4,15 @@
     <search-form
       :is-dev="isDev"
       :method-type-options="methodTypeOptions"
+      :services="dataSource"
+      :attribute-arr="attributeArr"
+      :type-arr="typeArr"
+      :industry-arr="industryArr"
+      :scenario-arr="scenarioArr"
+      :technology-arr="technologyArr"
       :vertical-type="verticalType"
       @search-completed="handleSearchCompleted"
+      @search-reset="handleSearchReset"
     />
 
     <!-- 筛选标签部分 -->
@@ -179,14 +186,13 @@ export default {
     },
     // 筛选变化处理 - 从FilterCard组件接收
     handleFilterChange(filterValues) {
+      this.agentSearchData = []
       this.filterDataSource(filterValues)
     },
     // 处理搜索结果 - 从SearchForm组件接收
     handleSearchCompleted(searchResults) {
       this.agentSearchData = searchResults
-      this.filteredDataSource = this.dataSource.filter(item =>
-        searchResults.includes(item.name)
-      )
+      this.filteredDataSource = searchResults
 
       this.$nextTick(() => {
         this.$message.success('检索完毕！')
@@ -196,6 +202,10 @@ export default {
           table.scrollIntoView({ behavior: 'smooth' })
         }
       })
+    },
+    handleSearchReset() {
+      this.agentSearchData = []
+      this.filteredDataSource = this.dataSource
     },
     // 根据筛选条件过滤数据
     async filterDataSource(filterValues) {
