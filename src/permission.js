@@ -9,6 +9,7 @@ import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { i18nRender } from '@/locales'
 import { loadDict, preloadAllDict } from '@/utils/dictionaryCache' // 引入字典预加载功能
 import {
+  getDefaultLandingPath,
   getCurrentDomainCode,
   getDomainModuleEntryPath,
   resolveCurrentDomain
@@ -27,7 +28,7 @@ NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
 const allowList = ['login', 'register', 'registerResult'] // no redirect allowList
 const loginRoutePath = '/user/login'
-const defaultRoutePath = '/home'
+const getDefaultRoutePath = () => getDefaultLandingPath()
 
 router.beforeEach(async (to, from, next) => {
   NProgress.start() // start progress bar
@@ -36,7 +37,7 @@ router.beforeEach(async (to, from, next) => {
   const token = storage.get(ACCESS_TOKEN)
   if (token) {
     if (to.path === loginRoutePath) {
-      next({ path: defaultRoutePath })
+      next({ path: getDefaultRoutePath() })
       NProgress.done()
     } else {
       // check login user.roles is null

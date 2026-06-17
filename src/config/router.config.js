@@ -2,6 +2,7 @@
 import { UserLayout, BasicLayout, BlankLayout, AppView } from '@/layouts'
 import { bxAnaalyse } from '@/core/icons'
 import { loadDict } from '@/utils/dictionaryCache'
+import { getDefaultLandingPath } from '@/utils/domainContext'
 
 const RouteView = {
   name: 'RouteView',
@@ -499,9 +500,7 @@ export const asyncRouterMap = [
     name: 'index',
     component: BasicLayout,
     meta: { title: 'menu.home' },
-    redirect: {
-      name: 'home'
-    },
+    redirect: () => getDefaultLandingPath(),
     children: [
       // 垂域应用AI资源检索 - 从字典动态获取
       {
