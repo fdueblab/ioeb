@@ -69,6 +69,8 @@
             <a-button style="padding: 0" type="link" v-if="record.status === 0" :disabled="record.username === 'root'" size="small" @click="handleActivate(record)">激活</a-button>
             <a-button style="padding: 0" type="link" v-if="record.status === 1" :disabled="record.username === 'root'" size="small" @click="handleDisable(record)">禁用</a-button>
             <a-divider type="vertical" />
+            <a-button style="padding: 0" type="link" size="small" @click="handleViewActionLogs(record)">行为</a-button>
+            <a-divider type="vertical" />
             <a-button v-if="record.username === 'root'" style="padding: 0" type="link" disabled size="small" @click="handleDelete(record)">删除</a-button>
             <a-button v-else style="padding: 0;color: orangered" type="link" size="small" @click="handleDelete(record)">删除</a-button>
           </template>
@@ -81,11 +83,13 @@
       ref="userManageModal"
       @refresh="handleModalRefresh"
     />
+    <UserActionLogModal ref="userActionLogModal" />
   </page-header-wrapper>
 </template>
 
 <script>
 import { getAllUsers, enableUser, disableUser, deleteUser, getAllRoles } from '@/api/users'
+import UserActionLogModal from '@/components/UserActionLogModal'
 import UserManageModal from '@/components/UserManageModal'
 
 const statusMap = {
@@ -102,6 +106,7 @@ const statusMap = {
 export default {
   name: 'TableList',
   components: {
+    UserActionLogModal,
     UserManageModal
   },
   data () {
@@ -161,7 +166,7 @@ export default {
         {
           title: '操作',
           dataIndex: 'action',
-          width: '110px',
+          width: '170px',
           align: 'center',
           scopedSlots: { customRender: 'action' }
         }
@@ -344,6 +349,9 @@ export default {
     },
     handleRoleEdit(record) {
       this.$refs.userManageModal.showRoleSelectModal(record)
+    },
+    handleViewActionLogs(record) {
+      this.$refs.userActionLogModal.show(record)
     },
     getRoleName(roleId) {
       // 如果UserManageModal组件已经加载，使用其getRoleName方法
