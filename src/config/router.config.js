@@ -533,7 +533,7 @@ export const asyncRouterMap = [
       // 垂域元应用仿真构建 - 从字典动态获取
       {
         path: '/vertical-meta-app',
-        name: 'vertical-ms',
+        name: 'vertical-meta-app',
         redirect: '/vertical-atom-app/aml', // 默认重定向，会在路由初始化时被更新
         component: RouteView,
         meta: {

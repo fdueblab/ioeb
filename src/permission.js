@@ -7,22 +7,20 @@ import notification from 'ant-design-vue/es/notification'
 import { setDocumentTitle, domTitle } from '@/utils/domUtil'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { i18nRender } from '@/locales'
-import { preloadAllDict } from '@/utils/dictionaryCache' // 引入字典预加载功能
+import { loadDict, preloadAllDict } from '@/utils/dictionaryCache' // 引入字典预加载功能
+import {
+  getCurrentDomainCode,
+  getDomainModuleEntryPath,
+  resolveCurrentDomain
+} from '@/utils/domainContext'
 import {
   generateVerticalUserRoutes,
-  getFirstVerticalUserPath,
   generateVerticalMSRoutes,
-  getFirstMSPath,
   generateVerticalScenarioDevRoutes,
-  getFirstScenarioDevPath,
   generateVerticalAppRoutes,
-  getFirstAppPath,
   generateGuideRoutes,
   generateEvaluationRoutes,
-  getFirstEvaluationPath,
-  generateOperationRoutes,
-  getFirstOperationPath,
-  getFirstTechnologyPath
+  generateOperationRoutes
 } from '@/config/router.config' // 引入动态生成路由函数
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
@@ -50,6 +48,9 @@ router.beforeEach(async (to, from, next) => {
           await preloadAllDict().catch(err => {
             console.error('预加载字典数据失败:', err)
           })
+          const domainOptions = await loadDict('domain', [])
+          const currentDomain = resolveCurrentDomain(domainOptions)
+          await store.dispatch('SetCurrentDomain', currentDomain)
           // 根据用户权限信息生成可访问的路由表
           await store.dispatch('GenerateRoutes', { token, ...res })
           // 重置路由 防止退出重新登录或者 token 过期后页面未刷新，导致的路由重复添加
@@ -63,7 +64,7 @@ router.beforeEach(async (to, from, next) => {
               const verticalUserRoute = router.children.find(route => route.path === '/vertical-user')
               if (verticalUserRoute) {
                 // 获取第一个垂域路径作为重定向路径
-                verticalUserRoute.redirect = await getFirstVerticalUserPath()
+                verticalUserRoute.redirect = () => getDomainModuleEntryPath('/vertical-user', getCurrentDomainCode())
                 // 动态生成垂域路由
                 verticalUserRoute.children = await generateVerticalUserRoutes()
               }
@@ -74,7 +75,7 @@ router.beforeEach(async (to, from, next) => {
                 const verticalMSRoute = router.children.find(route => route.path === '/vertical-ms')
                 if (verticalMSRoute) {
                   // 获取第一个微服务路径作为重定向路径
-                  verticalMSRoute.redirect = await getFirstMSPath()
+                  verticalMSRoute.redirect = () => getDomainModuleEntryPath('/vertical-ms', getCurrentDomainCode())
                   // 动态生成微服务路由
                   const allMSRoutes = await generateVerticalMSRoutes()
 
@@ -104,7 +105,7 @@ router.beforeEach(async (to, from, next) => {
                   store.getters.roles.permissionList.includes('publisher')) {
                 const verticalScenarioDevRoute = router.children.find(route => route.path === '/vertical-scenario-dev')
                 if (verticalScenarioDevRoute) {
-                  verticalScenarioDevRoute.redirect = await getFirstScenarioDevPath()
+                  verticalScenarioDevRoute.redirect = () => getDomainModuleEntryPath('/vertical-scenario-dev', getCurrentDomainCode())
                   verticalScenarioDevRoute.children = await generateVerticalScenarioDevRoutes()
                 }
               }
@@ -112,7 +113,7 @@ router.beforeEach(async (to, from, next) => {
               const verticalAppRoute = router.children.find(route => route.path === '/vertical-meta-app')
               if (verticalAppRoute) {
                 // 获取第一个元应用路径作为重定向路径
-                verticalAppRoute.redirect = await getFirstAppPath()
+                verticalAppRoute.redirect = () => getDomainModuleEntryPath('/vertical-meta-app', getCurrentDomainCode())
                 // 动态生成元应用路由
                 verticalAppRoute.children = await generateVerticalAppRoutes()
               }
@@ -124,10 +125,10 @@ router.beforeEach(async (to, from, next) => {
                     (store.getters.roles.permissionList.includes('admin') ||
                      store.getters.roles.permissionList.includes('publisher'))) {
                   // admin或publisher权限的用户重定向到技术评测页面
-                  verticalEvaluationRoute.redirect = await getFirstTechnologyPath()
+                  verticalEvaluationRoute.redirect = () => getDomainModuleEntryPath('/evaluation', getCurrentDomainCode(), store.getters.roles.permissionList)
                 } else {
                   // user权限的用户只能重定向到元应用业务数据验证页面
-                  verticalEvaluationRoute.redirect = await getFirstEvaluationPath()
+                  verticalEvaluationRoute.redirect = () => getDomainModuleEntryPath('/evaluation', getCurrentDomainCode(), store.getters.roles.permissionList)
                 }
                 // 动态生成技术评测与业务验证路由
                 const allEvaluationRoutes = await generateEvaluationRoutes()
@@ -160,7 +161,7 @@ router.beforeEach(async (to, from, next) => {
                 const verticalOperationRoute = router.children.find(route => route.path === '/operation')
                 if (verticalOperationRoute) { // 修正变量名
                   // 获取第一个路径作为重定向路径
-                  verticalOperationRoute.redirect = await getFirstOperationPath()
+                  verticalOperationRoute.redirect = () => getDomainModuleEntryPath('/operation', getCurrentDomainCode(), store.getters.roles.permissionList)
                   // 动态生成运维管理路由
                   const allOperationRoutes = await generateOperationRoutes()
 
