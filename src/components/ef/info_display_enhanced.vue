@@ -3,6 +3,7 @@
     title="元应用智能体及服务详情"
     :visible.sync="dialogVisible"
     width="80%"
+    append-to-body
     :before-close="handleClose"
     class="node-info-dialog"
   >

@@ -22,6 +22,7 @@ const SIMULATION_SSE_EVENTS = [
   'phase',
   'issue',
   'service',
+  'service_calling',
   'log',
   'metrics',
   'progress',

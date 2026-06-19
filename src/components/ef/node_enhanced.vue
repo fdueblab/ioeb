@@ -260,6 +260,40 @@ export default {
     box-shadow: 0 0 0 2px rgba(245, 34, 45, 0.85), 0 2px 10px rgba(245, 34, 45, 0.2);
     animation: sim-svc-shake 0.5s ease-in-out;
   }
+  /* 正在调用：蓝色高亮 + 呼吸 + 微抬 */
+  &.sim-visual-active.sim-svc-calling {
+    opacity: 1;
+    filter: none;
+    background: rgba(239, 248, 255, 0.98);
+    border-color: #1677ff;
+    box-shadow:
+      0 0 0 4px rgba(22, 119, 255, 0.12),
+      0 16px 30px rgba(22, 119, 255, 0.14);
+    transform: translateY(-2px);
+    animation: sim-svc-calling-pulse 1.2s ease-in-out infinite;
+    .node-icon {
+      animation: sim-ico-pulse 1.2s ease-in-out infinite;
+    }
+  }
+  /* 未被调用：灰化（对齐 loop_only 示意） */
+  &.sim-visual-active.sim-svc-dimmed {
+    opacity: 0.34;
+    filter: grayscale(0.35);
+
+    .node-icon {
+      background: #e4eaf1 !important;
+      color: #94a3b8 !important;
+      box-shadow: none !important;
+    }
+
+    .ef-node-title {
+      color: #94a3b8;
+    }
+
+    .ef-node-type-tag {
+      opacity: 0.55;
+    }
+  }
 }
 
 @keyframes sim-svc-pulse {
@@ -285,11 +319,30 @@ export default {
   }
 }
 
+@keyframes sim-svc-calling-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.10), 0 12px 26px rgba(22, 119, 255, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(22, 119, 255, 0.16), 0 18px 34px rgba(22, 119, 255, 0.18);
+  }
+}
+
+@keyframes sim-ico-pulse {
+  0%, 100% {
+    box-shadow: 0 8px 14px rgba(22, 119, 255, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(22, 119, 255, 0.10), 0 8px 14px rgba(22, 119, 255, 0.12);
+  }
+}
+
 // 智能体节点样式
 .ef-node-agent {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6658dc, #7567ef);
   color: white;
-  border: 2px solid #5a67d8;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 20px 46px rgba(79, 70, 200, 0.28);
 
   .ef-node-content {
     color: white;
@@ -297,11 +350,11 @@ export default {
 
   .ef-node-title {
     color: white;
-    font-weight: 600;
+    font-weight: 800;
   }
 
   &:hover {
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 24px 50px rgba(79, 70, 200, 0.35);
   }
 
   /* 仿真构建：智能体在 data / logic / check 阶段的强调色环 */

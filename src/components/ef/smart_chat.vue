@@ -56,7 +56,7 @@
     <div class="chat-input">
       <div class="input-wrapper" style="width: 100%; position: relative;" ref="inputWrapper">
         <a-input
-          style="width: 100%"
+          style="width: 100%; padding-right: 44px"
           v-model="userInput"
           :placeholder="placeholder"
           :disabled="!isInputEnabled"
@@ -153,7 +153,7 @@ export default {
       agentSessionId: null,
       intakeSessionId: null,
       scenarioSummary: '',
-      parsedIntent: null,
+      scenarioParsed: null,
       userRemark: '',
       localMcpIntakePending: null
     }
@@ -330,10 +330,10 @@ export default {
 
         if (res.status === 'ready') {
           this.scenarioSummary = res.scenarioSummary || ''
-          this.parsedIntent = res.parsedIntent || null
+          this.scenarioParsed = res.scenarioParsed || null
           this.userRemark = res.userRemark || ''
           this.$emit('scenario-intake', {
-            parsedIntent: this.parsedIntent,
+            scenarioParsed: this.scenarioParsed,
             scenarioSummary: this.scenarioSummary,
             userRemark: this.userRemark,
             intakeSessionId: this.intakeSessionId
@@ -513,8 +513,8 @@ export default {
       if (this.scenarioSummary) {
         formData.append('scenario_summary', this.scenarioSummary)
       }
-      if (this.parsedIntent) {
-        formData.append('parsed_intent', JSON.stringify(this.parsedIntent))
+      if (this.scenarioParsed) {
+        formData.append('scenario_parsed', JSON.stringify(this.scenarioParsed))
       }
       if (this.userRemark) {
         formData.append('user_remark', this.userRemark)
@@ -592,7 +592,7 @@ export default {
             preOutputName: result.preOutputName,
             nodeList: result.nodeList,
             scenarioSummary: this.scenarioSummary || '',
-            parsedIntent: this.parsedIntent || null
+            scenarioParsed: this.scenarioParsed || null
           }
           // 生成服务节点和选中服务列表
           const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
@@ -646,18 +646,20 @@ export default {
     finishScheduleDemo(input) {
       this.isTaskFinishing = true
       this.handleFinalStep()
-      const isMcp = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.LOCAL_MCP
+      const demoKind = resolveScheduleDemoKind(input)
+      const isMcp = demoKind === SCHEDULE_DEMO_KIND.LOCAL_MCP
+      const isTopic = demoKind === SCHEDULE_DEMO_KIND.TOPIC
       getMetaAppNodes(this.verticalType, input)
         .then((flowData) => {
-          if (isMcp && flowData.parsedIntent) {
+          if ((isMcp || isTopic) && flowData.scenarioParsed) {
             const intakeEvent = toScenarioIntakeEvent({
-              parsedIntent: flowData.parsedIntent,
+              scenarioParsed: flowData.scenarioParsed,
               scenarioSummary: flowData.scenarioSummary,
               userRemark: flowData.preDes,
               intakeSessionId: null
             })
             this.scenarioSummary = intakeEvent.scenarioSummary || ''
-            this.parsedIntent = intakeEvent.parsedIntent || null
+            this.scenarioParsed = intakeEvent.scenarioParsed || null
             this.userRemark = intakeEvent.userRemark || ''
             this.$emit('scenario-intake', intakeEvent)
           }
@@ -667,8 +669,8 @@ export default {
           )
           this.$emit('update-services', serviceNodes)
           this.$emit('update-flow', flowData)
-          this.placeholder = isMcp
-            ? '可继续对话补充想定，或打开仿真构建前在准备页编辑'
+          this.placeholder = isMcp || isTopic
+            ? '可继续对话补充想定，或点击「开始仿真构建」进入构建'
             : '继续补充或调整需求…'
           this.agentTypeWriter(
             this.messageManager.generateSuccessReply(chosenServices)
@@ -750,7 +752,7 @@ export default {
       this.agentSessionId = null
       this.intakeSessionId = null
       this.scenarioSummary = ''
-      this.parsedIntent = null
+      this.scenarioParsed = null
       this.userRemark = ''
       this.localMcpIntakePending = null
       const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '智能体未获取到必要信息，请刷新后重试'
@@ -853,8 +855,23 @@ export default {
 .submit-button {
   position: absolute;
   right: 0;
-  top: 0;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 2;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+
+  :deep(.anticon) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
 }
 
 .loading-text-wrapper {

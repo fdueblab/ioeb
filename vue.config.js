@@ -154,13 +154,8 @@ const vueConfig = {
     host: '0.0.0.0',
     // 允许所有来源
     allowedHosts: 'all',
-    // 客户端配置
     client: {
-      webSocketURL: {
-        hostname: '0.0.0.0',
-        pathname: '/ws',
-        port: 8001
-      }
+      webSocketURL: 'auto://0.0.0.0:0/ws'
     }
     // 如果需要代理，请去除下面的注释
     // proxy: {

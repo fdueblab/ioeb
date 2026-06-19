@@ -3,6 +3,8 @@
     :title="title"
     width="40%"
     :visible.sync="dialogVisible"
+    :append-to-body="true"
+    :modal-append-to-body="true"
     @close="onClose"
     class="service-dialog"
   >
@@ -287,6 +289,12 @@ export default {
 }
 </script>
 <style scoped>
+.service-dialog {
+  :deep(.el-dialog__wrapper) {
+    z-index: 3000 !important;
+  }
+}
+
 /* 对话框整体样式 */
 .service-dialog {
   border-radius: 8px;

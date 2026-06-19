@@ -66,6 +66,22 @@ function truncateForLog(text, max = 220) {
   return s.length <= max ? s : `${s.slice(0, max)}…`
 }
 
+function demoToolName(svc) {
+  const tools = svc.tools || []
+  const t = tools.find((x) => x.name && x.name !== 'healthCheck') || tools[0]
+  return (t && t.name) || 'invoke'
+}
+
+function demoExecutionPath(servicesMeta) {
+  const path = ['用户输入']
+  servicesMeta.forEach((svc) => {
+    const tool = demoToolName(svc)
+    path.push(`${svc.name} · ${tool}`)
+  })
+  path.push('输出结果')
+  return path
+}
+
 function start(body) {
   const sessionId = genSessionId()
   const session = {
@@ -223,7 +239,26 @@ async function runStream(sessionId, emit) {
         `[调度规划] 领域知识增强: ${truncateForLog(enPlanning.promptFragment)}`
       )
 
-      await runPhase('data')
+      checkCancel()
+      emit('phase', { phase: 'data', status: 'running' })
+      for (const svc of servicesMeta) {
+        checkCancel()
+        const toolName = demoToolName(svc)
+        emit('service_calling', {
+          serviceId: String(svc.id),
+          serviceName: svc.name,
+          toolName,
+          status: 'start'
+        })
+        await sleepRange([520, 880])
+        emit('service_calling', {
+          serviceId: String(svc.id),
+          serviceName: svc.name,
+          toolName,
+          status: 'end'
+        })
+      }
+      emit('phase', { phase: 'data', status: 'done' })
       pushLog('SUCCESS', '数据仿真: 数据流转正常')
 
       await runPhase('logic')
@@ -242,15 +277,38 @@ async function runStream(sessionId, emit) {
       await runPhase('check')
       pushLog('INFO', '链路检视: 检查偏差和冗余')
 
+      const plannerPayload = {
+        iteration,
+        selected_tools: servicesMeta.map((s) => demoToolName(s)),
+        executionPath: demoExecutionPath(servicesMeta),
+        reason: '演示：按想定编排服务调用顺序'
+      }
+      emit('planner_decision', plannerPayload)
+
       if (iteration < demoRounds) {
         pushLog('WARN', '链路检视: 发现可优化项，进入下一轮自动修复')
         emit('issue', {
+          iteration,
           message: '演示：服务调用顺序可优化，将自动调整后重试',
-          fix: '重新规划调度顺序'
+          fix: '重新规划调度顺序',
+          plannerDecision: plannerPayload
+        })
+        emit('verifier_result', {
+          iteration,
+          status: 'FAILED',
+          summary: '链路存在可优化项',
+          reason: '服务调用顺序可进一步压缩',
+          plannerDecision: plannerPayload
         })
         emit('iteration', { iteration, status: 'retry' })
       } else {
         pushLog('SUCCESS', '链路检视: 未发现偏差')
+        emit('verifier_result', {
+          iteration,
+          status: 'PASSED',
+          summary: '链路检视通过，调度方案可固化',
+          plannerDecision: plannerPayload
+        })
         emit('iteration', { iteration, status: 'passed' })
       }
     }

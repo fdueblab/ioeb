@@ -1,7 +1,7 @@
 <template>
-  <div v-if="easyFlowVisible" :style="containerStyle">
-    <!-- 工具栏 - 可选显示 -->
-    <el-row v-if="showToolbar">
+  <div v-if="easyFlowVisible" :style="containerStyle" :class="{ 'ef-workbench-root': workbenchMode }">
+    <!-- 工具栏 - 可选显示（workbench 模式用 stage-header） -->
+    <el-row v-if="showToolbar && !workbenchMode">
       <el-col :span="24">
         <div class="ef-tooltar-enhanced">
           <div class="toolbar-left">
@@ -74,11 +74,14 @@
 
     <div
       class="ef-main-container"
-      :class="{ 'ef-main--simulation': simulationBuilderVisible }"
+      :class="{
+        'ef-main--simulation': simulationBuilderVisible && !workbenchMode,
+        'ef-main--workbench': workbenchMode
+      }"
       :style="mainContainerStyle"
     >
-      <!-- 仿真构建：与画布同级，左栏（无遮罩） -->
-      <div v-if="simulationBuilderVisible" class="ef-simulation-pane">
+      <!-- 仿真构建：非 workbench 时左栏 -->
+      <div v-if="!workbenchMode && simulationBuilderVisible" class="ef-simulation-pane">
         <simulation-builder
           ref="simulationBuilder"
           :service-nodes="data.nodeList"
@@ -86,25 +89,161 @@
           :app-id="data.name || 'meta-app-draft'"
           :domain="verticalType"
           :scenario-description="simulationScenarioText"
-          :parsed-intent="data.parsedIntent || {}"
+          :scenario-parsed="data.scenarioParsed || {}"
           @success="handleSimulationSuccess"
           @prePublish="previewAndPublish"
           @canvas-visual="onSimulationCanvasVisual"
-          @parsed-intent-update="onParsedIntentUpdate"
+          @scenario-parsed-update="onScenarioParsedUpdate"
           @close="simulationBuilderVisible = false"
         />
       </div>
 
-      <!-- 左侧工具栏 - 可选显示 -->
-      <div v-if="showSidebar && !simulationBuilderVisible" class="ef-sidebar">
+      <!-- 左侧服务菜单 -->
+      <div v-if="showSidebar && !workbenchMode && !simulationBuilderVisible" class="ef-sidebar">
         <div v-if="loadingServices" class="loading-overlay">
           <a-spin size="large" tip="正在选择服务"/>
         </div>
         <node-menu @addNode="addNode" ref="nodeMenu" :menu-list="services" />
       </div>
 
-      <!-- 主画布区域 -->
+      <!-- workbench 右栏：stage-header + 画布 + 详情侧栏 -->
+      <div v-if="workbenchMode" class="wb-panel-right-inner">
+        <div class="wb-stage-header">
+          <div class="wb-stage-title">
+            <div class="wb-mark"><span></span><span></span><span></span><span></span></div>
+            <span class="wb-stage-name">{{ data.preName || '新元应用' }}</span>
+            <a-tooltip
+              v-if="data.preDes"
+              :title="data.preDes"
+              placement="bottomLeft"
+              overlay-class-name="wb-des-tooltip"
+            >
+              <a-icon type="info-circle" class="wb-des-hint" />
+            </a-tooltip>
+          </div>
+          <div class="wb-entry-wrap">
+            <button
+              type="button"
+              class="wb-top-entry-btn"
+              :disabled="!workbenchShowBuildEntry"
+              :class="{ 'wb-top-entry-btn--hidden': !workbenchShowBuildEntry }"
+              @click="$emit('start-build')"
+            >
+              <a-icon type="play-circle" /> 开始仿真构建
+            </button>
+          </div>
+          <div class="wb-toolbar">
+            <a-space :size="6">
+              <a-tooltip title="下载元应用配置">
+                <span class="wb-toolbar-btn-wrap">
+                  <a-button
+                    shape="circle"
+                    icon="download"
+                    :disabled="workbenchDownloadDisabled"
+                    @click="exportMetaApp"
+                  />
+                </span>
+              </a-tooltip>
+              <a-tooltip title="导入元应用配置">
+                <span class="wb-toolbar-btn-wrap">
+                  <a-button
+                    shape="circle"
+                    icon="import"
+                    :disabled="workbenchImportDisabled"
+                    :loading="importLoading"
+                    @click="importMetaApp"
+                  />
+                </span>
+              </a-tooltip>
+              <a-tooltip title="元应用详情">
+                <span class="wb-toolbar-btn-wrap">
+                  <a-button
+                    shape="circle"
+                    icon="file-text"
+                    :disabled="workbenchDataInfoDisabled"
+                    @click="showDataInfo"
+                  />
+                </span>
+              </a-tooltip>
+              <a-tooltip title="清空服务">
+                <span class="wb-toolbar-btn-wrap">
+                  <a-button
+                    type="danger"
+                    shape="circle"
+                    icon="delete"
+                    :disabled="workbenchClearDisabled"
+                    @click="confirmClearCanvasServices"
+                  />
+                </span>
+              </a-tooltip>
+              <a-tooltip title="添加服务">
+                <span class="wb-toolbar-btn-wrap">
+                  <a-button
+                    type="primary"
+                    shape="circle"
+                    icon="plus"
+                    :disabled="workbenchAddServiceDisabled"
+                    @click="addServices"
+                  />
+                </span>
+              </a-tooltip>
+            </a-space>
+          </div>
+        </div>
+
+        <div class="wb-stage-body">
+          <div class="wb-canvas-zone">
+            <div v-if="showWorkbenchLockOverlay" class="wb-canvas-overlay">
+              <div class="wb-overlay-card">
+                <div class="wb-overlay-big"><a-icon type="star" /></div>
+                <strong>请先在左侧输入元应用的需求，或通过右上方按钮导入已有的元应用</strong>
+              </div>
+            </div>
+            <div
+              id="efContainer"
+              ref="efContainer"
+              class="ef-canvas"
+              :class="simulationCanvasClasses"
+            >
+              <div v-if="loadingFlow" class="loading-overlay">
+                <a-spin size="large" tip="正在生成元应用">
+                  <div style="height: 200px;"></div>
+                </a-spin>
+              </div>
+              <div v-if="connectionLabel.visible"
+                   class="connection-hover-label"
+                   :class="`label-${connectionLabel.type}`"
+                   :style="{
+                     left: connectionLabel.x + 'px',
+                     top: connectionLabel.y + 'px'
+                   }">
+                {{ connectionLabel.text }}
+              </div>
+              <flow-node-enhanced
+                v-for="node in workbenchCanvasNodes"
+                :key="node.id"
+                :node="node"
+                :app-name="metaAppDisplayNameForSimulation"
+                :sim-visual="simulationVisualForNode(node)"
+                :chrome-locked="workbenchChromeLocked"
+                @nodeRightMenu="nodeRightMenu"
+                @deleteNode="deleteNode"
+                :style="{
+                  position: 'absolute',
+                  left: node.left,
+                  top: node.top,
+                  opacity: nodePositionsCalculated ? 1 : 0,
+                  transition: 'opacity 0.3s ease'
+                }"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 非 workbench：原有画布 -->
       <div
+        v-else
         id="efContainer"
         ref="efContainer"
         class="ef-canvas"
@@ -115,11 +254,7 @@
             <div style="height: 200px;"></div>
           </a-spin>
         </div>
-
-        <!-- 画布背景网格 -->
         <div class="canvas-grid"></div>
-
-        <!-- 连线悬停标签 -->
         <div v-if="connectionLabel.visible"
              class="connection-hover-label"
              :class="`label-${connectionLabel.type}`"
@@ -129,8 +264,6 @@
              }">
           {{ connectionLabel.text }}
         </div>
-
-        <!-- 节点渲染 -->
         <flow-node-enhanced
           v-for="node in data.nodeList"
           :key="node.id"
@@ -221,6 +354,9 @@ import {
 } from './utils'
 import dictionaryCache from '@/utils/dictionaryCache'
 
+/** 真实构建 SSE start/end 常同帧到达；至少展示时长对齐 mock 间隔 */
+const SERVICE_CALL_VIS_MIN_MS = 720
+
 export default {
   props: {
     initialFlow: {
@@ -250,18 +386,92 @@ export default {
     showSidebar: {
       type: Boolean,
       default: true
+    },
+    workbenchMode: {
+      type: Boolean,
+      default: false
+    },
+    workbenchPhase: {
+      type: String,
+      default: 'input'
+    },
+    buildEntryReady: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
     containerStyle() {
       return {
-        height: this.showToolbar ? 'calc(100vh)' : '100%'
+        height: this.workbenchMode ? '100%' : (this.showToolbar ? 'calc(100vh)' : '100%')
       }
     },
     mainContainerStyle() {
+      if (this.workbenchMode) {
+        return { height: '100%', flex: 1, minHeight: 0, width: '100%' }
+      }
       return {
         height: this.showToolbar ? 'calc(100% - 65px)' : '100%'
       }
+    },
+    workbenchToolbarDisabled() {
+      return this.loadingFlow || this.workbenchPhase === 'build'
+    },
+    workbenchImportDisabled() {
+      return this.loadingFlow || this.loadingServices || this.workbenchPhase === 'build'
+    },
+    workbenchDownloadDisabled() {
+      return this.workbenchToolbarDisabled || !this.hasServiceNodes
+    },
+    workbenchDataInfoDisabled() {
+      return (
+        this.loadingFlow ||
+        this.loadingServices ||
+        this.workbenchPhase === 'build' ||
+        !this.hasServiceNodes
+      )
+    },
+    workbenchClearDisabled() {
+      return (
+        this.workbenchToolbarDisabled ||
+        this.workbenchPhase === 'build' ||
+        !this.hasServiceNodes
+      )
+    },
+    workbenchAddServiceDisabled() {
+      return this.workbenchToolbarDisabled || this.workbenchPhase === 'build'
+    },
+    workbenchShowBuildEntry() {
+      return this.buildEntryReady && this.workbenchPhase === 'input'
+    },
+    workbenchChromeLocked() {
+      return this.workbenchPhase === 'build'
+    },
+    canvasPhaseTitle() {
+      if (this.workbenchPhase === 'build') return '智能体调度视图'
+      if (this.buildEntryReady) return '场景与服务能力视图'
+      return '元应用智能体视图'
+    },
+    canvasPhaseDesc() {
+      if (this.workbenchPhase === 'input' && !this.buildEntryReady) {
+        return '当前尚未完成想定场景解析，请在左侧完成想定输入。'
+      }
+      if (this.buildEntryReady && this.workbenchPhase === 'input') {
+        return '中间为大画布，右侧为当前场景栏；顶部中间为仿真构建入口。'
+      }
+      return '中间为当前调度关系，右侧为轮次详情和当前步骤细节。'
+    },
+    /** 无服务节点时显示引导遮罩（与 phase 无关）；有服务后展示智能体与服务 */
+    showWorkbenchLockOverlay() {
+      if (!this.workbenchMode) return false
+      if (this.loadingFlow || this.loadingServices) return false
+      return !this.hasServiceNodes
+    },
+    /** workbench 无服务时不渲染节点（遮罩态），避免 jsPlumb 绑定到 display:none 元素 */
+    workbenchCanvasNodes() {
+      if (!this.workbenchMode) return this.data.nodeList
+      if (!this.hasServiceNodes) return []
+      return this.data.nodeList
     },
     // 从当前画布节点中提取服务信息，用于标记已选中的服务
     currentCanvasServices() {
@@ -329,7 +539,7 @@ export default {
         preName: '元应用名称',
         preDes: '以支持独立运行和柔性集成的大模型智能体为软件载体的最小粒度应用',
         scenarioSummary: '',
-        parsedIntent: null,
+        scenarioParsed: null,
         preInputName: '输入内容',
         preOutputName: '输出内容',
         inputType: 0,
@@ -356,9 +566,10 @@ export default {
       jsplumbSetting: {
         Connector: ["Bezier", { curviness: 60 }],
         Anchors: ["TopCenter", "RightMiddle", "BottomCenter", "LeftMiddle"],
+        Overlays: [],
         PaintStyle: {
-          strokeWidth: 3,
-          stroke: "#1890ff",
+          strokeWidth: 2.4,
+          stroke: "#2a7de8",
           outlineStroke: "transparent",
           outlineWidth: 6,
           dashstyle: "0"
@@ -402,6 +613,13 @@ export default {
     this.jsPlumb = jsPlumb.getInstance()
     this.setServices(this.initialServices)
     this.parseInitialFlowText()
+    if (this.workbenchMode) {
+      this.$nextTick(() => this.bindCanvasResizeObserver())
+    }
+  },
+  beforeDestroy() {
+    this._clearServiceCallVisualHold()
+    this.unbindCanvasResizeObserver()
   },
   watch: {
     initialServices: {
@@ -420,6 +638,20 @@ export default {
           })
           this.jsPlumb.repaintEverything()
         }
+      })
+    },
+    workbenchMode(val) {
+      if (val) this.$nextTick(() => this.bindCanvasResizeObserver())
+      else this.unbindCanvasResizeObserver()
+    },
+    hasServiceNodes(val, oldVal) {
+      if (!this.workbenchMode || val === oldVal) return
+      if (!val || !this.jsPlumb || !this.easyFlowVisible) return
+      this.$nextTick(() => {
+        this.calculateNodePositions()
+        this.$nextTick(() => {
+          this.loadEasyFlow()
+        })
       })
     }
   },
@@ -481,30 +713,24 @@ export default {
     },
 
     // 自动布局算法
-    calculateNodePositions() {
-      console.log('=== calculateNodePositions 开始 ===')
-      console.log('当前 data.nodeList:', JSON.stringify(this.data.nodeList, null, 2))
-      // 确保容器存在并有正确尺寸
+    calculateNodePositions(retryCount = 0) {
+      const MAX_RETRY = 20
       if (!this.$refs.efContainer) {
-        console.warn('画布容器未准备好，延迟执行布局')
+        if (retryCount >= MAX_RETRY) return
         this.$nextTick(() => {
-          this.calculateNodePositions()
+          this.calculateNodePositions(retryCount + 1)
         })
         return
       }
-      const containerWidth = this.$refs.efContainer?.clientWidth || 800
-      const containerHeight = this.$refs.efContainer?.clientHeight || 600
-      // 如果容器尺寸为0，说明还没渲染完成
+      const containerWidth = this.$refs.efContainer.clientWidth
+      const containerHeight = this.$refs.efContainer.clientHeight
       if (containerWidth <= 0 || containerHeight <= 0) {
-        console.warn('画布容器尺寸未准备好，延迟执行布局', containerWidth, containerHeight)
+        if (retryCount >= MAX_RETRY) return
         setTimeout(() => {
-          this.calculateNodePositions()
+          this.calculateNodePositions(retryCount + 1)
         }, 100)
         return
       }
-
-      console.log('画布尺寸:', containerWidth, containerHeight)
-      console.log('节点列表:', this.data.nodeList)
 
       // 画布中心点 - 稍微上移一些以获得更好的视觉平衡
       const centerX = containerWidth / 2
@@ -523,9 +749,6 @@ export default {
         node.name !== 'metaAppAgent'
       )
 
-      console.log('智能体节点:', agentNodes)
-      console.log('服务节点:', toolNodes)
-
       // 智能体节点放在中心 - 如果有多个智能体，围绕中心分布
       if (agentNodes.length === 1) {
         // 单个智能体放在中心
@@ -535,7 +758,6 @@ export default {
 
         this.$set(node, 'left', newLeft)
         this.$set(node, 'top', newTop)
-        console.log(`智能体节点 ${node.name} 位置:`, node.left, node.top)
       } else if (agentNodes.length > 1) {
         // 多个智能体水平排列在中心
         const totalWidth = agentNodes.length * nodeWidth + (agentNodes.length - 1) * 20
@@ -547,7 +769,6 @@ export default {
 
           this.$set(node, 'left', newLeft)
           this.$set(node, 'top', newTop)
-          console.log(`智能体节点 ${node.name} 位置:`, node.left, node.top)
         })
       }
 
@@ -555,10 +776,6 @@ export default {
       if (toolNodes.length > 0) {
         // 使用更大的基础半径，让节点分布更远
         const baseRadius = Math.max(220, Math.min(containerWidth, containerHeight) / 3)
-
-        console.log('画布尺寸:', containerWidth, containerHeight)
-        console.log('中心点:', centerX, centerY)
-        console.log('基础半径:', baseRadius)
 
         // 根据节点数量定义特定的角度分布
         let angles = []
@@ -709,60 +926,105 @@ export default {
 
     // 加载流程
     loadEasyFlow() {
-      console.log('开始加载流程，节点数量:', this.data.nodeList.length)
+      const wireNodes = this.workbenchMode ? this.workbenchCanvasNodes : this.data.nodeList
 
-      // 先确保DOM已渲染，再计算节点位置
       this.$nextTick(() => {
-        this.calculateNodePositions()
+        if (wireNodes.length) {
+          this.calculateNodePositions()
+        }
 
-        // 等待位置更新后再设置jsPlumb
         this.$nextTick(() => {
-          // 设置节点为连接源和目标
-          for (let i = 0; i < this.data.nodeList.length; i++) {
-            const node = this.data.nodeList[i];
-            this.jsPlumb.makeSource(node.id, this.jsplumbSourceOptions);
-            this.jsPlumb.makeTarget(node.id, this.jsplumbTargetOptions);
+          if (!wireNodes.length) {
+            this.loadEasyFlowFinish = true
+            this.nodePositionsCalculated = true
+            return
           }
 
-          // 暂时设置标志防止connection事件被触发
-          this.loadEasyFlowFinish = false;
+          for (let i = 0; i < wireNodes.length; i++) {
+            const node = wireNodes[i]
+            if (!document.getElementById(node.id)) continue
+            this.jsPlumb.makeSource(node.id, this.jsplumbSourceOptions)
+            this.jsPlumb.makeTarget(node.id, this.jsplumbTargetOptions)
+          }
 
-          // 自动创建智能体与服务节点之间的双向连线
-          this.createAutoConnections();
+          this.loadEasyFlowFinish = false
+          this.createAutoConnections()
 
           this.$nextTick(() => {
-            this.loadEasyFlowFinish = true;
-            console.log('流程加载完成')
-          });
+            this.loadEasyFlowFinish = true
+            if (this.jsPlumb) this.jsPlumb.repaintEverything()
+          })
         })
       })
     },
 
-    // 自动创建连线：智能体与每个服务节点之间建立双向连线
+    // 自动创建连线：智能体与每个服务节点之间建立单向连线（agent → service）
     createAutoConnections() {
-      // 找到智能体节点
+      this._purgeReturnConnectionData()
+
       const agentNodes = this.data.nodeList.filter(node =>
         node.name === 'metaAppAgent'
       )
 
-      // 找到服务节点
       const toolNodes = this.data.nodeList.filter(node =>
         node.name !== 'metaAppAgent'
       )
 
       console.log('创建自动连线 - 智能体节点:', agentNodes.length, '服务节点:', toolNodes.length)
 
-      // 为每个智能体节点与每个节点建立双向连线
       agentNodes.forEach(agentNode => {
         toolNodes.forEach(toolNode => {
-          // 智能体 -> 服务（调用）
           this.createAutoConnection(agentNode.id, toolNode.id, 'call')
-          // 服务 -> 智能体（返回）
-          this.createAutoConnection(toolNode.id, agentNode.id, 'return')
         })
       })
 
       console.log('自动连线创建完成，总连线数:', this.data.lineList.length)
+      this._normalizeBoundLinks()
+    },
+
+    _removeConnectionArrows(conn) {
+      if (!conn || typeof conn.getOverlays !== 'function') return
+      const overlays = conn.getOverlays() || {}
+      Object.keys(overlays).forEach((id) => {
+        const overlay = overlays[id]
+        if (overlay && String(overlay.type).toLowerCase() === 'arrow') {
+          conn.removeOverlay(id)
+        }
+      })
+    },
+
+    _normalizeBoundLinks() {
+      if (!this.jsPlumb) return
+      const conns = this.jsPlumb.getConnections() || []
+      conns.forEach((conn) => {
+        if (!this._isAgentToServiceConnection(conn)) return
+        this._removeConnectionArrows(conn)
+        conn.setPaintStyle({
+          strokeWidth: 2.4,
+          stroke: '#2a7de8',
+          outlineStroke: 'transparent',
+          outlineWidth: 6,
+          dashstyle: '0'
+        })
+      })
+    },
+
+    _isReturnLine(line) {
+      if (!line) return false
+      if (line.type === 'return') return true
+      const fromNode = this.data.nodeList.find(n => n.id === line.from)
+      const toNode = this.data.nodeList.find(n => n.id === line.to)
+      return fromNode?.name !== 'metaAppAgent' && toNode?.name === 'metaAppAgent'
+    },
+
+    _purgeReturnConnectionData() {
+      const lines = this.data.lineList || []
+      lines.filter(line => this._isReturnLine(line)).forEach(line => {
+        if (!this.jsPlumb) return
+        const conns = this.jsPlumb.getConnections({ source: line.from, target: line.to }) || []
+        conns.forEach(conn => this.jsPlumb.deleteConnection(conn))
+      })
+      this.data.lineList = lines.filter(line => !this._isReturnLine(line))
     },
 
     // 创建自动连线（不触发事件）
@@ -786,15 +1048,14 @@ export default {
         let label = '';
 
         if (isFromAgent && !isToAgent) {
-          // 智能体 -> 服务（调用）
           paintStyle = {
-            strokeWidth: 3,
-            stroke: "#1890ff",
-            outlineStroke: "transparent",
+            strokeWidth: 2.4,
+            stroke: '#2a7de8',
+            outlineStroke: 'transparent',
             outlineWidth: 6,
-            dashstyle: "0"
-          };
-          label = '调用MCP Server';
+            dashstyle: '0'
+          }
+          label = '已绑定可调度'
         } else if (!isFromAgent && isToAgent) {
           // 服务 -> 智能体（返回）
           paintStyle = {
@@ -813,16 +1074,13 @@ export default {
         const conn = this.jsPlumb.connect({
           source: from,
           target: to,
-          paintStyle: paintStyle,
-          overlays: [
-            ["Arrow", {
-              location: 1,
-              width: 12,
-              length: 12,
-              foldback: 0.8
-            }]
-          ]
-        });
+          paintStyle,
+          overlays: []
+        })
+
+        if (conn && isFromAgent && !isToAgent) {
+          this._removeConnectionArrows(conn)
+        }
 
         // 为连线添加悬停事件
         if (conn) {
@@ -911,9 +1169,7 @@ export default {
           if (agentNode && agentNode.id !== nodeId) {
             // 等待 DOM 更新后再创建连线
             this.$nextTick(() => {
-              // 创建双向连线
-              this.createAutoConnection(agentNode.id, node.id, 'call')  // 智能体 -> 服务
-              this.createAutoConnection(node.id, agentNode.id, 'return') // 服务 -> 智能体
+              this.createAutoConnection(agentNode.id, node.id, 'call')
               // 再次等待连线创建完成后重绘
               this.$nextTick(() => {
                 this.jsPlumb.repaintEverything()
@@ -923,6 +1179,7 @@ export default {
         })
       })
       this.$message.success(`添加${node.name}成功`)
+      this.$nextTick(() => this.emitFlowSynced())
     },
 
     deleteNode(nodeId) {
@@ -959,6 +1216,7 @@ export default {
           })
         })
         this.$message.success('节点删除成功')
+        this.$nextTick(() => this.emitFlowSynced())
       }).catch(() => {
       })
       return true
@@ -975,15 +1233,21 @@ export default {
       this.jsPlumb.repaint()
     },
     showDataInfo() {
-      if (this.data.nodeList.length > 1) {
+      const nodes = this.data.nodeList || []
+      const canShow = nodes.length > 1 || (this.workbenchMode && nodes.length > 0 && this.data.preName)
+      if (canShow) {
         this.flowInfoVisible = true
-        this.$nextTick(function () {
+        this.$nextTick(() => {
           const filteredInfo = transformNodesForDisplay(this.data.nodeList, this.data.preName, this.data.preDes)
-          this.$refs.flowInfo.init(filteredInfo)
+          if (this.$refs.flowInfo) this.$refs.flowInfo.init(filteredInfo)
         })
       } else {
         this.$message.error('请先智能生成应用或添加服务！')
       }
+    },
+    emitFlowSynced() {
+      if (!this.workbenchMode) return
+      this.$emit('flow-synced', prepareDataForReload(this.data))
     },
     dataReload(data) {
       this.easyFlowVisible = false
@@ -993,29 +1257,34 @@ export default {
         const preparedData = prepareDataForReload(data)
         this.easyFlowVisible = true
         this.data = preparedData
+        this.emitFlowSynced()
         this.$nextTick(() => {
           this.jsPlumb = jsPlumb.getInstance()
           this.$nextTick(() => {
             this.jsPlumbInit()
+            if (this.workbenchMode) {
+              this.$nextTick(() => this.bindCanvasResizeObserver())
+            }
           })
         })
       })
     },
-    onParsedIntentUpdate(intent) {
-      if (!intent || typeof intent !== 'object') return
-      this.data.parsedIntent = intent
+    onScenarioParsedUpdate(scenarioParsed) {
+      if (!scenarioParsed || typeof scenarioParsed !== 'object') return
+      this.data.scenarioParsed = scenarioParsed
     },
     applyScenarioIntake(payload) {
       if (!payload) return
       if (payload.scenarioSummary) {
         this.data.scenarioSummary = payload.scenarioSummary
       }
-      if (payload.parsedIntent) {
-        this.data.parsedIntent = payload.parsedIntent
+      if (payload.scenarioParsed) {
+        this.data.scenarioParsed = payload.scenarioParsed
       }
       if (payload.userRemark) {
         this.data.preDes = payload.userRemark
       }
+      this.emitFlowSynced()
     },
     updateInitialFlow(newFlow) {
       console.log('updateInitialFlow 被调用，newFlow:', newFlow)
@@ -1026,8 +1295,8 @@ export default {
         if (newFlow.scenarioSummary) {
           parsedFlow.scenarioSummary = newFlow.scenarioSummary
         }
-        if (newFlow.parsedIntent) {
-          parsedFlow.parsedIntent = newFlow.parsedIntent
+        if (newFlow.scenarioParsed) {
+          parsedFlow.scenarioParsed = newFlow.scenarioParsed
         }
         // 同步初始节点到左侧服务列表
         const initNodes = parsedFlow.nodeList.filter(node => node.name !== 'metaAppAgent')
@@ -1129,9 +1398,7 @@ export default {
             // 等待 DOM 更新后再创建连线
             this.$nextTick(() => {
               addedNodeIds.forEach(nodeId => {
-                // 创建双向连线
-                this.createAutoConnection(agentNode.id, nodeId, 'call')   // 智能体 -> 服务
-                this.createAutoConnection(nodeId, agentNode.id, 'return') // 服务 -> 智能体
+                this.createAutoConnection(agentNode.id, nodeId, 'call')
               })
 
               // 再次等待连线创建完成后重绘
@@ -1177,8 +1444,11 @@ export default {
     },
     // 元应用预览与发布
     previewAndPublish() {
+      if (this.workbenchMode) {
+        this.$emit('pre-publish')
+        return
+      }
       if (this.data.nodeList.length > 1) {
-        // 提取服务ID列表（排除智能体节点）
         const serviceIds = this.data.nodeList
           .filter(node => node.name !== 'metaAppAgent')
           .map(node => node.id)
@@ -1188,6 +1458,55 @@ export default {
         })
       } else {
         this.$message.error('请先智能生成应用或添加服务！')
+      }
+    },
+    scheduleCanvasReflow() {
+      this.$nextTick(() => {
+        window.setTimeout(() => {
+          if (!this.$refs.efContainer) return
+          this.calculateNodePositions()
+          this.$nextTick(() => {
+            if (this.jsPlumb) this.jsPlumb.repaintEverything()
+          })
+        }, 340)
+      })
+    },
+    bindCanvasResizeObserver() {
+      if (!this.workbenchMode) return
+      this.unbindCanvasResizeObserver()
+      const el = this.$refs.efContainer
+      if (!el || typeof ResizeObserver === 'undefined') return
+      this._lastCanvasW = 0
+      this._lastCanvasH = 0
+      this._canvasResizeObs = new ResizeObserver(() => {
+        if (!this.nodePositionsCalculated || this._canvasLayoutBusy) return
+        const w = el.clientWidth
+        const h = el.clientHeight
+        if (!w || !h) return
+        if (w === this._lastCanvasW && h === this._lastCanvasH) return
+        this._lastCanvasW = w
+        this._lastCanvasH = h
+        if (this._canvasResizeRaf) cancelAnimationFrame(this._canvasResizeRaf)
+        this._canvasResizeRaf = requestAnimationFrame(() => {
+          this._canvasLayoutBusy = true
+          try {
+            this.calculateNodePositions()
+            if (this.jsPlumb) this.jsPlumb.repaintEverything()
+          } finally {
+            this._canvasLayoutBusy = false
+          }
+        })
+      })
+      this._canvasResizeObs.observe(el)
+    },
+    unbindCanvasResizeObserver() {
+      if (this._canvasResizeRaf) {
+        cancelAnimationFrame(this._canvasResizeRaf)
+        this._canvasResizeRaf = null
+      }
+      if (this._canvasResizeObs) {
+        this._canvasResizeObs.disconnect()
+        this._canvasResizeObs = null
       }
     },
     showConnectionLabel(conn, event) {
@@ -1387,25 +1706,37 @@ export default {
       if (!payload || typeof payload !== 'object') return
       const { type } = payload
       if (type === 'clear') {
+        this._clearServiceCallVisualHold()
         this.simulationCanvas = {
           active: false,
           step: null,
           nodes: {},
           simulatePhase: null
         }
+        this._resetSimulationLinkVisual()
         return
       }
       if (type === 'build') {
         this.simulationCanvas.active = !!payload.active
         if (!payload.active) {
+          this._clearServiceCallVisualHold()
           this.simulationCanvas.nodes = {}
           this.simulationCanvas.simulatePhase = null
           this.simulationCanvas.step = null
+          this._resetSimulationLinkVisual()
         }
         return
       }
       if (type === 'step') {
         this.simulationCanvas.step = payload.step
+        if (payload.step === 2 && this.simulationCanvas.active) {
+          const nodes = this.data.nodeList || []
+          nodes.forEach((n) => {
+            if (n.name === 'metaAppAgent') return
+            this.$set(this.simulationCanvas.nodes, String(n.id), 'dimmed')
+          })
+          this._applyServiceCallLinksIdle()
+        }
         return
       }
       if (type === 'node') {
@@ -1417,7 +1748,136 @@ export default {
           phase: payload.phase,
           status: payload.status
         }
+        return
       }
+      if (type === 'serviceCall') {
+        this._enqueueServiceCallEvent(payload)
+      }
+    },
+    _ensureServiceCallVisual() {
+      if (!this._serviceCallVisual) {
+        this._serviceCallVisual = {
+          events: [],
+          playing: false,
+          playTimer: null,
+          activeNodeId: null
+        }
+      }
+      return this._serviceCallVisual
+    },
+    _clearServiceCallVisualHold() {
+      const hold = this._serviceCallVisual
+      if (!hold) return
+      if (hold.playTimer) {
+        clearTimeout(hold.playTimer)
+        hold.playTimer = null
+      }
+      hold.events = []
+      hold.playing = false
+      hold.activeNodeId = null
+    },
+    _enqueueServiceCallEvent(payload) {
+      if (!payload || !payload.serviceId) return
+      const hold = this._ensureServiceCallVisual()
+      hold.events.push({
+        serviceId: String(payload.serviceId),
+        status: payload.status
+      })
+      this._drainServiceCallQueue()
+    },
+    _drainServiceCallQueue() {
+      const hold = this._ensureServiceCallVisual()
+      if (hold.playing) return
+
+      while (hold.events.length && hold.events[0].status === 'end') {
+        hold.events.shift()
+      }
+      if (!hold.events.length) return
+
+      const startEv = hold.events.shift()
+      if (!startEv || startEv.status !== 'start') return
+
+      const nodeId = startEv.serviceId
+      if (
+        hold.events.length &&
+        hold.events[0].status === 'end' &&
+        hold.events[0].serviceId === nodeId
+      ) {
+        hold.events.shift()
+      }
+
+      hold.playing = true
+      hold.activeNodeId = nodeId
+      this._showServiceCallStart(nodeId)
+
+      hold.playTimer = setTimeout(() => {
+        hold.playTimer = null
+        hold.playing = false
+        hold.activeNodeId = null
+        this._showServiceCallEnd(nodeId)
+        this._drainServiceCallQueue()
+      }, SERVICE_CALL_VIS_MIN_MS)
+    },
+    _showServiceCallStart(nodeId) {
+      const nodes = this.data.nodeList || []
+      nodes.forEach((n) => {
+        if (n.name === 'metaAppAgent') return
+        const nid = String(n.id)
+        this.$set(this.simulationCanvas.nodes, nid, nid === nodeId ? 'calling' : 'dimmed')
+      })
+      this._applyServiceCallLinkFocus(nodeId)
+      this.$nextTick(() => {
+        if (this.jsPlumb) this.jsPlumb.repaintEverything()
+      })
+    },
+    _showServiceCallEnd(nodeId) {
+      this.$set(this.simulationCanvas.nodes, String(nodeId), 'dimmed')
+      this._applyServiceCallLinksIdle()
+      this.$nextTick(() => {
+        if (this.jsPlumb) this.jsPlumb.repaintEverything()
+      })
+    },
+    _isAgentToServiceConnection(conn) {
+      const src = (this.data.nodeList || []).find((n) => n.id === conn.sourceId)
+      const tgt = (this.data.nodeList || []).find((n) => n.id === conn.targetId)
+      return src && tgt && src.name === 'metaAppAgent' && tgt.name !== 'metaAppAgent'
+    },
+    _stripSimulationLinkClasses(conn) {
+      conn.removeClass('sim-link-calling')
+      conn.removeClass('sim-link-dimmed')
+    },
+    _applyServiceCallLinkFocus(callingNodeId) {
+      if (!this.jsPlumb) return
+      const targetId = String(callingNodeId)
+      const conns = this.jsPlumb.getConnections() || []
+      conns.forEach((conn) => {
+        this._stripSimulationLinkClasses(conn)
+        if (!this._isAgentToServiceConnection(conn)) return
+        if (String(conn.targetId) === targetId) {
+          conn.addClass('sim-link-calling')
+        } else {
+          conn.addClass('sim-link-dimmed')
+        }
+      })
+    },
+    _applyServiceCallLinksIdle() {
+      if (!this.jsPlumb) return
+      const sc = this.simulationCanvas
+      const inDispatch = sc.active && sc.step != null && sc.step >= 2
+      const conns = this.jsPlumb.getConnections() || []
+      conns.forEach((conn) => {
+        this._stripSimulationLinkClasses(conn)
+        if (inDispatch && this._isAgentToServiceConnection(conn)) {
+          conn.addClass('sim-link-dimmed')
+        }
+      })
+    },
+    _resetSimulationLinkVisual() {
+      if (!this.jsPlumb) return
+      const conns = this.jsPlumb.getConnections() || []
+      conns.forEach((conn) => {
+        this._stripSimulationLinkClasses(conn)
+      })
     },
     simulationVisualForNode(node) {
       const sc = this.simulationCanvas
@@ -1428,6 +1888,8 @@ export default {
       let status = sc.nodes[id]
       if (!isAgent && status == null && sc.step != null && sc.step < 2) {
         status = 'checking'
+      } else if (!isAgent && status == null && sc.step != null && sc.step >= 2) {
+        status = 'dimmed'
       }
       return {
         active: true,
@@ -1445,11 +1907,40 @@ export default {
 /* 全局连线样式增强 */
 /deep/ .jtk-connector {
   z-index: 4;
-  transition: all 0.3s ease;
+  transition: all 0.32s ease;
 }
 
 /deep/ .jtk-connector:hover {
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+}
+
+/* 绑定连线：无箭头 */
+/deep/ .jtk-connector .jtk-overlay.jtk-arrow,
+/deep/ .jtk-connector .jtk-overlay-arrow {
+  display: none !important;
+}
+
+/* 仿真构建：正在调用的连线为蓝色虚线流动，其余置灰 */
+/deep/ .jtk-connector.sim-link-calling path,
+/deep/ svg.jtk-connector.sim-link-calling path {
+  stroke: #1677ff !important;
+  stroke-width: 3.4 !important;
+  opacity: 1 !important;
+  stroke-dasharray: 10 9;
+  animation: sim-link-flow 1.25s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(22, 119, 255, 0.28));
+}
+/deep/ .jtk-connector.sim-link-dimmed path,
+/deep/ svg.jtk-connector.sim-link-dimmed path {
+  stroke-width: 2.2 !important;
+  opacity: 0.38 !important;
+  stroke: #d8e0ea !important;
+  stroke-dasharray: none !important;
+  animation: none !important;
+  filter: none !important;
+}
+@keyframes sim-link-flow {
+  to { stroke-dashoffset: -38; }
 }
 
 /deep/ .jtk-endpoint {
@@ -1495,11 +1986,6 @@ export default {
 
 .connection-hover-label.label-call {
   background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.connection-hover-label.label-return {
-  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -1676,18 +2162,7 @@ export default {
   }
 }
 
-/* 阶段二（智能体调度仿真）：连线虚线流动 */
-.ef-canvas.sim-build-active.sim-build-step-2 /deep/ svg.jtk-connector path,
-.ef-canvas.sim-build-active.sim-build-step-2 /deep/ .jtk-connector path {
-  stroke-dasharray: 10 8;
-  animation: sim-connector-flow 0.85s linear infinite;
-}
-
-@keyframes sim-connector-flow {
-  to {
-    stroke-dashoffset: -18;
-  }
-}
+/* 阶段二（智能体调度仿真）：连线动画由 service_calling 事件单独控制（sim-link-calling/dimmed） */
 
 /* 阶段零/一：连线略提亮，无强流动 */
 .ef-canvas.sim-build-active.sim-build-step-0 /deep/ svg.jtk-connector path,
@@ -1751,5 +2226,47 @@ export default {
   .ef-sidebar {
     width: 200px;
   }
+}
+
+@import './meta_app_build/simulation-workbench.less';
+
+.ef-workbench-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.ef-main--workbench {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.wb-panel-right-inner {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.wb-toolbar-btn-wrap {
+  display: inline-flex;
+  line-height: 0;
+}
+
+</style>
+
+<style lang="less">
+.wb-des-tooltip .ant-tooltip-inner {
+  max-width: 420px;
+  white-space: pre-wrap;
+  text-align: left;
+  line-height: 1.55;
 }
 </style>

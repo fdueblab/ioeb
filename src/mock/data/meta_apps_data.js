@@ -1,4 +1,5 @@
 import { enrichLocalMcpFlowWithScenarioIntake } from './local_mcp_scenario_intake'
+import { enrichTopicFlowWithScenarioIntake } from './topic_scenario_intake'
 import {
   LOCAL_MCP_MARK_RE,
   localMcpPrefix,
@@ -870,9 +871,37 @@ function generateMcpDemoMockSteps(userInput) {
  * @param {string} userInput - 用户输入
  * @returns {Array} - 返回推理步骤数组
  */
+function generateTopicDemoMockSteps(userInput) {
+  const flowName =
+    userInput.includes('课题二')
+      ? '课题二风险识别'
+      : userInput.includes('课题四') && !userInput.includes('课题三')
+        ? '课题四安全评测'
+        : userInput.includes('课题三') || userInput.includes('各课题')
+          ? '多课题组合'
+          : '课题一风险识别'
+  return [
+    {
+      step: 1,
+      thought: `识别课题演示场景「${flowName}」：将查询 aml 领域 MCP 服务并匹配用户诉求。`
+    },
+    {
+      step: 2,
+      thought: '已生成课题结构化想定（演示数据），包含场景目标、约束与验收标准。'
+    },
+    {
+      step: 3,
+      thought: '仿真将走进程内演示模式；构建完成后可进入元应用预发布。'
+    }
+  ]
+}
+
 export function generateMockSteps(serviceType, userInput) {
   if (resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.LOCAL_MCP) {
     return generateMcpDemoMockSteps(userInput)
+  }
+  if (resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.TOPIC) {
+    return generateTopicDemoMockSteps(userInput)
   }
   return [
     {
@@ -971,6 +1000,13 @@ export function getMetaAppNodes(serviceType, userInput) {
       }
     }
     if (flowData) {
+      if (
+        serviceType === 'aml' &&
+        resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.TOPIC
+      ) {
+        resolve(enrichTopicFlowWithScenarioIntake(flowData, userInput))
+        return
+      }
       resolve(flowData)
     }
   })

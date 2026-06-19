@@ -1,7 +1,7 @@
 <template>
-  <div class="simulation-inline-root">
+  <div class="simulation-inline-root" :class="{ 'simulation-embedded': embedded }">
     <div class="simulation-container">
-      <!-- 顶部：整体流程步骤条（含「准备」） -->
+      <!-- 顶部：整体流程步骤条（workbench 嵌入时由 shell macrobar 承担） -->
       <div class="main-steps main-steps-five">
         <div
           v-for="(step, index) in mainSteps"
@@ -29,7 +29,7 @@
         <!-- 内容区域 -->
         <div class="content-area">
           <!-- 准备：说明 + 生产/研究 + 策略（模块化插拔，仅研究展示） -->
-          <template v-if="showPreStart">
+          <template v-if="showPreStart && !embedded">
             <div class="pre-start-panel">
               <div class="pre-start-title">准备就绪</div>
               <p class="pre-start-lead">
@@ -56,7 +56,7 @@
                 <a-icon type="bulb" /> {{ domainHint }}
               </div>
 
-              <div v-if="hasParsedIntentDraft" class="pre-start-parsed-intent">
+              <div v-if="hasScenarioParsedDraft" class="pre-start-parsed-intent">
                 <div class="pre-start-parsed-title">
                   结构化想定
                   <span class="pre-start-parsed-hint">经追问收敛；可在此或左侧对话继续补充，开始构建后锁定</span>
@@ -65,126 +65,43 @@
                   <div class="parsed-intent-field">
                     <span class="parsed-intent-field-label">目标</span>
                     <a-input
-                      v-model="parsedIntentDraft.goal"
+                      v-model="scenarioParsedDraft.goal"
                       size="small"
                       placeholder="核心业务目标"
-                      @change="emitParsedIntentUpdate"
+                      @change="emitScenarioParsedUpdate"
                     />
                   </div>
                   <div class="parsed-intent-field">
-                    <span class="parsed-intent-field-label">业务情境</span>
+                    <span class="parsed-intent-field-label">场景描述</span>
                     <a-textarea
-                      v-model="parsedIntentDraft.situationBrief"
+                      v-model="scenarioParsedDraft.description"
                       :auto-size="{ minRows: 2, maxRows: 4 }"
-                      placeholder="必要的业务情境摘要（可空）"
-                      @change="emitParsedIntentUpdate"
+                      placeholder="完整场景描述"
+                      @change="emitScenarioParsedUpdate"
                     />
                   </div>
                   <div class="parsed-intent-field">
                     <span class="parsed-intent-field-label">约束</span>
                     <a-textarea
-                      v-model="parsedIntentListDraft.constraints"
+                      v-model="scenarioParsedListDraft.constraints"
                       :auto-size="{ minRows: 2, maxRows: 5 }"
                       placeholder="每行一条"
-                      @change="onParsedIntentListChange('constraints')"
+                      @change="onScenarioParsedListChange('constraints')"
                     />
                   </div>
                   <div class="parsed-intent-field">
                     <span class="parsed-intent-field-label">验收标准</span>
                     <a-textarea
-                      v-model="parsedIntentListDraft.acceptanceCriteria"
+                      v-model="scenarioParsedListDraft.acceptanceCriteria"
                       :auto-size="{ minRows: 2, maxRows: 5 }"
                       placeholder="每行一条（可检查，非最终成败判定）"
-                      @change="onParsedIntentListChange('acceptanceCriteria')"
+                      @change="onScenarioParsedListChange('acceptanceCriteria')"
                     />
-                  </div>
-                  <div class="parsed-intent-field parsed-intent-field--io">
-                    <div>
-                      <span class="parsed-intent-field-label">预期输入</span>
-                      <a-textarea
-                        v-model="parsedIntentListDraft.inputs"
-                        :auto-size="{ minRows: 2, maxRows: 4 }"
-                        placeholder="每行一条"
-                        @change="onParsedIntentListChange('inputs')"
-                      />
-                    </div>
-                    <div>
-                      <span class="parsed-intent-field-label">预期输出</span>
-                      <a-textarea
-                        v-model="parsedIntentListDraft.outputs"
-                        :auto-size="{ minRows: 2, maxRows: 4 }"
-                        placeholder="每行一条"
-                        @change="onParsedIntentListChange('outputs')"
-                      />
-                    </div>
                   </div>
                 </div>
               </div>
 
-              <div class="pre-start-config">
-                <div class="toolbar-row">
-                  <span class="toolbar-label">研究模式</span>
-                  <a-switch
-                    :checked="internalMode === 'research'"
-                    size="small"
-                    @change="(val) => { internalMode = val ? 'research' : 'production' }"
-                  />
-                </div>
-
-                <template v-if="internalMode === 'research'">
-                  <div class="toolbar-row scenario-row">
-                    <span class="toolbar-label">场景描述</span>
-                    <a-input
-                      v-model="scenarioDraft"
-                      size="small"
-                      placeholder="可选：用一句话描述你的业务场景"
-                    />
-                  </div>
-                  <div class="research-strategy-panel">
-                    <div class="strategy-grid">
-                      <div class="strategy-field">
-                        <span>M1 沙箱</span>
-                        <a-select v-model="strategy.sandbox" size="small" style="width: 100%">
-                          <a-select-option value="cow">CoW</a-select-option>
-                          <a-select-option value="none">无沙箱</a-select-option>
-                          <a-select-option value="full_mock">全模拟</a-select-option>
-                        </a-select>
-                      </div>
-                      <div class="strategy-field">
-                        <span>M2 规划</span>
-                        <a-select v-model="strategy.planning" size="small" style="width: 100%">
-                          <a-select-option value="llm_autonomous">LLM 自主</a-select-option>
-                          <a-select-option value="preset_workflow">预设流程</a-select-option>
-                        </a-select>
-                      </div>
-                      <div class="strategy-field">
-                        <span>M3 验证</span>
-                        <a-select v-model="strategy.verification" size="small" style="width: 100%">
-                          <a-select-option value="multi_agent">多 Agent</a-select-option>
-                          <a-select-option value="single_agent">单 Agent</a-select-option>
-                          <a-select-option value="rule_based">规则</a-select-option>
-                        </a-select>
-                      </div>
-                      <div class="strategy-field">
-                        <span>M4 修复</span>
-                        <a-select v-model="strategy.repair" size="small" style="width: 100%">
-                          <a-select-option value="llm_repair">LLM</a-select-option>
-                          <a-select-option value="rule_repair">规则</a-select-option>
-                          <a-select-option value="none">禁用</a-select-option>
-                        </a-select>
-                      </div>
-                      <div class="strategy-field">
-                        <span>M5 固化</span>
-                        <a-select v-model="strategy.solidify" size="small" style="width: 100%">
-                          <a-select-option value="golden_trace">经验固化</a-select-option>
-                          <a-select-option value="replan">重规划</a-select-option>
-                          <a-select-option value="static">静态</a-select-option>
-                        </a-select>
-                      </div>
-                    </div>
-                  </div>
-                </template>
-              </div>
+              <!-- 研究模式 UI 已移除；mode/strategy 字段仍随 start payload 发送，供 Micro-Agent orchestrator 使用（见 build-design4llm.md §4） -->
             </div>
           </template>
 
@@ -377,48 +294,6 @@
                 </div>
               </div>
 
-              <div v-if="internalMode === 'research'" class="strategy-summary">
-                <div class="path-label">策略摘要</div>
-                <div class="strategy-tags">
-                  <a-tag v-for="(v, k) in strategy" :key="k">{{ strategyLabel(k, v) }}</a-tag>
-                </div>
-              </div>
-
-              <div v-if="internalMode === 'research' && resultEnhancements.length" class="strategy-summary">
-                <div class="path-label">领域知识增强</div>
-                <div class="strategy-tags">
-                  <a-tag v-for="en in resultEnhancements" :key="en.stage" color="blue">
-                    {{ enhancementStageLabel(en.stage) }} ✓
-                  </a-tag>
-                </div>
-              </div>
-
-              <div v-if="internalMode === 'research' && hasModuleMetrics" class="research-metrics">
-                <div class="path-label">模块级指标</div>
-                <div class="metrics-grid">
-                  <div v-if="finalMetrics.sandboxFidelity != null" class="metric-cell">
-                    <span class="m-v">{{ formatPct(finalMetrics.sandboxFidelity) }}</span>
-                    <span class="m-l">沙箱保真度</span>
-                  </div>
-                  <div v-if="finalMetrics.planningAccuracy != null" class="metric-cell">
-                    <span class="m-v">{{ formatPct(finalMetrics.planningAccuracy) }}</span>
-                    <span class="m-l">规划合理率</span>
-                  </div>
-                  <div v-if="finalMetrics.verificationAccuracy != null" class="metric-cell">
-                    <span class="m-v">{{ formatPct(finalMetrics.verificationAccuracy) }}</span>
-                    <span class="m-l">验证准确率</span>
-                  </div>
-                  <div v-if="finalMetrics.repairEffectiveness != null" class="metric-cell">
-                    <span class="m-v">{{ formatPct(finalMetrics.repairEffectiveness) }}</span>
-                    <span class="m-l">修复有效率</span>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="internalMode === 'research'" class="research-actions">
-                <a-button size="small" @click="openCompareModal">实验记录对比</a-button>
-              </div>
-
             </div>
           </template>
 
@@ -447,7 +322,7 @@
         </div>
 
         <!-- 技术详情（构建开始后才显示） -->
-        <div class="tech-toggle" v-if="hasStarted">
+        <div class="tech-toggle" v-if="hasStarted && !embedded">
           <a-button type="link" size="small" @click="showTechDetails = !showTechDetails">
             <a-icon :type="showTechDetails ? 'up' : 'down'" />
             {{ showTechDetails ? '收起详情' : '查看详情' }}
@@ -455,7 +330,7 @@
         </div>
 
         <transition name="slide-fade">
-          <div class="tech-details" v-if="hasStarted && showTechDetails">
+          <div class="tech-details" v-if="hasStarted && showTechDetails && !embedded">
             <template v-if="isCompleted">
               <div class="detail-section detail-section-card">
                 <div class="detail-title">轨迹</div>
@@ -628,44 +503,31 @@
                 <!-- 场景解析 -->
                 <div class="detail-subsection detail-subsection--first">
                   <div class="detail-subtitle">场景解析</div>
-                  <template v-if="parsedIntentView.hasContent">
-                    <p v-if="parsedIntentView.goal" class="parsed-intent-goal">{{ parsedIntentView.goal }}</p>
-                    <p v-if="parsedIntentView.situationBrief" class="detail-summary-line parsed-intent-situation">
-                      {{ parsedIntentView.situationBrief }}
+                  <template v-if="scenarioParsedView.hasContent">
+                    <p v-if="scenarioParsedView.goal" class="parsed-intent-goal">{{ scenarioParsedView.goal }}</p>
+                    <p v-if="scenarioParsedView.description" class="detail-summary-line parsed-intent-situation">
+                      {{ scenarioParsedView.description }}
                     </p>
-                    <div v-if="parsedIntentView.constraints.length" class="parsed-intent-block">
+                    <div v-if="scenarioParsedView.constraints.length" class="parsed-intent-block">
                       <span class="parsed-intent-label">约束</span>
                       <a-tag
-                        v-for="(item, idx) in parsedIntentView.constraints"
+                        v-for="(item, idx) in scenarioParsedView.constraints"
                         :key="'c-' + idx"
                         class="parsed-intent-tag"
                       >{{ item }}</a-tag>
                     </div>
-                    <div v-if="parsedIntentView.acceptanceCriteria.length" class="parsed-intent-block">
+                    <div v-if="scenarioParsedView.acceptanceCriteria.length" class="parsed-intent-block">
                       <span class="parsed-intent-label">验收标准</span>
                       <ul class="parsed-intent-list">
-                        <li v-for="(item, idx) in parsedIntentView.acceptanceCriteria" :key="'a-' + idx">{{ item }}</li>
+                        <li v-for="(item, idx) in scenarioParsedView.acceptanceCriteria" :key="'a-' + idx">{{ item }}</li>
                       </ul>
                     </div>
-                    <div
-                      v-if="parsedIntentView.inputs.length || parsedIntentView.outputs.length"
-                      class="parsed-intent-io"
-                    >
-                      <div v-if="parsedIntentView.inputs.length" class="parsed-intent-io-col">
-                        <span class="parsed-intent-label">预期输入</span>
-                        <span class="detail-summary-line">{{ parsedIntentView.inputs.join('、') }}</span>
-                      </div>
-                      <div v-if="parsedIntentView.outputs.length" class="parsed-intent-io-col">
-                        <span class="parsed-intent-label">预期输出</span>
-                        <span class="detail-summary-line">{{ parsedIntentView.outputs.join('、') }}</span>
-                      </div>
-                    </div>
                     <p
-                      v-if="parsedIntentView.parserModel || parsedIntentView.parsedAt"
+                      v-if="scenarioParsedView.parserModel || scenarioParsedView.parsedAt"
                       class="detail-summary-line detail-summary-line--tight parsed-intent-meta"
                     >
-                      <template v-if="parsedIntentView.parserModel">解析模型 {{ parsedIntentView.parserModel }}</template>
-                      <template v-if="parsedIntentView.parsedAt"> · {{ parsedIntentView.parsedAt }}</template>
+                      <template v-if="scenarioParsedView.parserModel">解析模型 {{ scenarioParsedView.parserModel }}</template>
+                      <template v-if="scenarioParsedView.parsedAt"> · {{ scenarioParsedView.parsedAt }}</template>
                     </p>
                   </template>
                   <p v-else class="detail-muted detail-subsection-flush">未生成结构化场景（可能无场景描述，或 LLM 解析未执行）</p>
@@ -705,10 +567,17 @@
                 <div class="detail-subsection">
                   <div class="detail-subtitle">固化门禁</div>
                   <div class="evidence-head">
-                    <a-tag :color="detailArtifact.data.solidifiable ? 'green' : 'red'">
-                      {{ detailArtifact.data.solidifiable ? '可固化' : '不可固化' }}
+                    <a-tag :color="artifactView.solidifiable ? 'green' : 'red'">
+                      {{ artifactView.solidifiable ? '可固化' : '不可固化' }}
                     </a-tag>
-                    <span class="evidence-id">{{ detailArtifact.data.artifactId }}</span>
+                    <a-tag
+                      v-if="artifactView.goldenPathExtractable != null"
+                      :color="artifactView.goldenPathExtractable ? 'blue' : 'default'"
+                      style="margin-left: 8px"
+                    >
+                      {{ artifactView.goldenPathExtractable ? '黄金路径' : '无黄金路径' }}
+                    </a-tag>
+                    <span class="evidence-id">{{ artifactView.artifactId }}</span>
                   </div>
                 </div>
                 <!-- 六道 gate -->
@@ -728,26 +597,34 @@
                     </div>
                   </div>
                 </div>
-                <!-- 状态机概要 -->
-                <div class="detail-subsection" v-if="detailArtifact.data.stateMachineTrace">
-                  <div class="detail-subtitle">构建轨迹</div>
-                  <p class="detail-summary-line">
-                    共 {{ detailArtifact.data.stateMachineTrace.totalIterations }} 轮迭代 ·
-                    {{ detailArtifact.data.stateMachineTrace.states ? detailArtifact.data.stateMachineTrace.states.length : 0 }} 个状态节点 ·
-                    状态 {{ detailArtifact.data.stateMachineTrace.finalStatus }}
-                    <template v-if="detailArtifact.data.stateMachineTrace.elapsedMs">
-                      · {{ (detailArtifact.data.stateMachineTrace.elapsedMs / 1000).toFixed(1) }}s
+                <!-- 黄金路径 / 构建摘要 -->
+                <div class="detail-subsection" v-if="artifactView.buildSummary || goldenPathSteps.length">
+                  <div class="detail-subtitle">可复用路径</div>
+                  <p v-if="artifactView.buildSummary" class="detail-summary-line">
+                    共 {{ artifactView.buildSummary.totalIterations }} 轮迭代 ·
+                    状态 {{ artifactView.buildSummary.finalStatus }}
+                    <template v-if="artifactView.buildSummary.elapsedMs">
+                      · {{ (artifactView.buildSummary.elapsedMs / 1000).toFixed(1) }}s
                     </template>
                   </p>
+                  <p v-if="artifactView.goldenPathReason" class="detail-summary-line detail-summary-line--tight">
+                    {{ artifactView.goldenPathReason }}
+                  </p>
+                  <ul v-if="goldenPathSteps.length" class="parsed-intent-list">
+                    <li v-for="step in goldenPathSteps" :key="step.stepId">
+                      {{ step.stepId }} · {{ step.toolName }}
+                    </li>
+                  </ul>
+                  <ul v-else-if="artifactView.remediation.length" class="parsed-intent-list">
+                    <li v-for="(item, idx) in artifactView.remediation" :key="'rem-' + idx">{{ item }}</li>
+                  </ul>
                 </div>
                 <!-- 溯源 -->
-                <div class="detail-subsection" v-if="detailArtifact.data.provenance">
+                <div class="detail-subsection" v-if="artifactView.sourceSessionId || artifactView.artifactHash">
                   <div class="detail-subtitle">溯源信息</div>
                   <p class="detail-summary-line">
-                    会话 {{ detailArtifact.data.provenance.sourceSessionId }} ·
-                    Hash {{ detailArtifact.data.provenance.artifactHash
-                      ? detailArtifact.data.provenance.artifactHash.slice(0, 16)
-                      : '—' }}
+                    会话 {{ artifactView.sourceSessionId || '—' }} ·
+                    Hash {{ artifactView.artifactHash ? artifactView.artifactHash.slice(0, 16) : '—' }}
                   </p>
                 </div>
                 <!-- 展开完整 JSON -->
@@ -854,8 +731,8 @@
       </div>
 
       <!-- 底部按钮 -->
-      <div class="footer-buttons">
-        <template v-if="showPreStart">
+      <div class="footer-buttons" :class="{ 'footer-buttons--embedded': embedded }">
+        <template v-if="showPreStart && !embedded">
           <a-button @click="handleClose">返回编辑</a-button>
           <a-button
             type="primary"
@@ -868,80 +745,27 @@
         </template>
 
         <template v-else-if="isRunning">
-          <a-button type="danger" @click="handleCancel">取消构建</a-button>
+          <button v-if="embedded" type="button" class="wb-danger-btn" @click="handleCancel">取消构建</button>
+          <a-button v-else type="danger" @click="handleCancel">取消构建</a-button>
         </template>
 
         <template v-else-if="isCompleted && hasFailed">
-          <a-button @click="handleClose">返回编辑</a-button>
+          <a-button v-if="!embedded" @click="handleClose">返回编辑</a-button>
+          <button v-if="embedded" type="button" class="wb-danger-btn" @click="confirmBackToEdit">返回重新编辑</button>
           <a-button type="primary" @click="retrySimulation">重新构建</a-button>
         </template>
 
         <template v-else-if="isCompleted && !hasFailed">
-          <a-button @click="handleClose">返回编辑</a-button>
-          <a-button type="primary" icon="rocket" @click="handlePrePublish">
+          <a-button v-if="!embedded" @click="handleClose">返回编辑</a-button>
+          <button v-if="embedded" type="button" class="wb-danger-btn" @click="confirmBackToEdit">返回重新编辑</button>
+          <button v-if="embedded" type="button" class="wb-primary-btn" @click="handlePrePublish">元应用预览与发布</button>
+          <a-button v-else type="primary" icon="rocket" @click="handlePrePublish">
             元应用预览与发布
           </a-button>
         </template>
       </div>
     </div>
 
-    <a-modal
-      :visible="compareModalVisible"
-      title="实验记录对比"
-      width="720px"
-      :footer="null"
-      :destroy-on-close="true"
-      :get-container="compareModalGetContainer"
-      @cancel="compareModalVisible = false"
-    >
-      <a-spin :spinning="compareLoading">
-        <div class="compare-toolbar">
-          <a-button type="primary" size="small" :disabled="compareSelectedIds.length < 2" @click="runCompare">
-            对比选中
-          </a-button>
-          <a-button size="small" @click="loadRecordList">刷新列表</a-button>
-        </div>
-        <a-checkbox-group v-model="compareSelectedIds" class="compare-check-group">
-          <div v-for="r in recordList" :key="r.recordId" class="compare-row">
-            <a-checkbox :value="r.recordId">
-              {{ r.createdAt }} · {{ r.success ? '成功' : '失败' }} · 轮次 {{ (r.metrics && r.metrics.iterations) || 0 }}
-            </a-checkbox>
-          </div>
-        </a-checkbox-group>
-        <div v-if="!recordList.length" class="compare-empty">暂无记录，请先完成至少一次研究模式构建</div>
-
-        <div v-if="compareResultRows.length" class="compare-table-wrap">
-          <table class="compare-table">
-            <thead>
-              <tr>
-                <th>记录</th>
-                <th>沙箱</th>
-                <th>规划</th>
-                <th>验证</th>
-                <th>修复</th>
-                <th>固化</th>
-                <th>迭代</th>
-                <th>耗时(ms)</th>
-                <th>保真度</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in compareResultRows" :key="row.recordId">
-                <td>{{ row.recordId.slice(-8) }}</td>
-                <td>{{ row.strategy && row.strategy.sandbox }}</td>
-                <td>{{ row.strategy && row.strategy.planning }}</td>
-                <td>{{ row.strategy && row.strategy.verification }}</td>
-                <td>{{ row.strategy && row.strategy.repair }}</td>
-                <td>{{ row.strategy && row.strategy.solidify }}</td>
-                <td>{{ row.metrics && row.metrics.iterations }}</td>
-                <td>{{ row.metrics && row.metrics.elapsedMs }}</td>
-                <td>{{ formatPct(row.metrics && row.metrics.sandboxFidelity) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </a-spin>
-    </a-modal>
   </div>
 </template>
 
@@ -950,8 +774,6 @@ import {
   startSimulation,
   cancelSimulation,
   subscribeSimulationStream,
-  fetchSimulationRecords,
-  compareSimulationRecords,
   fetchSimulationTrace,
   fetchSimulationEvidence,
   fetchSimulationArtifact
@@ -1011,9 +833,14 @@ export default {
       type: String,
       default: ''
     },
-    parsedIntent: {
+    scenarioParsed: {
       type: Object,
       default: () => ({})
+    },
+    /** workbench 左栏嵌入：隐藏步骤条与准备页，详情迁到右侧栏 */
+    embedded: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -1029,18 +856,16 @@ export default {
 
       internalMode: 'production',
       scenarioDraft: '',
-      parsedIntentDraft: {
+      scenarioParsedDraft: {
         goal: '',
-        situationBrief: '',
+        description: '',
         constraints: [],
         acceptanceCriteria: [],
-        ioExpectation: { inputs: [], outputs: [] }
+        domain: ''
       },
-      parsedIntentListDraft: {
+      scenarioParsedListDraft: {
         constraints: '',
-        acceptanceCriteria: '',
-        inputs: '',
-        outputs: ''
+        acceptanceCriteria: ''
       },
       strategy: { ...SIMULATION_BUILD_DEFAULT_STRATEGY },
 
@@ -1051,12 +876,6 @@ export default {
 
       finalMetrics: {},
       finalResult: null,
-
-      compareModalVisible: false,
-      compareLoading: false,
-      recordList: [],
-      compareSelectedIds: [],
-      compareResultRows: [],
 
       mainSteps: [
         { key: 'prep', title: '准备' },
@@ -1136,44 +955,57 @@ export default {
         return ''
       }
     },
-    parsedIntentView() {
+    scenarioParsedView() {
       const data = this.detailArtifact && this.detailArtifact.data
-      const pi = data && data.scenario && data.scenario.parsedIntent
-      if (!pi || typeof pi !== 'object') {
+      const sc = data && (data.parsedIntent || data.scenario)
+      if (!sc || typeof sc !== 'object') {
         return { hasContent: false }
       }
-      const constraints = Array.isArray(pi.constraints) ? pi.constraints.filter(Boolean) : []
-      const acceptanceRaw = pi.acceptanceCriteria != null ? pi.acceptanceCriteria : pi.successCriteria
-      const acceptanceCriteria = Array.isArray(acceptanceRaw) ? acceptanceRaw.filter(Boolean) : []
-      const io = pi.ioExpectation && typeof pi.ioExpectation === 'object' ? pi.ioExpectation : {}
-      const inputs = Array.isArray(io.inputs) ? io.inputs.filter(Boolean) : []
-      const outputs = Array.isArray(io.outputs) ? io.outputs.filter(Boolean) : []
-      const goal = pi.goal ? String(pi.goal).trim() : ''
-      const situationBrief = pi.situationBrief ? String(pi.situationBrief).trim() : ''
+      const goal = sc.goal ? String(sc.goal).trim() : ''
+      const description = sc.description ? String(sc.description).trim() : ''
+      const constraints = Array.isArray(sc.constraints) ? sc.constraints.filter(Boolean) : []
+      const acceptanceCriteria = Array.isArray(sc.acceptanceCriteria) ? sc.acceptanceCriteria.filter(Boolean) : []
+      const source = sc.sourceRef || sc.source || {}
       return {
-        hasContent: Boolean(
-          goal || situationBrief || constraints.length || acceptanceCriteria.length || inputs.length || outputs.length
-        ),
+        hasContent: Boolean(goal || description || constraints.length || acceptanceCriteria.length),
         goal,
-        situationBrief,
+        description,
         constraints,
         acceptanceCriteria,
-        inputs,
-        outputs,
-        parserModel: pi.parserModel ? String(pi.parserModel) : '',
-        parsedAt: pi.parsedAt ? String(pi.parsedAt) : ''
+        parserModel: source.parserModel ? String(source.parserModel) : '',
+        parsedAt: source.parsedAt ? String(source.parsedAt) : ''
       }
     },
-    hasParsedIntentDraft() {
-      const d = this.parsedIntentDraft || {}
-      const io = d.ioExpectation || {}
+    artifactView() {
+      const art = this.detailArtifact && this.detailArtifact.data
+      if (!art) return {}
+      const meta = art.artifactMeta || {}
+      const report = art.solidificationReport || {}
+      return {
+        artifactId: art.artifactId || meta.artifactId || '',
+        schemaVersion: art.schemaVersion || '',
+        solidifiable: report.solidifiable != null ? report.solidifiable : art.solidifiable,
+        goldenPathExtractable: report.goldenPathExtractable,
+        goldenPathReason: report.goldenPathReason || '',
+        remediation: Array.isArray(report.remediation) ? report.remediation : [],
+        buildSummary: meta.buildSummary || null,
+        artifactHash: meta.artifactHash || (art.provenance && art.provenance.artifactHash) || '',
+        sourceSessionId: meta.sourceSessionId || (art.provenance && art.provenance.sourceSessionId) || ''
+      }
+    },
+    goldenPathSteps() {
+      const art = this.detailArtifact && this.detailArtifact.data
+      const gp = art && art.goldenPath
+      if (!gp || !Array.isArray(gp.steps)) return []
+      return gp.steps
+    },
+    hasScenarioParsedDraft() {
+      const d = this.scenarioParsedDraft || {}
       return Boolean(
         (d.goal && String(d.goal).trim()) ||
-        (d.situationBrief && String(d.situationBrief).trim()) ||
+        (d.description && String(d.description).trim()) ||
         (d.constraints && d.constraints.length) ||
-        (d.acceptanceCriteria && d.acceptanceCriteria.length) ||
-        (io.inputs && io.inputs.length) ||
-        (io.outputs && io.outputs.length)
+        (d.acceptanceCriteria && d.acceptanceCriteria.length)
       )
     },
     serviceContractRows() {
@@ -1299,7 +1131,7 @@ export default {
       return cards
     },
     showPreStart() {
-      return !this.hasStarted && !this.isCompleted
+      return !this.embedded && !this.hasStarted && !this.isCompleted
     },
     domainHint() {
       const d = this.domain || 'generic'
@@ -1319,19 +1151,16 @@ export default {
     }
   },
   watch: {
-    parsedIntent: {
+    scenarioParsed: {
       deep: true,
       handler() {
         if (!this.hasStarted) {
-          this.initParsedIntentDraftFromProp()
+          this.initScenarioParsedDraftFromProp()
         }
       }
     }
   },
   methods: {
-    compareModalGetContainer() {
-      return document.body
-    },
     enhancementStageLabel(stage) {
       const m = { scenarioParsing: '想定解析', planning: '调度规划', verification: '仿真验证' }
       return m[stage] || stage
@@ -1355,9 +1184,10 @@ export default {
     init(nodes) {
       this.visible = true
       this.intentionalClose = false
-      this.internalMode = this.mode === 'research' ? 'research' : 'production'
+      // 研究模式 UI 已移除；固定 production，strategy 默认值仍写入 payload
+      this.internalMode = 'production'
       this.scenarioDraft = this.scenarioDescription || ''
-      this.initParsedIntentDraftFromProp()
+      this.initScenarioParsedDraftFromProp()
       this.strategy = { ...SIMULATION_BUILD_DEFAULT_STRATEGY }
       this.resetState()
       this.initServiceStatuses(nodes || this.serviceNodes)
@@ -1374,61 +1204,42 @@ export default {
       return Array.isArray(list) ? list.filter(Boolean).join('\n') : ''
     },
 
-    initParsedIntentDraftFromProp() {
-      const pi = this.parsedIntent && typeof this.parsedIntent === 'object' ? this.parsedIntent : {}
-      const acceptanceRaw = pi.acceptanceCriteria != null ? pi.acceptanceCriteria : pi.successCriteria
-      const io = pi.ioExpectation && typeof pi.ioExpectation === 'object' ? pi.ioExpectation : {}
-      this.parsedIntentDraft = {
-        goal: pi.goal ? String(pi.goal) : '',
-        situationBrief: pi.situationBrief ? String(pi.situationBrief) : '',
-        constraints: Array.isArray(pi.constraints) ? [...pi.constraints] : [],
-        acceptanceCriteria: Array.isArray(acceptanceRaw) ? [...acceptanceRaw] : [],
-        ioExpectation: {
-          inputs: Array.isArray(io.inputs) ? [...io.inputs] : [],
-          outputs: Array.isArray(io.outputs) ? [...io.outputs] : []
-        }
+    initScenarioParsedDraftFromProp() {
+      const sp = this.scenarioParsed && typeof this.scenarioParsed === 'object' ? this.scenarioParsed : {}
+      this.scenarioParsedDraft = {
+        goal: sp.goal ? String(sp.goal) : '',
+        description: sp.description ? String(sp.description) : '',
+        constraints: Array.isArray(sp.constraints) ? [...sp.constraints] : [],
+        acceptanceCriteria: Array.isArray(sp.acceptanceCriteria) ? [...sp.acceptanceCriteria] : [],
+        domain: sp.domain ? String(sp.domain) : (this.domain || 'generic')
       }
-      this.parsedIntentListDraft = {
-        constraints: this.listToLines(this.parsedIntentDraft.constraints),
-        acceptanceCriteria: this.listToLines(this.parsedIntentDraft.acceptanceCriteria),
-        inputs: this.listToLines(this.parsedIntentDraft.ioExpectation.inputs),
-        outputs: this.listToLines(this.parsedIntentDraft.ioExpectation.outputs)
+      this.scenarioParsedListDraft = {
+        constraints: this.listToLines(this.scenarioParsedDraft.constraints),
+        acceptanceCriteria: this.listToLines(this.scenarioParsedDraft.acceptanceCriteria)
       }
     },
 
-    onParsedIntentListChange(field) {
-      if (field === 'inputs' || field === 'outputs') {
-        if (!this.parsedIntentDraft.ioExpectation) {
-          this.parsedIntentDraft.ioExpectation = { inputs: [], outputs: [] }
-        }
-        this.parsedIntentDraft.ioExpectation[field] = this.linesToList(this.parsedIntentListDraft[field])
-      } else {
-        this.parsedIntentDraft[field] = this.linesToList(this.parsedIntentListDraft[field])
-      }
-      this.emitParsedIntentUpdate()
+    onScenarioParsedListChange(field) {
+      this.scenarioParsedDraft[field] = this.linesToList(this.scenarioParsedListDraft[field])
+      this.emitScenarioParsedUpdate()
     },
 
-    getParsedIntentForStart() {
+    getScenarioParsedForStart() {
       const draft = {
-        goal: String(this.parsedIntentDraft.goal || '').trim(),
-        situationBrief: String(this.parsedIntentDraft.situationBrief || '').trim(),
-        constraints: [...(this.parsedIntentDraft.constraints || [])],
-        acceptanceCriteria: [...(this.parsedIntentDraft.acceptanceCriteria || [])],
-        ioExpectation: {
-          inputs: [...((this.parsedIntentDraft.ioExpectation && this.parsedIntentDraft.ioExpectation.inputs) || [])],
-          outputs: [...((this.parsedIntentDraft.ioExpectation && this.parsedIntentDraft.ioExpectation.outputs) || [])]
-        }
+        goal: String(this.scenarioParsedDraft.goal || '').trim(),
+        description: String(this.scenarioParsedDraft.description || '').trim(),
+        constraints: [...(this.scenarioParsedDraft.constraints || [])],
+        acceptanceCriteria: [...(this.scenarioParsedDraft.acceptanceCriteria || [])],
+        domain: String(this.scenarioParsedDraft.domain || this.domain || 'generic').trim() || 'generic'
       }
-      const meta = this.parsedIntent && typeof this.parsedIntent === 'object' ? this.parsedIntent : {}
-      if (meta.parserModel) draft.parserModel = meta.parserModel
-      if (meta.parsedAt) draft.parsedAt = meta.parsedAt
-      if (meta.intakeSessionId) draft.intakeSessionId = meta.intakeSessionId
+      const meta = this.scenarioParsed && typeof this.scenarioParsed === 'object' ? this.scenarioParsed : {}
+      if (meta.source) draft.source = meta.source
       return draft
     },
 
-    emitParsedIntentUpdate() {
+    emitScenarioParsedUpdate() {
       if (this.hasStarted) return
-      this.$emit('parsed-intent-update', this.getParsedIntentForStart())
+      this.$emit('scenario-parsed-update', this.getScenarioParsedForStart())
     },
 
     confirmStartBuild() {
@@ -1502,7 +1313,7 @@ export default {
           name: node.name,
           mcpUrl: node.url || node.mcpUrl || '',
           tools: node.tools || [],
-          isFake: !!node.isFake,
+          isFake: !!(node.isFake || node.is_fake),
           mcpMethod: node.mcpMethod || 'sse',
           mcpCommand: node.mcpCommand || '',
           mcpArgs: node.mcpArgs || [],
@@ -1513,12 +1324,12 @@ export default {
     },
 
     buildSimulationStrategy() {
-      const base =
-        this.internalMode === 'research' ? { ...this.strategy } : {}
+      // strategy 随 start payload 发送，供 Micro-Agent orchestrator 使用
+      const base = { ...this.strategy }
       if (resolveScheduleDemoKind(this.appName) === SCHEDULE_DEMO_KIND.LOCAL_MCP) {
         return { ...base, stabilityPasses: 2 }
       }
-      return Object.keys(base).length ? base : undefined
+      return base
     },
 
     buildStartPayload() {
@@ -1549,7 +1360,7 @@ export default {
         maxIterations: this.maxIterations,
         scenarioDescription: this.scenarioDraft,
         scenarioSummary: this.scenarioDraft,
-        parsedIntent: this.hasParsedIntentDraft ? this.getParsedIntentForStart() : undefined,
+        scenarioParsed: this.hasScenarioParsedDraft ? this.getScenarioParsedForStart() : undefined,
         mode: this.internalMode,
         strategy: this.buildSimulationStrategy()
       }
@@ -1704,25 +1515,74 @@ export default {
       return null
     },
 
-    async fetchTraceWithRetry(sessionId, attempts = 8) {
+    formatArtifactError(err, fallback = '加载失败') {
+      if (!err) return fallback
+      if (typeof err === 'string') return err
+      const status = err.response && err.response.status
+      if (status === 404) return '轨迹尚未落盘，正在等待服务端写入…'
+      const detail = err.response && err.response.data
+      if (typeof detail === 'string') return detail
+      if (detail && detail.detail) return String(detail.detail)
+      if (detail && detail.message) return String(detail.message)
+      if (err.message) return err.message
+      return fallback
+    },
+
+    isRetryableArtifactError(err) {
+      const status = err && err.response && err.response.status
+      return !status || status === 404 || status === 503 || status >= 500
+    },
+
+    async fetchTraceWithRetry(sessionId, attempts = 24, delayMs = 500) {
       let lastErr = null
+      // complete 事件先于 SSE finally 落盘，先等一拍再轮询
+      await new Promise((resolve) => setTimeout(resolve, 400))
       for (let i = 0; i < attempts; i += 1) {
         try {
           return await fetchSimulationTrace(sessionId)
         } catch (e) {
           lastErr = e
-          await new Promise((resolve) => setTimeout(resolve, 300))
+          if (!this.isRetryableArtifactError(e)) throw e
+          await new Promise((resolve) => setTimeout(resolve, delayMs))
         }
       }
-      throw lastErr || new Error('轨迹加载失败')
+      throw lastErr || new Error('轨迹加载超时，请稍后刷新重试')
     },
 
     async loadDetailArtifacts() {
       if (!this.sessionId) return
       if (useMemorySimulation(this.appName)) {
-        this.detailTrace = { loading: false, skipped: true, error: null, view: null, rawJson: '' }
-        this.detailEvidence = { loading: false, skipped: true, error: null, data: null }
-        this.detailArtifact = { loading: false, skipped: true, error: null, data: null }
+        this.detailTrace = { loading: true, skipped: false, error: null, view: null, rawJson: '' }
+        this.detailEvidence = { loading: true, skipped: false, error: null, data: null }
+        this.detailArtifact = { loading: true, skipped: false, error: null, data: null }
+        try {
+          const { buildTopicDemoArtifacts } = await import('@/mock/data/topic_simulation_artifacts')
+          const packs = buildTopicDemoArtifacts({
+            sessionId: this.sessionId,
+            appName: this.appName,
+            appId: this.appId,
+            scenarioParsed: this.hasScenarioParsedDraft ? this.getScenarioParsedForStart() : undefined,
+            scenarioDescription: this.scenarioDraft,
+            servicesMeta: this.serviceStatuses,
+            finalResult: this.finalResult
+          })
+          const view = this.buildTraceView(packs.trace)
+          let rawJson = ''
+          try {
+            rawJson = JSON.stringify(packs.trace, null, 2)
+            if (rawJson.length > 12000) rawJson = `${rawJson.slice(0, 12000)}\n…`
+          } catch (e) {
+            rawJson = ''
+          }
+          this.detailTrace = { loading: false, skipped: false, error: null, view, rawJson }
+          this.detailEvidence = { loading: false, skipped: false, error: null, data: packs.evidence }
+          this.detailArtifact = { loading: false, skipped: false, error: null, data: packs.artifact }
+        } catch (e) {
+          const msg = this.formatArtifactError(e, '课题演示产物加载失败')
+          this.detailTrace = { loading: false, skipped: true, error: msg, view: null, rawJson: '' }
+          this.detailEvidence = { loading: false, skipped: true, error: null, data: null }
+          this.detailArtifact = { loading: false, skipped: true, error: null, data: null }
+        }
         return
       }
       this.detailTrace = { loading: true, skipped: false, error: null, view: null, rawJson: '' }
@@ -1741,35 +1601,35 @@ export default {
         }
         this.detailTrace = { loading: false, skipped: false, error: null, view, rawJson }
         this.detailEvidence = { loading: true, skipped: false, error: null, data: null }
-        const data = await fetchSimulationEvidence(this.sessionId)
-        this.detailEvidence = { loading: false, skipped: false, error: null, data }
+        try {
+          const data = await fetchSimulationEvidence(this.sessionId)
+          this.detailEvidence = { loading: false, skipped: false, error: null, data }
+        } catch (eEvidence) {
+          this.detailEvidence = {
+            loading: false,
+            skipped: false,
+            error: this.formatArtifactError(eEvidence, '证据分析加载失败'),
+            data: null
+          }
+        }
         // 加载 ArtifactSpec
         this.detailArtifact = { loading: true, skipped: false, error: null, data: null }
         try {
           const artifact = await fetchSimulationArtifact(this.sessionId)
           this.detailArtifact = { loading: false, skipped: false, error: null, data: artifact }
         } catch (e2) {
-          this.detailArtifact = { loading: false, skipped: false, error: (e2 && e2.message) || 'Artifact 加载失败', data: null }
+          this.detailArtifact = {
+            loading: false,
+            skipped: false,
+            error: this.formatArtifactError(e2, 'Artifact 加载失败'),
+            data: null
+          }
         }
       } catch (e) {
-        const msg = (e && e.message) || '加载失败'
-        if (!this.detailTrace.view) {
-          this.detailTrace = { loading: false, skipped: false, error: msg, view: null, rawJson: '' }
-        } else {
-          this.detailTrace = { ...this.detailTrace, loading: false }
-        }
-        this.detailEvidence = {
-          loading: false,
-          skipped: false,
-          error: msg,
-          data: null
-        }
-        this.detailArtifact = {
-          loading: false,
-          skipped: false,
-          error: msg,
-          data: null
-        }
+        const msg = this.formatArtifactError(e, '轨迹加载失败')
+        this.detailTrace = { loading: false, skipped: false, error: msg, view: null, rawJson: '' }
+        this.detailEvidence = { loading: false, skipped: false, error: null, data: null }
+        this.detailArtifact = { loading: false, skipped: false, error: null, data: null }
       }
     },
 
@@ -1846,6 +1706,18 @@ export default {
         s.status = 'error'
         s.statusText = '不可用'
       }
+    },
+
+    onStreamServiceCalling({ serviceId, serviceName, toolName, status }) {
+      if (this.aborted || !this.isRunning) return
+      // 驱动画布节点 calling/dimmed 动画
+      this.syncCanvasVisual({
+        type: 'serviceCall',
+        serviceId: String(serviceId),
+        serviceName,
+        toolName,
+        status // 'start' | 'end'
+      })
     },
 
     onStreamProgress({ ctx, index, text, active, done }) {
@@ -2069,6 +1941,7 @@ export default {
         planner_decision: this.onStreamPlannerDecision,
         verifier_result: this.onStreamVerifierResult,
         service: this.onStreamService,
+        service_calling: this.onStreamServiceCalling,
         log: this.onStreamLog,
         metrics: this.onStreamMetrics,
         progress: this.onStreamProgress,
@@ -2110,7 +1983,9 @@ export default {
 
     retrySimulation() {
       this.resetState()
+      this.resetProgressLists()
       this.initServiceStatuses(this.serviceNodes)
+      this.confirmStartBuild()
     },
 
     handlePrePublish() {
@@ -2123,15 +1998,262 @@ export default {
         metrics: { ...this.finalMetrics },
         result: this.finalResult,
         artifactRef: this.detailArtifact.data ? {
-          artifactId: this.detailArtifact.data.artifactId,
-          solidifiable: this.detailArtifact.data.solidifiable,
-          artifactHash: this.detailArtifact.data.provenance && this.detailArtifact.data.provenance.artifactHash
-            ? this.detailArtifact.data.provenance.artifactHash.slice(0, 16)
+          artifactId: this.artifactView.artifactId,
+          solidifiable: this.artifactView.solidifiable,
+          goldenPathExtractable: this.artifactView.goldenPathExtractable,
+          artifactHash: this.artifactView.artifactHash
+            ? this.artifactView.artifactHash.slice(0, 16)
             : null
         } : null
       })
       this.$emit('prePublish')
-      this.handleClose()
+      if (!this.embedded) {
+        this.handleClose()
+      }
+    },
+
+    iterationStatusLabel(iter) {
+      if (!iter) return '—'
+      if (!iter.completed && (iter.execPhase === 'running' || iter.checkPhase === 'running')) {
+        return '进行中'
+      }
+      if (iter.success) return '已通过'
+      if (iter.completed && !iter.success) return '需优化'
+      if (iter.execPhase === 'done' && iter.checkPhase !== 'done') return '验收中'
+      if (iter.execPhase === 'running') return '执行中'
+      return '—'
+    },
+
+    iterationPhaseLabel(phase) {
+      if (phase === 'done') return '已完成'
+      if (phase === 'running') return '进行中'
+      if (phase === 'pending') return '待开始'
+      return '—'
+    },
+
+    iterationPlannerToolSteps(plannerDecision) {
+      if (!plannerDecision) return []
+      const tools = plannerDecision.selected_tools || plannerDecision.selectedTools || []
+      return Array.isArray(tools) ? tools.filter(Boolean) : []
+    },
+
+    iterationExecutionPathSteps(plannerDecision) {
+      if (!plannerDecision) return []
+      const path = plannerDecision.executionPath || plannerDecision.execution_path
+      return Array.isArray(path) && path.length ? path.filter(Boolean) : []
+    },
+
+    iterationExecutionPath(plannerDecision) {
+      const steps = this.iterationExecutionPathSteps(plannerDecision)
+      return steps.length ? steps.join(' → ') : ''
+    },
+
+    getDetailViewModel() {
+      const evidence = this.detailEvidence.data
+      return {
+        currentPhaseLabel: this.isRunning ? '智能构建中' : (this.isCompleted ? '构建完成' : '准备中'),
+        currentActionText: this.currentActionText,
+        dispatchStatus: this.dispatchStatus,
+        iterations: (this.iterationDetails || []).map((i) => {
+          const vr = i.verifierResult
+          const executionPathSteps = this.iterationExecutionPathSteps(i.plannerDecision)
+          const plannerToolSteps = this.iterationPlannerToolSteps(i.plannerDecision)
+          const plannerTools = plannerToolSteps.length ? plannerToolSteps.join(' → ') : ''
+          const executionPath = executionPathSteps.length ? executionPathSteps.join(' → ') : ''
+          return {
+            iteration: i.iteration,
+            statusLabel: this.iterationStatusLabel(i),
+            execPhaseLabel: this.iterationPhaseLabel(i.execPhase),
+            checkPhaseLabel: this.iterationPhaseLabel(i.checkPhase),
+            plannerTools,
+            plannerToolSteps,
+            executionPath,
+            executionPathSteps,
+            verifierStatus: vr && vr.status ? vr.status : '',
+            verifierSummary: (vr && (vr.reason || vr.summary)) || '',
+            issue: i.issue || '',
+            fix: i.fix || '',
+            summary: (vr && (vr.reason || vr.summary)) || ''
+          }
+        }),
+        services: this.serviceStatuses,
+        stats: {
+          serviceCount: this.serviceStatuses.length,
+          completedCalls: this.serviceStatuses.filter((s) => s.status === 'online').length,
+          pendingIssues: (this.iterationDetails || []).filter((i) => i.issue).length
+        },
+        showTechDetails: this.hasStarted,
+        traceLoading: this.detailTrace.loading,
+        traceSkipped: this.detailTrace.skipped,
+        traceError: this.detailTrace.error,
+        callChain: this.callChainSteps,
+        evidenceStatus: evidence && evidence.overallStatus,
+        evidenceSummary: evidence && evidence.summary
+          ? `共 ${evidence.summary.total_checks} 项检查 · 通过 ${evidence.summary.passed || 0}`
+          : '',
+        solidifiable: this.artifactView.solidifiable,
+        goldenPathExtractable: this.artifactView.goldenPathExtractable,
+        artifactId: this.artifactView.artifactId,
+        artifactRows: this.isCompleted ? this.buildProductArtifactRows() : []
+      }
+    },
+
+    pushProductRow(rows, key, label, value, size = 'sm') {
+      if (value == null || value === '') return
+      rows.push({ key, label, value: String(value), size })
+    },
+
+    productGateSize(gateName) {
+      const compactGates = ['noInfrastructureErrors', 'realMcpCallsPresent']
+      return compactGates.includes(gateName) ? 'sm' : 'sm'
+    },
+
+    buildBuildSummaryRows() {
+      const rows = []
+      const art = this.detailArtifact.data
+      const evidence = this.detailEvidence.data
+
+      if (this.detailTrace.loading) {
+        this.pushProductRow(rows, 'trace', '轨迹', '加载中…', 'xl')
+      } else if (this.detailTrace.skipped) {
+        this.pushProductRow(rows, 'trace', '轨迹', '进程内演示无落盘轨迹', 'lg')
+      } else if (this.detailTrace.error) {
+        this.pushProductRow(rows, 'trace', '轨迹', this.detailTrace.error, 'xl')
+      } else if (this.callChainSteps.length) {
+        this.pushProductRow(rows, 'trace', '轨迹', this.callChainSteps.join(' → '), 'xl')
+      }
+
+      if (evidence) {
+        const statusText = evidence.overallStatus || '—'
+        let summaryText = statusText
+        if (evidence.summary) {
+          const s = evidence.summary
+          summaryText = `${statusText} · 共 ${s.total_checks} 项检查 · 通过 ${s.passed || 0}${s.failed ? ` · 失败 ${s.failed}` : ''}${s.warnings ? ` · 警告 ${s.warnings}` : ''}`
+        }
+        this.pushProductRow(rows, 'evidence-status', '证据结论', summaryText, 'lg')
+      }
+
+      if (art) {
+        const av = this.artifactView
+        this.pushProductRow(rows, 'artifact-id', '产物 ID', av.artifactId, 'sm')
+        this.pushProductRow(rows, 'solidifiable', '可固化', av.solidifiable ? '是' : '否', 'xs')
+        if (av.goldenPathExtractable != null) {
+          this.pushProductRow(rows, 'golden-path', '黄金路径', av.goldenPathExtractable ? '可抽取' : '不可抽取', 'xs')
+        }
+        if (av.sourceSessionId) {
+          this.pushProductRow(rows, 'session', '来源会话', av.sourceSessionId, 'xs')
+        }
+      }
+
+      this.pushProductRow(rows, 'elapsed', '构建耗时', this.formattedElapsedTime, 'xs')
+      return rows
+    },
+
+    buildProductArtifactRows() {
+      const rows = []
+      const art = this.detailArtifact.data
+
+      this.pushProductRow(rows, 'app-name', '应用名称', this.appName)
+      this.pushProductRow(rows, 'domain', '应用领域', this.domain || 'generic')
+      if (art && art.artifactMeta) {
+        this.pushProductRow(rows, 'mode', '构建模式', art.artifactMeta.mode)
+        this.pushProductRow(rows, 'app-id', '应用 ID', art.artifactMeta.appId)
+      } else if (art && art.metaApp) {
+        this.pushProductRow(rows, 'mode', '构建模式', art.metaApp.mode)
+        this.pushProductRow(rows, 'app-id', '应用 ID', art.metaApp.appId)
+      }
+
+      const sp = this.scenarioParsedView
+      if (sp.hasContent) {
+        this.pushProductRow(rows, 'goal', '场景目标', sp.goal)
+        this.pushProductRow(rows, 'scenario-desc', '场景描述', sp.description, 'lg')
+        if (sp.constraints.length) {
+          this.pushProductRow(rows, 'constraints', '约束', sp.constraints.join('；'), 'lg')
+        }
+        if (sp.acceptanceCriteria.length) {
+          this.pushProductRow(rows, 'acceptance', '验收标准', sp.acceptanceCriteria.join('；'), 'lg')
+        }
+        this.pushProductRow(rows, 'parser-model', '解析模型', sp.parserModel)
+        this.pushProductRow(rows, 'parsed-at', '解析时间', sp.parsedAt)
+      } else {
+        const d = this.scenarioParsedDraft || {}
+        this.pushProductRow(rows, 'goal', '场景目标', d.goal)
+        this.pushProductRow(rows, 'scenario-desc', '场景描述', d.description, 'lg')
+        if (d.constraints && d.constraints.length) {
+          this.pushProductRow(rows, 'constraints', '约束', d.constraints.join('；'), 'lg')
+        }
+        const acc = d.acceptanceCriteria
+        if (acc && acc.length) {
+          this.pushProductRow(rows, 'acceptance', '验收标准', acc.join('；'), 'lg')
+        }
+      }
+
+      if (art) {
+        const av = this.artifactView
+        this.pushProductRow(rows, 'artifact-id', '产物 ID', av.artifactId, 'sm')
+        this.pushProductRow(rows, 'schema', 'Schema 版本', av.schemaVersion || art.schemaVersion, 'xs')
+        this.pushProductRow(rows, 'solidifiable', '可固化', av.solidifiable ? '是' : '否', 'xs')
+        if (av.goldenPathExtractable != null) {
+          this.pushProductRow(rows, 'golden-path', '黄金路径', av.goldenPathExtractable ? '可抽取' : `不可抽取：${av.goldenPathReason || '—'}`, 'lg')
+        }
+        const gates = art.solidificationReport && art.solidificationReport.gates
+        if (gates && gates.length) {
+          gates.forEach((g, idx) => {
+            this.pushProductRow(
+              rows,
+              `gate-${idx}`,
+              g.gate,
+              g.passed ? '通过' : `未通过：${g.detail || '—'}`,
+              this.productGateSize(g.gate)
+            )
+          })
+        }
+        if (av.artifactHash) {
+          this.pushProductRow(rows, 'hash', '产物 Hash', av.artifactHash, 'sm')
+        }
+      }
+
+      this.serviceContractRows.forEach((c, idx) => {
+        const detail = c.uncalled
+          ? `未调用 · ${c.channelLabel}`
+          : `调用 ${c.totalCalls} 次 · 成功率 ${c.successRate} · ${c.channelLabel}`
+        const tools = c.declaredToolNames.length ? `声明工具：${c.declaredToolNames.join('、')}` : ''
+        const observed = c.observedSummaries.length ? `实测：${c.observedSummaries.join('；')}` : ''
+        const value = [detail, tools, observed].filter(Boolean).join(' · ')
+        this.pushProductRow(rows, `contract-${idx}`, c.serviceName, value, 'xl')
+      })
+
+      this.pushProductRow(
+        rows,
+        'services',
+        '服务绑定',
+        this.serviceStatuses.map((s) => s.name).join('、'),
+        'xl'
+      )
+
+      return rows
+    },
+
+    getProductViewModel() {
+      const art = this.detailArtifact.data
+      const tags = []
+      if (art) {
+        tags.push({ label: '场景与意图', tone: 'green' })
+        tags.push({ label: '服务与契约', tone: 'green' })
+        if (art.solidificationReport && art.solidificationReport.goldenPathExtractable) {
+          tags.push({ label: '黄金路径', tone: 'green' })
+        } else if (art.solidificationReport && art.solidificationReport.solidifiable) {
+          tags.push({ label: '固化候选', tone: 'blue' })
+        }
+        tags.push({ label: '预览信息', tone: 'blue' })
+      }
+      return {
+        artifactRows: this.buildProductArtifactRows(),
+        summaryRows: this.buildBuildSummaryRows(),
+        intent: (this.scenarioParsedDraft && this.scenarioParsedDraft.goal) || this.appName,
+        services: this.serviceStatuses.map((s) => s.name).join('、'),
+        tags
+      }
     },
 
     isActiveBuild() {
@@ -2141,6 +2263,7 @@ export default {
     /** 用户确认离开调度页后调用 */
     cancelBuildForLeave() {
       this.intentionalClose = true
+      this.aborted = true
       if (this.sessionId) {
         cancelSimulation(this.sessionId)
       }
@@ -2149,8 +2272,33 @@ export default {
       this.isRunning = false
       this.syncCanvasVisual({ type: 'build', active: false })
       this.syncCanvasVisual({ type: 'clear' })
-      this.visible = false
-      this.$emit('close')
+      this.finishClose()
+    },
+
+    confirmBackToEdit() {
+      this.$confirm(
+        '将回到想定解析完成后的编辑界面。本次仿真构建进度与产物摘要将不再保留，需要重新完成仿真构建后才能再次预发布。确定继续吗？',
+        '返回重新编辑？',
+        {
+          confirmButtonText: '返回重新编辑',
+          cancelButtonText: '留在此页',
+          confirmButtonClass: 'el-button--danger',
+          type: 'warning',
+          closeOnClickModal: false
+        }
+      )
+        .then(() => {
+          this.intentionalClose = true
+          this.aborted = true
+          this.teardownStream()
+          this.stopTimer()
+          this.isRunning = false
+          this.syncCanvasVisual({ type: 'build', active: false })
+          this.syncCanvasVisual({ type: 'clear' })
+          this.resetState()
+          this.$emit('back-to-edit')
+        })
+        .catch(() => {})
     },
 
     handleCancel() {
@@ -2168,8 +2316,10 @@ export default {
         }
         this.teardownStream()
         this.stopTimer()
-        this.visible = false
-        this.$emit('close')
+        this.isRunning = false
+        this.syncCanvasVisual({ type: 'build', active: false })
+        this.syncCanvasVisual({ type: 'clear' })
+        this.finishClose()
       }).catch(() => {})
     },
 
@@ -2183,42 +2333,15 @@ export default {
       this.teardownStream()
       this.stopTimer()
       this.isRunning = false
+      this.finishClose()
+    },
+
+    finishClose() {
       this.visible = false
-      this.$emit('close')
-    },
-
-    async openCompareModal() {
-      this.compareModalVisible = true
-      this.compareSelectedIds = []
-      this.compareResultRows = []
-      await this.loadRecordList()
-    },
-
-    async loadRecordList() {
-      this.compareLoading = true
-      try {
-        this.recordList = await fetchSimulationRecords(this.appName)
-      } catch (e) {
-        this.recordList = []
-        this.$message.error('加载实验记录失败')
-      } finally {
-        this.compareLoading = false
-      }
-    },
-
-    async runCompare() {
-      if (this.compareSelectedIds.length < 2) return
-      this.compareLoading = true
-      try {
-        const { records } = await compareSimulationRecords(
-          this.compareSelectedIds,
-          this.appName
-        )
-        this.compareResultRows = records || []
-      } catch (e) {
-        this.$message.error('对比失败')
-      } finally {
-        this.compareLoading = false
+      if (this.embedded) {
+        this.$emit('cancel-build')
+      } else {
+        this.$emit('close')
       }
     }
   },
@@ -2436,52 +2559,6 @@ export default {
 .parsed-intent-situation {
   color: #595959;
   margin-bottom: 8px;
-}
-
-.pre-start-config {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid #f0f0f0;
-
-  .toolbar-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 10px;
-  }
-
-  .toolbar-label {
-    font-size: 13px;
-    color: #595959;
-    flex-shrink: 0;
-  }
-
-  .scenario-row .ant-input {
-    flex: 1;
-    max-width: 100%;
-  }
-}
-
-.research-strategy-panel {
-  margin-top: 8px;
-  padding: 10px 12px;
-  background: #fafafa;
-  border-radius: 4px;
-  border: 1px solid #f0f0f0;
-}
-
-.pre-start-config .strategy-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 10px 12px;
-}
-
-.pre-start-config .strategy-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: #8c8c8c;
 }
 
 .pre-start-services {
@@ -3462,97 +3539,6 @@ export default {
   }
 }
 
-.strategy-summary {
-  margin-bottom: 16px;
-  text-align: left;
-
-  .strategy-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-}
-
-.research-metrics {
-  margin-bottom: 16px;
-  text-align: left;
-
-  .metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
-  .metric-cell {
-    background: #fafafa;
-    border-radius: 8px;
-    padding: 10px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-
-    .m-v {
-      font-size: 20px;
-      font-weight: 600;
-      color: #1890ff;
-    }
-
-    .m-l {
-      font-size: 12px;
-      color: #8c8c8c;
-    }
-  }
-}
-
-.research-actions {
-  margin-top: 12px;
-}
-
-.compare-toolbar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.compare-check-group {
-  display: block;
-  max-height: 200px;
-  overflow-y: auto;
-  margin-bottom: 12px;
-}
-
-.compare-row {
-  padding: 4px 0;
-}
-
-.compare-empty {
-  color: #8c8c8c;
-  font-size: 13px;
-  margin-bottom: 12px;
-}
-
-.compare-table-wrap {
-  overflow-x: auto;
-}
-
-.compare-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-
-  th,
-  td {
-    border: 1px solid #f0f0f0;
-    padding: 8px 6px;
-    text-align: left;
-  }
-
-  th {
-    background: #fafafa;
-    color: #595959;
-  }
-}
-
 // ArtifactSpec 门禁列表
 .gate-list {
   display: flex;
@@ -3578,5 +3564,47 @@ export default {
 .gate-detail {
   color: #8c8c8c;
   flex: 1;
+}
+
+@import './meta_app_build/simulation-workbench.less';
+
+.simulation-embedded {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  .simulation-container {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .main-steps {
+    padding: 12px 10px;
+  }
+
+  .main-steps-five .step-label {
+    font-size: 10px;
+    max-width: 64px;
+  }
+
+  .simulation-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .footer-buttons--embedded {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 0 4px;
+    border-top: 1px solid #e8edf4;
+    margin-top: 8px;
+  }
 }
 </style>
