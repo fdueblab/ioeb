@@ -39,9 +39,10 @@
         :dataSource="dataSource"
         :loading="loading"
         :pagination="pagination"
+        @change="handleTableChange"
       >
         <span slot="serial" slot-scope="text, record, index">
-          {{ index + 1 }}
+          {{ (pagination.current - 1) * pagination.pageSize + index + 1 }}
         </span>
         <span slot="avatar" slot-scope="text, record">
           <a-avatar :src="record.avatar" :alt="record.name" size="small">
@@ -68,6 +69,8 @@
             <a-button style="padding: 0" type="link" v-if="record.status === 0" :disabled="record.username === 'root'" size="small" @click="handleActivate(record)">激活</a-button>
             <a-button style="padding: 0" type="link" v-if="record.status === 1" :disabled="record.username === 'root'" size="small" @click="handleDisable(record)">禁用</a-button>
             <a-divider type="vertical" />
+            <a-button style="padding: 0" type="link" size="small" @click="handleViewActionLogs(record)">行为</a-button>
+            <a-divider type="vertical" />
             <a-button v-if="record.username === 'root'" style="padding: 0" type="link" disabled size="small" @click="handleDelete(record)">删除</a-button>
             <a-button v-else style="padding: 0;color: orangered" type="link" size="small" @click="handleDelete(record)">删除</a-button>
           </template>
@@ -80,11 +83,13 @@
       ref="userManageModal"
       @refresh="handleModalRefresh"
     />
+    <UserActionLogModal ref="userActionLogModal" />
   </page-header-wrapper>
 </template>
 
 <script>
 import { getAllUsers, enableUser, disableUser, deleteUser, getAllRoles } from '@/api/users'
+import UserActionLogModal from '@/components/UserActionLogModal'
 import UserManageModal from '@/components/UserManageModal'
 
 const statusMap = {
@@ -101,6 +106,7 @@ const statusMap = {
 export default {
   name: 'TableList',
   components: {
+    UserActionLogModal,
     UserManageModal
   },
   data () {
@@ -160,7 +166,7 @@ export default {
         {
           title: '操作',
           dataIndex: 'action',
-          width: '110px',
+          width: '170px',
           align: 'center',
           scopedSlots: { customRender: 'action' }
         }
@@ -213,7 +219,7 @@ export default {
             lastLoginTimeDisplay: user.lastLoginTime ? this.formatTime(user.lastLoginTime) : '-' // 格式化时间
           }))
           this.dataSource = [...this.originalData]
-          this.pagination.total = this.originalData.length
+          this.syncPaginationTotal(this.originalData.length)
         } else {
           this.$message.error('获取用户数据失败')
         }
@@ -245,15 +251,30 @@ export default {
         filteredData = filteredData.filter(user => user.status === statusValue)
       }
       this.dataSource = filteredData
-      this.pagination.total = filteredData.length
-      this.pagination.current = 1 // 重置到第一页
+      this.syncPaginationTotal(filteredData.length, 1)
     },
     // 重置搜索
     handleReset() {
       this.queryParam = {}
       this.dataSource = [...this.originalData]
-      this.pagination.total = this.originalData.length
-      this.pagination.current = 1
+      this.syncPaginationTotal(this.originalData.length, 1)
+    },
+    syncPaginationTotal(total, current) {
+      const pageSize = this.pagination.pageSize
+      const maxPage = Math.max(1, Math.ceil(total / pageSize))
+      const nextCurrent = current || Math.min(this.pagination.current, maxPage)
+      this.pagination = {
+        ...this.pagination,
+        total,
+        current: nextCurrent
+      }
+    },
+    handleTableChange(pagination) {
+      this.pagination = {
+        ...this.pagination,
+        current: pagination.current,
+        pageSize: pagination.pageSize
+      }
     },
     handleAdd () {
       this.$refs.userManageModal.showAddUserModal()
@@ -328,6 +349,9 @@ export default {
     },
     handleRoleEdit(record) {
       this.$refs.userManageModal.showRoleSelectModal(record)
+    },
+    handleViewActionLogs(record) {
+      this.$refs.userActionLogModal.show(record)
     },
     getRoleName(roleId) {
       // 如果UserManageModal组件已经加载，使用其getRoleName方法

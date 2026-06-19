@@ -1,14 +1,16 @@
 import { getProfile, saveProfile } from '@/api/userProfile'
 
 // 画像字段定义（用于完成度计算与展示顺序）
-// domain: 领域, major: 专业, occupation: 职业, techNeeds: 技术需求(多选)
-export const PROFILE_FIELDS = ['domain', 'major', 'occupation', 'techNeeds']
+// preferredVertical: 兴趣调查选择的垂域；interestPoints: 垂域兴趣点（可选）
+export const PROFILE_FIELDS = ['preferredVertical', 'domain', 'major', 'occupation', 'techNeeds']
 
 const emptyProfile = () => ({
+  preferredVertical: '',
   domain: '',
   major: '',
   occupation: '',
   techNeeds: [],
+  interestPoints: [],
   bio: ''
 })
 

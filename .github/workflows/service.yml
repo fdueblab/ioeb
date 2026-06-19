@@ -14,8 +14,13 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - run: |
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project1:latest ./api/Project_1
+          SHORT_SHA=${GITHUB_SHA::7}
+          docker build \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project1:latest \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project1:${SHORT_SHA} \
+            ./api/Project_1
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project1:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project1:${SHORT_SHA}
 
   build-project2:
     runs-on: ubuntu-latest
@@ -26,8 +31,13 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - run: |
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project2:latest ./api/Project_2
+          SHORT_SHA=${GITHUB_SHA::7}
+          docker build \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project2:latest \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project2:${SHORT_SHA} \
+            ./api/Project_2
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project2:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project2:${SHORT_SHA}
 
   build-project3:
     runs-on: ubuntu-latest
@@ -38,8 +48,13 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - run: |
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project3:latest ./api/Project-3
+          SHORT_SHA=${GITHUB_SHA::7}
+          docker build \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project3:latest \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project3:${SHORT_SHA} \
+            ./api/Project-3
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project3:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project3:${SHORT_SHA}
 
   build-project4:
     runs-on: ubuntu-latest
@@ -50,8 +65,13 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - run: |
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project4:latest ./api/Project-4
+          SHORT_SHA=${GITHUB_SHA::7}
+          docker build \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project4:latest \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project4:${SHORT_SHA} \
+            ./api/Project-4
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project4:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project4:${SHORT_SHA}
 
   build-linezolid:
     runs-on: ubuntu-latest
@@ -62,8 +82,13 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - run: |
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:latest ./api/linezolid
+          SHORT_SHA=${GITHUB_SHA::7}
+          docker build \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:latest \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:${SHORT_SHA} \
+            ./api/linezolid
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:${SHORT_SHA}
 
   deploy:
     name: Deploy Services
@@ -85,7 +110,8 @@ jobs:
     steps:
       - name: Trigger deploy webhook
         run: |
+          SHORT_SHA=${GITHUB_SHA::7}
           curl -sf -X POST "${{ secrets.DEPLOY_WEBHOOK_URL }}" \
             -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d '{"service":"${{ matrix.service }}","image":"${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.image_suffix }}:latest"}'
+            -d "{\"service\":\"${{ matrix.service }}\",\"image\":\"${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.image_suffix }}:${SHORT_SHA}\"}"

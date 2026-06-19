@@ -11,6 +11,8 @@ jobs:
     name: Build & Push Frontend Image
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    env:
+      IMAGE_REPO: ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-frontend
     steps:
       - uses: actions/checkout@v4
 
@@ -33,18 +35,22 @@ jobs:
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
           docker build \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-frontend:latest \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-frontend:${SHORT_SHA} .
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-frontend --all-tags
+            -t "${IMAGE_REPO}:latest" \
+            -t "${IMAGE_REPO}:${SHORT_SHA}" .
+          docker push "${IMAGE_REPO}:latest"
+          docker push "${IMAGE_REPO}:${SHORT_SHA}"
 
   deploy:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
+    env:
+      IMAGE_REPO: ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-frontend
     steps:
       - name: Trigger deploy webhook
         run: |
+          SHORT_SHA=${GITHUB_SHA::7}
           curl -sf -X POST "${{ secrets.DEPLOY_WEBHOOK_URL }}" \
             -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d '{"service":"frontend","image":"${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-frontend:latest"}'
+            -d "{\"service\":\"frontend\",\"image\":\"${IMAGE_REPO}:${SHORT_SHA}\"}"

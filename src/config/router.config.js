@@ -2,16 +2,43 @@
 import { UserLayout, BasicLayout, BlankLayout, AppView } from '@/layouts'
 import { bxAnaalyse } from '@/core/icons'
 import { loadDict } from '@/utils/dictionaryCache'
+import { getDefaultLandingPath } from '@/utils/domainContext'
+import { getPreferredVertical } from '@/api/userProfile'
 
 const RouteView = {
   name: 'RouteView',
   render: (h) => h('router-view')
 }
 
+const DEFAULT_VERTICAL_DOMAIN = { code: 'aml', text: '跨境支付AI监测' }
+const OPENED_VERTICAL_LABELS = {
+  aml: '跨境支付AI监测',
+  health: '心理健康分析'
+}
+
+function normalizePreferredVertical(code) {
+  return Object.prototype.hasOwnProperty.call(OPENED_VERTICAL_LABELS, code) ? code : DEFAULT_VERTICAL_DOMAIN.code
+}
+
+function filterDomainsByPreference(domains = []) {
+  const preferred = normalizePreferredVertical(getPreferredVertical())
+  const hit = (domains || []).find(domain => domain.code === preferred)
+  if (hit) return [hit]
+  return [{ code: preferred, text: OPENED_VERTICAL_LABELS[preferred] || DEFAULT_VERTICAL_DOMAIN.text }]
+}
+
+async function loadPreferredDomains() {
+  const domains = await loadDict('domain', [])
+  if (!domains || domains.length === 0) {
+    return [DEFAULT_VERTICAL_DOMAIN]
+  }
+  return filterDomainsByPreference(domains)
+}
+
 // 获取垂域路由的第一个路径，用于重定向
 export async function getFirstVerticalUserPath() {
   try {
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
     if (domains && domains.length > 0) {
       return `/vertical-user/${domains[0].code}`
     }
@@ -25,7 +52,7 @@ export async function getFirstVerticalUserPath() {
 export async function generateVerticalUserRoutes() {
   try {
     // 从字典加载"domain"类别的数据
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
 
     // 如果字典为空，返回至少一个默认路由（防止路由为空）
     if (!domains || domains.length === 0) {
@@ -63,7 +90,7 @@ export async function generateVerticalUserRoutes() {
 export async function generateVerticalMSRoutes() {
   try {
     // 从字典加载"domain"类别的数据
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
 
     // 如果字典为空，返回至少一个默认路由（防止路由为空）
     if (!domains || domains.length === 0) {
@@ -101,7 +128,7 @@ export async function generateVerticalMSRoutes() {
 export async function generateVerticalAppRoutes() {
   try {
     // 从字典加载"domain"类别的数据
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
 
     // 如果字典为空，返回至少一个默认路由（防止路由为空）
     if (!domains || domains.length === 0) {
@@ -143,7 +170,7 @@ export async function generateVerticalAppRoutes() {
 export async function generateGuideRoutes() {
   try {
     // 从字典加载"domain"类别的数据
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
 
     // 如果字典为空，返回至少一个默认路由（防止路由为空）
     if (!domains || domains.length === 0) {
@@ -179,7 +206,7 @@ export async function generateGuideRoutes() {
 
 export async function getFirstMSPath() {
   try {
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
     if (domains && domains.length > 0) {
       return `/vertical-ms/${domains[0].code}`
     }
@@ -192,7 +219,7 @@ export async function getFirstMSPath() {
 // 获取想定式开发路由的第一个路径，用于重定向
 export async function getFirstScenarioDevPath() {
   try {
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
     if (domains && domains.length > 0) {
       return `/vertical-scenario-dev/${domains[0].code}`
     }
@@ -205,7 +232,7 @@ export async function getFirstScenarioDevPath() {
 // 动态生成算法模型想定式开发路由的辅助函数
 export async function generateVerticalScenarioDevRoutes() {
   try {
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
     if (!domains || domains.length === 0) {
       return [{
         path: '/vertical-scenario-dev/aml',
@@ -236,7 +263,7 @@ export async function generateVerticalScenarioDevRoutes() {
 
 export async function getFirstAppPath() {
   try {
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
     if (domains && domains.length > 0) {
       return `/vertical-atom-app/${domains[0].code}`
     }
@@ -250,7 +277,7 @@ export async function getFirstAppPath() {
 export async function generateEvaluationRoutes() {
   try {
     // 从字典加载"domain"类别的数据
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
 
     // 如果字典为空，返回至少一个默认路由（防止路由为空）
     if (!domains || domains.length === 0) {
@@ -331,7 +358,7 @@ export async function generateEvaluationRoutes() {
 
 export async function getFirstTechnologyPath() {
   try {
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
     if (domains && domains.length > 0) {
       return `/evaluation/${domains[0].code}/technology`
     }
@@ -343,7 +370,7 @@ export async function getFirstTechnologyPath() {
 
 export async function getFirstEvaluationPath() {
   try {
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
     if (domains && domains.length > 0) {
       return `/evaluation/${domains[0].code}/technology`
     }
@@ -357,7 +384,7 @@ export async function getFirstEvaluationPath() {
 export async function generateOperationRoutes() {
   try {
     // 从字典加载"domain"类别的数据
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
 
     // 如果字典为空，返回至少一个默认路由（防止路由为空）
     if (!domains || domains.length === 0) {
@@ -438,7 +465,7 @@ export async function generateOperationRoutes() {
 
 export async function getFirstOperationPath() {
   try {
-    const domains = await loadDict('domain', [])
+    const domains = await loadPreferredDomains()
     if (domains && domains.length > 0) {
       return `/operation/${domains[0].code}/container-status`
     }
@@ -499,9 +526,7 @@ export const asyncRouterMap = [
     name: 'index',
     component: BasicLayout,
     meta: { title: 'menu.home' },
-    redirect: {
-      name: 'home'
-    },
+    redirect: () => getDefaultLandingPath(),
     children: [
       // 垂域应用AI资源检索 - 从字典动态获取
       {
@@ -533,7 +558,7 @@ export const asyncRouterMap = [
       // 垂域元应用仿真构建 - 从字典动态获取
       {
         path: '/vertical-meta-app',
-        name: 'vertical-ms',
+        name: 'vertical-meta-app',
         redirect: '/vertical-atom-app/aml', // 默认重定向，会在路由初始化时被更新
         component: RouteView,
         meta: {

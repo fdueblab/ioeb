@@ -11,10 +11,12 @@ import {
   TOGGLE_COLOR,
   TOGGLE_WEAK,
   TOGGLE_MULTI_TAB,
+  CURRENT_DOMAIN,
   // i18n
   APP_LANGUAGE
 } from '@/store/mutation-types'
 import { loadLanguageAsync } from '@/locales'
+import { DEFAULT_DOMAIN, getCurrentDomainCode, resolveCurrentDomain } from '@/utils/domainContext'
 
 const app = {
   state: {
@@ -29,6 +31,10 @@ const app = {
     color: '',
     weak: false,
     multiTab: true,
+    currentDomain: {
+      code: getCurrentDomainCode(),
+      text: DEFAULT_DOMAIN.text
+    },
     lang: 'zh-CN',
     _antLocale: {}
   },
@@ -80,6 +86,9 @@ const app = {
     [TOGGLE_MULTI_TAB]: (state, bool) => {
       storage.set(TOGGLE_MULTI_TAB, bool)
       state.multiTab = bool
+    },
+    [CURRENT_DOMAIN]: (state, domain) => {
+      state.currentDomain = resolveCurrentDomain([domain || DEFAULT_DOMAIN], domain && domain.code)
     }
   },
   actions: {
@@ -92,6 +101,9 @@ const app = {
           reject(e)
         })
       })
+    },
+    SetCurrentDomain ({ commit }, domain) {
+      commit(CURRENT_DOMAIN, domain)
     }
   }
 }

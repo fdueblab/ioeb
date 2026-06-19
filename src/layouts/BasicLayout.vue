@@ -37,20 +37,22 @@
       <right-content :top-menu="settings.layout === 'topmenu'" :is-mobile="isMobile" :theme="settings.theme" />
     </template>
     <router-view />
-    <user-profile-survey :visible="surveyVisible" @close="surveyVisible = false" @done="surveyVisible = false" />
+    <user-profile-survey :visible="surveyVisible" @close="surveyVisible = false" @done="handleSurveyDone" />
   </pro-layout>
 </template>
 
 <script>
 import { SettingDrawer, updateTheme } from '@ant-design-vue/pro-layout'
 import { i18nRender } from '@/locales'
-import { mapState } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
 import { CONTENT_WIDTH_TYPE, SIDEBAR_TYPE, TOGGLE_MOBILE_TYPE } from '@/store/mutation-types'
+import cloneDeep from 'lodash.clonedeep'
 
 import defaultSettings from '@/config/defaultSettings'
 import RightContent from '@/components/GlobalHeader/RightContent'
 import UserProfileSurvey from '@/components/UserProfileSurvey'
 import { isSurveyDone } from '@/api/userProfile'
+import { projectDomainMenus } from '@/utils/domainContext'
 // import { asyncRouterMap } from '@/config/router.config.js'
 export default {
   name: 'BasicLayout',
@@ -67,8 +69,6 @@ export default {
       // isDev: this.$route.query.isDev === 'true' || process.env.NODE_ENV === 'development' || process.env.VUE_APP_PREVIEW === 'true',
       isDev: this.$route.query.isDev === 'true',
 
-      // base
-      menus: [],
       // 侧栏收起状态
       collapsed: false,
       settings: {
@@ -102,12 +102,18 @@ export default {
     ...mapState({
       // 动态主路由
       mainMenu: (state) => state.permission.addRouters
-    })
+    }),
+    ...mapGetters(['currentDomainCode', 'roles']),
+    permissionList () {
+      return (this.roles && this.roles.permissionList) || []
+    },
+    menus () {
+      const routes = this.mainMenu.find((item) => item.path === '/')
+      const children = cloneDeep((routes && routes.children) || [])
+      return projectDomainMenus(children, this.currentDomainCode, this.permissionList)
+    }
   },
   created() {
-    const routes = this.mainMenu.find((item) => item.path === '/')
-    // const routes = asyncRouterMap.find((item) => item.path === '/')
-    this.menus = (routes && routes.children) || []
     // const username = localStorage.getItem('username')
     // if (username === 'user') {
     //   this.subTitle = '应用平台'
@@ -156,6 +162,10 @@ export default {
           }, 800)
         }
       })
+    },
+    handleSurveyDone() {
+      this.surveyVisible = false
+      window.location.reload()
     },
     handleMediaQuery(val) {
       this.query = val
