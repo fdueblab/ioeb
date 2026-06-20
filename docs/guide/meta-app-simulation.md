@@ -6,7 +6,7 @@
 
 ## 界面预览
 
-![元应用仿真构建界面](/images/guide/meta-app-simulation/元应用仿真构建界面.png)
+![元应用仿真构建界面](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/meta-app-simulation/%E5%85%83%E5%BA%94%E7%94%A8%E4%BB%BF%E7%9C%9F%E6%9E%84%E5%BB%BA%E7%95%8C%E9%9D%A2.png)
 
 *元应用仿真构建主界面，左侧为智能对话，右侧为可视化编排画布*
 
@@ -76,7 +76,7 @@
 
 ### 3. 可视化服务编排
 
-![可视化编排界面](/images/guide/meta-app-simulation/可视化编排界面.png)
+![可视化编排界面](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/meta-app-simulation/%E5%8F%AF%E8%A7%86%E5%8C%96%E7%BC%96%E6%8E%92%E7%95%8C%E9%9D%A2.png)
 
 在右侧画布查看和调整AI推荐的服务组合：
 
@@ -101,7 +101,7 @@
 
 确认服务编排方案后，点击"开始仿真构建"按钮，平台进入仿真构建环节：
 
-![仿真构建过程展示](/images/guide/meta-app-simulation/仿真构建过程展示.png)
+![仿真构建过程展示](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/meta-app-simulation/%E4%BB%BF%E7%9C%9F%E6%9E%84%E5%BB%BA%E8%BF%87%E7%A8%8B%E5%B1%95%E7%A4%BA.png)
 
 *仿真构建过程：平台依次经过准备、服务匹配、环境准备、智能构建、方案生成等阶段，通过多轮智能体调度完成数据仿真、逻辑仿真与链路校验*
 
@@ -115,7 +115,7 @@
 
 仿真构建完成后，系统将弹出"构建元应用"对话框。左侧为界面预览，右侧为属性配置：
 
-![元应用预览界面](/images/guide/meta-app-simulation/元应用预发布界面.png)
+![元应用预览界面](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/meta-app-simulation/%E5%85%83%E5%BA%94%E7%94%A8%E9%A2%84%E5%8F%91%E5%B8%83%E7%95%8C%E9%9D%A2.png)
 
 **视觉配置：**
 - **应用名称**：设置元应用的标识名称

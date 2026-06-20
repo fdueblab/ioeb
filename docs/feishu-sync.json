@@ -1,0 +1,158 @@
+{
+  "larkDomain": "https://open.feishu.cn",
+  "spaceId": "7651440674163789040",
+  "siteBaseUrl": "https://fdueblab.cn/docs",
+  "imageBaseUrl": "https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs",
+  "root": {
+    "title": "系统用户指南",
+    "nodeToken": "Gm6vwATzzixPkDkwgExcdM9mnOb",
+    "url": "https://fdueblab.feishu.cn/wiki/Gm6vwATzzixPkDkwgExcdM9mnOb"
+  },
+  "archive": {
+    "title": "同步归档"
+  },
+  "fixedDocuments": [
+    {
+      "file": "quickstart.md",
+      "group": "root"
+    }
+  ],
+  "trailingDocuments": [
+    {
+      "file": "faq.md",
+      "group": "root"
+    }
+  ],
+  "groups": {
+    "core": {
+      "title": "核心功能",
+      "nodeToken": "JnUrwGvPjip1d0kb9IyczWWAnNf",
+      "url": "https://fdueblab.feishu.cn/wiki/JnUrwGvPjip1d0kb9IyczWWAnNf"
+    },
+    "other": {
+      "title": "其他功能",
+      "nodeToken": "L99twasuqiay7Ak5x6TcZoianZe",
+      "url": "https://fdueblab.feishu.cn/wiki/L99twasuqiay7Ak5x6TcZoianZe"
+    },
+    "reference": {
+      "title": "相关资料",
+      "nodeToken": "Jy0mweHL9irs23kC7u7cuvl1nxe",
+      "url": "https://fdueblab.feishu.cn/wiki/Jy0mweHL9irs23kC7u7cuvl1nxe"
+    }
+  },
+  "documents": {
+    "quickstart.md": {
+      "group": "root",
+      "nodeToken": "HEK2wBMSciYQT0kkjgKcnLBbnzc",
+      "url": "https://fdueblab.feishu.cn/wiki/HEK2wBMSciYQT0kkjgKcnLBbnzc",
+      "title": "快速开始",
+      "contentHash": "04e7ae10ba229b5da5b41e84ef65e2a91d08e0872307ef2de6401f7f9f417074"
+    },
+    "guide/register-profile-scenario-dev.md": {
+      "group": "core",
+      "nodeToken": "O0Tcw21U2iSGYHki720c2eVlnGf",
+      "url": "https://fdueblab.feishu.cn/wiki/O0Tcw21U2iSGYHki720c2eVlnGf",
+      "title": "从注册到算法模型想定式开发使用指南",
+      "contentHash": "pending-cos-resync"
+    },
+    "guide/ai-resources-overview.md": {
+      "group": "core",
+      "nodeToken": "IJ20wlHvkid1YykvPYtcaAjUnZd",
+      "url": "https://fdueblab.feishu.cn/wiki/IJ20wlHvkid1YykvPYtcaAjUnZd",
+      "title": "垂域AI资源总览",
+      "contentHash": "2ac08a5e80009c2922b14d95c6fca16517bb89297e19a5e90e725a3793e98fe1"
+    },
+    "guide/ai-resources-search.md": {
+      "group": "core",
+      "nodeToken": "Y2D6wBZb9ihEiKkrfq5cfYDNnjc",
+      "url": "https://fdueblab.feishu.cn/wiki/Y2D6wBZb9ihEiKkrfq5cfYDNnjc",
+      "title": "垂域AI资源智能检索",
+      "contentHash": "6cb1db4aebd2d439a45ff6fa89df8e7f03fce9464214ef250299d2b9c221aff8"
+    },
+    "guide/microservice-publish.md": {
+      "group": "core",
+      "nodeToken": "GQJowHeZUis3IVkwdeqcbH60nke",
+      "url": "https://fdueblab.feishu.cn/wiki/GQJowHeZUis3IVkwdeqcbH60nke",
+      "title": "原子微服务可视化解析发布",
+      "contentHash": "3a7e2a0b5526955cfdb44c31e5e97bd62f53594fbf4df07f1ebbd0d7b823c724"
+    },
+    "guide/microservice-evaluation.md": {
+      "group": "core",
+      "nodeToken": "XSqawbvk1iCqRxkjlHvcpNnRnLd",
+      "url": "https://fdueblab.feishu.cn/wiki/XSqawbvk1iCqRxkjlHvcpNnRnLd",
+      "title": "原子微服务技术评测",
+      "contentHash": "87e2f0a9ef9f85650cf63ea036b23453cda044fcdf87a582624b72f91737e973"
+    },
+    "guide/microservice-testing.md": {
+      "group": "core",
+      "nodeToken": "PKYlwiDTVird0skuHC0c5wf7nMc",
+      "url": "https://fdueblab.feishu.cn/wiki/PKYlwiDTVird0skuHC0c5wf7nMc",
+      "title": "原子微服务调用测试",
+      "contentHash": "1ff47856435e284124a37418e5e00eb509f18a78479654cec04cfd18259e7674"
+    },
+    "guide/meta-app-simulation.md": {
+      "group": "core",
+      "nodeToken": "XRQuweAwSiiCXekAZe1crOlOnQf",
+      "objToken": "VR3SdPV66os4OTxW4hAcF3dcncb",
+      "url": "https://fdueblab.feishu.cn/wiki/XRQuweAwSiiCXekAZe1crOlOnQf",
+      "title": "垂域元应用仿真构建",
+      "contentHash": "pending-cos-resync"
+    },
+    "guide/meta-app-validation.md": {
+      "group": "core",
+      "nodeToken": "RBv7wtK1ii10FskirXvcAflFn2g",
+      "url": "https://fdueblab.feishu.cn/wiki/RBv7wtK1ii10FskirXvcAflFn2g",
+      "title": "元应用业务数据验证",
+      "contentHash": "a73a660de31ae408b7e2b1580ebda330bf7a70b32b3525ae0caa4d59c3415ff7"
+    },
+    "guide/app-construction.md": {
+      "group": "core",
+      "nodeToken": "GqJKwU0CLiO5fTkuNp7chlcinZ8",
+      "url": "https://fdueblab.feishu.cn/wiki/GqJKwU0CLiO5fTkuNp7chlcinZ8",
+      "title": "垂域应用参数化构建",
+      "contentHash": "90d19f4a11e4e7927746e44947f2bd80e71f94df48ce4a1da18dc6bd2d738a15"
+    },
+    "guide/operations.md": {
+      "group": "other",
+      "nodeToken": "VUTdwn3Haib0FXkWgSwc0Wcun2g",
+      "url": "https://fdueblab.feishu.cn/wiki/VUTdwn3Haib0FXkWgSwc0Wcun2g",
+      "title": "服务及应用运维管理",
+      "contentHash": "9ea0da2698ac6ae562f8b884641a88a9b0f54f7db360b46260448bc362783f90"
+    },
+    "guide/user-management.md": {
+      "group": "other",
+      "nodeToken": "JOi5wNsWfiBwstkoYhEcheH4nWK",
+      "url": "https://fdueblab.feishu.cn/wiki/JOi5wNsWfiBwstkoYhEcheH4nWK",
+      "title": "用户管理",
+      "contentHash": "d9fdffb92d95370bc14f2538e04811688f75b39b0086324e2e8dab17d8e8134a"
+    },
+    "guide/account-settings.md": {
+      "group": "other",
+      "nodeToken": "UjpuwqHTTiL6AJkXYuecqeC0n2g",
+      "url": "https://fdueblab.feishu.cn/wiki/UjpuwqHTTiL6AJkXYuecqeC0n2g",
+      "title": "账户设置",
+      "contentHash": "65ef1371cd5193db90a0662073fbb982ce184a8c994ce77b2791f39a5e74a8fd"
+    },
+    "guide/platform-intro.md": {
+      "group": "reference",
+      "nodeToken": "MyUTwgfrFithFdkHkYgc40LBn6p",
+      "url": "https://fdueblab.feishu.cn/wiki/MyUTwgfrFithFdkHkYgc40LBn6p",
+      "title": "平台介绍",
+      "contentHash": "1f7f5d3469c4b47b7d248910555106e7dfabec01be52cff24fe05da0e6ba15e4"
+    },
+    "guide/code-template.md": {
+      "group": "reference",
+      "nodeToken": "EoyEwN86aiUcbxk5jv1cUboPnOg",
+      "url": "https://fdueblab.feishu.cn/wiki/EoyEwN86aiUcbxk5jv1cUboPnOg",
+      "title": "算法代码提交要求",
+      "contentHash": "59a819a014a304a5dc1acc42070c4e501171f3f14b01d6853dde4a8373306aa1"
+    },
+    "faq.md": {
+      "group": "root",
+      "nodeToken": "Wr4UwyyKWiQdiGk5i6ccfTZDnL5",
+      "url": "https://fdueblab.feishu.cn/wiki/Wr4UwyyKWiQdiGk5i6ccfTZDnL5",
+      "title": "常见问题",
+      "contentHash": "d7781c547a1cff3d5fab1db2fa1cf39cba225a173128c4103160a5b90dd4ba7f"
+    }
+  }
+}
