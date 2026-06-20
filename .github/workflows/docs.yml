@@ -78,9 +78,6 @@ jobs:
           node-version: 20
           cache: npm
 
-      - run: npm ci --ignore-scripts
-        if: steps.feishu.outputs.enabled == 'true'
-
       - name: Sync docs to Feishu knowledge base
         if: steps.feishu.outputs.enabled == 'true'
         run: npm run docs:sync:feishu:strict
