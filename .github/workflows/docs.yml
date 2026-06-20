@@ -77,6 +77,11 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: docs/package.json
+
+      - name: Install docs tooling
+        if: steps.feishu.outputs.enabled == 'true'
+        run: npm --prefix docs install --ignore-scripts --package-lock=false
 
       - name: Sync docs to Feishu knowledge base
         if: steps.feishu.outputs.enabled == 'true'
