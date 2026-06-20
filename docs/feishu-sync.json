@@ -9,7 +9,9 @@
     "url": "https://fdueblab.feishu.cn/wiki/Gm6vwATzzixPkDkwgExcdM9mnOb"
   },
   "archive": {
-    "title": "同步归档"
+    "title": "同步归档",
+    "nodeToken": "Dt3lwOrmIiNxtekzqrtcVcyxn2e",
+    "url": "https://fdueblab.feishu.cn/wiki/Dt3lwOrmIiNxtekzqrtcVcyxn2e"
   },
   "fixedDocuments": [
     {
@@ -49,11 +51,12 @@
       "contentHash": "04e7ae10ba229b5da5b41e84ef65e2a91d08e0872307ef2de6401f7f9f417074"
     },
     "guide/register-profile-scenario-dev.md": {
+      "title": "从注册到算法模型想定式开发使用指南",
       "group": "core",
       "nodeToken": "O0Tcw21U2iSGYHki720c2eVlnGf",
+      "objToken": "GNAcdIJ2YovumoxsYYrcU0wkn0g",
       "url": "https://fdueblab.feishu.cn/wiki/O0Tcw21U2iSGYHki720c2eVlnGf",
-      "title": "从注册到算法模型想定式开发使用指南",
-      "contentHash": "pending-cos-resync"
+      "contentHash": "66559d4212ab135400d20167b79a119ee1d6a6fcd85a0dc1c87068f118fb02fb"
     },
     "guide/ai-resources-overview.md": {
       "group": "core",
@@ -91,12 +94,12 @@
       "contentHash": "1ff47856435e284124a37418e5e00eb509f18a78479654cec04cfd18259e7674"
     },
     "guide/meta-app-simulation.md": {
+      "title": "垂域元应用仿真构建",
       "group": "core",
       "nodeToken": "XRQuweAwSiiCXekAZe1crOlOnQf",
       "objToken": "VR3SdPV66os4OTxW4hAcF3dcncb",
       "url": "https://fdueblab.feishu.cn/wiki/XRQuweAwSiiCXekAZe1crOlOnQf",
-      "title": "垂域元应用仿真构建",
-      "contentHash": "pending-cos-resync"
+      "contentHash": "b96f4b4ca5da10497de6b5e91309a2d2c10e08f9d02c27a6cd1ddb8bcb222c25"
     },
     "guide/meta-app-validation.md": {
       "group": "core",
