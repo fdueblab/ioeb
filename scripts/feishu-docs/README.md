@@ -23,10 +23,17 @@ The docs workflow skips Feishu sync unless these secrets are configured:
 FEISHU_APP_ID
 FEISHU_APP_SECRET
 FEISHU_SPACE_ID
+FEISHU_USER_REFRESH_TOKEN
 ```
 
-The Feishu app must have tenant permissions for Wiki, Docs, and Drive import,
-and it must be able to edit the target knowledge base.
+When `FEISHU_USER_REFRESH_TOKEN` is present, CI refreshes it into a user access
+token and syncs as that user. This is the preferred path when the user already
+has edit access to the target Wiki space.
+
+When `FEISHU_USER_REFRESH_TOKEN` is absent, CI falls back to app identity
+(`tenant_access_token`). In that mode, the Feishu app must have tenant
+permissions for Wiki, Docs, and Drive import, and it must be able to edit the
+target knowledge base.
 
 There are two separate permission layers:
 

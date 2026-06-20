@@ -204,12 +204,34 @@ async function createFeishuClient(config) {
   const appId = process.env.FEISHU_APP_ID
   const appSecret = process.env.FEISHU_APP_SECRET
   const explicitToken = process.env.FEISHU_USER_ACCESS_TOKEN || process.env.FEISHU_ACCESS_TOKEN
+  const userRefreshToken = process.env.FEISHU_USER_REFRESH_TOKEN
 
-  if (!explicitToken && (!appId || !appSecret)) {
-    throw new Error('Missing Feishu credentials. Set FEISHU_APP_ID and FEISHU_APP_SECRET, or FEISHU_USER_ACCESS_TOKEN.')
+  if (!explicitToken && !userRefreshToken && (!appId || !appSecret)) {
+    throw new Error(
+      'Missing Feishu credentials. Set FEISHU_APP_ID and FEISHU_APP_SECRET, FEISHU_USER_REFRESH_TOKEN, or FEISHU_USER_ACCESS_TOKEN.'
+    )
   }
 
   let accessToken = explicitToken
+  if (!accessToken && userRefreshToken) {
+    if (!appId || !appSecret) {
+      throw new Error('FEISHU_USER_REFRESH_TOKEN requires FEISHU_APP_ID and FEISHU_APP_SECRET.')
+    }
+    const tokenResponse = await requestJson(config.larkDomain, '/open-apis/authen/v2/oauth/token', {
+      method: 'POST',
+      body: {
+        grant_type: 'refresh_token',
+        client_id: appId,
+        client_secret: appSecret,
+        refresh_token: userRefreshToken
+      }
+    })
+    accessToken = tokenResponse.access_token
+    if (!accessToken) {
+      throw new Error('Feishu OAuth refresh succeeded but access_token is missing.')
+    }
+  }
+
   if (!accessToken) {
     const tokenResponse = await requestJson(config.larkDomain, '/open-apis/auth/v3/tenant_access_token/internal', {
       method: 'POST',

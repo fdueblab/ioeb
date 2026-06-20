@@ -58,6 +58,7 @@ jobs:
       FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
       FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
       FEISHU_SPACE_ID: ${{ secrets.FEISHU_SPACE_ID }}
+      FEISHU_USER_REFRESH_TOKEN: ${{ secrets.FEISHU_USER_REFRESH_TOKEN }}
     steps:
       - name: Check Feishu secrets
         id: feishu
@@ -66,7 +67,7 @@ jobs:
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
             echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "Feishu secrets are not configured; skip knowledge base sync."
+            echo "Feishu app secrets are not configured; skip knowledge base sync."
           fi
 
       - uses: actions/checkout@v4
