@@ -28,6 +28,14 @@ FEISHU_SPACE_ID
 The Feishu app must have tenant permissions for Wiki, Docs, and Drive import,
 and it must be able to edit the target knowledge base.
 
+There are two separate permission layers:
+
+1. Open Platform API scopes on the app, for example `wiki:wiki` or
+   `wiki:node:create` for creating Wiki nodes.
+2. Document permission on the target Wiki space. Add the app/bot as a member or
+   collaborator of the Wiki space and grant edit permission. If this is missing,
+   the sync fails with Feishu error `131006`: `tenant needs edit permission`.
+
 ## Update Strategy
 
 The first stable implementation updates changed documents by importing a new
