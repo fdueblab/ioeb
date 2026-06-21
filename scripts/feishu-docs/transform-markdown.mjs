@@ -95,8 +95,7 @@ function transformVitePressContainers(markdown) {
       inContainer = true
       const label = containerLabels[open[1]]
       const title = open[2].trim()
-      out.push(`> **${label}${title ? `：${title}` : ''}**`)
-      out.push('>')
+      out.push(`**${label}${title ? `：${title}` : ''}**`)
       continue
     }
 
@@ -106,7 +105,7 @@ function transformVitePressContainers(markdown) {
       continue
     }
 
-    out.push(inContainer ? `> ${line}` : line)
+    out.push(line)
   }
 
   return out.join('\n')
