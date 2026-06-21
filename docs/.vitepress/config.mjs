@@ -107,6 +107,7 @@ export default defineConfig({
         {
           text: '核心功能',
           items: [
+            { text: '从注册到想定式开发', link: '/guide/register-profile-scenario-dev' },
             { text: '垂域AI资源总览', link: '/guide/ai-resources-overview' },
             { text: '垂域AI资源智能检索', link: '/guide/ai-resources-search' },
             { text: '原子微服务可视化解析发布', link: '/guide/microservice-publish' },

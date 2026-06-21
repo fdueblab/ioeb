@@ -4,6 +4,7 @@
 
 ## 核心功能
 
+- [从注册到想定式开发](/guide/register-profile-scenario-dev)
 - [垂域AI资源总览](/guide/ai-resources-overview)
 - [垂域AI资源智能检索](/guide/ai-resources-search)
 - [原子微服务可视化解析发布](/guide/microservice-publish)
