@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import {
   contentHash,
   extractTitle,
+  findImageRefs,
   findLocalImageRefs,
   markdownPathFromRoute,
   normalizeMarkdownForFeishu
@@ -16,6 +18,9 @@ const repoRoot = path.resolve(__dirname, '../..')
 const docsRoot = path.join(repoRoot, 'docs')
 const syncConfigPath = path.join(docsRoot, 'feishu-sync.json')
 const vitePressConfigPath = path.join(docsRoot, '.vitepress/config.mjs')
+const docsRequire = createRequire(path.join(docsRoot, 'package.json'))
+const textRenderer = 'drive-import-v1'
+const imageRenderer = 'docx-blocks-v1'
 
 const args = new Set(process.argv.slice(2))
 const dryRun = args.has('--dry-run')
@@ -100,13 +105,17 @@ async function loadLocalDocuments(config, desiredDocuments) {
     })
     const title = extractTitle(markdown, path.basename(desired.file, '.md'))
     const groupKey = desired.group || groupKeyForTitle(config, desired.groupTitle)
+    const imageRefs = findImageRefs(transformed, desired.file)
+    const renderer = imageRefs.length > 0 ? imageRenderer : textRenderer
     docs.push({
       ...desired,
       group: groupKey,
       title,
       markdown,
       transformed,
-      hash: contentHash(transformed),
+      renderer,
+      hash: contentHash(renderer === imageRenderer ? `${renderer}\n${transformed}` : transformed),
+      imageRefs,
       localImageRefs: findLocalImageRefs(markdown, desired.file)
     })
   }
@@ -130,6 +139,7 @@ function refreshConfigHashes(config, localDocs) {
       ...current,
       title: doc.title,
       group: doc.group,
+      renderer: doc.renderer,
       contentHash: doc.hash
     }
   }
@@ -164,7 +174,9 @@ async function applyPlan(client, config, plan) {
     const parentNodeToken = parentTokenFor(config, item.doc.group)
     console.log(`${item.action}: ${item.doc.file} -> ${item.doc.title}`)
 
-    const imported = await client.importMarkdown(item.doc.title, item.doc.transformed)
+    const imported = item.doc.renderer === imageRenderer
+      ? await client.createDocxFromMarkdown(item.doc.title, item.doc.transformed)
+      : await client.importMarkdown(item.doc.title, item.doc.transformed)
     const node = await client.moveDocToWiki({
       title: item.doc.title,
       objToken: imported.objToken,
@@ -183,6 +195,7 @@ async function applyPlan(client, config, plan) {
       nodeToken: node.node_token,
       objToken: node.obj_token || imported.objToken,
       url: node.url,
+      renderer: item.doc.renderer,
       contentHash: item.doc.hash
     }
   }
@@ -309,6 +322,31 @@ class FeishuClient {
     throw new Error(`Import timed out for ${title}`)
   }
 
+  async createDocxFromMarkdown(title, markdown) {
+    const { FeishuMarkdown } = await loadFeishuMarkdown()
+    const converter = new FeishuMarkdown({
+      appId: 'user-oauth',
+      appSecret: 'user-oauth',
+      baseUrl: this.domain,
+      timeout: 60000,
+      retryTimes: 5,
+      retryDelay: 1000
+    })
+
+    converter.client.getAccessToken = async () => this.accessToken
+    const result = await converter.convert(markdown, {
+      title,
+      imageBaseDir: docsRoot,
+      downloadImages: true,
+      mermaid: { enabled: false }
+    })
+
+    if (!result.documentId) {
+      throw new Error(`Docx block import succeeded but document ID is missing for ${title}`)
+    }
+    return { objToken: result.documentId, result }
+  }
+
   async moveDocToWiki({ title, objToken, parentNodeToken }) {
     const moved = await this.request(`/open-apis/wiki/v2/spaces/${this.spaceId}/nodes/move_docs_to_wiki`, {
       method: 'POST',
@@ -431,6 +469,17 @@ function printPlan(plan, localImageRefs) {
 
   if (localImageRefs.length > 0) {
     console.log(`Local image references detected: ${localImageRefs.length}`)
+  }
+}
+
+async function loadFeishuMarkdown() {
+  try {
+    const resolved = docsRequire.resolve('feishu-markdown')
+    return import(pathToFileURL(resolved).href)
+  } catch (error) {
+    throw new Error(
+      `Missing docs dependency feishu-markdown. Run "npm --prefix docs install --ignore-scripts --package-lock=false" before syncing. ${error.message}`
+    )
   }
 }
 

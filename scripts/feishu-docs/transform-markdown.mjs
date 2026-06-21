@@ -46,6 +46,10 @@ export function normalizeMarkdownForFeishu(markdown, relFile, options = {}) {
     return `${prefix}${joinUrl(imageBaseUrl, encodePath(resolved.replace(/^\/public\//, '')))}${suffix}`
   })
 
+  output = output.replace(/(!\[[^\]]*\]\()((?:https?:\/\/)[^)]+)(\))/g, (_, prefix, imageUrl, suffix) => {
+    return `${prefix}${encodeHttpUrlPath(imageUrl)}${suffix}`
+  })
+
   output = output.replace(/(?<!!)\[([^\]]+)\]\(([^)]+)\)/g, (_, text, target) => {
     return `[${text}](${normalizeLinkTarget(target, relFile, siteBaseUrl)})`
   })
@@ -54,17 +58,27 @@ export function normalizeMarkdownForFeishu(markdown, relFile, options = {}) {
 }
 
 export function findLocalImageRefs(markdown, relFile) {
+  return findImageRefs(markdown, relFile).flatMap(({ alt, url }) => {
+    if (/^(https?:|data:)/.test(url)) return []
+    return [{
+      alt,
+      url,
+      relFile,
+      normalizedPath: normalizeLocalImagePath(url, relFile)
+    }]
+  })
+}
+
+export function findImageRefs(markdown, relFile) {
   const refs = []
   const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g
   let match
   while ((match = imageRegex.exec(markdown))) {
     const [, alt, url] = match
-    if (/^(https?:|data:)/.test(url)) continue
     refs.push({
       alt,
       url,
-      relFile,
-      normalizedPath: normalizeLocalImagePath(url, relFile)
+      relFile
     })
   }
   return refs
@@ -133,4 +147,14 @@ function encodePath(value) {
     .split('/')
     .map((segment) => encodeURIComponent(decodeURIComponent(segment)))
     .join('/')
+}
+
+function encodeHttpUrlPath(value) {
+  try {
+    const parsed = new URL(value)
+    parsed.pathname = encodePath(parsed.pathname)
+    return parsed.toString()
+  } catch {
+    return value
+  }
 }
