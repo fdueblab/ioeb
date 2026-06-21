@@ -1,14 +1,17 @@
-# design_docs · 文档索引
+# design_docs · 仿真构建设计文档索引
 
-本目录放 **仿真构建 / 课题相关** 的设计与研究材料。  
-平台面向用户的说明、开发快开在仓库根目录的 **`docs/`**（VitePress 等），**不**与这里混放。
+更新：2026-06-21。本目录只放“元应用想定式仿真构建”相关设计与研究材料；平台用户指南仍在根目录 `docs/`，不在这里维护。
 
-| 文件 | 给谁看 | 写什么 | 不写什么 |
-|------|--------|--------|----------|
-| **`build-design4llm.md`** | LLM / 接后端与联调的工程 | HTTP/SSE 契约、路径、事件、前端分流与实现对齐；宜短、可执行 | 周历、论文操作口诀 |
-| **`simulation-build-design.md`** | 你自用 · **设计与实现** | 产品机制、线框、领域在 Micro-Agent Skill 的落点、工程说明（可含路径）；契约处 **指向** 4llm | 不与 4llm 重复维护两套 API 字段表 |
-| **`research-guide-execution-traces-to-mcp-apps.md`** | 你自用 · **研究执行** | 傻瓜步骤、目的、周历、论文结构；指向契约而非抄实现 | 文件级实现地图（已迁出） |
+| 文件 | 用途 | 当前状态 |
+| --- | --- | --- |
+| `build-design4llm.md` | 给 LLM/工程协作者看的当前接口契约和文件定位 | 与 MicroAgent `lyx` 分支当前 API 对齐 |
+| `simulation-build-design.md` | 设计机制、对象边界、前端临时展示与真实链路说明 | 只描述当前真实实现，不再沿用旧 CoW/ArtifactSpec 叙述 |
+| `research-guide-execution-traces-to-mcp-apps.md` | 轨迹固化与复用研究执行指南 | 按当前 BuildBundle/MetaAppArtifact/experiment runner 重写 |
 
-**约定**：改「协议/接口/事件」→ 只改 **`build-design4llm.md`**；改「产品长文、为什么这样设计、代码放哪」→ **`simulation-build-design.md`**；改「这周干什么、验收心里有没有数」→ **研究 guide**。
+维护约定：
 
-如需把 **`docs/dev/`** 里某篇仿真专题也并入本目录，可以单独迁文件并全仓替换链接。
+- 改 HTTP/SSE/API 字段：先改 `build-design4llm.md`。
+- 改机制解释、对象分层、前端展示策略：改 `simulation-build-design.md`。
+- 改实验任务、baseline、论文计划：改 `research-guide-execution-traces-to-mcp-apps.md`。
+- 不在这些文档里描述 ioeb_backend 已支持 artifact 入库；当前没有。
+- 不把 ioeb 进程内 mock 的旧演示数据当成真实构建能力。

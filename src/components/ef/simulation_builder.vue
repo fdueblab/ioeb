@@ -578,7 +578,7 @@
                     <span class="evidence-id">{{ artifactView.artifactId }}</span>
                   </div>
                 </div>
-                <!-- 六道 gate -->
+                <!-- 旧演示 artifact 可能带 solidificationReport；真实 MetaAppArtifact v1 不包含该字段 -->
                 <div class="detail-subsection" v-if="detailArtifact.data.solidificationReport && detailArtifact.data.solidificationReport.gates">
                   <div class="detail-subtitle">质量检查</div>
                   <div class="gate-list">
@@ -1632,7 +1632,7 @@ export default {
             data: null
           }
         }
-        // 加载 ArtifactSpec
+        // 加载 MetaAppArtifact v1（真实链路来自 BuildBundle；演示 mock 可能是旧形状）
         this.detailArtifact = { loading: true, skipped: false, error: null, data: null }
         try {
           const artifact = await fetchSimulationArtifact(this.sessionId)
@@ -3625,7 +3625,7 @@ export default {
   }
 }
 
-// ArtifactSpec 门禁列表
+// 旧演示 artifact 的门禁列表；真实 MetaAppArtifact v1 不依赖 gate
 .gate-list {
   display: flex;
   flex-direction: column;

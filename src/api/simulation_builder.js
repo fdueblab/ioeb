@@ -73,7 +73,7 @@ function createMemorySimulationBuildClient() {
   }
 }
 
-/** HTTP + SSE 实现（走 ioeb 网关 API） */
+/** HTTP + SSE 实现（直连 Micro-Agent；不经过 ioeb_backend） */
 function createHttpSimulationBuildClient() {
   return {
     startSimulation(payload) {
@@ -215,7 +215,7 @@ export function fetchSimulationTrace(sessionId) {
   })
 }
 
-/** 对轨迹跑 trace_evidence 管道，返回证据摘要 */
+/** 读取 Micro-Agent 从 BuildBundle 派生的 evidence summary，不运行旧 trace_evidence 管道 */
 export function fetchSimulationEvidence(sessionId) {
   return request({
     url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/evidence`,

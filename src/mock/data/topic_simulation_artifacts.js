@@ -1,6 +1,6 @@
 /**
- * 课题 inmemory 仿真：合成 trace / evidence / artifact（ArtifactSpec v0.3）
- * 字段与 Micro-Agent artifact_compiler / orchestrator SSE 对齐。
+ * 课题 inmemory 仿真：合成 trace / evidence / legacy demo artifact。
+ * 该路径只用于前端演示，不代表 Micro-Agent 真实 MetaAppArtifact v1 主链路。
  */
 
 import { resolveTopicScenarioKeyByAppName } from './topic_scenario_intake'
