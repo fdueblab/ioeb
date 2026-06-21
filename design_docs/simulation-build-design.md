@@ -31,7 +31,7 @@ MetaAppArtifact        最小可运行元应用产物
 ExperimentRun          本地科研实验结果
 ```
 
-最终 `MetaAppArtifact` 不包含 trace、service selection、accepted trajectory、verifier refs、experiment result、产物哈希反向引用。
+最终 `MetaAppArtifact` 是最小运行闭包，只保留 `app`、`taskContract`、`runtime`、`goldenPaths` 四类运行必需信息；不包含 trace、service selection、accepted trajectory、verifier refs、experiment result、产物哈希反向引用。完整详情入口展示的是 BuildBundle 视图，不等于把这些中间数据写进 artifact。
 
 ## 三、当前真实流程
 
@@ -62,6 +62,8 @@ ioeb start
 ### Verifier
 
 构建期 Verifier 是最终裁判。只有最终 PASSED iteration 的业务 tool call 会进入 AcceptedTrajectory；失败尝试留在 BuildTrace 中。
+
+当前 Verifier 的通过条件是“任务目标、关键服务、数据流和调用顺序看起来成立”，不是“轨迹已经最短/最优”。因此 AcceptedTrajectory 表示被接受的成功主干，不等价于优化后的主干；无效重复调用、参数试错、discover/schema 探索等剪枝应在后续 `OptimizedTrajectory`/GoldenPath 编译阶段处理，而不应由前端展示层伪装成已优化。
 
 ### GoldenPath
 
@@ -101,6 +103,7 @@ ioeb 中仍保留“课题”进程内 mock 路线；它用于演示，不代表
 - 批量 source-target reuse benchmark。
 - 完整 token/cost/LLM call metrics。
 - 强数据流依赖归纳与可执行 L2 断言。
+- 成功轨迹优化：剪掉无效重复调用、失败试错、无产出的 schema/discover 探索，并保留必要证据链。
 - 多 GoldenPath 管理策略。
 
 ## 七、研究目标
@@ -115,6 +118,7 @@ ioeb 中仍保留“课题”进程内 mock 路线；它用于演示，不代表
 小论文优先聚焦“轨迹固化、复用、优化”：
 
 - 从成功 ReAct 轨迹固化为 verified executable artifact。
+- 在固化前识别并压缩无效重复调用和试错片段，比较 raw accepted trajectory 与 optimized trajectory 的调用数、延迟和成功率。
 - 对比 no reuse、raw trace prompt、workflow memory、golden path。
 - 指标包括成功率、延迟、成本、MCP 调用数、fallback 率、Verifier 通过率和错误类型。
 
@@ -124,7 +128,8 @@ ioeb 中仍保留“课题”进程内 mock 路线；它用于演示，不代表
 2. 批量跑四个 baseline，输出 JSONL/CSV。
 3. 构造 GoldenPath 失败用例，验证 fallback 慢模式。
 4. 增强 BindingPlan 与 L2 数据流断言。
-5. 等 ioeb_backend 阶段再设计正式持久化。
+5. 增加轨迹优化编译阶段，先处理重复调用、失败试错和无效 discover/schema 探索。
+6. 等 ioeb_backend 阶段再设计正式持久化。
 
 ## 九、代码定位
 

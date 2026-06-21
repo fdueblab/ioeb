@@ -69,7 +69,8 @@
               <a-tag v-if="c.channelLabel" size="small">{{ c.channelLabel }}</a-tag>
             </div>
             <p class="wb-artifact-contract-detail">
-              <template v-if="c.uncalled">本次未调用</template>
+              <template v-if="c.boundOnly">已绑定 · 等待运行期调用</template>
+              <template v-else-if="c.uncalled">本次未调用</template>
               <template v-else>调用 {{ c.totalCalls }} 次 · 成功率 {{ c.successRate }}</template>
             </p>
             <p v-if="c.declaredToolNames.length" class="wb-artifact-contract-detail">
@@ -209,6 +210,7 @@ export default {
             successRate: c.successRate || '—',
             declaredToolNames: c.declaredToolNames || [],
             observedSummaries: c.observedSummaries || [],
+            boundOnly: !!c.boundOnly,
             uncalled: !!c.uncalled
           }
         })

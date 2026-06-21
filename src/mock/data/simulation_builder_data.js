@@ -27,11 +27,11 @@
 // 策略默认值（与前端研究面板、POST body.strategy 对齐；生产模式请求体可不带 strategy）
 // ---------------------------------------------------------------------------
 export const SIMULATION_BUILD_DEFAULT_STRATEGY = {
-  sandbox: 'cow',
+  sandbox: 'auto',
   planning: 'llm_autonomous',
   verification: 'multi_agent',
   repair: 'llm_repair',
-  solidify: 'golden_trace'
+  solidify: 'golden_path'
 }
 
 /** 与主步骤条文案一致；当前由 inmemory 里硬编码 step name，本数组供扩展或文档同步 */
@@ -46,18 +46,18 @@ export const SIMULATION_BUILD_STEP_NAMES = [
 // 步骤 1「环境准备」：与前端 envSetupItems 一一对应；顺序即 emit progress 的顺序
 // ---------------------------------------------------------------------------
 export const SIMULATION_BUILD_ENV_TASKS = [
-  '初始化沙箱环境',
-  '配置写操作拦截',
-  '加载拟真数据集'
+  '初始化构建会话',
+  '加载课题服务契约',
+  '准备结构化想定上下文'
 ]
 
 // ---------------------------------------------------------------------------
 // 步骤 4「方案生成」：与前端 generationItems 一一对应
 // ---------------------------------------------------------------------------
 export const SIMULATION_BUILD_GEN_TASKS = [
-  '存储执行方案',
-  '生成配置文件',
-  '保存验证报告'
+  '汇总 BuildTrace 轨迹',
+  '编译 MetaAppArtifact v1',
+  '准备预发布配置摘要'
 ]
 
 // ---------------------------------------------------------------------------

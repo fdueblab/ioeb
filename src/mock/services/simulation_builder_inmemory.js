@@ -26,6 +26,7 @@ import {
   simulationBuildModuleMetrics,
   simulationBuildMockEnhancementRecord
 } from '@/mock/data/simulation_builder_data'
+import { buildTopicServiceSelectionReport } from '@/mock/data/topic_simulation_artifacts'
 
 const sessions = new Map()
 let idSeq = 0
@@ -66,10 +67,32 @@ function truncateForLog(text, max = 220) {
   return s.length <= max ? s : `${s.slice(0, max)}…`
 }
 
+function sanitizeId(text, maxLen = 128) {
+  const ident = String(text || 'srv')
+    .replace(/[^A-Za-z0-9_-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+  return (ident || 'srv').slice(0, maxLen)
+}
+
 function demoToolName(svc) {
-  const tools = svc.tools || []
-  const t = tools.find((x) => x.name && x.name !== 'healthCheck') || tools[0]
-  return (t && t.name) || 'invoke'
+  return `${sanitizeId(svc.id || svc.name)}_execute`
+}
+
+function buildScenarioParsed(body) {
+  const sp = body.scenarioParsed || {}
+  return {
+    goal: sp.goal || body.appName || '课题元应用构建',
+    description: sp.description || body.scenarioDescription || '',
+    constraints: Array.isArray(sp.constraints) ? [...sp.constraints] : [],
+    acceptanceCriteria: Array.isArray(sp.acceptanceCriteria) ? [...sp.acceptanceCriteria] : [],
+    domain: sp.domain || body.domain || 'generic',
+    source: sp.source || {
+      parserModel: 'scenario-intake-agent-v1',
+      parsedAt: new Date().toISOString()
+    },
+    scenarioKey: sp.scenarioKey || sp.demoScenarioKey
+  }
 }
 
 function buildPlannerPayload(iteration, servicesMeta) {
@@ -78,13 +101,13 @@ function buildPlannerPayload(iteration, servicesMeta) {
     const toolName = demoToolName(svc)
     const latency = 120 + idx * 35
     return {
-      call_id: `call-mock-${iteration}-${idx}`,
+      call_id: `call-topic-${iteration}-${idx}`,
       tool: toolName,
       service: svc.name,
-      channel: 'sandbox',
-      transport: 'in_process',
-      arguments: { demo: true, iteration },
-      result_preview: `演示调用成功 · ${svc.name}`,
+      channel: 'real_mcp',
+      transport: 'sse',
+      arguments: { iteration, taskRef: `iter-${iteration}-service-${idx + 1}` },
+      result_preview: `调用成功 · ${svc.name}`,
       error: null,
       latency_ms: latency,
       success: true,
@@ -105,13 +128,17 @@ function buildPlannerPayload(iteration, servicesMeta) {
 }
 
 function buildVerifierPayload(iteration, status, plannerPayload, servicesMeta) {
-  const evidenceRefs = servicesMeta.map((_, idx) => `call-mock-${iteration}-${idx}`)
+  const evidenceRefs = servicesMeta.map((_, idx) => `call-topic-${iteration}-${idx}`)
   const failed = status === 'FAILED'
-  const issueText = failed ? '服务调用顺序可进一步压缩，存在冗余往返' : ''
+  const issueText = failed
+    ? '首轮轨迹中服务覆盖已完成，但报告生成阶段对上游风险识别和安全评测结果的引用不够明确，审计证据链仍需补强。'
+    : ''
   return {
     iteration,
     status,
-    summary: failed ? '链路存在可优化项' : '链路检视通过，调度方案可固化',
+    summary: failed
+      ? '审查未通过：当前轨迹可以证明服务已被调用，但数据流说明不足，最终报告的输入依赖没有完整落到可复核证据。'
+      : '审查通过：最终轮服务覆盖完整，关键输出已进入下游报告生成，调用顺序和场景验收标准一致，可生成最小 MetaAppArtifact。',
     reason: issueText,
     checks: [
       {
@@ -151,6 +178,7 @@ function start(body) {
   return {
     success: true,
     sessionId,
+    buildId: sessionId,
     streamUrl: `/api/simulation/${sessionId}/stream`
   }
 }
@@ -229,6 +257,10 @@ async function runStream(sessionId, emit) {
   try {
     session.enhancements = []
 
+    const scenarioParsed = buildScenarioParsed(body)
+    emit('scenario_parsed', scenarioParsed)
+    pushLog('INFO', `场景解析完成: ${scenarioParsed.goal}`)
+
     emit('step', { step: 0, name: '服务匹配' })
     pushLog('INFO', '开始服务匹配')
     const enScenario = simulationBuildMockEnhancementRecord(
@@ -253,6 +285,13 @@ async function runStream(sessionId, emit) {
       })
       pushLog('SUCCESS', `${svc.name} 连接正常 (${latency}ms)`)
     }
+    const serviceSelection = buildTopicServiceSelectionReport({
+      sessionId,
+      appName: body.appName,
+      servicesMeta
+    })
+    emit('service_selection', serviceSelection)
+    pushLog('INFO', `服务选择完成: ${serviceSelection.selectedServices.length} 个服务进入构建主干`)
     pushLog('SUCCESS', '服务匹配完成')
 
     checkCancel()
@@ -353,12 +392,12 @@ async function runStream(sessionId, emit) {
 
       if (iteration < demoRounds) {
         const verifierFailed = buildVerifierPayload(iteration, 'FAILED', plannerPayload, servicesMeta)
-        pushLog('WARN', '链路检视: 发现可优化项，进入下一轮自动修复')
+        pushLog('WARN', '链路检视: 数据流说明不足，进入下一轮自动修复')
         emit('planner_decision', plannerPayload)
         emit('issue', {
           iteration,
           message: verifierFailed.reason,
-          fix: '重新规划调度顺序，压缩冗余服务往返',
+          fix: '保留服务主干，补充上游输出引用和报告证据字段',
           plannerDecision: plannerPayload,
           phase: 'verification'
         })
@@ -416,15 +455,18 @@ async function runStream(sessionId, emit) {
       pushLog('INFO', text)
     }
 
-    const executionPath = ['用户输入', ...servicesMeta.map((s) => s.name), '输出结果']
+    const executionPath = ['用户输入', ...servicesMeta.map((s) => `${s.name} · ${demoToolName(s)}`), '输出结果']
     const successResult = {
       success: true,
       executionPath,
       strategy,
       scenarioDescription: body.scenarioDescription,
+      scenarioParsed,
       appName: body.appName,
       domain: body.domain,
-      enhancements: session.enhancements || []
+      enhancements: session.enhancements || [],
+      elapsedMs,
+      buildId: sessionId
     }
 
     session.result = successResult
@@ -433,6 +475,7 @@ async function runStream(sessionId, emit) {
 
     emit('complete', {
       success: true,
+      buildId: sessionId,
       metrics,
       result: successResult
     })

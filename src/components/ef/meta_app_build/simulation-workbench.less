@@ -887,10 +887,7 @@
 }
 
 .wb-iter-block-body {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 8px;
+  display: block;
 }
 
 .wb-iter-block-text {
@@ -899,6 +896,14 @@
   line-height: 1.55;
   color: #595959;
   word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.wb-iter-verify-main {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .wb-path-chain {
@@ -1392,6 +1397,7 @@
   font-size: 12px;
   color: #666;
   line-height: 1.55;
+  word-break: break-word;
 
   li + li {
     margin-top: 4px;

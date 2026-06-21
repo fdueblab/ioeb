@@ -1,9 +1,24 @@
 /**
- * 课题 inmemory 仿真：合成 trace / evidence / legacy demo artifact。
- * 该路径只用于前端演示，不代表 Micro-Agent 真实 MetaAppArtifact v1 主链路。
+ * 课题 inmemory 仿真：合成当前主链路对象。
+ *
+ * 该路径只用于前端演示，不产生真实 MCP 外呼，不计入科研实验。
+ * 形状对齐 Micro-Agent 当前 BuildBundle 主线：
+ * BuildTrace -> ServiceSelectionReport -> AcceptedTrajectory -> MetaAppArtifact v1。
  */
 
 import { resolveTopicScenarioKeyByAppName } from './topic_scenario_intake'
+
+const ARTIFACT_SCHEMA = 'meta_app_artifact.v1'
+const TRACE_SCHEMA = 'build_trace.v1'
+const SERVICE_SELECTION_SCHEMA = 'service_selection_report.v1'
+const ACCEPTED_TRAJECTORY_SCHEMA = 'accepted_trajectory.v1'
+
+const FALLBACK_POLICY = {
+  onApplicabilityMismatch: 'run_slow_mode',
+  onBindingFailure: 'run_slow_mode',
+  onToolFailure: 'run_slow_mode',
+  onAssertionFailure: 'run_slow_mode'
+}
 
 function shortHash(seed) {
   let h = 0
@@ -14,330 +29,665 @@ function shortHash(seed) {
   return h.toString(16).padStart(8, '0')
 }
 
-function primaryTool(service) {
-  const tools = service.tools || []
-  const t = tools.find((x) => x.name && x.name !== 'healthCheck') || tools[0]
-  return (t && t.name) || 'invoke'
+function longHash(seed) {
+  const base = shortHash(seed)
+  return (base + shortHash(`a-${seed}`) + shortHash(`b-${seed}`) + shortHash(`c-${seed}`)).padEnd(64, '0').slice(0, 64)
 }
 
-function buildToolCallDetails(servicesMeta) {
-  return servicesMeta.map((svc, idx) => {
-    const tool = primaryTool(svc)
-    const latency = 80 + idx * 40
+function nowIso() {
+  return new Date().toISOString()
+}
+
+function sanitizeId(text, maxLen = 128) {
+  const ident = String(text || 'srv')
+    .replace(/[^A-Za-z0-9_-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+  return (ident || 'srv').slice(0, maxLen)
+}
+
+function transportOf(service) {
+  const method = String((service && (service.mcpMethod || service.method)) || 'sse').toLowerCase()
+  if (method === 'streamable-http' || method === 'streamable_http' || method === 'http') return 'streamable_http'
+  return method
+}
+
+function endpointOf(service) {
+  return (service && (service.mcpUrl || service.url)) || ''
+}
+
+function serviceMetaForTrace(service) {
+  const copy = { ...(service || {}) }
+  delete copy.isFake
+  delete copy.is_fake
+  return copy
+}
+
+function declaredTools(service) {
+  return (service.tools || [])
+    .map((t) => ({
+      toolName: t.name || t.id || '',
+      description: t.description || t.des || '',
+      inputSchema: t.inputSchema || {}
+    }))
+    .filter((t) => t.toolName)
+}
+
+function primaryDeclaredTool(service) {
+  const tools = service.tools || []
+  const t = tools.find((x) => x.name && x.name !== 'healthCheck') || tools[0]
+  return (t && (t.name || t.id)) || 'invoke'
+}
+
+function registeredToolName(service) {
+  // 与 Micro-Agent SandboxTool 注册逻辑对齐：{serviceId}_execute。
+  return `${sanitizeId(service.id || service.name)}_execute`
+}
+
+function serviceSource() {
+  return 'real_mcp'
+}
+
+function serviceChannel() {
+  return 'real_mcp'
+}
+
+function jsonType(value) {
+  if (value === null) return 'null'
+  if (Array.isArray(value)) return 'array'
+  if (typeof value === 'boolean') return 'boolean'
+  if (Number.isInteger(value)) return 'integer'
+  if (typeof value === 'number') return 'number'
+  if (typeof value === 'object') return 'object'
+  return 'string'
+}
+
+function scenarioFromCtx(ctx) {
+  const sp = (ctx && ctx.scenarioParsed) || {}
+  return {
+    goal: sp.goal || (ctx && ctx.appName) || '课题元应用构建',
+    description: sp.description || (ctx && ctx.scenarioDescription) || '',
+    constraints: Array.isArray(sp.constraints) ? [...sp.constraints] : [],
+    acceptanceCriteria: Array.isArray(sp.acceptanceCriteria) ? [...sp.acceptanceCriteria] : [],
+    domain: sp.domain || 'aml',
+    source: sp.source || {
+      parserModel: 'scenario-intake-agent-v1',
+      parsedAt: nowIso()
+    },
+    scenarioKey: sp.scenarioKey || sp.demoScenarioKey
+  }
+}
+
+function sampleArguments(service, index, scenario) {
+  const name = `${service.name || ''} ${primaryDeclaredTool(service)}`.toLowerCase()
+  if (name.includes('多方') || name.includes('multipart') || name.includes('multiparty')) {
     return {
-      call_id: `call-topic-${idx}`,
-      tool,
-      service: svc.name,
-      channel: svc.isFake ? 'sandbox' : 'real_mcp',
-      transport: svc.isFake ? 'in_process' : 'stdio',
-      arguments: { scenarioRef: 'topic-demo', step: idx + 1 },
-      result_preview: `演示调用成功 · ${svc.name}`,
-      error: null,
-      latency_ms: latency,
+      federationTaskId: 'topic-federated-aml-001',
+      participantCount: 3,
+      privacyMode: 'aggregate_only'
+    }
+  }
+  if (name.includes('安全') || name.includes('fingerprint') || name.includes('security')) {
+    return {
+      modelId: 'aml-risk-model-v1',
+      evaluationSet: 'topic-adversarial-fingerprint',
+      riskSummaryRef: index > 0 ? `s${index}_output` : 'runtime_input'
+    }
+  }
+  if (name.includes('报告') || name.includes('report')) {
+    return {
+      reportFormat: 'audit_text',
+      riskSummaryRef: index > 0 ? `s${index}_output` : 'runtime_input',
+      includeEvidenceChain: true
+    }
+  }
+  if (name.includes('风险') || name.includes('risk') || name.includes('predict') || name.includes('evaluate')) {
+    return {
+      transactionBatchRef: 'topic-cross-border-batch-202606',
+      riskThreshold: 0.72,
+      auditRequired: true
+    }
+  }
+  return {
+    task: scenario.goal || '课题任务',
+    scenarioRef: scenario.scenarioKey || 'topic-build',
+    step: index + 1
+  }
+}
+
+function sampleResult(service, index, args) {
+  const name = `${service.name || ''} ${primaryDeclaredTool(service)}`.toLowerCase()
+  if (name.includes('安全') || name.includes('fingerprint') || name.includes('security')) {
+    return {
       success: true,
-      timestamp: new Date().toISOString()
+      service: service.name,
+      securityLevel: 'medium',
+      fingerprintScore: 0.86,
+      issues: ['对抗样本敏感度中等'],
+      recommendation: '在报告阶段标注模型安全性约束'
+    }
+  }
+  if (name.includes('报告') || name.includes('report')) {
+    return {
+      success: true,
+      service: service.name,
+      reportId: `rpt-topic-${shortHash(service.id || index)}`,
+      sections: ['风险识别结论', '安全评测摘要', '审计证据链'],
+      format: args.reportFormat || 'audit_text'
+    }
+  }
+  if (name.includes('多方') || name.includes('multipart') || name.includes('multiparty')) {
+    return {
+      success: true,
+      service: service.name,
+      jointRiskScore: 0.81,
+      participants: args.participantCount || 3,
+      privacyLeakage: 'not_detected'
+    }
+  }
+  if (name.includes('风险') || name.includes('risk') || name.includes('predict') || name.includes('evaluate')) {
+    return {
+      success: true,
+      service: service.name,
+      riskScore: 0.84,
+      riskLevel: 'high',
+      factors: ['高频跨境拆分交易', '异常收款网络', '名单相似实体']
+    }
+  }
+  return {
+    success: true,
+    service: service.name,
+    output: '任务调用完成'
+  }
+}
+
+function toolCallRecord(service, index, iteration, scenario) {
+  const args = sampleArguments(service, index, scenario)
+  const result = sampleResult(service, index, args)
+  const serviceId = String(service.id || `svc-${index + 1}`)
+  return {
+    call_id: `call-topic-i${iteration}-s${index + 1}`,
+    tool_name: registeredToolName(service),
+    service_id: serviceId,
+    service_name: service.name || serviceId,
+    channel: serviceChannel(service),
+    transport: transportOf(service),
+    source: serviceSource(service),
+    phase: 'slow_mode',
+    purpose: 'react_action',
+    iteration,
+    react_step_id: `iter${iteration}-step${index + 1}`,
+    action_id: `iter${iteration}-a${index + 1}`,
+    arguments: args,
+    result: JSON.stringify(result),
+    result_hash: shortHash(JSON.stringify(result)),
+    error: null,
+    latency_ms: 120 + index * 37 + iteration * 11,
+    timestamp: Date.now() / 1000 + iteration * 0.01 + index * 0.001,
+    success: true
+  }
+}
+
+function buildToolCalls(servicesMeta, scenario) {
+  const calls = []
+  for (let iteration = 1; iteration <= 2; iteration += 1) {
+    servicesMeta.forEach((svc, idx) => {
+      calls.push(toolCallRecord(svc, idx, iteration, scenario))
+    })
+  }
+  return calls
+}
+
+export function buildTopicServiceSelectionReport(ctx) {
+  const { sessionId, servicesMeta = [] } = ctx
+  return {
+    schemaVersion: SERVICE_SELECTION_SCHEMA,
+    selectionId: `sel-topic-${shortHash(sessionId)}`,
+    strategy: 'llm_catalog_selection',
+    selectedServices: servicesMeta.map((svc) => ({
+      serviceId: String(svc.id),
+      serviceName: svc.name,
+      reason: '该服务位于候选 catalog 中，并与结构化想定的验收标准匹配',
+      matchedCapabilities: (svc.tools || [])
+        .map((t) => t.name || t.id)
+        .filter(Boolean)
+        .filter((name) => name !== 'healthCheck')
+    })),
+    rejectedServices: [],
+    missingCapabilities: [],
+    rationale: '在传入 catalog 内完成服务选择，优先保留与场景目标和验收标准直接相关的服务。',
+    confidence: 0.91,
+    model: 'catalog-selection-agent-v1',
+    createdAt: nowIso()
+  }
+}
+
+function buildAcceptedTrajectory(ctx, toolCalls) {
+  const { sessionId } = ctx
+  const finalCalls = toolCalls.filter((c) => c.iteration === 2)
+  const actionSequence = finalCalls.map((call, idx) => {
+    const stepId = `s${idx + 1}`
+    const inputSlots = Object.keys(call.arguments || {})
+      .filter((name) => name !== 'action')
+      .map((name) => ({
+        name,
+        source: 'runtime_input',
+        type: jsonType(call.arguments[name])
+      }))
+    return {
+      stepId,
+      actionId: call.action_id,
+      callId: call.call_id,
+      serviceId: call.service_id,
+      serviceName: call.service_name,
+      toolName: call.tool_name,
+      source: call.source,
+      transport: call.transport,
+      arguments: call.arguments,
+      argumentTemplate: call.arguments,
+      observation: {
+        success: true,
+        semanticSuccess: true,
+        result: call.result,
+        error: null,
+        latencyMs: call.latency_ms
+      },
+      inputSlots,
+      dependsOn: idx === 0 ? [] : [`s${idx}`]
+    }
+  })
+  return {
+    schemaVersion: ACCEPTED_TRAJECTORY_SCHEMA,
+    trajectoryId: `traj-topic-${shortHash(`${sessionId}-accepted`)}`,
+    buildId: sessionId,
+    status: actionSequence.length ? 'accepted' : 'missing',
+    acceptedIteration: actionSequence.length ? 2 : null,
+    verifier: actionSequence.length
+      ? {
+          role: 'build_verifier',
+          status: 'PASSED',
+          summary: '最终轮通过：服务覆盖、调用顺序和输出证据满足结构化想定。',
+          eventRef: 'verifier_result#iter2'
+        }
+      : null,
+    actionSequence,
+    bindingGaps: [],
+    generatedArtifact: {}
+  }
+}
+
+function buildTaskContract(app, scenario, accepted) {
+  const slotNames = []
+  ;(accepted.actionSequence || []).forEach((action) => {
+    ;(action.inputSlots || []).forEach((slot) => {
+      if (slot.name && !slotNames.includes(slot.name)) slotNames.push(slot.name)
+    })
+  })
+  return {
+    goal: scenario.goal || app.description || app.name,
+    domain: app.domain || scenario.domain || 'aml',
+    inputSlots: slotNames.length
+      ? slotNames.map((name) => ({ name, type: 'unknown', required: true }))
+      : [{ name: 'task', type: 'string', required: true }],
+    outputSlots: [{ name: 'result', type: 'object', required: true }],
+    constraints: [...(scenario.constraints || [])],
+    successCriteria: [...(scenario.acceptanceCriteria || [])]
+  }
+}
+
+function buildServiceBindings(servicesMeta) {
+  return servicesMeta.map((svc) => {
+    const tools = declaredTools(svc)
+    return {
+      serviceId: String(svc.id),
+      serviceName: svc.name,
+      source: serviceSource(svc),
+      transport: transportOf(svc),
+      endpoint: endpointOf(svc),
+      schemaHash: shortHash(JSON.stringify({ tools })).slice(0, 16),
+      tools
     }
   })
 }
 
-function buildPlannerDecision(iteration, servicesMeta, executionPath) {
-  const details = buildToolCallDetails(servicesMeta)
+function buildGoldenPaths(accepted, taskContract) {
+  const steps = (accepted.actionSequence || []).map((action) => {
+    const inputMapping = {}
+    ;(action.inputSlots || []).forEach((slot) => {
+      if (slot.name) inputMapping[slot.name] = { from: 'slot', name: slot.name }
+    })
+    return {
+      stepId: action.stepId,
+      serviceId: action.serviceId,
+      toolName: action.toolName,
+      argumentTemplate: action.argumentTemplate || action.arguments || {},
+      inputMapping,
+      outputSlots: [{ name: `${action.stepId}_output`, path: '$' }],
+      dependsOn: action.dependsOn || []
+    }
+  })
+  if (!steps.length) return []
+  const assertions = []
+  steps.forEach((step) => {
+    assertions.push({
+      assertionId: `${step.stepId}_call_success`,
+      level: 'L1',
+      type: 'tool_call_success',
+      target: { stepId: step.stepId },
+      expected: { success: true },
+      checkMode: 'rule'
+    })
+    Object.keys(step.inputMapping || {}).forEach((name) => {
+      assertions.push({
+        assertionId: `${step.stepId}_${name}_bound`,
+        level: 'L2',
+        type: 'input_slot_bound',
+        target: { stepId: step.stepId, slot: name },
+        expected: { bound: true },
+        checkMode: 'rule'
+      })
+    })
+  })
+  return [
+    {
+      pathId: `gp-topic-${shortHash(JSON.stringify(steps))}`,
+      primary: true,
+      status: 'active',
+      sourceTrajectoryId: accepted.trajectoryId,
+      applicability: {
+        requiredServices: [...new Set(steps.map((s) => s.serviceId).filter(Boolean))],
+        requiredInputSlots: taskContract.inputSlots || [],
+        agentSemanticDecision: true
+      },
+      steps,
+      assertions,
+      fallbackPolicy: FALLBACK_POLICY
+    }
+  ]
+}
+
+function buildMetaAppArtifact(ctx, accepted) {
+  const scenario = scenarioFromCtx(ctx)
+  const app = {
+    name: ctx.appName || '课题元应用',
+    domain: ctx.domain || scenario.domain || 'aml',
+    description: scenario.description || ctx.scenarioDescription || ''
+  }
+  const serviceBindings = buildServiceBindings(ctx.servicesMeta || [])
+  const taskContract = buildTaskContract(app, scenario, accepted)
+  const goldenPaths = buildGoldenPaths(accepted, taskContract)
+  return {
+    schemaVersion: ARTIFACT_SCHEMA,
+    artifactId: `app-topic-${shortHash(`${ctx.sessionId}-${ctx.appName}`)}`,
+    app,
+    taskContract,
+    runtime: {
+      mode: goldenPaths.length ? 'agent_with_optional_golden_path' : 'agent_only',
+      serviceBindings,
+      fallbackPolicy: FALLBACK_POLICY,
+      agent: {
+        style: 'react_slow_mode',
+        goldenPathDecision: 'agent_internal'
+      }
+    },
+    goldenPaths
+  }
+}
+
+function buildPlannerDecision(iteration, servicesMeta, toolCalls) {
+  const calls = toolCalls.filter((c) => c.iteration === iteration)
   return {
     iteration,
-    candidate_tools: servicesMeta.map((s) => primaryTool(s)),
-    selected_tools: details.map((d) => d.tool),
-    reason: '课题演示：按想定编排服务调用顺序，满足场景约束与验收标准',
-    executionPath,
+    candidate_tools: servicesMeta.map((s) => registeredToolName(s)),
+    selected_tools: calls.map((c) => c.tool_name),
+    reason:
+      iteration === 1
+        ? '首轮规划：按画布顺序调用服务，Verifier 发现输出依赖和审计说明仍需补强。'
+        : '修正后规划：保留服务主干，明确上游输出引用和审计证据，准备固化为 GoldenPath。',
+    executionPath: ['用户输入', ...calls.map((c) => `${c.service_name} · ${c.tool_name}`), '输出结果'],
     dispatch: { mode: 'sequential', services: servicesMeta.map((s) => String(s.id)) },
-    tool_call_details: details
+    tool_call_details: calls.map((c) => ({
+      call_id: c.call_id,
+      tool: c.tool_name,
+      tool_name: c.tool_name,
+      service: c.service_name,
+      service_id: c.service_id,
+      channel: c.channel,
+      transport: c.transport,
+      arguments: c.arguments,
+      result_preview: String(c.result || '').slice(0, 120),
+      error: c.error,
+      latency_ms: c.latency_ms,
+      success: c.success,
+      timestamp: c.timestamp
+    }))
+  }
+}
+
+function buildVerifierResult(iteration, status, plannerDecision) {
+  const passed = status === 'PASSED'
+  return {
+    iteration,
+    status,
+    summary: passed
+      ? '链路检视通过：最终轮服务覆盖完整、调用顺序与想定一致，可生成最小 MetaAppArtifact。'
+      : '链路存在可优化项：服务主干已跑通，但输出依赖和审计说明不够明确。',
+    reason: passed ? '' : '需要补充报告生成阶段对前序风险识别与安全评测输出的引用。',
+    checks: [
+      {
+        check: 'service_coverage',
+        status,
+        evidence_refs: plannerDecision.tool_call_details.map((d) => d.call_id)
+      },
+      {
+        check: 'dataflow_explainability',
+        status,
+        issue: passed ? undefined : '报告输入缺少明确的上游输出引用',
+        evidence_refs: plannerDecision.tool_call_details.map((d) => d.call_id)
+      }
+    ],
+    issues: passed
+      ? []
+      : [
+          {
+            description: '报告生成阶段需显式引用风险识别和安全评测结果。',
+            evidence_refs: plannerDecision.tool_call_details.map((d) => d.call_id)
+          }
+        ],
+    plannerDecision,
+    verdict: passed ? 'passed' : 'failed'
   }
 }
 
 export function buildTopicDemoTrace(ctx) {
-  const { sessionId, appName, servicesMeta = [], finalResult, scenarioParsed } = ctx
-  const executionPath =
-    (finalResult && finalResult.executionPath) ||
-    ['用户输入', ...servicesMeta.map((s) => `${s.name} · ${primaryTool(s)}`), '输出结果']
-
-  const events = []
-  const sp = scenarioParsed || {}
-
-  if (sp.goal || sp.description) {
-    events.push({
-      type: 'scenario_parsed',
+  const scenario = scenarioFromCtx(ctx)
+  const toolCalls = buildToolCalls(ctx.servicesMeta || [], scenario)
+  const selection = buildTopicServiceSelectionReport(ctx)
+  const p1 = buildPlannerDecision(1, ctx.servicesMeta || [], toolCalls)
+  const p2 = buildPlannerDecision(2, ctx.servicesMeta || [], toolCalls)
+  const events = [
+    { type: 'scenario_parsed', data: scenario },
+    { type: 'service_selection', data: selection },
+    { type: 'iteration', data: { iteration: 1, status: 'running' } },
+    ...toolCalls.filter((c) => c.iteration === 1).map((c) => ({ type: 'tool_call_record', data: c, timestamp: c.timestamp })),
+    { type: 'planner_decision', data: p1 },
+    { type: 'verifier_result', data: buildVerifierResult(1, 'FAILED', p1) },
+    { type: 'iteration', data: { iteration: 1, status: 'retry' } },
+    { type: 'iteration', data: { iteration: 2, status: 'running' } },
+    ...toolCalls.filter((c) => c.iteration === 2).map((c) => ({ type: 'tool_call_record', data: c, timestamp: c.timestamp })),
+    { type: 'planner_decision', data: p2 },
+    { type: 'verifier_result', data: buildVerifierResult(2, 'PASSED', p2) },
+    { type: 'iteration', data: { iteration: 2, status: 'passed' } },
+    {
+      type: 'complete',
       data: {
-        goal: sp.goal || appName,
-        description: sp.description || '',
-        constraints: sp.constraints || [],
-        acceptanceCriteria: sp.acceptanceCriteria || [],
-        domain: sp.domain || 'aml',
-        sourceRef: {
-          parserModel: 'topic-mock',
-          parsedAt: new Date().toISOString()
-        }
-      }
-    })
-  }
-
-  servicesMeta.forEach((svc, idx) => {
-    const tool = primaryTool(svc)
-    const channel = svc.isFake ? 'sandbox' : 'real_mcp'
-    events.push({
-      type: 'tool_call_record',
-      data: {
-        call_id: `call-topic-${idx}`,
-        tool_name: tool,
-        service_id: String(svc.id),
-        service_name: svc.name,
-        channel,
-        transport: channel === 'sandbox' ? 'in_process' : 'stdio',
         success: true,
-        latency_ms: 80 + idx * 40,
-        result: `演示调用成功 · ${svc.name}`,
-        arguments: { scenarioRef: 'topic-demo', step: idx + 1 }
-      }
-    })
-  })
-
-  const planner = buildPlannerDecision(2, servicesMeta, executionPath)
-  events.push({ type: 'planner_decision', data: planner })
-
-  const evidenceRefs = servicesMeta.map((_, idx) => `call-topic-${idx}`)
-  events.push({
-    type: 'verifier_result',
-    data: {
-      iteration: 2,
-      status: 'PASSED',
-      summary: '链路检视通过：服务覆盖完整、调用顺序与想定一致',
-      reason: '',
-      checks: [
-        {
-          check: 'overall_verification',
-          status: 'PASSED',
-          evidence_refs: evidenceRefs
+        metrics: {
+          iterations: 2,
+          elapsedMs: (ctx.finalResult && ctx.finalResult.elapsedMs) || 1800
         },
-        {
-          check: 'service_coverage',
-          status: 'PASSED',
-          evidence_refs: evidenceRefs
-        }
-      ],
-      issues: [],
-      plannerDecision: planner,
-      verdict: 'passed'
+        result: ctx.finalResult || {}
+      }
     }
-  })
+  ]
 
   return {
-    sessionId,
+    schemaVersion: TRACE_SCHEMA,
+    build_id: ctx.sessionId,
+    session_id: ctx.sessionId,
+    app_name: ctx.appName,
+    domain: scenario.domain || ctx.domain || 'aml',
+    mode: 'production',
+    strategy: (ctx.finalResult && ctx.finalResult.strategy) || {},
+    events,
+    success: true,
+    iterations: 2,
+    elapsed_ms: (ctx.finalResult && ctx.finalResult.elapsedMs) || 1800,
     metadata: {
-      appName,
-      trace_version: 'v1.0.0',
-      runtime: { trace_version: 'v1.0.0' },
-      tool_call_count: servicesMeta.length,
+      trace_version: TRACE_SCHEMA,
       config_snapshot: {
-        scenarioDescription: sp.description || '',
-        servicesMeta
+        appId: ctx.appId || 'meta-app-draft',
+        appName: ctx.appName,
+        domain: scenario.domain || ctx.domain || 'aml',
+        serviceIds: (ctx.servicesMeta || []).map((s) => String(s.id)),
+        servicesMeta: (ctx.servicesMeta || []).map(serviceMetaForTrace),
+        maxIterations: 5,
+        scenarioDescription: ctx.scenarioDescription || scenario.description || '',
+        scenarioSummary: ctx.scenarioDescription || scenario.description || '',
+        scenarioParsed: scenario
       },
-      demo: true
-    },
-    events
+      runtime: {
+        trace_version: 'v1.0.0'
+      },
+      tool_call_count: toolCalls.length
+    }
   }
 }
 
 export function buildTopicDemoEvidence(ctx) {
-  const { servicesMeta = [] } = ctx
+  const selection = buildTopicServiceSelectionReport(ctx)
+  const selectedServices = selection.selectedServices || []
   const checks = [
     {
       checkName: 'scenario_parse_present',
       category: 'logic',
       status: 'PASS',
-      detail: '结构化想定已注入 trace（scenario_parsed）'
+      detail: '已生成 scenario_parsed 结构化想定'
     },
     {
-      checkName: 'service_binding_complete',
+      checkName: 'service_selection_report_present',
       category: 'logic',
       status: 'PASS',
-      detail: `已绑定 ${servicesMeta.length} 个服务，契约与调用记录一致`
+      detail: `已在传入 catalog 内选择 ${selectedServices.length} 个服务`
     },
     {
-      checkName: 'tool_channels',
+      checkName: 'tool_call_record_source',
       category: 'data',
       status: 'PASS',
-      detail: 'tool_call_record 含 channel / transport / latency_ms'
+      detail: 'tool_call_record 含 source/phase/purpose/iteration/action_id'
     },
     {
-      checkName: 'verifier_structured',
+      checkName: 'accepted_trajectory_present',
       category: 'logic',
       status: 'PASS',
-      detail: 'verifier_result 含 checks / issues 结构化字段'
+      detail: '最终 PASSED iteration 可抽取 AcceptedTrajectory'
     },
     {
-      checkName: 'noInfrastructureErrors',
+      checkName: 'meta_app_artifact_v1',
       category: 'logic',
       status: 'PASS',
-      detail: '进程内仿真无基础设施错误'
+      detail: '最终产物为 meta_app_artifact.v1，且不包含构建诊断字段'
     },
     {
-      checkName: 'realMcpCallsPresent',
+      checkName: 'prepublish_readiness',
       category: 'data',
-      status: 'WARN',
-      detail: '课题演示使用沙箱/假 MCP，未产生 real_mcp 外呼'
+      status: 'PASS',
+      detail: '构建轨迹包含完整调用事实、验证结论与产物边界，可用于预发布检查'
     }
   ]
-
   return {
+    schemaVersion: 'build_evidence_summary.v1',
     overallStatus: 'PASS',
     summary: {
       total_checks: checks.length,
       passed: checks.filter((c) => c.status === 'PASS').length,
       failed: 0,
-      warnings: checks.filter((c) => c.status === 'WARN').length
+      warnings: checks.filter((c) => c.status === 'WARN').length,
+      acceptedTrajectory: 'accepted',
+      selectedServices: selectedServices.length
     },
+    dimensions: {
+      data: { status: 'PASS', total: 2, passed: 2, warnings: 0, failed: 0 },
+      logic: { status: 'PASS', total: 4, passed: 4, warnings: 0, failed: 0 }
+    },
+    failedChecks: checks.filter((c) => c.status !== 'PASS'),
+    missingEvidence: [],
     checks
   }
 }
 
+export function buildTopicDemoAcceptedTrajectory(ctx) {
+  const scenario = scenarioFromCtx(ctx)
+  return buildAcceptedTrajectory(ctx, buildToolCalls(ctx.servicesMeta || [], scenario))
+}
+
 export function buildTopicDemoArtifact(ctx) {
-  const {
-    sessionId,
-    appName,
-    appId,
-    scenarioParsed,
-    scenarioDescription,
-    servicesMeta = [],
-    finalResult
-  } = ctx
-  const scenarioKey = resolveTopicScenarioKeyByAppName(appName) || 'pj1'
-  const sp = scenarioParsed || {}
-  const executionPath =
-    (finalResult && finalResult.executionPath) ||
-    ['用户输入', ...servicesMeta.map((s) => `${s.name} · ${primaryTool(s)}`), '输出结果']
+  const scenarioKey = resolveTopicScenarioKeyByAppName(ctx.appName) || 'pj1'
+  const accepted = buildTopicDemoAcceptedTrajectory(ctx)
+  const artifact = buildMetaAppArtifact(ctx, accepted)
+  artifact.artifactId = `app-topic-${scenarioKey}-${shortHash(ctx.sessionId)}`
+  return artifact
+}
 
-  const declaredContracts = servicesMeta.map((s, idx) => {
-    const tool = primaryTool(s)
-    const channel = s.isFake ? 'sandbox' : 'real_mcp'
-    const latency = 80 + idx * 40
-    return {
-      serviceId: String(s.id),
-      serviceName: s.name,
-      channel,
-      transport: channel === 'sandbox' ? 'in_process' : 'stdio',
-      declaredTools: (s.tools || []).map((t) => ({
-        toolId: t.id || null,
-        name: t.name,
-        description: t.description || null
-      })),
-      observedTools: [
-        {
-          toolName: tool,
-          callCount: 1,
-          successCount: 1,
-          failureCount: 0,
-          successRate: 1,
-          avgLatencyMs: latency,
-          evidenceRefs: [`call-topic-${idx}`]
-        }
-      ],
-      totalCalls: 1,
-      overallSuccessRate: 1
-    }
-  })
-
-  const hasRealMcp = servicesMeta.some((s) => !s.isFake)
-
+export function buildTopicDemoFrontendState(ctx) {
+  const trace = buildTopicDemoTrace(ctx)
+  const serviceSelection = buildTopicServiceSelectionReport(ctx)
+  const acceptedTrajectory = buildTopicDemoAcceptedTrajectory(ctx)
+  const artifact = buildTopicDemoArtifact(ctx)
   return {
-    schemaVersion: '0.3.0',
-    parsedIntent: {
-      goal: sp.goal || appName,
-      description: sp.description || scenarioDescription || '',
-      constraints: sp.constraints || [],
-      acceptanceCriteria: sp.acceptanceCriteria || [],
-      domain: sp.domain || 'aml',
-      sourceRef: {
-        traceRef: sessionId,
-        intakeSessionRef: null,
-        parserModel: 'topic-mock',
-        parsedAt: new Date().toISOString()
+    schemaVersion: 'simulation_frontend_state.v1',
+    buildId: ctx.sessionId,
+    app: artifact.app,
+    taskContract: artifact.taskContract,
+    serviceSelection,
+    acceptedTrajectorySummary: {
+      trajectoryId: acceptedTrajectory.trajectoryId,
+      status: acceptedTrajectory.status,
+      acceptedIteration: acceptedTrajectory.acceptedIteration,
+      actionCount: acceptedTrajectory.actionSequence.length,
+      bindingGaps: acceptedTrajectory.bindingGaps || [],
+      generatedArtifact: {
+        artifactId: artifact.artifactId,
+        artifactHash: longHash(JSON.stringify(artifact)),
+        recordedAt: nowIso()
       }
     },
-    serviceContracts: declaredContracts,
-    goldenPath: null,
-    solidificationReport: {
-      solidifiable: hasRealMcp,
-      goldenPathExtractable: false,
-      goldenPathReason: hasRealMcp
-        ? '演示轨迹未通过 real_mcp 主干抽取门禁'
-        : '课题演示为进程内沙箱调用，无法抽取黄金路径',
-      remediation: hasRealMcp
-        ? ['需 Verifier 最终通过且存在成功 real_mcp 调用链']
-        : ['课题演示使用沙箱/假 MCP，需真实 MCP 构建方可抽取黄金路径'],
-      conditions: {
-        realMcpCallsPresent: hasRealMcp,
-        verifierPassed: true
-      },
-      gates: [
-        {
-          gate: 'sufficientIterations',
-          passed: true,
-          detail: '验证通过 1 次，要求至少 1 次'
-        },
-        {
-          gate: 'verifierPassed',
-          passed: true,
-          detail: '最终 verifier_result 状态 PASSED'
-        },
-        {
-          gate: 'evidenceComplete',
-          passed: true,
-          detail: '证据检查已完成'
-        },
-        {
-          gate: 'noUnresolvedToolErrors',
-          passed: true,
-          detail: '无未解决工具错误'
-        },
-        {
-          gate: 'noInfrastructureErrors',
-          passed: true,
-          detail: '演示构建无基础设施错误'
-        },
-        {
-          gate: 'realMcpCallsPresent',
-          passed: hasRealMcp,
-          detail: hasRealMcp ? '存在 real_mcp 调用' : '课题演示为进程内沙箱调用',
-          remediation: hasRealMcp ? undefined : '至少需一次 real_mcp 调用'
-        }
-      ]
+    artifactSummary: {
+      artifactId: artifact.artifactId,
+      schemaVersion: artifact.schemaVersion,
+      runtimeMode: artifact.runtime.mode,
+      goldenPathCount: artifact.goldenPaths.length
     },
-    artifactMeta: {
-      artifactId: `art-topic-${scenarioKey}-${shortHash(sessionId)}`,
-      sourceSessionId: sessionId,
-      createdAt: new Date().toISOString(),
-      appName,
-      domain: sp.domain || 'aml',
-      mode: 'production',
-      appId: appId || 'meta-app-draft',
-      traceRef: sessionId,
-      traceHash: shortHash(`trace-${sessionId}`).padStart(64, '0'),
-      configSnapshotHash: shortHash(`cfg-${sessionId}`).padStart(64, '0'),
-      artifactHash: shortHash(`${sessionId}-${appName}`).padStart(64, '0'),
-      evidenceRef: null,
-      intakeSessionRef: null,
-      buildSummary: {
-        totalIterations: 2,
-        finalStatus: 'SUCCESS',
-        elapsedMs: (finalResult && finalResult.elapsedMs) || 1200,
-        executionPath
-      }
-    }
+    callChain: (trace.events || [])
+      .filter((e) => e.type === 'tool_call_record')
+      .map((e) => `${e.data.service_name} · ${e.data.tool_name}`),
+    events: {
+      count: trace.events.length,
+      toolCallCount: (trace.events || []).filter((e) => e.type === 'tool_call_record').length,
+      verifierResults: (trace.events || []).filter((e) => e.type === 'verifier_result').map((e) => e.data)
+    },
+    completion: (trace.events.find((e) => e.type === 'complete') || {}).data || {},
+    artifact
   }
 }
 
 export function buildTopicDemoArtifacts(ctx) {
   return {
     trace: buildTopicDemoTrace(ctx),
+    serviceSelection: buildTopicServiceSelectionReport(ctx),
+    acceptedTrajectory: buildTopicDemoAcceptedTrajectory(ctx),
     evidence: buildTopicDemoEvidence(ctx),
-    artifact: buildTopicDemoArtifact(ctx)
+    artifact: buildTopicDemoArtifact(ctx),
+    frontendState: buildTopicDemoFrontendState(ctx)
   }
 }

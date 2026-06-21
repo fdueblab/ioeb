@@ -2,7 +2,7 @@
  * 课题演示：结构化想定 mock（纯前端）
  */
 
-export const TOPIC_PARSER_MODEL = 'topic-demo-mock'
+export const TOPIC_PARSER_MODEL = 'scenario-intake-agent-v1'
 
 export const TOPIC_SCENARIO_INTAKE = {
   pj1: {
@@ -141,7 +141,7 @@ export function buildTopicScenarioIntake(scenarioKey, flow, userInput) {
       parserModel: TOPIC_PARSER_MODEL,
       parsedAt: new Date().toISOString()
     },
-    demoScenarioKey: scenarioKey
+    scenarioKey
   }
 
   return {

@@ -6,6 +6,13 @@ export const DEFAULT_DOMAIN = {
   text: '跨境支付AI监测'
 }
 
+export const OPENED_VERTICAL_LABELS = {
+  aml: '跨境支付AI监测',
+  health: '心理健康分析'
+}
+
+export const OPENED_VERTICAL_CODES = Object.keys(OPENED_VERTICAL_LABELS)
+
 const SINGLE_DOMAIN_MENU_PATHS = [
   '/vertical-user',
   '/vertical-scenario-dev',
@@ -24,23 +31,47 @@ export function normalizeDomains(domains = []) {
   return normalized.length > 0 ? normalized : [DEFAULT_DOMAIN]
 }
 
+export function isOpenedVerticalDomain(code) {
+  return OPENED_VERTICAL_CODES.includes(code)
+}
+
+export function normalizeOpenedDomainCode(code) {
+  return isOpenedVerticalDomain(code) ? code : DEFAULT_DOMAIN.code
+}
+
+export function filterOpenedDomains(domains = []) {
+  const normalized = normalizeDomains(domains)
+  const domainMap = normalized.reduce((map, domain) => {
+    map[domain.code] = domain
+    return map
+  }, {})
+
+  return OPENED_VERTICAL_CODES.map(code => {
+    const hit = domainMap[code]
+    return {
+      code,
+      text: (hit && hit.text) || OPENED_VERTICAL_LABELS[code] || DEFAULT_DOMAIN.text
+    }
+  })
+}
+
 export function getCurrentDomainCode() {
-  return storage.get(DOMAIN_STORAGE_KEY) || DEFAULT_DOMAIN.code
+  return normalizeOpenedDomainCode(storage.get(DOMAIN_STORAGE_KEY) || DEFAULT_DOMAIN.code)
 }
 
 export function setCurrentDomainCode(code) {
-  storage.set(DOMAIN_STORAGE_KEY, code || DEFAULT_DOMAIN.code)
+  storage.set(DOMAIN_STORAGE_KEY, normalizeOpenedDomainCode(code || DEFAULT_DOMAIN.code))
 }
 
 export function resolveCurrentDomain(domains = [], preferredCode = getCurrentDomainCode()) {
-  const normalized = normalizeDomains(domains)
-  const matched = normalized.find(domain => domain.code === preferredCode) || normalized[0]
+  const normalized = filterOpenedDomains(domains)
+  const matched = normalized.find(domain => domain.code === normalizeOpenedDomainCode(preferredCode)) || normalized[0]
   setCurrentDomainCode(matched.code)
   return matched
 }
 
 export function getDomainModuleEntryPath(basePath, domainCode = getCurrentDomainCode(), permissionList = []) {
-  const code = domainCode || DEFAULT_DOMAIN.code
+  const code = normalizeOpenedDomainCode(domainCode || DEFAULT_DOMAIN.code)
   switch (basePath) {
     case '/vertical-user':
       return `/vertical-user/${code}`
@@ -76,14 +107,15 @@ export function replaceDomainInPath(path, domainCode, permissionList = []) {
   if (!path || !domainCode) {
     return path
   }
+  const code = normalizeOpenedDomainCode(domainCode)
 
   const rules = [
-    { pattern: /^\/vertical-user\/[^/]+/, replacement: `/vertical-user/${domainCode}` },
-    { pattern: /^\/vertical-scenario-dev\/[^/]+/, replacement: `/vertical-scenario-dev/${domainCode}` },
-    { pattern: /^\/vertical-ms\/[^/]+/, replacement: `/vertical-ms/${domainCode}` },
-    { pattern: /^\/vertical-atom-app\/[^/]+/, replacement: `/vertical-atom-app/${domainCode}` },
-    { pattern: /^\/evaluation\/[^/]+/, replacement: `/evaluation/${domainCode}` },
-    { pattern: /^\/operation\/[^/]+/, replacement: `/operation/${domainCode}` }
+    { pattern: /^\/vertical-user\/[^/]+/, replacement: `/vertical-user/${code}` },
+    { pattern: /^\/vertical-scenario-dev\/[^/]+/, replacement: `/vertical-scenario-dev/${code}` },
+    { pattern: /^\/vertical-ms\/[^/]+/, replacement: `/vertical-ms/${code}` },
+    { pattern: /^\/vertical-atom-app\/[^/]+/, replacement: `/vertical-atom-app/${code}` },
+    { pattern: /^\/evaluation\/[^/]+/, replacement: `/evaluation/${code}` },
+    { pattern: /^\/operation\/[^/]+/, replacement: `/operation/${code}` }
   ]
 
   for (const rule of rules) {
@@ -101,7 +133,7 @@ export function replaceDomainInPath(path, domainCode, permissionList = []) {
     '/operation'
   ].find(basePath => path === basePath)
 
-  return topLevelRule ? getDomainModuleEntryPath(topLevelRule, domainCode, permissionList) : path
+  return topLevelRule ? getDomainModuleEntryPath(topLevelRule, code, permissionList) : path
 }
 
 export function isDomainRoutedPath(path) {
@@ -117,13 +149,14 @@ export function isDomainRoutedPath(path) {
 }
 
 export function projectDomainMenus(menus = [], domainCode = getCurrentDomainCode(), permissionList = []) {
+  const code = normalizeOpenedDomainCode(domainCode)
   return menus.map(menu => {
     if (!menu || !menu.path) {
       return menu
     }
 
     if (SINGLE_DOMAIN_MENU_PATHS.includes(menu.path)) {
-      const entryPath = getDomainModuleEntryPath(menu.path, domainCode, permissionList)
+      const entryPath = getDomainModuleEntryPath(menu.path, code, permissionList)
       const selectedDomainRoute = (menu.children || []).find(child => child.path === entryPath) || (menu.children || [])[0]
       const projectedMenu = {
         ...menu,
@@ -137,11 +170,11 @@ export function projectDomainMenus(menus = [], domainCode = getCurrentDomainCode
     }
 
     if (menu.path === '/evaluation' || menu.path === '/operation') {
-      const domainPath = `/${menu.path.split('/')[1]}/${domainCode}`
+      const domainPath = `/${menu.path.split('/')[1]}/${code}`
       const selectedDomainRoute = (menu.children || []).find(child => child.path === domainPath) || (menu.children || [])[0]
       return {
         ...menu,
-        redirect: getDomainModuleEntryPath(menu.path, domainCode, permissionList),
+        redirect: getDomainModuleEntryPath(menu.path, code, permissionList),
         children: selectedDomainRoute && selectedDomainRoute.children ? selectedDomainRoute.children : []
       }
     }

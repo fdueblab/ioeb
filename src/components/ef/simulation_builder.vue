@@ -197,6 +197,19 @@
 
                 <!-- 当前状态 -->
                 <div class="current-action">{{ currentActionText }}</div>
+
+                <div class="process-snapshot" v-if="processSnapshotCards.length">
+                  <div
+                    v-for="card in processSnapshotCards"
+                    :key="card.key"
+                    class="process-snapshot-card"
+                    :class="'process-snapshot-card--' + card.tone"
+                  >
+                    <span class="process-snapshot-label">{{ card.label }}</span>
+                    <strong>{{ card.value }}</strong>
+                    <span class="process-snapshot-hint">{{ card.hint }}</span>
+                  </div>
+                </div>
               </div>
 
               <!-- 简洁历史 -->
@@ -294,6 +307,10 @@
                 </div>
               </div>
 
+              <div class="result-actions" v-if="!showTechDetails">
+                <a-button icon="profile" @click="openBuildDetails">查看完整构建详情</a-button>
+              </div>
+
             </div>
           </template>
 
@@ -317,6 +334,10 @@
                   </div>
                 </div>
               </div>
+
+              <div class="result-actions" v-if="!showTechDetails">
+                <a-button icon="profile" @click="openBuildDetails">查看完整构建详情</a-button>
+              </div>
             </div>
           </template>
         </div>
@@ -325,7 +346,7 @@
         <div class="tech-toggle" v-if="hasStarted && !embedded">
           <a-button type="link" size="small" @click="showTechDetails = !showTechDetails">
             <a-icon :type="showTechDetails ? 'up' : 'down'" />
-            {{ showTechDetails ? '收起详情' : '查看详情' }}
+            {{ showTechDetails ? '收起完整详情' : '查看完整构建详情' }}
           </a-button>
         </div>
 
@@ -336,7 +357,7 @@
                 <div class="detail-title">轨迹</div>
 
                 <div v-if="callChainSteps.length" class="detail-subsection">
-                  <div class="detail-subtitle">调用链</div>
+                  <div class="detail-subtitle">{{ callChainTitle }}</div>
                   <div class="path-nodes path-nodes-block">
                     <span v-for="(node, index) in callChainSteps" :key="'path-' + index" class="path-node">
                       {{ node }}
@@ -345,7 +366,7 @@
                   </div>
                 </div>
 
-                <div v-if="detailTrace.skipped" class="detail-muted detail-subsection">进程内演示无落盘轨迹</div>
+                <div v-if="detailTrace.skipped" class="detail-muted detail-subsection">构建轨迹暂未生成</div>
                 <div v-else-if="detailTrace.loading" class="detail-muted detail-subsection">
                   <a-icon type="loading" /> 轨迹加载中…
                 </div>
@@ -434,7 +455,7 @@
 
               <div class="detail-section detail-section-card">
                 <div class="detail-title">证据</div>
-                <div v-if="detailEvidence.skipped" class="detail-muted">进程内演示无证据分析</div>
+                <div v-if="detailEvidence.skipped" class="detail-muted">证据分析暂未生成</div>
                 <div v-else-if="detailEvidence.loading" class="detail-muted"><a-icon type="loading" /> 分析中…</div>
                 <div v-else-if="detailEvidence.error" class="detail-error">{{ detailEvidence.error }}</div>
                 <template v-else-if="detailEvidence.data">
@@ -446,15 +467,8 @@
                       </a-tag>
                       <span class="evidence-id">{{ detailEvidence.data.evidenceId }}</span>
                     </div>
-                    <p v-if="detailEvidence.data.summary" class="detail-summary-line detail-summary-line--tight">
-                      共 {{ detailEvidence.data.summary.total_checks }} 项检查 ·
-                      通过 {{ detailEvidence.data.summary.passed }}
-                      <template v-if="detailEvidence.data.summary.failed">
-                        · 失败 {{ detailEvidence.data.summary.failed }}
-                      </template>
-                      <template v-if="detailEvidence.data.summary.warnings">
-                        · 警告 {{ detailEvidence.data.summary.warnings }}
-                      </template>
+                    <p v-if="evidenceSummaryText(detailEvidence.data)" class="detail-summary-line detail-summary-line--tight">
+                      {{ evidenceSummaryText(detailEvidence.data) }}
                     </p>
                   </div>
 
@@ -492,7 +506,7 @@
 
             <!-- MetaAppArtifact v1 临时 JSON 展示 -->
             <div class="detail-section detail-section-card" v-if="isCompleted && !detailArtifact.skipped">
-              <div class="detail-title">元应用产物 (MetaAppArtifact v1)</div>
+              <div class="detail-title">元应用产物（最小运行包）</div>
               <div v-if="detailArtifact.loading" class="detail-muted detail-subsection">
                 <a-icon type="loading" /> 产物编译中…
               </div>
@@ -500,6 +514,9 @@
                 {{ detailArtifact.error }}
               </div>
               <template v-else-if="detailArtifact.data">
+                <p class="detail-summary-line detail-summary-line--artifact">
+                  artifact.json 仅保留运行必要的 app、taskContract、runtime 与 goldenPaths；构建轨迹、服务选择与验收记录留在 BuildBundle。
+                </p>
                 <!-- 场景解析 -->
                 <div class="detail-subsection detail-subsection--first">
                   <div class="detail-subtitle">场景解析</div>
@@ -547,7 +564,8 @@
                         <a-tag size="small">{{ row.channelLabel }}</a-tag>
                       </div>
                       <p class="detail-summary-line detail-summary-line--tight">
-                        <template v-if="row.uncalled">本次未调用</template>
+                        <template v-if="row.boundOnly">已绑定 · 等待运行期调用</template>
+                        <template v-else-if="row.uncalled">本次未调用</template>
                         <template v-else>调用 {{ row.totalCalls }} 次 · 成功率 {{ row.successRate }}</template>
                       </p>
                       <p v-if="row.declaredToolNames.length" class="detail-summary-line">
@@ -578,7 +596,7 @@
                     <span class="evidence-id">{{ artifactView.artifactId }}</span>
                   </div>
                 </div>
-                <!-- 旧演示 artifact 可能带 solidificationReport；真实 MetaAppArtifact v1 不包含该字段 -->
+                <!-- 旧 artifact 可能带 solidificationReport；真实 MetaAppArtifact v1 不包含该字段 -->
                 <div class="detail-subsection" v-if="detailArtifact.data.solidificationReport && detailArtifact.data.solidificationReport.gates">
                   <div class="detail-subtitle">质量检查</div>
                   <div class="gate-list">
@@ -673,18 +691,25 @@
                     </div>
                   </div>
                   <div class="iter-verifier" v-if="iter.hasVerification">
-                    <span class="verifier-label">验证：</span>
-                    <a-tag
-                      v-if="iter.verifierStatus"
-                      size="small"
-                      :color="iter.verifierStatus === 'PASSED' ? 'green' : 'red'"
-                    >
-                      {{ iter.verifierStatus }}
-                    </a-tag>
-                    <span>{{ iter.verifierSummary }}</span>
+                    <div class="iter-verifier-main">
+                      <span class="verifier-label">验证</span>
+                      <a-tag
+                        v-if="iter.verifierStatus"
+                        size="small"
+                        :color="iter.verifierStatus === 'PASSED' ? 'green' : 'red'"
+                      >
+                        {{ iter.verifierStatus }}
+                      </a-tag>
+                      <span v-if="iter.verifierSummary" class="iter-verifier-summary">{{ iter.verifierSummary }}</span>
+                    </div>
                     <ul v-if="iter.verifierChecks && iter.verifierChecks.length" class="iter-check-list">
                       <li v-for="(chk, ci) in iter.verifierChecks" :key="'c-' + ci">
                         {{ chk.status || chk.check }}：{{ chk.issue || chk.check }}
+                      </li>
+                    </ul>
+                    <ul v-if="iter.verifierIssues && iter.verifierIssues.length" class="iter-check-list">
+                      <li v-for="(iss, ii) in iter.verifierIssues" :key="'iss-' + ii">
+                        {{ iss.description }}
                       </li>
                     </ul>
                     <div v-if="iter.fix" class="iter-fix-inline">修复：{{ iter.fix }}</div>
@@ -781,7 +806,8 @@ import {
   subscribeSimulationStream,
   fetchSimulationTrace,
   fetchSimulationEvidence,
-  fetchSimulationArtifact
+  fetchSimulationArtifact,
+  fetchSimulationAcceptedTrajectory
 } from '@/api/simulation_builder'
 import {
   SIMULATION_BUILD_ENV_TASKS,
@@ -800,11 +826,15 @@ function mapSetupItems(tasks) {
 }
 
 /** 开发：fdueblab mcp-proxy → 本机同端口（需 .env 中 VUE_APP_LOCAL_MCP_REWRITE=true） */
+const LOCAL_MCP_REWRITE_SKIP_PORTS = new Set([25013])
+
 function rewriteMcpUrlForLocalDev(url) {
   if (process.env.VUE_APP_LOCAL_MCP_REWRITE !== 'true' || !url) return url
   const m = String(url).match(/^https?:\/\/fdueblab\.cn\/mcp-proxy\/(\d+)(\/.*)?$/i)
   if (!m) return url
-  return `http://127.0.0.1:${m[1]}${m[2] || '/sse'}`
+  const port = Number(m[1])
+  if (LOCAL_MCP_REWRITE_SKIP_PORTS.has(port)) return url
+  return `http://127.0.0.1:${port}${m[2] || '/sse'}`
 }
 
 export default {
@@ -903,6 +933,9 @@ export default {
       },
       dispatchStatus: '智能体调度执行中',
       currentActionText: '初始化中...',
+      activeServiceCall: null,
+      lastServiceCall: null,
+      serviceCallStats: { total: 0, perService: {} },
 
       iterationHistory: [],
       iterationDetails: [],
@@ -912,7 +945,9 @@ export default {
       detailTrace: { loading: false, skipped: false, error: null, view: null, rawJson: '' },
       detailEvidence: { loading: false, skipped: false, error: null, data: null },
       detailArtifact: { loading: false, skipped: false, error: null, data: null },
+      detailAcceptedTrajectory: { loading: false, skipped: false, error: null, data: null },
       failureSuggestion: '',
+      serviceSelectionReport: null,
 
       serviceStatuses: [],
 
@@ -944,11 +979,31 @@ export default {
       )
     },
     callChainSteps() {
-      const path = this.finalResult && this.finalResult.executionPath
-      if (Array.isArray(path) && path.length) return path
+      const accepted = this.buildCallChainFromAcceptedTrajectory(
+        this.detailAcceptedTrajectory && this.detailAcceptedTrajectory.data
+      )
+      if (accepted.length) return accepted
       const fromTrace = this.detailTrace.view && this.detailTrace.view.callChain
       if (Array.isArray(fromTrace) && fromTrace.length) return fromTrace
+      const path = this.finalResult && this.finalResult.executionPath
+      if (Array.isArray(path) && path.length) return path
       return []
+    },
+    callChainSourceLabel() {
+      const accepted = this.detailAcceptedTrajectory && this.detailAcceptedTrajectory.data
+      if (accepted && accepted.status === 'accepted' && Array.isArray(accepted.actionSequence) && accepted.actionSequence.length) {
+        return '最终通过主干'
+      }
+      if (this.detailTrace.view && Array.isArray(this.detailTrace.view.callChain) && this.detailTrace.view.callChain.length) {
+        return '原始轨迹'
+      }
+      if (this.finalResult && Array.isArray(this.finalResult.executionPath) && this.finalResult.executionPath.length) {
+        return '完成事件'
+      }
+      return ''
+    },
+    callChainTitle() {
+      return this.callChainSourceLabel ? `调用链（${this.callChainSourceLabel}）` : '调用链'
     },
     artifactJsonPreview() {
       const data = this.detailArtifact && this.detailArtifact.data
@@ -1027,15 +1082,16 @@ export default {
         const declared = Array.isArray(c.tools) ? c.tools : (Array.isArray(c.declaredTools) ? c.declaredTools : [])
         const observed = Array.isArray(c.observedTools) ? c.observedTools : []
         const channelParts = [c.source || c.channel, c.transport].filter(Boolean)
-        const totalCalls = typeof c.totalCalls === 'number' ? c.totalCalls : 0
+        const totalCalls = typeof c.totalCalls === 'number' ? c.totalCalls : null
         const successRate = c.overallSuccessRate != null
           ? `${Math.round(c.overallSuccessRate * 100)}%`
           : '—'
+        const boundOnly = totalCalls == null && !observed.length
         return {
           serviceId: c.serviceId || '',
           serviceName: c.serviceName || '未命名服务',
           channelLabel: channelParts.length ? channelParts.join(' · ') : '—',
-          totalCalls,
+          totalCalls: totalCalls != null ? totalCalls : 0,
           successRate,
           declaredToolNames: declared.map((t) => t.name || t.toolName).filter(Boolean),
           observedSummaries: observed.map((o) => {
@@ -1046,7 +1102,8 @@ export default {
             }
             return parts.join(' · ')
           }),
-          uncalled: totalCalls === 0
+          boundOnly,
+          uncalled: !boundOnly && totalCalls === 0
         }
       })
     },
@@ -1106,7 +1163,7 @@ export default {
           key: 'data',
           label: '数据保真',
           value: this.formatPct(m.sandboxFidelity),
-          hint: '沙箱/返回保真度',
+          hint: '返回保真度',
           tone: m.sandboxFidelity >= 0.8 ? 'ok' : 'warn'
         })
       } else if (dataPanel) {
@@ -1148,6 +1205,60 @@ export default {
 
       return cards
     },
+    selectedServiceNames() {
+      const selected = this.serviceSelectionReport && Array.isArray(this.serviceSelectionReport.selectedServices)
+        ? this.serviceSelectionReport.selectedServices
+        : []
+      return selected
+        .map((s) => s.serviceName || s.serviceId)
+        .filter(Boolean)
+    },
+    activeServiceCallLabel() {
+      const call = this.activeServiceCall || this.lastServiceCall
+      if (!call) return '等待工具调用'
+      const service = call.serviceName || call.serviceId || '服务'
+      const tool = call.toolName || ''
+      return tool ? `${service} · ${tool}` : service
+    },
+    currentVerifierState() {
+      const detail = this.currentDetail()
+      if (!detail) return '待验收'
+      const verification = this.formatIterationVerification(detail)
+      if (verification.verifierStatus) return verification.verifierStatus
+      if (detail.checkPhase === 'running') return '验收中'
+      if (detail.execPhase === 'running') return '等待验收'
+      return '待验收'
+    },
+    processSnapshotCards() {
+      if (!this.isRunning || this.currentMainStep !== 2) return []
+      const selectedCount = this.selectedServiceNames.length || this.serviceStatuses.length
+      const selectedHint = this.selectedServiceNames.length
+        ? this.selectedServiceNames.slice(0, 3).join('、')
+        : '画布服务已进入候选集'
+      return [
+        {
+          key: 'services',
+          label: '服务主干',
+          value: `${selectedCount} 个服务`,
+          hint: selectedHint,
+          tone: 'neutral'
+        },
+        {
+          key: 'calls',
+          label: '当前调用',
+          value: this.activeServiceCall ? '执行中' : (this.lastServiceCall ? '已返回' : '待触发'),
+          hint: this.activeServiceCallLabel,
+          tone: this.activeServiceCall ? 'active' : 'neutral'
+        },
+        {
+          key: 'verifier',
+          label: '目标验收',
+          value: this.currentVerifierState,
+          hint: `第 ${this.currentIteration} 轮 · 工具调用 ${this.serviceCallStats.total} 次`,
+          tone: this.currentVerifierState === 'FAILED' ? 'warn' : (this.currentVerifierState === 'PASSED' ? 'ok' : 'neutral')
+        }
+      ]
+    },
     showPreStart() {
       return !this.embedded && !this.hasStarted && !this.isCompleted
     },
@@ -1185,11 +1296,11 @@ export default {
     },
     strategyLabel(key, value) {
       const labels = {
-        sandbox: { cow: 'CoW', none: '无沙箱', full_mock: '全模拟' },
+        sandbox: { auto: '真实优先', none: '无回退', full_mock: '全模拟' },
         planning: { llm_autonomous: 'LLM规划', preset_workflow: '预设流' },
         verification: { multi_agent: '多Agent', single_agent: '单Agent', rule_based: '规则' },
         repair: { llm_repair: 'LLM修复', rule_repair: '规则修复', none: '无修复' },
-        solidify: { golden_trace: '经验固化', replan: '重规划', static: '静态' }
+        solidify: { golden_path: 'GoldenPath', golden_trace: '经验固化', replan: '重规划', static: '静态' }
       }
       const group = labels[key] || {}
       return `${key}: ${group[value] || value}`
@@ -1298,12 +1409,17 @@ export default {
       this.phases = { exec: 'pending', check: 'pending' }
       this.dispatchStatus = '智能体调度执行中'
       this.currentActionText = '初始化中...'
+      this.activeServiceCall = null
+      this.lastServiceCall = null
+      this.serviceCallStats = { total: 0, perService: {} }
       this.iterationHistory = []
       this.iterationDetails = []
       this.failureMessage = ''
       this.detailTrace = { loading: false, skipped: false, error: null, view: null, rawJson: '' }
       this.detailEvidence = { loading: false, skipped: false, error: null, data: null }
       this.detailArtifact = { loading: false, skipped: false, error: null, data: null }
+      this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: null }
+      this.serviceSelectionReport = null
       this.failureSuggestion = ''
       this.logs = []
       this.elapsedTime = 0
@@ -1412,6 +1528,25 @@ export default {
       return 'red'
     },
 
+    evidenceSummaryText(evidence) {
+      const s = evidence && evidence.summary
+      if (!s) return ''
+      const parts = []
+      if (s.total_checks != null) {
+        parts.push(`共 ${s.total_checks} 项检查`)
+        if (s.passed != null) parts.push(`通过 ${s.passed}`)
+        if (s.failed) parts.push(`失败 ${s.failed}`)
+        if (s.warnings) parts.push(`警告 ${s.warnings}`)
+        return parts.join(' · ')
+      }
+      if (s.acceptedTrajectory) parts.push(`AcceptedTrajectory ${s.acceptedTrajectory}`)
+      if (s.selectedServices != null) parts.push(`选择服务 ${s.selectedServices}`)
+      if (s.researchEligible != null) {
+        parts.push(s.researchEligible ? '可计入科研' : '不计入科研')
+      }
+      return parts.join(' · ')
+    },
+
     classifyEvidenceDimension(check) {
       if (!check) return 'logic'
       if (check.category === 'data' || check.category === 'logic') return check.category
@@ -1511,6 +1646,21 @@ export default {
       return steps
     },
 
+    buildCallChainFromAcceptedTrajectory(trajectory) {
+      const actions = trajectory && Array.isArray(trajectory.actionSequence)
+        ? trajectory.actionSequence
+        : []
+      if (!actions.length) return []
+      const steps = ['用户输入']
+      actions.forEach((action) => {
+        const svc = action.serviceName || action.serviceId || '—'
+        const tool = action.toolName || ''
+        steps.push(tool && tool !== svc ? `${svc} · ${tool}` : svc)
+      })
+      steps.push('输出结果')
+      return steps
+    },
+
     resolveServiceNodeIdFromTool(toolName) {
       const t = String(toolName || '').toLowerCase()
       for (const s of this.serviceStatuses) {
@@ -1571,10 +1721,11 @@ export default {
 
     async loadDetailArtifacts() {
       if (!this.sessionId) return
-      if (useMemorySimulation(this.appName)) {
+      if (useMemorySimulation(this.buildStartPayload())) {
         this.detailTrace = { loading: true, skipped: false, error: null, view: null, rawJson: '' }
         this.detailEvidence = { loading: true, skipped: false, error: null, data: null }
         this.detailArtifact = { loading: true, skipped: false, error: null, data: null }
+        this.detailAcceptedTrajectory = { loading: true, skipped: false, error: null, data: null }
         try {
           const { buildTopicDemoArtifacts } = await import('@/mock/data/topic_simulation_artifacts')
           const packs = buildTopicDemoArtifacts({
@@ -1597,16 +1748,19 @@ export default {
           this.detailTrace = { loading: false, skipped: false, error: null, view, rawJson }
           this.detailEvidence = { loading: false, skipped: false, error: null, data: packs.evidence }
           this.detailArtifact = { loading: false, skipped: false, error: null, data: packs.artifact }
+          this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: packs.acceptedTrajectory }
         } catch (e) {
-          const msg = this.formatArtifactError(e, '课题演示产物加载失败')
+          const msg = this.formatArtifactError(e, '课题产物加载失败')
           this.detailTrace = { loading: false, skipped: true, error: msg, view: null, rawJson: '' }
           this.detailEvidence = { loading: false, skipped: true, error: null, data: null }
           this.detailArtifact = { loading: false, skipped: true, error: null, data: null }
+          this.detailAcceptedTrajectory = { loading: false, skipped: true, error: null, data: null }
         }
         return
       }
       this.detailTrace = { loading: true, skipped: false, error: null, view: null, rawJson: '' }
       this.detailEvidence = { loading: false, skipped: false, error: null, data: null }
+      this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: null }
       try {
         const trace = await this.fetchTraceWithRetry(this.sessionId)
         const view = this.buildTraceView(trace)
@@ -1633,6 +1787,18 @@ export default {
           }
         }
         // 加载 MetaAppArtifact v1（真实链路来自 BuildBundle；演示 mock 可能是旧形状）
+        this.detailAcceptedTrajectory = { loading: true, skipped: false, error: null, data: null }
+        try {
+          const accepted = await fetchSimulationAcceptedTrajectory(this.sessionId)
+          this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: accepted }
+        } catch (eAccepted) {
+          this.detailAcceptedTrajectory = {
+            loading: false,
+            skipped: false,
+            error: this.formatArtifactError(eAccepted, 'AcceptedTrajectory 加载失败'),
+            data: null
+          }
+        }
         this.detailArtifact = { loading: true, skipped: false, error: null, data: null }
         try {
           const artifact = await fetchSimulationArtifact(this.sessionId)
@@ -1650,6 +1816,7 @@ export default {
         this.detailTrace = { loading: false, skipped: false, error: msg, view: null, rawJson: '' }
         this.detailEvidence = { loading: false, skipped: false, error: null, data: null }
         this.detailArtifact = { loading: false, skipped: false, error: null, data: null }
+        this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: null }
       }
     },
 
@@ -1728,8 +1895,57 @@ export default {
       }
     },
 
+    onStreamScenarioParsed(payload) {
+      if (!payload || typeof payload !== 'object') return
+      this.scenarioParsedDraft = {
+        goal: payload.goal ? String(payload.goal) : '',
+        description: payload.description ? String(payload.description) : '',
+        constraints: Array.isArray(payload.constraints) ? [...payload.constraints] : [],
+        acceptanceCriteria: Array.isArray(payload.acceptanceCriteria) ? [...payload.acceptanceCriteria] : [],
+        domain: payload.domain ? String(payload.domain) : (this.domain || 'generic')
+      }
+      this.scenarioParsedListDraft = {
+        constraints: this.listToLines(this.scenarioParsedDraft.constraints),
+        acceptanceCriteria: this.listToLines(this.scenarioParsedDraft.acceptanceCriteria)
+      }
+      this.addLog(`场景解析完成: ${this.scenarioParsedDraft.goal || this.appName}`, 'INFO', 'info')
+    },
+
+    onStreamServiceSelection(payload) {
+      if (!payload || typeof payload !== 'object') return
+      this.serviceSelectionReport = payload
+      const selected = Array.isArray(payload.selectedServices) ? payload.selectedServices : []
+      const names = selected.map((s) => s.serviceName || s.serviceId).filter(Boolean)
+      this.addLog(`服务选择完成: ${names.join('、') || '无'}`, 'INFO', 'info')
+    },
+
     onStreamServiceCalling({ serviceId, serviceName, toolName, status }) {
       if (this.aborted || !this.isRunning) return
+      const call = {
+        serviceId: String(serviceId),
+        serviceName,
+        toolName
+      }
+      if (status === 'start') {
+        this.activeServiceCall = call
+        this.lastServiceCall = call
+        this.serviceCallStats.total += 1
+        const key = call.serviceId
+        this.$set(
+          this.serviceCallStats.perService,
+          key,
+          (this.serviceCallStats.perService[key] || 0) + 1
+        )
+        this.currentActionText = `正在调用：${this.activeServiceCallLabel}`
+      } else if (
+        status === 'end' &&
+        this.activeServiceCall &&
+        this.activeServiceCall.serviceId === call.serviceId
+      ) {
+        this.lastServiceCall = { ...this.activeServiceCall }
+        this.activeServiceCall = null
+        this.currentActionText = `调用返回：${this.activeServiceCallLabel}`
+      }
       // 驱动画布节点 calling/dimmed 动画
       this.syncCanvasVisual({
         type: 'serviceCall',
@@ -1931,11 +2147,19 @@ export default {
         if (result.error) this.failureMessage = result.error
         if (result.suggestion) this.failureSuggestion = result.suggestion
       }
-      this.showTechDetails = true
+      this.showTechDetails = false
       this.syncCanvasVisual({ type: 'activeCall', targetNodeId: null })
       this.syncCanvasVisual({ type: 'build', active: false })
       this.syncCanvasVisual({ type: 'clear' })
       this.loadDetailArtifacts()
+    },
+
+    openBuildDetails() {
+      this.showTechDetails = true
+      this.$nextTick(() => {
+        const el = this.$el && this.$el.querySelector && this.$el.querySelector('.tech-details')
+        if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' })
+      })
     },
 
     onStreamError(err) {
@@ -1955,6 +2179,8 @@ export default {
       this.sessionId = sessionId
       this.unsubscribeStream = subscribeSimulationStream(sessionId, streamUrl, {
         step: this.onStreamStep,
+        scenario_parsed: this.onStreamScenarioParsed,
+        service_selection: this.onStreamServiceSelection,
         iteration: this.onStreamIteration,
         phase: this.onStreamPhase,
         issue: this.onStreamIssue,
@@ -2068,15 +2294,69 @@ export default {
       return steps.length ? steps.join(' → ') : ''
     },
 
+    compactVerifierText(text) {
+      return String(text || '').replace(/\s+/g, ' ').trim()
+    },
+
+    verifierStatusSame(a, b) {
+      const x = String(a || '').toUpperCase()
+      const y = String(b || '').toUpperCase()
+      if (!x || !y) return false
+      if (x === y) return true
+      return (x === 'PASS' && y === 'PASSED') || (x === 'PASSED' && y === 'PASS')
+    },
+
+    normalizeVerifierIssues(rawIssues, hiddenTexts = []) {
+      const hidden = hiddenTexts.map((x) => this.compactVerifierText(x)).filter(Boolean)
+      const seen = new Set()
+      return (Array.isArray(rawIssues) ? rawIssues : [])
+        .map((item) => {
+          const description = this.compactVerifierText(
+            typeof item === 'string' ? item : (item.description || item.issue || item.detail)
+          )
+          if (!description || hidden.includes(description) || seen.has(description)) return null
+          seen.add(description)
+          return typeof item === 'string' ? { description } : { ...item, description }
+        })
+        .filter(Boolean)
+    },
+
+    normalizeVerifierChecks(rawChecks, overallStatus, issues = []) {
+      const issueTexts = issues
+        .map((x) => this.compactVerifierText(x && x.description))
+        .filter(Boolean)
+      return (Array.isArray(rawChecks) ? rawChecks : [])
+        .map((check) => {
+          const checkName = this.compactVerifierText(check.check || check.name || '')
+          const issue = this.compactVerifierText(check.issue || check.detail || check.message || '')
+          return { ...check, check: checkName || check.check, issue }
+        })
+        .filter((check) => {
+          if (check.check === 'overall_verification') return false
+          if (check.issue && issueTexts.includes(check.issue)) return false
+          if (!check.issue && this.verifierStatusSame(check.status, overallStatus)) return false
+          return Boolean(check.issue || check.check)
+        })
+    },
+
     formatIterationVerification(iterDetail) {
       const vr = iterDetail && iterDetail.verifierResult
-      const summary = (vr && (vr.reason || vr.summary)) || ''
+      const status = vr && vr.status
+      const summary = (vr && (vr.summary || vr.reason)) || ''
+      const reason = (vr && vr.reason) || ''
       const streamIssue = (iterDetail && iterDetail.issue) || ''
-      const checks = (vr && vr.checks) || []
-      const issues = (vr && vr.issues) || []
+      const rawIssues = (vr && vr.issues) || []
       const fix = (iterDetail && iterDetail.fix) || ''
       const hasVerifier = Boolean(vr && vr.status)
       const distinctIssue = streamIssue && streamIssue !== summary ? streamIssue : ''
+      let issues = this.normalizeVerifierIssues(rawIssues, [summary])
+      if (!issues.length && reason && this.compactVerifierText(reason) !== this.compactVerifierText(summary)) {
+        issues = this.normalizeVerifierIssues([{ description: reason }], [summary])
+      }
+      if (!issues.length && distinctIssue) {
+        issues = this.normalizeVerifierIssues([{ description: distinctIssue }], [summary])
+      }
+      const checks = this.normalizeVerifierChecks((vr && vr.checks) || [], status, issues)
       return {
         verifierStatus: hasVerifier ? vr.status : (distinctIssue ? 'FAILED' : ''),
         verifierSummary: summary || distinctIssue,
@@ -2126,17 +2406,17 @@ export default {
           pendingIssues: (this.iterationDetails || []).filter((i) => {
             const v = this.formatIterationVerification(i)
             return v.verifierStatus === 'FAILED' || Boolean(v.fix)
-          }).length
+          }).length,
+          toolCallCount: this.serviceCallStats.total
         },
+        activeCallLabel: this.activeServiceCallLabel,
         showTechDetails: this.hasStarted,
         traceLoading: this.detailTrace.loading,
         traceSkipped: this.detailTrace.skipped,
         traceError: this.detailTrace.error,
         callChain: this.callChainSteps,
         evidenceStatus: evidence && evidence.overallStatus,
-        evidenceSummary: evidence && evidence.summary
-          ? `共 ${evidence.summary.total_checks} 项检查 · 通过 ${evidence.summary.passed || 0}`
-          : '',
+        evidenceSummary: this.evidenceSummaryText(evidence),
         solidifiable: this.artifactView.solidifiable,
         goldenPathExtractable: this.artifactView.goldenPathExtractable,
         artifactId: this.artifactView.artifactId,
@@ -2166,7 +2446,7 @@ export default {
       if (this.detailTrace.loading) {
         this.pushProductRow(rows, 'trace', '轨迹', '加载中…', 'xl')
       } else if (this.detailTrace.skipped) {
-        this.pushProductRow(rows, 'trace', '轨迹', '进程内演示无落盘轨迹', 'lg')
+        this.pushProductRow(rows, 'trace', '轨迹', '构建轨迹暂未生成', 'lg')
       } else if (this.detailTrace.error) {
         this.pushProductRow(rows, 'trace', '轨迹', this.detailTrace.error, 'xl')
       } else if (this.callChainSteps.length) {
@@ -2175,11 +2455,7 @@ export default {
 
       if (evidence) {
         const statusText = evidence.overallStatus || '—'
-        let summaryText = statusText
-        if (evidence.summary) {
-          const s = evidence.summary
-          summaryText = `${statusText} · 共 ${s.total_checks} 项检查 · 通过 ${s.passed || 0}${s.failed ? ` · 失败 ${s.failed}` : ''}${s.warnings ? ` · 警告 ${s.warnings}` : ''}`
-        }
+        const summaryText = [statusText, this.evidenceSummaryText(evidence)].filter(Boolean).join(' · ')
         this.pushProductRow(rows, 'evidence-status', '证据结论', summaryText, 'lg')
       }
 
@@ -2273,7 +2549,9 @@ export default {
       }
 
       this.serviceContractRows.forEach((c, idx) => {
-        const detail = c.uncalled
+        const detail = c.boundOnly
+          ? `已绑定 · ${c.channelLabel}`
+          : c.uncalled
           ? `未调用 · ${c.channelLabel}`
           : `调用 ${c.totalCalls} 次 · 成功率 ${c.successRate} · ${c.channelLabel}`
         const tools = c.declaredToolNames.length ? `声明工具：${c.declaredToolNames.join('、')}` : ''
@@ -2286,6 +2564,7 @@ export default {
             successRate: c.successRate,
             declaredToolNames: c.declaredToolNames,
             observedSummaries: c.observedSummaries,
+            boundOnly: c.boundOnly,
             uncalled: c.uncalled
           }
         })
@@ -2294,7 +2573,8 @@ export default {
       const gp = art && (art.goldenPath || (Array.isArray(art.goldenPaths) ? art.goldenPaths[0] : null))
       if (gp && Array.isArray(gp.steps)) {
         gp.steps.forEach((step, idx) => {
-          const bindingKeys = step.inputBinding ? Object.keys(step.inputBinding) : []
+          const mapping = step.inputMapping || step.inputBinding || {}
+          const bindingKeys = Object.keys(mapping)
           const bindingHint = bindingKeys.length ? ` · 入参 ${bindingKeys.join(', ')}` : ''
           const slots = (step.outputSlots || []).map((s) => (typeof s === 'string' ? s : s.name)).filter(Boolean)
           const slotHint = slots.length ? ` · 输出 ${slots.join(', ')}` : ''
@@ -2309,11 +2589,12 @@ export default {
       }
       if (gp && Array.isArray(gp.assertions)) {
         gp.assertions.forEach((a, idx) => {
+          const result = a.result || a.checkMode || (a.expected ? 'rule' : 'unknown')
           this.pushProductRow(
             rows,
             `gp-assertion-${idx}`,
             a.assertionId || `assertion_${idx + 1}`,
-            `${a.level || ''} · ${a.type || ''} · ${a.result || 'unknown'}`,
+            `${a.level || ''} · ${a.type || ''} · ${result}`,
             'md'
           )
         })
@@ -2881,6 +3162,61 @@ export default {
   padding: 8px 12px;
   background: #fff;
   border-radius: 6px;
+  word-break: break-word;
+}
+
+.process-snapshot {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.process-snapshot-card {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  background: #fff;
+  text-align: left;
+
+  &--active {
+    border-color: #91d5ff;
+    background: #f0f7ff;
+  }
+
+  &--ok {
+    border-color: #b7eb8f;
+    background: #f6ffed;
+  }
+
+  &--warn {
+    border-color: #ffe58f;
+    background: #fffbe6;
+  }
+}
+
+.process-snapshot-label {
+  display: block;
+  font-size: 11px;
+  color: #8c8c8c;
+  margin-bottom: 4px;
+}
+
+.process-snapshot-card strong {
+  display: block;
+  font-size: 14px;
+  color: #262626;
+  line-height: 1.25;
+}
+
+.process-snapshot-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #8c8c8c;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 // 迭代历史
@@ -3019,6 +3355,10 @@ export default {
   font-size: 10px;
   color: #bfbfbf;
   margin-top: 4px;
+}
+
+.result-actions {
+  margin-top: 16px;
 }
 
 .stats-row {
@@ -3262,6 +3602,13 @@ export default {
   &--tight {
     margin-top: 6px;
   }
+
+  &--artifact {
+    padding: 8px 10px;
+    background: #fcfcfc;
+    border: 1px solid #f0f0f0;
+    border-radius: 6px;
+  }
 }
 
 .evidence-dimension-panel {
@@ -3479,6 +3826,46 @@ export default {
     .verifier-label { color: #722ed1; }
     .issue-label { color: #faad14; }
     .fix-label { color: #52c41a; }
+  }
+
+  .iter-verifier {
+    padding: 8px 10px;
+    background: #fafafa;
+    border: 1px solid #f0f0f0;
+    border-radius: 6px;
+  }
+
+  .iter-verifier-main {
+    display: grid;
+    grid-template-columns: max-content max-content minmax(0, 1fr);
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .iter-verifier-summary {
+    min-width: 0;
+    line-height: 1.55;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  .iter-check-list {
+    margin: 8px 0 0 64px;
+    padding-left: 16px;
+    line-height: 1.55;
+    color: #666;
+    word-break: break-word;
+
+    li + li {
+      margin-top: 4px;
+    }
+  }
+
+  .iter-fix-inline {
+    margin: 8px 0 0 64px;
+    color: #ad6800;
+    line-height: 1.5;
+    word-break: break-word;
   }
 
   .iter-exec-path {

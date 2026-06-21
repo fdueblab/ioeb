@@ -2,37 +2,16 @@
 import { UserLayout, BasicLayout, BlankLayout, AppView } from '@/layouts'
 import { bxAnaalyse } from '@/core/icons'
 import { loadDict } from '@/utils/dictionaryCache'
-import { getDefaultLandingPath } from '@/utils/domainContext'
-import { getPreferredVertical } from '@/api/userProfile'
+import { filterOpenedDomains, getDefaultLandingPath } from '@/utils/domainContext'
 
 const RouteView = {
   name: 'RouteView',
   render: (h) => h('router-view')
 }
 
-const DEFAULT_VERTICAL_DOMAIN = { code: 'aml', text: '跨境支付AI监测' }
-const OPENED_VERTICAL_LABELS = {
-  aml: '跨境支付AI监测',
-  health: '心理健康分析'
-}
-
-function normalizePreferredVertical(code) {
-  return Object.prototype.hasOwnProperty.call(OPENED_VERTICAL_LABELS, code) ? code : DEFAULT_VERTICAL_DOMAIN.code
-}
-
-function filterDomainsByPreference(domains = []) {
-  const preferred = normalizePreferredVertical(getPreferredVertical())
-  const hit = (domains || []).find(domain => domain.code === preferred)
-  if (hit) return [hit]
-  return [{ code: preferred, text: OPENED_VERTICAL_LABELS[preferred] || DEFAULT_VERTICAL_DOMAIN.text }]
-}
-
 async function loadPreferredDomains() {
   const domains = await loadDict('domain', [])
-  if (!domains || domains.length === 0) {
-    return [DEFAULT_VERTICAL_DOMAIN]
-  }
-  return filterDomainsByPreference(domains)
+  return filterOpenedDomains(domains)
 }
 
 // 获取垂域路由的第一个路径，用于重定向

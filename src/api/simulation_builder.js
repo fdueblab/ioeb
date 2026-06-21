@@ -1,7 +1,7 @@
 /**
  * simulation_builder · 前端 API 统一入口（与 `simulation_builder.vue` 配套）
  *
- * 【分流】元应用展示名 `appName`（与画布 `data.preName` 一致）见 `@/mock/data/meta_apps_data`：
+ * 【分流】构建上下文（元应用名 / 想定 / 服务名）见 `@/mock/data/meta_apps_data`：
  * - **课题** → 进程内 inmemory
  * - **【本地MCP】(n)** → HTTP Micro-Agent（真 MCP，n 见元应用名）
  * - **其他** → HTTP + EventSource → `VUE_APP_AGENT_BASE_URL`
@@ -36,8 +36,8 @@ const SIMULATION_SSE_EVENTS = [
 /** 由「含课题关键字的 start」创建的 sessionId，subscribe/cancel 须走同一实现 */
 const memoryRouteSessionIds = new Set()
 
-function useMemoryForAppName(appName) {
-  return useMemorySimulation(appName)
+function useMemoryForContext(context) {
+  return useMemorySimulation(context)
 }
 
 function createMemorySimulationBuildClient() {
@@ -154,10 +154,10 @@ function createHttpSimulationBuildClient() {
   }
 }
 
-function pickClient(appName, sessionId) {
+function pickClient(context, sessionId) {
   const memory = sessionId != null
     ? memoryRouteSessionIds.has(sessionId)
-    : useMemoryForAppName(appName)
+    : useMemoryForContext(context)
   return memory
     ? createMemorySimulationBuildClient()
     : createHttpSimulationBuildClient()
@@ -165,8 +165,8 @@ function pickClient(appName, sessionId) {
 
 /** @param {Record<string, unknown>} payload */
 export function startSimulation(payload) {
-  const memory = useMemoryForAppName(payload && payload.appName)
-  const client = pickClient(payload && payload.appName)
+  const memory = useMemoryForContext(payload)
+  const client = pickClient(payload)
   return client.startSimulation(payload).then((res) => {
     if (memory && res && res.sessionId) memoryRouteSessionIds.add(res.sessionId)
     return res
@@ -228,6 +228,15 @@ export function fetchSimulationEvidence(sessionId) {
 export function fetchSimulationArtifact(sessionId) {
   return request({
     url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/artifact`,
+    method: 'get',
+    timeout: 60000
+  })
+}
+
+/** 获取 Verifier 接受的最终执行主干（来自 BuildBundle） */
+export function fetchSimulationAcceptedTrajectory(sessionId) {
+  return request({
+    url: `${SIMULATION_BASE_URL}/api/simulation/builds/${sessionId}/accepted-trajectory`,
     method: 'get',
     timeout: 60000
   })

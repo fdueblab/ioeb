@@ -82,14 +82,19 @@
             <span>接入服务</span>
           </div>
           <div class="wb-stat">
-            <strong>{{ buildStats.completedCalls }}</strong>
-            <span>已完成调用</span>
+            <strong>{{ buildStats.toolCallCount || buildStats.completedCalls }}</strong>
+            <span>工具调用</span>
           </div>
           <div class="wb-stat">
             <strong>{{ buildStats.pendingIssues }}</strong>
             <span>待修正项</span>
           </div>
         </div>
+      </div>
+
+      <div v-if="build.activeCallLabel" class="wb-row wb-row--xl">
+        <strong>当前调度</strong>
+        <div>{{ build.activeCallLabel }}</div>
       </div>
 
       <template v-if="build.iterations && build.iterations.length">
@@ -163,10 +168,12 @@
                 <strong>验证结论</strong>
               </div>
               <div class="wb-iter-block-body">
-                <a-tag v-if="iter.verifierStatus" :color="verifierTagColor(iter.verifierStatus)">
-                  {{ iter.verifierStatus }}
-                </a-tag>
-                <span v-if="iter.verifierSummary" class="wb-iter-block-text">{{ iter.verifierSummary }}</span>
+                <div class="wb-iter-verify-main">
+                  <a-tag v-if="iter.verifierStatus" :color="verifierTagColor(iter.verifierStatus)">
+                    {{ iter.verifierStatus }}
+                  </a-tag>
+                  <span v-if="iter.verifierSummary" class="wb-iter-block-text">{{ iter.verifierSummary }}</span>
+                </div>
                 <ul v-if="iter.verifierChecks && iter.verifierChecks.length" class="wb-iter-check-list">
                   <li v-for="(chk, ci) in iter.verifierChecks" :key="'chk-' + ci">
                     <a-tag size="small" :color="verifierTagColor(chk.status)">{{ chk.status || chk.check }}</a-tag>
@@ -213,7 +220,7 @@
                 <span class="wb-subtle"><a-icon type="loading" /> 加载中…</span>
               </template>
               <template v-else-if="build.traceSkipped">
-                <span class="wb-subtle">进程内演示无落盘轨迹</span>
+                <span class="wb-subtle">构建轨迹暂未生成</span>
               </template>
               <template v-else-if="build.traceError">
                 <span class="wb-subtle wb-text-error">{{ build.traceError }}</span>
@@ -301,6 +308,7 @@ export default {
       return this.build.stats || {
         serviceCount: 0,
         completedCalls: 0,
+        toolCallCount: 0,
         pendingIssues: 0
       }
     },

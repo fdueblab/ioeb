@@ -27,6 +27,10 @@ export function matchMcpScenarioByKeywords(text) {
 
   if (/重症医院感染|出院.*医保|随访安排/.test(t)) return 'all5'
   if (/肾功能.*肺炎|评分.*剂量.*标签/.test(t)) return 'clinical_triad'
+  if (/qSOFA.*Geneva|Geneva.*qSOFA|感染.*双评分|脓毒症.*肺栓塞/i.test(t)) return 'infection_scores'
+  if (/qSOFA|quick\s*sofa|脓毒症筛查|NEWS2|vitalscore/i.test(t)) return 'vitalscore'
+  if (/Geneva|PERC|肺栓塞|CHA2DS2|medimetry/i.test(t)) return 'medimetry'
+  if (/临床试验|ClinicalTrials|文献检索|PubMed|Europe PMC/i.test(t)) return 'clinical_evidence'
   if (/脓毒症|休克|SOFA.*利奈/.test(t)) return 'combo'
   if (/说明书|黑框|相互作用|openfda|fda|药品标签/i.test(t)) return 'openfda'
   if (/BRAF|MDT|靶点|opentargets|基因/i.test(t)) return 'opentargets'
@@ -49,7 +53,7 @@ export function resolveMcpDemoScenario(userInput) {
 
   if (n === 5) return 'all5'
   if (n === 3) return 'clinical_triad'
-  if (n === 2) return 'combo'
+  if (n === 2) return 'infection_scores'
 
   return 'linezolid'
 }
@@ -57,13 +61,17 @@ export function resolveMcpDemoScenario(userInput) {
 /** 追问文案用：与 matchMcpScenarioByKeywords 同源的可读提示 */
 export const LOCAL_MCP_KEYWORD_HINTS = [
   '利奈唑胺 / 给药 / 剂量 / 肺炎',
+  'qSOFA / 脓毒症筛查 / vitalscore',
+  'Geneva / PERC / 肺栓塞 / medimetry',
+  '临床试验 / 文献检索 / clinical-evidence',
   'SOFA / 医学计算 / 计算器',
   '说明书 / 黑框 / 相互作用',
   '靶点 / BRAF / MDT',
   '医保 / 参保',
   '脓毒症 / 休克',
   '重症医院感染 / 随访',
-  '肾功能 / 评分+剂量+标签'
+  '肾功能 / 评分+剂量+标签',
+  '感染 / 双评分'
 ]
 
 export const LOCAL_MCP_FAKE_QUESTION =

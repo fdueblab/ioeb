@@ -9,6 +9,7 @@ import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { i18nRender } from '@/locales'
 import { loadDict, preloadAllDict } from '@/utils/dictionaryCache' // 引入字典预加载功能
 import {
+  filterOpenedDomains,
   getDefaultLandingPath,
   getCurrentDomainCode,
   getDomainModuleEntryPath,
@@ -50,7 +51,7 @@ router.beforeEach(async (to, from, next) => {
             console.error('预加载字典数据失败:', err)
           })
           const domainOptions = await loadDict('domain', [])
-          const currentDomain = resolveCurrentDomain(domainOptions)
+          const currentDomain = resolveCurrentDomain(filterOpenedDomains(domainOptions))
           await store.dispatch('SetCurrentDomain', currentDomain)
           // 根据用户权限信息生成可访问的路由表
           await store.dispatch('GenerateRoutes', { token, ...res })

@@ -168,7 +168,7 @@ const pj2Flow = {
 
 const aircraftFlow = {
   name: '新元应用',
-  preName: '智能飞行控制',
+  preName: '无人机AI应用课题智能飞行控制',
   preInputName: '智能飞行器参数',
   preOutputName: '智能飞行器任务结果',
   inputType: 1,
@@ -238,7 +238,7 @@ const aircraftFlow = {
 
 const pj1pj4pj3Flow = {
   name: '新元应用',
-  preName: '金融风险报告生成',
+  preName: '课题一课题四课题三金融风险报告生成',
   preInputName: '跨境贸易数据',
   preOutputName: '金融风险报告',
   inputType: 2,
@@ -364,7 +364,7 @@ const pj4Flow = {
 
 const healthFlow = {
   name: '新元应用',
-  preName: '乡村医疗AI辅助诊断元应用',
+  preName: '乡村医疗AI应用课题辅助诊断元应用',
   preInputName: '患者医疗数据',
   preOutputName: '诊断与健康管理方案',
   inputType: 2,
@@ -449,7 +449,7 @@ const healthFlow = {
 
 const agricultureFlow = {
   name: '农业数智AI服务工作流',
-  preName: '农业数智AI元应用',
+  preName: '数字农业AI应用课题元应用',
   preInputName: '农业数据输入',
   preOutputName: '农业智能分析报告',
   inputType: 2,
@@ -560,7 +560,7 @@ const agricultureFlow = {
 
 const evtolFlow = {
   name: '新元应用',
-  preName: 'eVTOL智能飞行控制元应用',
+  preName: '低空飞行AI应用课题eVTOL智能飞行控制元应用',
   preInputName: '飞行任务参数',
   preOutputName: '飞行控制结果',
   inputType: 2,
@@ -657,7 +657,7 @@ const evtolFlow = {
 
 const ecommerceFlow = {
   name: '新元应用',
-  preName: '跨境电商智能营销元应用',
+  preName: '跨境电商AI应用课题智能营销元应用',
   preInputName: '产品信息与市场需求',
   preOutputName: '多语言营销方案',
   inputType: 2,
@@ -754,7 +754,7 @@ const ecommerceFlow = {
 
 const homeAIFlow = {
   name: '新元应用',
-  preName: '家庭智能助手元应用',
+  preName: '家庭智能助手AI应用课题元应用',
   preInputName: '家庭环境数据与指令',
   preOutputName: '智能家庭管理方案',
   inputType: 2,
@@ -850,7 +850,7 @@ const homeAIFlow = {
 }
 
 const pjNewFlow = {
-  preName: '金融欺诈检测推理元应用',
+  preName: '课题一金融欺诈检测推理元应用',
   preInputName: '金融交易数据',
   preOutputName: '欺诈检测评估报告',
   inputType: 2,
