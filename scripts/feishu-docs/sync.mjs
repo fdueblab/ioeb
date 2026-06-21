@@ -334,6 +334,13 @@ class FeishuClient {
     })
 
     converter.client.getAccessToken = async () => this.accessToken
+    const updateBlocks = converter.client.updateBlocks.bind(converter.client)
+    converter.client.updateBlocks = async (documentId, requests) => {
+      for (const chunk of chunks(requests, 10)) {
+        await updateBlocks(documentId, chunk)
+      }
+    }
+
     const result = await converter.convert(markdown, {
       title,
       imageBaseDir: docsRoot,
@@ -504,4 +511,10 @@ function timestamp() {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function* chunks(items, size) {
+  for (let index = 0; index < items.length; index += size) {
+    yield items.slice(index, index + size)
+  }
 }
