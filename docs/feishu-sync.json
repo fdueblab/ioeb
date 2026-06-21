@@ -44,118 +44,148 @@
   },
   "documents": {
     "quickstart.md": {
-      "group": "root",
-      "nodeToken": "HEK2wBMSciYQT0kkjgKcnLBbnzc",
-      "url": "https://fdueblab.feishu.cn/wiki/HEK2wBMSciYQT0kkjgKcnLBbnzc",
       "title": "快速开始",
-      "contentHash": "04e7ae10ba229b5da5b41e84ef65e2a91d08e0872307ef2de6401f7f9f417074"
+      "group": "root",
+      "nodeToken": "NjMEwFUsMiCjaYkFnv9cC5NDnxb",
+      "objToken": "LjKgdAKrHokWR9xWNHrcbPCWn6g",
+      "url": "https://fdueblab.feishu.cn/wiki/NjMEwFUsMiCjaYkFnv9cC5NDnxb",
+      "renderer": "docx-blocks-v1",
+      "contentHash": "7a335bff957fabdf97e8795f53baa0e0c0e906dc1de5becae603e3d26fc587c8"
     },
     "guide/register-profile-scenario-dev.md": {
       "title": "从注册到算法模型想定式开发使用指南",
       "group": "core",
-      "nodeToken": "O0Tcw21U2iSGYHki720c2eVlnGf",
-      "objToken": "GNAcdIJ2YovumoxsYYrcU0wkn0g",
-      "url": "https://fdueblab.feishu.cn/wiki/O0Tcw21U2iSGYHki720c2eVlnGf",
-      "contentHash": "66559d4212ab135400d20167b79a119ee1d6a6fcd85a0dc1c87068f118fb02fb"
+      "nodeToken": "RbqBwyJ6di0jyWkVYY9cGZ1VnRP",
+      "objToken": "VufydKWveoo42oxe2LIcahHEnac",
+      "url": "https://fdueblab.feishu.cn/wiki/RbqBwyJ6di0jyWkVYY9cGZ1VnRP",
+      "renderer": "docx-blocks-v1",
+      "contentHash": "2494f3af0a87b96700be2537c3113c916510716522dc02f0a20336e5d5b438dc"
     },
     "guide/ai-resources-overview.md": {
-      "group": "core",
-      "nodeToken": "IJ20wlHvkid1YykvPYtcaAjUnZd",
-      "url": "https://fdueblab.feishu.cn/wiki/IJ20wlHvkid1YykvPYtcaAjUnZd",
       "title": "垂域AI资源总览",
-      "contentHash": "2ac08a5e80009c2922b14d95c6fca16517bb89297e19a5e90e725a3793e98fe1"
+      "group": "core",
+      "nodeToken": "XaI5wFBohijcAFkKKCvcerHonEc",
+      "objToken": "HLQedEzScoTjmNxCv3ec0pe6nlg",
+      "url": "https://fdueblab.feishu.cn/wiki/XaI5wFBohijcAFkKKCvcerHonEc",
+      "renderer": "docx-blocks-v1",
+      "contentHash": "d2e302481ea9fb839736725e597ed331949319be65288ca6d7bade278a3545d1"
     },
     "guide/ai-resources-search.md": {
-      "group": "core",
-      "nodeToken": "Y2D6wBZb9ihEiKkrfq5cfYDNnjc",
-      "url": "https://fdueblab.feishu.cn/wiki/Y2D6wBZb9ihEiKkrfq5cfYDNnjc",
       "title": "垂域AI资源智能检索",
-      "contentHash": "6cb1db4aebd2d439a45ff6fa89df8e7f03fce9464214ef250299d2b9c221aff8"
+      "group": "core",
+      "nodeToken": "GYDwworr3iT1hSklMKxc4zu9n7c",
+      "objToken": "UXaGdjApVo1dhzxqdE4cgv4KnQs",
+      "url": "https://fdueblab.feishu.cn/wiki/GYDwworr3iT1hSklMKxc4zu9n7c",
+      "renderer": "docx-blocks-v1",
+      "contentHash": "c18c291c35c08bec997ce1915c289b9f97a5905d81a5cc00440c8eaa8cd925cb"
     },
     "guide/microservice-publish.md": {
-      "group": "core",
-      "nodeToken": "GQJowHeZUis3IVkwdeqcbH60nke",
-      "url": "https://fdueblab.feishu.cn/wiki/GQJowHeZUis3IVkwdeqcbH60nke",
       "title": "原子微服务可视化解析发布",
-      "contentHash": "3a7e2a0b5526955cfdb44c31e5e97bd62f53594fbf4df07f1ebbd0d7b823c724"
+      "group": "core",
+      "nodeToken": "JkdjwCbaqiHpKckxefxcbXBrnme",
+      "objToken": "XQ4pdk3NNonBuyxElArc3j1Znlf",
+      "url": "https://fdueblab.feishu.cn/wiki/JkdjwCbaqiHpKckxefxcbXBrnme",
+      "renderer": "docx-blocks-v1",
+      "contentHash": "ca26be2215fd882b0ef6df55a6b45dc01fe18bf862d80fee116588396c8d72fb"
     },
     "guide/microservice-evaluation.md": {
-      "group": "core",
-      "nodeToken": "XSqawbvk1iCqRxkjlHvcpNnRnLd",
-      "url": "https://fdueblab.feishu.cn/wiki/XSqawbvk1iCqRxkjlHvcpNnRnLd",
       "title": "原子微服务技术评测",
-      "contentHash": "87e2f0a9ef9f85650cf63ea036b23453cda044fcdf87a582624b72f91737e973"
+      "group": "core",
+      "nodeToken": "IHirwUnRSidZBkkY6oUcff3gnje",
+      "objToken": "CyIwdJjxRoi9rhxrhEAcCQ0ense",
+      "url": "https://fdueblab.feishu.cn/wiki/IHirwUnRSidZBkkY6oUcff3gnje",
+      "renderer": "docx-blocks-v1",
+      "contentHash": "142e3984b22dad8d9a20605551ec236ee4b10f24314f2a10fc1805a06a7d8295"
     },
     "guide/microservice-testing.md": {
-      "group": "core",
-      "nodeToken": "PKYlwiDTVird0skuHC0c5wf7nMc",
-      "url": "https://fdueblab.feishu.cn/wiki/PKYlwiDTVird0skuHC0c5wf7nMc",
       "title": "原子微服务调用测试",
-      "contentHash": "1ff47856435e284124a37418e5e00eb509f18a78479654cec04cfd18259e7674"
+      "group": "core",
+      "nodeToken": "RZG1w70X7iSOSDkuPYMc2fJrnVc",
+      "objToken": "ILlmdnO0GoOydyxd35dci8WbnLh",
+      "url": "https://fdueblab.feishu.cn/wiki/RZG1w70X7iSOSDkuPYMc2fJrnVc",
+      "renderer": "docx-blocks-v1",
+      "contentHash": "4a673f33badb518b2cc48394784f6cc69129cb229eb531851c2472e8de98481f"
     },
     "guide/meta-app-simulation.md": {
       "title": "垂域元应用仿真构建",
       "group": "core",
-      "nodeToken": "XRQuweAwSiiCXekAZe1crOlOnQf",
-      "objToken": "VR3SdPV66os4OTxW4hAcF3dcncb",
-      "url": "https://fdueblab.feishu.cn/wiki/XRQuweAwSiiCXekAZe1crOlOnQf",
-      "contentHash": "b96f4b4ca5da10497de6b5e91309a2d2c10e08f9d02c27a6cd1ddb8bcb222c25"
+      "nodeToken": "VJnxw6VhxiKMv6kLxnPcgQ4rnch",
+      "objToken": "YRZadfxzsorhafxxo87cxBGNnxV",
+      "url": "https://fdueblab.feishu.cn/wiki/VJnxw6VhxiKMv6kLxnPcgQ4rnch",
+      "renderer": "docx-blocks-v1",
+      "contentHash": "ec387d95b63d4554990c9bc1bc30f4f2dde24c72e1d00f7dbf957309492d2a3e"
     },
     "guide/meta-app-validation.md": {
+      "title": "元应用业务数据验证",
       "group": "core",
       "nodeToken": "RBv7wtK1ii10FskirXvcAflFn2g",
+      "objToken": "GtsideiBaopCvgxU2e4cNaPlnRJ",
       "url": "https://fdueblab.feishu.cn/wiki/RBv7wtK1ii10FskirXvcAflFn2g",
-      "title": "元应用业务数据验证",
-      "contentHash": "a73a660de31ae408b7e2b1580ebda330bf7a70b32b3525ae0caa4d59c3415ff7"
+      "renderer": "docx-blocks-v1",
+      "contentHash": "5ba2d95ec9a34419bd28371b853de3025da8aa111f326c762bb388808dcfcb4b"
     },
     "guide/app-construction.md": {
+      "title": "垂域应用参数化构建",
       "group": "core",
       "nodeToken": "GqJKwU0CLiO5fTkuNp7chlcinZ8",
+      "objToken": "UKLQdNSqDoDex1xucIqcePfYnKe",
       "url": "https://fdueblab.feishu.cn/wiki/GqJKwU0CLiO5fTkuNp7chlcinZ8",
-      "title": "垂域应用参数化构建",
-      "contentHash": "90d19f4a11e4e7927746e44947f2bd80e71f94df48ce4a1da18dc6bd2d738a15"
+      "renderer": "docx-blocks-v1",
+      "contentHash": "9fbe2c1740fb07457b596beab50d0b33495565b6730b7b18edc4afc20c2e6ac6"
     },
     "guide/operations.md": {
+      "title": "服务及应用运维管理",
       "group": "other",
       "nodeToken": "VUTdwn3Haib0FXkWgSwc0Wcun2g",
+      "objToken": "ZSw3dJIY9oZGyyxG0h5cu2YFnNf",
       "url": "https://fdueblab.feishu.cn/wiki/VUTdwn3Haib0FXkWgSwc0Wcun2g",
-      "title": "服务及应用运维管理",
-      "contentHash": "9ea0da2698ac6ae562f8b884641a88a9b0f54f7db360b46260448bc362783f90"
+      "renderer": "drive-import-v1",
+      "contentHash": "5aee7a6562d2bace4eda68abe224d736e61bbc94527598ca4103868f86a08957"
     },
     "guide/user-management.md": {
+      "title": "用户管理",
       "group": "other",
       "nodeToken": "JOi5wNsWfiBwstkoYhEcheH4nWK",
+      "objToken": "Gf9TdsWiboGVdBxh2YOcjjA5nbc",
       "url": "https://fdueblab.feishu.cn/wiki/JOi5wNsWfiBwstkoYhEcheH4nWK",
-      "title": "用户管理",
-      "contentHash": "d9fdffb92d95370bc14f2538e04811688f75b39b0086324e2e8dab17d8e8134a"
+      "renderer": "drive-import-v1",
+      "contentHash": "7973e035b424b923514a1fa88cc156c31e764c60d5cc0d943fbb3f22e5bbc348"
     },
     "guide/account-settings.md": {
+      "title": "账户设置",
       "group": "other",
       "nodeToken": "UjpuwqHTTiL6AJkXYuecqeC0n2g",
+      "objToken": "OJW1d402Doa87sx7TegcicRfntT",
       "url": "https://fdueblab.feishu.cn/wiki/UjpuwqHTTiL6AJkXYuecqeC0n2g",
-      "title": "账户设置",
-      "contentHash": "65ef1371cd5193db90a0662073fbb982ce184a8c994ce77b2791f39a5e74a8fd"
+      "renderer": "drive-import-v1",
+      "contentHash": "b5aed91256d77cc16134c4ac3a31ee2f1b30fa45cea3dc7415a76f0b24260f7e"
     },
     "guide/platform-intro.md": {
+      "title": "平台介绍",
       "group": "reference",
       "nodeToken": "MyUTwgfrFithFdkHkYgc40LBn6p",
+      "objToken": "OwKwd2TxworhHFxDZujcWeblnPg",
       "url": "https://fdueblab.feishu.cn/wiki/MyUTwgfrFithFdkHkYgc40LBn6p",
-      "title": "平台介绍",
-      "contentHash": "1f7f5d3469c4b47b7d248910555106e7dfabec01be52cff24fe05da0e6ba15e4"
+      "renderer": "docx-blocks-v1",
+      "contentHash": "24ff6149617c130bc78e771678ae4a5fb66eeb985b40fcb3897851ddd54b55e9"
     },
     "guide/code-template.md": {
+      "title": "算法代码提交要求",
       "group": "reference",
       "nodeToken": "EoyEwN86aiUcbxk5jv1cUboPnOg",
+      "objToken": "TpAbdeo87oWsaGxSaRacPXjEnCb",
       "url": "https://fdueblab.feishu.cn/wiki/EoyEwN86aiUcbxk5jv1cUboPnOg",
-      "title": "算法代码提交要求",
-      "contentHash": "59a819a014a304a5dc1acc42070c4e501171f3f14b01d6853dde4a8373306aa1"
+      "renderer": "drive-import-v1",
+      "contentHash": "fb15d831e30924e2927ddbb03de9fd22b69f9d55873acbf9e7386541f5dc89b2"
     },
     "faq.md": {
+      "title": "常见问题",
       "group": "root",
       "nodeToken": "Wr4UwyyKWiQdiGk5i6ccfTZDnL5",
+      "objToken": "Fj22dQHzAoIuTbxWG8FcMq9Un25",
       "url": "https://fdueblab.feishu.cn/wiki/Wr4UwyyKWiQdiGk5i6ccfTZDnL5",
-      "title": "常见问题",
-      "contentHash": "d7781c547a1cff3d5fab1db2fa1cf39cba225a173128c4103160a5b90dd4ba7f"
+      "renderer": "drive-import-v1",
+      "contentHash": "b8251f28f6d45cf2f7d9e6102bc79a3f44134b3b9d6957bac82fd52e12b9a7ad"
     }
   }
 }
