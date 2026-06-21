@@ -675,8 +675,6 @@ const bidRiggingDetectionApp = {
 // 本机 external-mcp 演示（health · SmartChat 输入含【本地MCP】(n)）
 // ---------------------------------------------------------------------------
 
-const MCP_ROOT = '/home/lyx/workspace/fdueblab/external-mcp'
-
 const MCP_NODES = {
   linezolid: {
     id: 'mcp-demo-linezolid',
@@ -687,7 +685,7 @@ const MCP_NODES = {
     des: '利奈唑胺剂量（SSE :25013）',
     type: 'atomic_mcp',
     status: 'released',
-    tools: [{ name: 'calculate_linezolid_dose', description: '计算推荐剂量' }]
+    tools: [{ name: 'calculate_linezolid_dose', description: '计算利奈唑胺推荐剂量。sex/age/height/weight/scr/tb: 患者参数。返回 JSON 字符串。' }]
   },
   medicalCalc: {
     id: 'mcp-demo-medical-calc',
@@ -699,52 +697,51 @@ const MCP_NODES = {
     type: 'atomic_mcp',
     status: 'released',
     tools: [
-      { name: 'discover', description: '发现计算器' },
-      { name: 'calculate', description: '执行计算' }
+      { name: 'discover', description: '按关键词或上下文发现医学计算器。by/value: 检索方式与关键词。返回 JSON。' },
+      { name: 'calculate', description: '执行指定计算器。calculator_id/params: 计算器 ID 与参数。返回 JSON。' }
     ]
   },
   openfda: {
     id: 'mcp-demo-openfda',
     name: 'openFDA 药品标签 MCP',
-    mcpMethod: 'stdio',
-    mcpCommand: 'node',
-    mcpArgs: [`${MCP_ROOT}/openfda-mcp/build/index.js`],
+    url: 'http://127.0.0.1:18003/sse',
+    mcpMethod: 'sse',
     isFake: false,
-    des: 'openFDA（stdio）',
+    des: 'openFDA（SSE :18003）',
     type: 'atomic_mcp',
     status: 'released',
     tools: [
-      { name: 'search_drug_labels', description: '检索药品标签' },
-      { name: 'search_drug_adverse_events', description: '检索不良事件' }
+      { name: 'search_drug_labels', description: '检索 FDA 药品标签。generic_name: 通用名。limit: 返回条数。返回 JSON 字符串。' },
+      { name: 'search_drug_adverse_events', description: '检索 FDA 不良事件。generic_name: 通用名。返回 JSON 字符串。' }
     ]
   },
   opentargets: {
     id: 'mcp-demo-opentargets',
     name: 'OpenTargets 靶点知识 MCP',
-    mcpMethod: 'stdio',
-    mcpCommand: `${MCP_ROOT}/opentargets-mcp/.venv/bin/python`,
-    mcpArgs: ['-m', 'opentargets_mcp.server', '--transport', 'stdio'],
+    url: 'http://127.0.0.1:18002/sse',
+    mcpMethod: 'sse',
     isFake: false,
-    des: 'OpenTargets（stdio）',
+    des: 'OpenTargets（SSE :18002）',
     type: 'atomic_mcp',
     status: 'released',
     tools: [
-      { name: 'search_entities', description: '检索实体' },
-      { name: 'get_target_associations', description: '靶点关联' }
+      { name: 'search_entities', description: '按关键词检索靶点/疾病/药物实体。query_string: 检索词。返回 JSON。' },
+      { name: 'get_target_associations', description: '查询靶点关联疾病与药物。返回 JSON。' }
     ]
   },
   healthcovered: {
     id: 'mcp-demo-healthcovered',
     name: 'healthcovered ACA 资格 MCP',
-    url: 'http://127.0.0.1:18001/mcp',
-    mcpMethod: 'streamable_http',
+    url: 'http://127.0.0.1:18001/sse',
+    mcpMethod: 'sse',
     isFake: false,
-    des: 'ACA 资格（HTTP :18001）',
+    des: 'ACA 资格（SSE :18001）',
     type: 'atomic_mcp',
     status: 'released',
     tools: [
-      { name: 'get_enrollment_dates', description: '开放注册日期' },
-      { name: 'check_eligibility', description: '参保资格' }
+      { name: 'get_enrollment_dates', description: '获取 2026 年开放注册日期与特殊注册触发条件。返回说明文本。' },
+      { name: 'check_aca_eligibility', description: '检查 ACA 补贴资格。household_size: 家庭人数。annual_income: 年收入（美元）。' },
+      { name: 'get_healthcovered_contact', description: '获取 HealthCovered.org 联系方式与计算器链接。' }
     ]
   }
 }

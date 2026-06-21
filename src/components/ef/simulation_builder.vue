@@ -490,9 +490,9 @@
               </div>
             </template>
 
-            <!-- ArtifactSpec v0 产物 -->
+            <!-- MetaAppArtifact v1 临时 JSON 展示 -->
             <div class="detail-section detail-section-card" v-if="isCompleted && !detailArtifact.skipped">
-              <div class="detail-title">固化产物 (ArtifactSpec v0)</div>
+              <div class="detail-title">元应用产物 (MetaAppArtifact v1)</div>
               <div v-if="detailArtifact.loading" class="detail-muted detail-subsection">
                 <a-icon type="loading" /> 产物编译中…
               </div>
@@ -563,13 +563,11 @@
                   <p v-else class="detail-muted detail-subsection-flush">无服务契约数据</p>
                 </div>
 
-                <!-- 固化结论 -->
+                <!-- 运行结论 -->
                 <div class="detail-subsection">
-                  <div class="detail-subtitle">固化门禁</div>
+                  <div class="detail-subtitle">运行模式</div>
                   <div class="evidence-head">
-                    <a-tag :color="artifactView.solidifiable ? 'green' : 'red'">
-                      {{ artifactView.solidifiable ? '可固化' : '不可固化' }}
-                    </a-tag>
+                    <a-tag color="blue">{{ artifactView.runtimeMode || 'agent_only' }}</a-tag>
                     <a-tag
                       v-if="artifactView.goldenPathExtractable != null"
                       :color="artifactView.goldenPathExtractable ? 'blue' : 'default'"
@@ -627,10 +625,10 @@
                     Hash {{ artifactView.artifactHash ? artifactView.artifactHash.slice(0, 16) : '—' }}
                   </p>
                 </div>
-                <!-- 展开完整 JSON -->
+                <!-- 展开完整 JSON：临时展示，后续可删除 -->
                 <div class="detail-subsection">
                   <a-collapse :bordered="false">
-                    <a-collapse-panel key="artifact-json" header="完整 ArtifactSpec JSON">
+                    <a-collapse-panel key="artifact-json" header="完整 MetaAppArtifact JSON">
                       <pre class="trace-raw-json">{{ artifactJsonPreview }}</pre>
                     </a-collapse-panel>
                   </a-collapse>
@@ -641,7 +639,7 @@
             <div class="detail-section detail-section-card" v-if="iterationDetails.length > 0">
               <div class="detail-title">轮次详情</div>
               <div class="iteration-details">
-                <div v-for="iter in iterationDetails" :key="iter.iteration" class="iter-detail-item">
+                <div v-for="iter in iterationDetailsForView" :key="iter.iteration" class="iter-detail-item">
                   <div class="iter-header">
                     <span class="iter-num">第{{ iter.iteration }}轮</span>
                     <a-tag v-if="iter.success" color="green">通过</a-tag>
@@ -674,18 +672,25 @@
                       {{ iter.plannerDecision.executionPath.join(' → ') }}
                     </div>
                   </div>
-                  <div class="iter-verifier" v-if="iter.verifierResult && iter.verifierResult.status">
+                  <div class="iter-verifier" v-if="iter.hasVerification">
                     <span class="verifier-label">验证：</span>
-                    <a-tag size="small" :color="iter.verifierResult.status === 'PASSED' ? 'green' : 'red'">
-                      {{ iter.verifierResult.status }}
+                    <a-tag
+                      v-if="iter.verifierStatus"
+                      size="small"
+                      :color="iter.verifierStatus === 'PASSED' ? 'green' : 'red'"
+                    >
+                      {{ iter.verifierStatus }}
                     </a-tag>
-                    {{ iter.verifierResult.reason || iter.verifierResult.summary || '' }}
+                    <span>{{ iter.verifierSummary }}</span>
+                    <ul v-if="iter.verifierChecks && iter.verifierChecks.length" class="iter-check-list">
+                      <li v-for="(chk, ci) in iter.verifierChecks" :key="'c-' + ci">
+                        {{ chk.status || chk.check }}：{{ chk.issue || chk.check }}
+                      </li>
+                    </ul>
+                    <div v-if="iter.fix" class="iter-fix-inline">修复：{{ iter.fix }}</div>
                   </div>
-                  <div class="iter-issue" v-if="iter.issue">
+                  <div class="iter-issue" v-if="iter.issue && !iter.hasVerification">
                     <span class="issue-label">问题：</span>{{ iter.issue }}
-                  </div>
-                  <div class="iter-fix" v-if="iter.fix">
-                    <span class="fix-label">修复：</span>{{ iter.fix }}
                   </div>
                 </div>
               </div>
@@ -957,14 +962,17 @@ export default {
     },
     scenarioParsedView() {
       const data = this.detailArtifact && this.detailArtifact.data
-      const sc = data && (data.parsedIntent || data.scenario)
+      const contract = data && data.taskContract
+      const sc = data && (data.parsedIntent || data.scenario || contract)
       if (!sc || typeof sc !== 'object') {
         return { hasContent: false }
       }
       const goal = sc.goal ? String(sc.goal).trim() : ''
-      const description = sc.description ? String(sc.description).trim() : ''
+      const description = sc.description ? String(sc.description).trim() : ((data.app && data.app.description) || '')
       const constraints = Array.isArray(sc.constraints) ? sc.constraints.filter(Boolean) : []
-      const acceptanceCriteria = Array.isArray(sc.acceptanceCriteria) ? sc.acceptanceCriteria.filter(Boolean) : []
+      const acceptanceCriteria = Array.isArray(sc.acceptanceCriteria)
+        ? sc.acceptanceCriteria.filter(Boolean)
+        : (Array.isArray(sc.successCriteria) ? sc.successCriteria.filter(Boolean) : [])
       const source = sc.sourceRef || sc.source || {}
       return {
         hasContent: Boolean(goal || description || constraints.length || acceptanceCriteria.length),
@@ -981,11 +989,13 @@ export default {
       if (!art) return {}
       const meta = art.artifactMeta || {}
       const report = art.solidificationReport || {}
+      const goldenPaths = Array.isArray(art.goldenPaths) ? art.goldenPaths : []
       return {
         artifactId: art.artifactId || meta.artifactId || '',
         schemaVersion: art.schemaVersion || '',
-        solidifiable: report.solidifiable != null ? report.solidifiable : art.solidifiable,
-        goldenPathExtractable: report.goldenPathExtractable,
+        runtimeMode: art.runtime && art.runtime.mode,
+        solidifiable: goldenPaths.length > 0,
+        goldenPathExtractable: report.goldenPathExtractable != null ? report.goldenPathExtractable : goldenPaths.length > 0,
         goldenPathReason: report.goldenPathReason || '',
         remediation: Array.isArray(report.remediation) ? report.remediation : [],
         buildSummary: meta.buildSummary || null,
@@ -995,7 +1005,7 @@ export default {
     },
     goldenPathSteps() {
       const art = this.detailArtifact && this.detailArtifact.data
-      const gp = art && art.goldenPath
+      const gp = art && (art.goldenPath || (Array.isArray(art.goldenPaths) ? art.goldenPaths[0] : null))
       if (!gp || !Array.isArray(gp.steps)) return []
       return gp.steps
     },
@@ -1010,11 +1020,13 @@ export default {
     },
     serviceContractRows() {
       const data = this.detailArtifact && this.detailArtifact.data
-      const contracts = data && Array.isArray(data.serviceContracts) ? data.serviceContracts : []
+      const contracts = data && data.runtime && Array.isArray(data.runtime.serviceBindings)
+        ? data.runtime.serviceBindings
+        : (data && Array.isArray(data.serviceContracts) ? data.serviceContracts : [])
       return contracts.map((c) => {
-        const declared = Array.isArray(c.declaredTools) ? c.declaredTools : []
+        const declared = Array.isArray(c.tools) ? c.tools : (Array.isArray(c.declaredTools) ? c.declaredTools : [])
         const observed = Array.isArray(c.observedTools) ? c.observedTools : []
-        const channelParts = [c.channel, c.transport].filter(Boolean)
+        const channelParts = [c.source || c.channel, c.transport].filter(Boolean)
         const totalCalls = typeof c.totalCalls === 'number' ? c.totalCalls : 0
         const successRate = c.overallSuccessRate != null
           ? `${Math.round(c.overallSuccessRate * 100)}%`
@@ -1025,7 +1037,7 @@ export default {
           channelLabel: channelParts.length ? channelParts.join(' · ') : '—',
           totalCalls,
           successRate,
-          declaredToolNames: declared.map((t) => t.name).filter(Boolean),
+          declaredToolNames: declared.map((t) => t.name || t.toolName).filter(Boolean),
           observedSummaries: observed.map((o) => {
             const parts = [`${o.toolName || '?'}×${o.callCount || 0}`]
             if (o.avgLatencyMs != null) parts.push(`${Math.round(o.avgLatencyMs)}ms`)
@@ -1074,6 +1086,12 @@ export default {
           summaryLine
         }
       })
+    },
+    iterationDetailsForView() {
+      return (this.iterationDetails || []).map((i) => ({
+        ...i,
+        ...this.formatIterationVerification(i)
+      }))
     },
     buildDimensionCards() {
       if (!this.isCompleted) return []
@@ -1459,6 +1477,8 @@ export default {
             status: d.status || 'UNKNOWN',
             summary: d.summary || '',
             reason: d.reason || '',
+            checks: d.checks || [],
+            issues: d.issues || [],
             plannerDecision: d.plannerDecision || null
           })
         }
@@ -2048,6 +2068,25 @@ export default {
       return steps.length ? steps.join(' → ') : ''
     },
 
+    formatIterationVerification(iterDetail) {
+      const vr = iterDetail && iterDetail.verifierResult
+      const summary = (vr && (vr.reason || vr.summary)) || ''
+      const streamIssue = (iterDetail && iterDetail.issue) || ''
+      const checks = (vr && vr.checks) || []
+      const issues = (vr && vr.issues) || []
+      const fix = (iterDetail && iterDetail.fix) || ''
+      const hasVerifier = Boolean(vr && vr.status)
+      const distinctIssue = streamIssue && streamIssue !== summary ? streamIssue : ''
+      return {
+        verifierStatus: hasVerifier ? vr.status : (distinctIssue ? 'FAILED' : ''),
+        verifierSummary: summary || distinctIssue,
+        verifierChecks: checks,
+        verifierIssues: issues,
+        fix,
+        hasVerification: Boolean(hasVerifier || summary || distinctIssue || checks.length || issues.length || fix)
+      }
+    },
+
     getDetailViewModel() {
       const evidence = this.detailEvidence.data
       return {
@@ -2056,6 +2095,7 @@ export default {
         dispatchStatus: this.dispatchStatus,
         iterations: (this.iterationDetails || []).map((i) => {
           const vr = i.verifierResult
+          const verification = this.formatIterationVerification(i)
           const executionPathSteps = this.iterationExecutionPathSteps(i.plannerDecision)
           const plannerToolSteps = this.iterationPlannerToolSteps(i.plannerDecision)
           const plannerTools = plannerToolSteps.length ? plannerToolSteps.join(' → ') : ''
@@ -2069,10 +2109,13 @@ export default {
             plannerToolSteps,
             executionPath,
             executionPathSteps,
-            verifierStatus: vr && vr.status ? vr.status : '',
-            verifierSummary: (vr && (vr.reason || vr.summary)) || '',
-            issue: i.issue || '',
-            fix: i.fix || '',
+            verifierStatus: verification.verifierStatus,
+            verifierSummary: verification.verifierSummary,
+            verifierChecks: verification.verifierChecks,
+            verifierIssues: verification.verifierIssues,
+            fix: verification.fix,
+            hasVerification: verification.hasVerification,
+            issue: '',
             summary: (vr && (vr.reason || vr.summary)) || ''
           }
         }),
@@ -2080,7 +2123,10 @@ export default {
         stats: {
           serviceCount: this.serviceStatuses.length,
           completedCalls: this.serviceStatuses.filter((s) => s.status === 'online').length,
-          pendingIssues: (this.iterationDetails || []).filter((i) => i.issue).length
+          pendingIssues: (this.iterationDetails || []).filter((i) => {
+            const v = this.formatIterationVerification(i)
+            return v.verifierStatus === 'FAILED' || Boolean(v.fix)
+          }).length
         },
         showTechDetails: this.hasStarted,
         traceLoading: this.detailTrace.loading,
@@ -2098,9 +2144,13 @@ export default {
       }
     },
 
-    pushProductRow(rows, key, label, value, size = 'sm') {
+    pushProductRow(rows, key, label, value, size = 'sm', extra = null) {
       if (value == null || value === '') return
-      rows.push({ key, label, value: String(value), size })
+      const row = { key, label, value: String(value), size }
+      if (extra && typeof extra === 'object') {
+        Object.assign(row, extra)
+      }
+      rows.push(row)
     },
 
     productGateSize(gateName) {
@@ -2136,9 +2186,9 @@ export default {
       if (art) {
         const av = this.artifactView
         this.pushProductRow(rows, 'artifact-id', '产物 ID', av.artifactId, 'sm')
-        this.pushProductRow(rows, 'solidifiable', '可固化', av.solidifiable ? '是' : '否', 'xs')
+        this.pushProductRow(rows, 'runtime-mode', '运行模式', av.runtimeMode || 'agent_only', 'xs')
         if (av.goldenPathExtractable != null) {
-          this.pushProductRow(rows, 'golden-path', '黄金路径', av.goldenPathExtractable ? '可抽取' : '不可抽取', 'xs')
+          this.pushProductRow(rows, 'golden-path', '黄金路径', av.goldenPathExtractable ? '可用' : '无', 'xs')
         }
         if (av.sourceSessionId) {
           this.pushProductRow(rows, 'session', '来源会话', av.sourceSessionId, 'xs')
@@ -2192,9 +2242,18 @@ export default {
         const av = this.artifactView
         this.pushProductRow(rows, 'artifact-id', '产物 ID', av.artifactId, 'sm')
         this.pushProductRow(rows, 'schema', 'Schema 版本', av.schemaVersion || art.schemaVersion, 'xs')
-        this.pushProductRow(rows, 'solidifiable', '可固化', av.solidifiable ? '是' : '否', 'xs')
+        this.pushProductRow(rows, 'runtime-mode', '运行模式', av.runtimeMode || 'agent_only', 'xs')
         if (av.goldenPathExtractable != null) {
-          this.pushProductRow(rows, 'golden-path', '黄金路径', av.goldenPathExtractable ? '可抽取' : `不可抽取：${av.goldenPathReason || '—'}`, 'lg')
+          this.pushProductRow(
+            rows,
+            'golden-path',
+            '黄金路径',
+            av.goldenPathExtractable ? '可用' : '无',
+            'sm'
+          )
+          if (!av.goldenPathExtractable && av.goldenPathReason) {
+            this.pushProductRow(rows, 'golden-path-reason', '说明', av.goldenPathReason, 'lg')
+          }
         }
         const gates = art.solidificationReport && art.solidificationReport.gates
         if (gates && gates.length) {
@@ -2220,16 +2279,45 @@ export default {
         const tools = c.declaredToolNames.length ? `声明工具：${c.declaredToolNames.join('、')}` : ''
         const observed = c.observedSummaries.length ? `实测：${c.observedSummaries.join('；')}` : ''
         const value = [detail, tools, observed].filter(Boolean).join(' · ')
-        this.pushProductRow(rows, `contract-${idx}`, c.serviceName, value, 'xl')
+        this.pushProductRow(rows, `contract-${idx}`, c.serviceName, value, 'xl', {
+          contract: {
+            channelLabel: c.channelLabel,
+            totalCalls: c.totalCalls,
+            successRate: c.successRate,
+            declaredToolNames: c.declaredToolNames,
+            observedSummaries: c.observedSummaries,
+            uncalled: c.uncalled
+          }
+        })
       })
 
-      this.pushProductRow(
-        rows,
-        'services',
-        '服务绑定',
-        this.serviceStatuses.map((s) => s.name).join('、'),
-        'xl'
-      )
+      const gp = art && (art.goldenPath || (Array.isArray(art.goldenPaths) ? art.goldenPaths[0] : null))
+      if (gp && Array.isArray(gp.steps)) {
+        gp.steps.forEach((step, idx) => {
+          const bindingKeys = step.inputBinding ? Object.keys(step.inputBinding) : []
+          const bindingHint = bindingKeys.length ? ` · 入参 ${bindingKeys.join(', ')}` : ''
+          const slots = (step.outputSlots || []).map((s) => (typeof s === 'string' ? s : s.name)).filter(Boolean)
+          const slotHint = slots.length ? ` · 输出 ${slots.join(', ')}` : ''
+          this.pushProductRow(
+            rows,
+            `gp-step-${idx}`,
+            step.stepId || `step_${idx + 1}`,
+            `${step.toolName || '—'}${bindingHint}${slotHint}`,
+            'lg'
+          )
+        })
+      }
+      if (gp && Array.isArray(gp.assertions)) {
+        gp.assertions.forEach((a, idx) => {
+          this.pushProductRow(
+            rows,
+            `gp-assertion-${idx}`,
+            a.assertionId || `assertion_${idx + 1}`,
+            `${a.level || ''} · ${a.type || ''} · ${a.result || 'unknown'}`,
+            'md'
+          )
+        })
+      }
 
       return rows
     },
@@ -2240,12 +2328,10 @@ export default {
       if (art) {
         tags.push({ label: '场景与意图', tone: 'green' })
         tags.push({ label: '服务与契约', tone: 'green' })
-        if (art.solidificationReport && art.solidificationReport.goldenPathExtractable) {
+        if (Array.isArray(art.goldenPaths) && art.goldenPaths.length) {
           tags.push({ label: '黄金路径', tone: 'green' })
-        } else if (art.solidificationReport && art.solidificationReport.solidifiable) {
-          tags.push({ label: '固化候选', tone: 'blue' })
         }
-        tags.push({ label: '预览信息', tone: 'blue' })
+        tags.push({ label: (art.runtime && art.runtime.mode) || 'agent_only', tone: 'blue' })
       }
       return {
         artifactRows: this.buildProductArtifactRows(),

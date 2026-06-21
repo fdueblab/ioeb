@@ -72,6 +72,61 @@ function demoToolName(svc) {
   return (t && t.name) || 'invoke'
 }
 
+function buildPlannerPayload(iteration, servicesMeta) {
+  const executionPath = demoExecutionPath(servicesMeta)
+  const toolCallDetails = servicesMeta.map((svc, idx) => {
+    const toolName = demoToolName(svc)
+    const latency = 120 + idx * 35
+    return {
+      call_id: `call-mock-${iteration}-${idx}`,
+      tool: toolName,
+      service: svc.name,
+      channel: 'sandbox',
+      transport: 'in_process',
+      arguments: { demo: true, iteration },
+      result_preview: `演示调用成功 · ${svc.name}`,
+      error: null,
+      latency_ms: latency,
+      success: true,
+      timestamp: new Date().toISOString()
+    }
+  })
+  return {
+    iteration,
+    candidate_tools: servicesMeta.map((s) => demoToolName(s)),
+    selected_tools: toolCallDetails.map((d) => d.tool),
+    reason: iteration < 2
+      ? '首轮规划：按想定顺序串联各 MCP 服务'
+      : '修复后规划：调用顺序已优化，满足验收标准',
+    executionPath,
+    dispatch: { mode: 'sequential', services: servicesMeta.map((s) => String(s.id)) },
+    tool_call_details: toolCallDetails
+  }
+}
+
+function buildVerifierPayload(iteration, status, plannerPayload, servicesMeta) {
+  const evidenceRefs = servicesMeta.map((_, idx) => `call-mock-${iteration}-${idx}`)
+  const failed = status === 'FAILED'
+  const issueText = failed ? '服务调用顺序可进一步压缩，存在冗余往返' : ''
+  return {
+    iteration,
+    status,
+    summary: failed ? '链路存在可优化项' : '链路检视通过，调度方案可固化',
+    reason: issueText,
+    checks: [
+      {
+        check: 'overall_verification',
+        status: failed ? 'FAILED' : 'PASSED',
+        issue: failed ? issueText : undefined,
+        evidence_refs: evidenceRefs
+      }
+    ],
+    issues: failed ? [{ description: issueText, evidence_refs: evidenceRefs }] : [],
+    plannerDecision: plannerPayload,
+    verdict: failed ? 'failed' : 'passed'
+  }
+}
+
 function demoExecutionPath(servicesMeta) {
   const path = ['用户输入']
   servicesMeta.forEach((svc) => {
@@ -262,6 +317,23 @@ async function runStream(sessionId, emit) {
       pushLog('SUCCESS', '数据仿真: 数据流转正常')
 
       await runPhase('logic')
+      for (const svc of servicesMeta) {
+        checkCancel()
+        const toolName = demoToolName(svc)
+        emit('service_calling', {
+          serviceId: String(svc.id),
+          serviceName: svc.name,
+          toolName,
+          status: 'start'
+        })
+        await sleepRange([320, 520])
+        emit('service_calling', {
+          serviceId: String(svc.id),
+          serviceName: svc.name,
+          toolName,
+          status: 'end'
+        })
+      }
       pushLog('SUCCESS', '逻辑仿真: 业务逻辑正常')
 
       const enVerify = simulationBuildMockEnhancementRecord(
@@ -277,38 +349,25 @@ async function runStream(sessionId, emit) {
       await runPhase('check')
       pushLog('INFO', '链路检视: 检查偏差和冗余')
 
-      const plannerPayload = {
-        iteration,
-        selected_tools: servicesMeta.map((s) => demoToolName(s)),
-        executionPath: demoExecutionPath(servicesMeta),
-        reason: '演示：按想定编排服务调用顺序'
-      }
-      emit('planner_decision', plannerPayload)
+      const plannerPayload = buildPlannerPayload(iteration, servicesMeta)
 
       if (iteration < demoRounds) {
+        const verifierFailed = buildVerifierPayload(iteration, 'FAILED', plannerPayload, servicesMeta)
         pushLog('WARN', '链路检视: 发现可优化项，进入下一轮自动修复')
+        emit('planner_decision', plannerPayload)
         emit('issue', {
           iteration,
-          message: '演示：服务调用顺序可优化，将自动调整后重试',
-          fix: '重新规划调度顺序',
-          plannerDecision: plannerPayload
+          message: verifierFailed.reason,
+          fix: '重新规划调度顺序，压缩冗余服务往返',
+          plannerDecision: plannerPayload,
+          phase: 'verification'
         })
-        emit('verifier_result', {
-          iteration,
-          status: 'FAILED',
-          summary: '链路存在可优化项',
-          reason: '服务调用顺序可进一步压缩',
-          plannerDecision: plannerPayload
-        })
+        emit('verifier_result', verifierFailed)
         emit('iteration', { iteration, status: 'retry' })
       } else {
         pushLog('SUCCESS', '链路检视: 未发现偏差')
-        emit('verifier_result', {
-          iteration,
-          status: 'PASSED',
-          summary: '链路检视通过，调度方案可固化',
-          plannerDecision: plannerPayload
-        })
+        emit('planner_decision', plannerPayload)
+        emit('verifier_result', buildVerifierPayload(iteration, 'PASSED', plannerPayload, servicesMeta))
         emit('iteration', { iteration, status: 'passed' })
       }
     }

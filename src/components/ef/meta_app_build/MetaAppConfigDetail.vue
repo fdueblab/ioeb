@@ -8,7 +8,6 @@
     </template>
 
     <template v-else>
-      <!-- 基本信息 -->
       <section v-if="identity.appName" class="wb-artifact-hero">
         <div class="wb-artifact-hero-main">
           <h3 class="wb-artifact-title">{{ identity.appName }}</h3>
@@ -23,7 +22,6 @@
         <div v-if="identity.appId" class="wb-artifact-id">ID · {{ identity.appId }}</div>
       </section>
 
-      <!-- 场景解析 -->
       <section v-if="hasScenario" class="wb-artifact-section">
         <h4 class="wb-artifact-section-title">场景解析</h4>
         <div class="wb-detail-band wb-scenario-bubbles">
@@ -58,30 +56,57 @@
         </div>
       </section>
 
-      <!-- 最终服务节点 -->
-      <section v-if="services.binding || services.contracts.length" class="wb-artifact-section">
-        <h4 class="wb-artifact-section-title">最终服务节点</h4>
-        <div v-if="services.binding" class="wb-artifact-chips">
-          <span
-            v-for="name in services.binding"
-            :key="name"
-            class="wb-artifact-chip"
-            :title="name"
-          >{{ name }}</span>
-        </div>
-        <div v-if="services.contracts.length" class="wb-artifact-contracts">
+      <section v-if="serviceContracts.length" class="wb-artifact-section">
+        <h4 class="wb-artifact-section-title">服务契约</h4>
+        <div class="wb-artifact-contracts">
           <div
-            v-for="c in services.contracts"
+            v-for="c in serviceContracts"
             :key="c.key"
             class="wb-artifact-contract"
           >
-            <div class="wb-artifact-contract-name">{{ c.name }}</div>
-            <div class="wb-artifact-contract-detail">{{ c.summary }}</div>
+            <div class="wb-artifact-contract-head">
+              <span class="wb-artifact-contract-name">{{ c.name }}</span>
+              <a-tag v-if="c.channelLabel" size="small">{{ c.channelLabel }}</a-tag>
+            </div>
+            <p class="wb-artifact-contract-detail">
+              <template v-if="c.uncalled">本次未调用</template>
+              <template v-else>调用 {{ c.totalCalls }} 次 · 成功率 {{ c.successRate }}</template>
+            </p>
+            <p v-if="c.declaredToolNames.length" class="wb-artifact-contract-detail">
+              <span class="wb-artifact-contract-label">声明工具</span>
+              {{ c.declaredToolNames.join('、') }}
+            </p>
+            <p v-if="c.observedSummaries.length" class="wb-artifact-contract-detail">
+              <span class="wb-artifact-contract-label">实测调用</span>
+              {{ c.observedSummaries.join('；') }}
+            </p>
           </div>
         </div>
       </section>
 
-      <!-- 产物元数据 -->
+      <section v-if="hasGoldenPath" class="wb-artifact-section">
+        <h4 class="wb-artifact-section-title">黄金路径</h4>
+        <div class="wb-artifact-golden-meta">
+          <a-tag :color="goldenPath.extractable ? 'blue' : 'default'">
+            {{ goldenPath.extractable ? '可抽取' : '不可抽取' }}
+          </a-tag>
+          <span v-if="goldenPath.reason" class="wb-artifact-golden-reason">{{ goldenPath.reason }}</span>
+        </div>
+        <ul v-if="goldenPath.steps.length" class="wb-artifact-golden-steps">
+          <li v-for="step in goldenPath.steps" :key="step.key">
+            <strong>{{ step.stepId }}</strong>
+            <span>{{ step.summary }}</span>
+          </li>
+        </ul>
+        <ul v-if="goldenPath.assertions.length" class="wb-artifact-golden-assertions">
+          <li v-for="a in goldenPath.assertions" :key="a.key">
+            <a-tag size="small" :color="assertionTagColor(a.result)">{{ a.result }}</a-tag>
+            <span>{{ a.assertionId }}</span>
+            <span v-if="a.detail" class="wb-artifact-golden-assert-detail">{{ a.detail }}</span>
+          </li>
+        </ul>
+      </section>
+
       <section v-if="hasArtifactMeta" class="wb-artifact-section">
         <h4 class="wb-artifact-section-title">产物信息</h4>
         <div class="wb-artifact-meta-grid">
@@ -171,16 +196,55 @@ export default {
         s.acceptance.length
       )
     },
-    services() {
-      const binding = splitList(this.mapped.services)
-      const contracts = (this.rows || [])
+    serviceContracts() {
+      return (this.rows || [])
         .filter((r) => r.key && r.key.startsWith('contract-'))
+        .map((r) => {
+          const c = r.contract || {}
+          return {
+            key: r.key,
+            name: r.label,
+            channelLabel: c.channelLabel || '',
+            totalCalls: c.totalCalls != null ? c.totalCalls : 0,
+            successRate: c.successRate || '—',
+            declaredToolNames: c.declaredToolNames || [],
+            observedSummaries: c.observedSummaries || [],
+            uncalled: !!c.uncalled
+          }
+        })
+    },
+    goldenPath() {
+      const m = this.mapped
+      const extractable = /^可(抽取|用)/.test(String(m['golden-path'] || ''))
+      const reason = m['golden-path-reason'] || ''
+      const steps = (this.rows || [])
+        .filter((r) => r.key && r.key.startsWith('gp-step-'))
         .map((r) => ({
           key: r.key,
-          name: r.label,
+          stepId: r.label,
           summary: r.value
         }))
-      return { binding, contracts }
+      const assertions = (this.rows || [])
+        .filter((r) => r.key && r.key.startsWith('gp-assertion-'))
+        .map((r) => {
+          const parts = String(r.value || '').split(' · ').filter(Boolean)
+          return {
+            key: r.key,
+            assertionId: r.label,
+            result: parts[2] || parts[parts.length - 1] || 'unknown',
+            detail: parts.slice(0, 2).join(' · ')
+          }
+        })
+      return { extractable, reason, steps, assertions }
+    },
+    hasGoldenPath() {
+      const gp = this.goldenPath
+      return Boolean(
+        gp.reason ||
+        gp.steps.length ||
+        gp.assertions.length ||
+        this.mapped['golden-path']
+      )
     },
     artifactMeta() {
       const m = this.mapped
@@ -216,10 +280,18 @@ export default {
       return (
         this.identity.appName ||
         this.hasScenario ||
-        this.services.binding.length ||
-        this.services.contracts.length ||
+        this.serviceContracts.length ||
+        this.hasGoldenPath ||
         this.hasArtifactMeta
       )
+    }
+  },
+  methods: {
+    assertionTagColor(result) {
+      const r = String(result || '').toLowerCase()
+      if (r === 'pass') return 'green'
+      if (r === 'fail') return 'red'
+      return 'default'
     }
   }
 }

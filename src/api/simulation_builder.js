@@ -28,6 +28,7 @@ const SIMULATION_SSE_EVENTS = [
   'progress',
   'planner_decision',
   'verifier_result',
+  'service_selection',
   'scenario_parsed',
   'complete'
 ]
@@ -223,7 +224,7 @@ export function fetchSimulationEvidence(sessionId) {
   })
 }
 
-/** 获取 ArtifactSpec v0 产物（编译自 trace，确定性输出） */
+/** 获取 MetaAppArtifact v1 产物（来自 BuildBundle） */
 export function fetchSimulationArtifact(sessionId) {
   return request({
     url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/artifact`,

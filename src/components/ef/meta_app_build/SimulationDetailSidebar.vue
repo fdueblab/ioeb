@@ -157,31 +157,27 @@
               </div>
             </div>
 
-            <div v-if="iter.verifierStatus" class="wb-iter-block wb-iter-block--verify">
+            <div v-if="iter.hasVerification" class="wb-iter-block wb-iter-block--verify">
               <div class="wb-iter-block-head">
                 <a-icon type="safety-certificate" />
                 <strong>验证结论</strong>
               </div>
               <div class="wb-iter-block-body">
-                <a-tag :color="verifierTagColor(iter.verifierStatus)">{{ iter.verifierStatus }}</a-tag>
+                <a-tag v-if="iter.verifierStatus" :color="verifierTagColor(iter.verifierStatus)">
+                  {{ iter.verifierStatus }}
+                </a-tag>
                 <span v-if="iter.verifierSummary" class="wb-iter-block-text">{{ iter.verifierSummary }}</span>
+                <ul v-if="iter.verifierChecks && iter.verifierChecks.length" class="wb-iter-check-list">
+                  <li v-for="(chk, ci) in iter.verifierChecks" :key="'chk-' + ci">
+                    <a-tag size="small" :color="verifierTagColor(chk.status)">{{ chk.status || chk.check }}</a-tag>
+                    <span>{{ chk.issue || chk.check }}</span>
+                  </li>
+                </ul>
+                <ul v-if="iter.verifierIssues && iter.verifierIssues.length" class="wb-iter-check-list">
+                  <li v-for="(iss, ii) in iter.verifierIssues" :key="'iss-' + ii">{{ iss.description }}</li>
+                </ul>
+                <p v-if="iter.fix" class="wb-iter-block-text wb-iter-block-text--fix">修复：{{ iter.fix }}</p>
               </div>
-            </div>
-
-            <div v-if="iter.issue" class="wb-iter-block wb-iter-block--issue">
-              <div class="wb-iter-block-head">
-                <a-icon type="warning" />
-                <strong>发现问题</strong>
-              </div>
-              <p class="wb-iter-block-text">{{ iter.issue }}</p>
-            </div>
-
-            <div v-if="iter.fix" class="wb-iter-block wb-iter-block--fix">
-              <div class="wb-iter-block-head">
-                <a-icon type="tool" />
-                <strong>自动修复</strong>
-              </div>
-              <p class="wb-iter-block-text">{{ iter.fix }}</p>
             </div>
 
             <div
@@ -346,9 +342,7 @@ export default {
       return Boolean(
         (iter.plannerToolSteps && iter.plannerToolSteps.length) ||
         (iter.executionPathSteps && iter.executionPathSteps.length) ||
-        iter.verifierStatus ||
-        iter.issue ||
-        iter.fix
+        iter.hasVerification
       )
     }
   }
