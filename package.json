@@ -14,13 +14,7 @@
     "prepare": "husky install",
     "docs:dev": "npm --prefix docs run dev -- --host",
     "docs:build": "npm --prefix docs run build",
-    "docs:preview": "npm --prefix docs run preview",
-    "docs:sync:feishu": "node scripts/feishu-docs/sync.mjs",
-    "docs:sync:feishu:dry-run": "node scripts/feishu-docs/sync.mjs --dry-run",
-    "docs:sync:feishu:strict": "node scripts/feishu-docs/sync.mjs --strict-images",
-    "docs:sync:feishu:refresh-hashes": "node scripts/feishu-docs/sync.mjs --refresh-hashes",
-    "docs:images:cos:dry-run": "node scripts/feishu-docs/upload-local-images-to-cos.mjs --dry-run",
-    "docs:images:cos": "node scripts/feishu-docs/upload-local-images-to-cos.mjs --rewrite --delete-local"
+    "docs:preview": "npm --prefix docs run preview"
   },
   "dependencies": {
     "@ant-design-vue/pro-layout": "^1.0.12",
