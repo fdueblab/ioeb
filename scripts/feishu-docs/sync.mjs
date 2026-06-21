@@ -58,6 +58,7 @@ async function main() {
   printPlan(plan, localImageRefs)
 
   if (dryRun) return
+  if (plan.every((item) => item.action === 'skip')) return
 
   const client = await createFeishuClient(config)
   await ensureGroups(client, config, plan)
