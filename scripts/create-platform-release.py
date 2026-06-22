@@ -31,7 +31,7 @@ DEFAULT_RELEASE_ORDER = ["backend", "agent", "frontend"]
 DEFAULT_WORKFLOWS = {
     "fdueblab/ioeb_backend": ["CI"],
     "fdueblab/Micro-Agent": ["CI"],
-    "fdueblab/ioeb": ["CI", "Build & Deploy Docs", "Build & Deploy Services"],
+    "fdueblab/ioeb": ["CI", "Build & Deploy Docs"],
 }
 
 
@@ -49,12 +49,24 @@ def run(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess[st
     return proc
 
 
-def gh_json(args: list[str]) -> Any:
-    proc = run(["gh", *args])
-    try:
-        return json.loads(proc.stdout)
-    except json.JSONDecodeError as exc:
-        raise ReleaseError(f"gh did not return JSON for args {args}: {proc.stdout}") from exc
+def gh_json(args: list[str], *, attempts: int = 3) -> Any:
+    last_error = ""
+    for attempt in range(1, attempts + 1):
+        proc = run(["gh", *args], check=False)
+        if proc.returncode == 0:
+            try:
+                return json.loads(proc.stdout)
+            except json.JSONDecodeError:
+                last_error = f"gh did not return JSON for args {args}: {proc.stdout}"
+        else:
+            rendered = " ".join(shlex.quote(part) for part in ["gh", *args])
+            last_error = (
+                f"Command failed: {rendered}\n"
+                f"STDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}"
+            )
+        if attempt < attempts:
+            time.sleep(min(2 ** (attempt - 1), 5))
+    raise ReleaseError(last_error)
 
 
 def load_manifest(path: str) -> dict[str, Any]:

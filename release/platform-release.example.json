@@ -21,8 +21,8 @@
       "name": "frontend",
       "repo": "fdueblab/ioeb",
       "ref": "master",
-      "deploys": ["frontend", "docs", "linezolid", "project-1", "project-2", "project-3", "project-4"],
-      "releaseWorkflows": ["CI", "Build & Deploy Docs", "Build & Deploy Services"]
+      "deploys": ["frontend", "docs"],
+      "releaseWorkflows": ["CI", "Build & Deploy Docs"]
     }
   ],
   "checks": [

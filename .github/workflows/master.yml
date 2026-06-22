@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     name: Build & Push Frontend Image
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && (github.event_name != 'release' || startsWith(github.event.release.tag_name, 'v'))
     runs-on: ubuntu-latest
     env:
       IMAGE_REPO: ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-frontend
@@ -67,7 +67,7 @@ jobs:
   deploy-production:
     name: Deploy Production
     needs: build
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-latest
     env:
       IMAGE_REPO: ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-frontend
