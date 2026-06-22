@@ -33,7 +33,7 @@ v2026.06.24.1
 | --- | --- | --- |
 | 后端 | `fdueblab/ioeb_backend` | `backend` |
 | 智能体 | `fdueblab/Micro-Agent` | `agent` |
-| 前端与平台服务 | `fdueblab/ioeb` | `frontend`、`docs`、`linezolid`、`project-1` 到 `project-4` |
+| 前端与文档 | `fdueblab/ioeb` | `frontend`、`docs` |
 
 推荐发布顺序：
 
@@ -80,6 +80,18 @@ python3 scripts/create-platform-release.py release/platform-release.v2026.06.24.
 ```bash
 python3 scripts/create-platform-release.py release/platform-release.v2026.06.24.json --execute --skip-existing
 ```
+
+## 服务镜像发布
+
+`linezolid` 和 `project-1` 到 `project-4` 不随每周平台发布自动部署，避免某个科研服务镜像构建失败阻塞核心平台上线。
+
+这些服务需要单独发布时，在 `fdueblab/ioeb` 创建 `services-vYYYY.MM.DD` 或 `services-vYYYY.MM.DD.N` 格式的 GitHub Release。只有这个前缀会触发 `Build & Deploy Services` 的生产部署；前端和文档 workflow 只响应 `v*` 平台版本，不会被服务版本误触发。
+
+服务发布前需要额外确认：
+
+- 需要发布的服务镜像在开发测试环境或本地构建通过。
+- 该服务依赖的数据、模型文件和端口配置已在生产环境准备好。
+- 如果只需要发布前端、后端、文档或智能体，不要创建 `services-v*` release。
 
 ## 发布前检查
 

@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-project1:
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'services-v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project1:${IMAGE_TAG}
 
   build-project2:
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'services-v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +40,7 @@ jobs:
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project2:${IMAGE_TAG}
 
   build-project3:
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'services-v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -56,7 +56,7 @@ jobs:
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project3:${IMAGE_TAG}
 
   build-project4:
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'services-v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -72,6 +72,7 @@ jobs:
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project4:${IMAGE_TAG}
 
   build-linezolid:
+    if: github.event_name == 'push' || (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'services-v'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -113,7 +114,7 @@ jobs:
   deploy-production:
     name: Deploy Production Services
     needs: [build-project1, build-project2, build-project3, build-project4, build-linezolid]
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'services-v')
     runs-on: ubuntu-latest
     strategy:
       matrix:

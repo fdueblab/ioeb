@@ -14,14 +14,8 @@ WORKDIR /app
 # 复制依赖文件
 COPY requirements.txt .
 
-# 先删除 requirements.txt 中的 dgl（如果有的话）
-RUN sed -i '/^dgl/d' requirements.txt
-
-# 安装其他 Python 依赖
-RUN pip install -r requirements.txt
-
-# 单独安装 DGL
-RUN pip install dgl -f https://data.dgl.ai/wheels/torch-2.3/repo.html
+# 安装 Python 依赖，DGL 从 PyTorch 2.3 专用 wheel 源安装
+RUN pip install -r requirements.txt -f https://data.dgl.ai/wheels/torch-2.3/repo.html
 
 # 复制应用代码
 COPY . .
