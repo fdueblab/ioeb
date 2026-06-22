@@ -141,6 +141,7 @@ export default defineConfig({
             // { text: '开发指南首页', link: '/dev/' },
             // { text: '环境搭建', link: '/dev/environment-setup' },
             { text: 'Git 最佳实践', link: '/dev/git-practices' },
+            { text: '生产发布流程', link: '/dev/release-process' },
             { text: '平台项目快速开始', link: '/dev/project-quickstart' },
             { text: '智能体添加指南', link: '/dev/add-agent' },
             // { text: '代码规范', link: '/dev/code-standards' }
