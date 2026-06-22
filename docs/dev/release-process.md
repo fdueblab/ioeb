@@ -51,7 +51,38 @@ ioeb_backend -> Micro-Agent -> ioeb
 4. 周三创建生产 GitHub Release，触发生产部署。
 5. 发布后记录 release notes、已发布 commit、验证结果和回滚目标。
 
-## Release Manifest
+## 自动化发布
+
+推荐使用 `ioeb` 仓库的 `Platform Release` workflow 发生产版本。
+
+首次使用前需要在 `fdueblab/ioeb` 配置：
+
+- Repository secret `PLATFORM_RELEASE_TOKEN`：这个 token 需要能在 `fdueblab/ioeb_backend`、`fdueblab/Micro-Agent`、`fdueblab/ioeb` 三个仓库创建 GitHub Release，并读取 Actions 状态。Fine-grained token 至少需要三个仓库的 `Contents: Read and write` 和 `Actions: Read` 权限；classic token 可使用 `repo` scope。
+- GitHub Environment `production`：建议配置 required reviewers。workflow 的真正 release job 会绑定这个环境，因此可以在创建生产 release 前保留人工批准点。
+
+发布步骤：
+
+1. 打开 `fdueblab/ioeb` 的 GitHub Actions。
+2. 选择 `Platform Release`。
+3. 点击 `Run workflow`，分支选择 `master`。
+4. 先用 `mode=dry-run`，输入版本号，例如 `v2026.06.24`，确认生成的发布计划只包含 `backend`、`agent`、`frontend`、`docs`。
+5. 确认后再次运行，选择 `mode=release`，并在 `confirm_version` 输入同一个版本号。
+6. 如果 `production` 环境配置了 required reviewers，在 GitHub 页面批准 release job。
+7. 等待 workflow 创建三个仓库的同名 GitHub Release，并等待生产部署完成。
+
+默认 ref：
+
+| 输入 | 默认值 | 含义 |
+| --- | --- | --- |
+| `backend_ref` | `main` | `fdueblab/ioeb_backend` 发布 ref |
+| `agent_ref` | `master` | `fdueblab/Micro-Agent` 发布 ref |
+| `ioeb_ref` | `master` | `fdueblab/ioeb` 发布 ref |
+
+如需发布冻结版本，可以把这些输入改成具体 commit SHA。workflow 会自动把 ref 解析成固定 SHA 并写入 release manifest。
+
+## Release Manifest 手动发布
+
+一般不需要手动编辑 manifest。以下命令作为本地兜底方案保留。
 
 生产发布必须使用 release manifest 固定三个仓库的发布 commit。复制模板：
 
