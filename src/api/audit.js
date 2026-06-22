@@ -1,6 +1,5 @@
 import request from '@/utils/request'
-
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL
+import { API_BASE_URL } from '@/utils/baseUrl'
 
 export function getUserActionLogs(params) {
   return request({

@@ -88,6 +88,7 @@
 
 <script>
 import request from '@/utils/request'
+import { buildServiceApiUrl } from '@/utils/baseUrl'
 import { codemirror } from 'vue-codemirror'
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/addon/lint/lint'
@@ -321,19 +322,7 @@ export default {
             break
         }
         // url地址
-        let url
-        switch (process.env.VUE_APP_HOST) {
-          case 'fdueblab.cn':
-            url = `https://fdueblab.cn/api/${this.serviceUrl}`
-            break
-          case 'ums':
-            // todo: 银联使用需要获取本机ipv4地址和服务对应端口
-            // eslint-disable-next-line no-fallthrough
-            url = `http://131.252.10.118/api/${this.serviceUrl}`
-            break
-          default:
-            url = `http://${process.env.VUE_APP_HOST}/api/${this.serviceUrl}`
-        }
+        const url = buildServiceApiUrl(this.serviceUrl)
         // 文件类型
         if (this.responseType === 2) {
           const response = await request({

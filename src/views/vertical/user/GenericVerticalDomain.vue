@@ -18,6 +18,7 @@ import UseService from './useService'
 import UseMetaApp from './useMetaApp'
 import UseMCP from './useMCP'
 import request from '@/utils/request'
+import { API_BASE_URL } from '@/utils/baseUrl'
 
 export default {
   name: 'GenericVerticalDomain',
@@ -87,7 +88,6 @@ export default {
       }
     },
     async downloadScenarioGeneratedAlgorithm(record) {
-      const API_BASE_URL = process.env.VUE_APP_API_BASE_URL
       const id = record && record.id
       if (!id) {
         this.$message.error('服务 ID 缺失')

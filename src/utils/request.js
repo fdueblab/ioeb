@@ -4,17 +4,16 @@ import storage from 'store'
 import notification from 'ant-design-vue/es/notification'
 import { VueAxios } from './axios'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
+import { API_BASE_URL, AGENT_BASE_URL } from '@/utils/baseUrl'
 
 /* eslint-disable handle-callback-err */
-// 添加Agent基础URL配置
-const AGENT_BASE_URL = process.env.VUE_APP_AGENT_BASE_URL || 'https://fdueblab.cn'
 console.log('AGENT_BASE_URL', AGENT_BASE_URL)
 
 // 创建 axios 实例
-console.log('process.env.VUE_APP_API_BASE_URL', process.env.VUE_APP_API_BASE_URL)
+console.log('API_BASE_URL', API_BASE_URL)
 const request = axios.create({
   // API 请求的默认前缀
-  baseURL: process.env.VUE_APP_API_BASE_URL,
+  baseURL: API_BASE_URL,
   timeout: 10000 // 请求超时时间
 })
 
