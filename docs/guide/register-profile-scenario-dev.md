@@ -10,7 +10,7 @@
 
 ## 第一步：注册账号
 
-![注册页面](/images/guide/register-profile-scenario-dev/注册.png)
+![注册页面](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/register-profile-scenario-dev/%E6%B3%A8%E5%86%8C.png)
 
 1. 打开登录页，点击“注册”进入注册页面。
 2. 按提示填写注册信息：
@@ -25,7 +25,7 @@
 
 ## 第二步：登录平台
 
-![登录页面](/images/guide/register-profile-scenario-dev/登录.png)
+![登录页面](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/register-profile-scenario-dev/%E7%99%BB%E5%BD%95.png)
 
 1. 选择“账户密码登录”。
 2. 输入用户名/邮箱与密码。
@@ -34,7 +34,7 @@
 ## 第三步：首次登录完成用户画像问卷
 
 首次登录后，若当前账号尚未完善画像，系统会自动弹出“用户画像问卷”。
-![用户画像问卷](/images/guide/register-profile-scenario-dev/完善用户画像1.png)
+![用户画像问卷](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/register-profile-scenario-dev/%E5%AE%8C%E5%96%84%E7%94%A8%E6%88%B7%E7%94%BB%E5%83%8F1.png)
 
 你可以：
 
@@ -50,7 +50,7 @@
 
 - 右上角头像下拉 -> 个人设置 -> 用户画像；
 - 或在左边菜单栏点击个人中心 -> 个人设置 -> 用户画像。
-![用户画像更改补充](/images/guide/register-profile-scenario-dev/完善用户画像2.png)
+![用户画像更改补充](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/register-profile-scenario-dev/%E5%AE%8C%E5%96%84%E7%94%A8%E6%88%B7%E7%94%BB%E5%83%8F2.png)
 
 可维护内容包括：
 
@@ -67,7 +67,7 @@
 
 从左侧菜单进入对应垂域的“算法模型想定式开发”：
 
-![想定式开发-配置区](/images/guide/register-profile-scenario-dev/算法生成配置.png)
+![想定式开发-配置区](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/register-profile-scenario-dev/%E7%AE%97%E6%B3%95%E7%94%9F%E6%88%90%E9%85%8D%E7%BD%AE.png)
 
 页面核心输入区包含：
 
@@ -82,18 +82,18 @@
 ## 第六步：查看生成进度与结果
 
 生成过程中可以查看“智能体执行步骤”。
-![生成进度](/images/guide/register-profile-scenario-dev/算法生成智能体执行过程.png)
+![生成进度](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/register-profile-scenario-dev/%E7%AE%97%E6%B3%95%E7%94%9F%E6%88%90%E6%99%BA%E8%83%BD%E4%BD%93%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B.png)
 
 生成完成后，重点查看以下结果页签：
 
 - 下载与资源库：下载生成代码，查看资源库提示
-![结果Tab预览](/images/guide/register-profile-scenario-dev/生成结果输出1.png)
+![结果Tab预览](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/register-profile-scenario-dev/%E7%94%9F%E6%88%90%E7%BB%93%E6%9E%9C%E8%BE%93%E5%87%BA1.png)
 - 测试结果：查看各维度验证状态
-![测试结果](/images/guide/register-profile-scenario-dev/生成结果输出2.png)
+![测试结果](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/register-profile-scenario-dev/%E7%94%9F%E6%88%90%E7%BB%93%E6%9E%9C%E8%BE%93%E5%87%BA2.png)
 - 参考资料：查看引用与参考摘要
-![参考资料](/images/guide/register-profile-scenario-dev/生成结果输出3.png)
+![参考资料](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/register-profile-scenario-dev/%E7%94%9F%E6%88%90%E7%BB%93%E6%9E%9C%E8%BE%93%E5%87%BA3.png)
 - 差异化说明：查看新增点、改进点、优势说明
-![差异化说明](/images/guide/register-profile-scenario-dev/生成结果输出4.png)
+![差异化说明](https://ioeb-1317429791.cos.ap-shanghai.myqcloud.com/docs/images/guide/register-profile-scenario-dev/%E7%94%9F%E6%88%90%E7%BB%93%E6%9E%9C%E8%BE%93%E5%87%BA4.png)
 
 
 ## 常见问题

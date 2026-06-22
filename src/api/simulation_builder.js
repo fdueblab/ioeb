@@ -8,11 +8,11 @@
  * `fetchSimulationRecords` / `compareSimulationRecords` 须传入同一上下文的 `appName`（与 prop 一致）。
  */
 import request from '@/utils/request'
+import { AGENT_BASE_URL } from '@/utils/baseUrl'
 import { simulationBuildInMemory } from '@/mock/services/simulation_builder_inmemory'
 import { useMemorySimulation } from '@/mock/data/meta_apps_data'
 
-const SIMULATION_BASE_URL =
-  process.env.VUE_APP_AGENT_BASE_URL || process.env.VUE_APP_API_BASE_URL || ''
+const SIMULATION_BASE_URL = AGENT_BASE_URL
 
 /** SSE 自定义事件名（与后端约定一致） */
 const SIMULATION_SSE_EVENTS = [

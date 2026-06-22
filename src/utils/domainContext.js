@@ -5,6 +5,7 @@ export const DEFAULT_DOMAIN = {
   code: 'aml',
   text: '跨境支付AI监测'
 }
+export const DEFAULT_LANDING_PATH = '/dashboard/workplace'
 
 export const OPENED_VERTICAL_LABELS = {
   aml: '跨境支付AI监测',
@@ -99,8 +100,8 @@ export function getDomainModuleEntryPath(basePath, domainCode = getCurrentDomain
   }
 }
 
-export function getDefaultLandingPath(domainCode = getCurrentDomainCode()) {
-  return getDomainModuleEntryPath('/vertical-user', domainCode)
+export function getDefaultLandingPath() {
+  return DEFAULT_LANDING_PATH
 }
 
 export function replaceDomainInPath(path, domainCode, permissionList = []) {

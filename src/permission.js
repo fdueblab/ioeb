@@ -15,6 +15,7 @@ import {
   getDomainModuleEntryPath,
   resolveCurrentDomain
 } from '@/utils/domainContext'
+import { recordRecentRoute } from '@/utils/recentRoutes'
 import {
   generateVerticalUserRoutes,
   generateVerticalMSRoutes,
@@ -241,6 +242,7 @@ router.beforeEach(async (to, from, next) => {
   }
 })
 
-router.afterEach(() => {
+router.afterEach((to) => {
+  recordRecentRoute(to)
   NProgress.done() // finish progress bar
 })

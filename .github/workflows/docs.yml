@@ -5,7 +5,10 @@ on:
     branches: [master, docs]
     paths:
       - 'docs/**'
+      - 'package.json'
       - '.github/workflows/docs.yml'
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -24,24 +27,47 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - run: |
-          SHORT_SHA=${GITHUB_SHA::7}
-          docker build -f docs/Dockerfile \
-            -t "${IMAGE_REPO}:latest" \
-            -t "${IMAGE_REPO}:${SHORT_SHA}" .
-          docker push "${IMAGE_REPO}:latest"
-          docker push "${IMAGE_REPO}:${SHORT_SHA}"
+          if [ "${GITHUB_EVENT_NAME}" = "release" ]; then
+            IMAGE_TAG="${GITHUB_REF_NAME}"
+            docker build -f docs/Dockerfile -t "${IMAGE_REPO}:${IMAGE_TAG}" .
+            docker push "${IMAGE_REPO}:${IMAGE_TAG}"
+          else
+            IMAGE_TAG=${GITHUB_SHA::7}
+            docker build -f docs/Dockerfile \
+              -t "${IMAGE_REPO}:latest" \
+              -t "${IMAGE_REPO}:${IMAGE_TAG}" .
+            docker push "${IMAGE_REPO}:latest"
+            docker push "${IMAGE_REPO}:${IMAGE_TAG}"
+          fi
 
-  deploy:
-    name: Deploy
+  deploy-staging:
+    name: Deploy Staging
     needs: build
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       IMAGE_REPO: ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-docs
     steps:
-      - name: Trigger deploy webhook
+      - name: Trigger staging deploy webhook
         run: |
-          SHORT_SHA=${GITHUB_SHA::7}
+          IMAGE_TAG=${GITHUB_SHA::7}
+          curl -sf -X POST "${{ secrets.STAGING_DEPLOY_WEBHOOK_URL }}" \
+            -H "X-Deploy-Token: ${{ secrets.STAGING_DEPLOY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"service\":\"docs\",\"image\":\"${IMAGE_REPO}:${IMAGE_TAG}\"}"
+
+  deploy-production:
+    name: Deploy Production
+    needs: build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_REPO: ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-docs
+    steps:
+      - name: Trigger production deploy webhook
+        run: |
+          IMAGE_TAG="${GITHUB_REF_NAME}"
           curl -sf -X POST "${{ secrets.DEPLOY_WEBHOOK_URL }}" \
             -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "{\"service\":\"docs\",\"image\":\"${IMAGE_REPO}:${SHORT_SHA}\"}"
+            -d "{\"service\":\"docs\",\"image\":\"${IMAGE_REPO}:${IMAGE_TAG}\"}"

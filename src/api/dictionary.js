@@ -1,6 +1,5 @@
 import request from '@/utils/request'
-
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL
+import { API_BASE_URL } from '@/utils/baseUrl'
 
 /**
  * 获取指定类别的字典列表

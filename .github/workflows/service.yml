@@ -3,9 +3,12 @@ name: Build & Deploy Services
 on:
   push:
     branches: [service]
+  release:
+    types: [published]
 
 jobs:
   build-project1:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,15 +17,14 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - run: |
-          SHORT_SHA=${GITHUB_SHA::7}
+          IMAGE_TAG="${GITHUB_REF_NAME}"
           docker build \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project1:latest \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project1:${SHORT_SHA} \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project1:${IMAGE_TAG} \
             ./api/Project_1
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project1:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project1:${SHORT_SHA}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project1:${IMAGE_TAG}
 
   build-project2:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,15 +33,14 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - run: |
-          SHORT_SHA=${GITHUB_SHA::7}
+          IMAGE_TAG="${GITHUB_REF_NAME}"
           docker build \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project2:latest \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project2:${SHORT_SHA} \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project2:${IMAGE_TAG} \
             ./api/Project_2
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project2:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project2:${SHORT_SHA}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project2:${IMAGE_TAG}
 
   build-project3:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,15 +49,14 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - run: |
-          SHORT_SHA=${GITHUB_SHA::7}
+          IMAGE_TAG="${GITHUB_REF_NAME}"
           docker build \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project3:latest \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project3:${SHORT_SHA} \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project3:${IMAGE_TAG} \
             ./api/Project-3
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project3:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project3:${SHORT_SHA}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project3:${IMAGE_TAG}
 
   build-project4:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,13 +65,11 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - run: |
-          SHORT_SHA=${GITHUB_SHA::7}
+          IMAGE_TAG="${GITHUB_REF_NAME}"
           docker build \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project4:latest \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project4:${SHORT_SHA} \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project4:${IMAGE_TAG} \
             ./api/Project-4
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project4:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project4:${SHORT_SHA}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-project4:${IMAGE_TAG}
 
   build-linezolid:
     runs-on: ubuntu-latest
@@ -82,17 +80,40 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - run: |
-          SHORT_SHA=${GITHUB_SHA::7}
-          docker build \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:latest \
-            -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:${SHORT_SHA} \
-            ./api/linezolid
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:${SHORT_SHA}
+          if [ "${GITHUB_EVENT_NAME}" = "release" ]; then
+            IMAGE_TAG="${GITHUB_REF_NAME}"
+            docker build \
+              -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:${IMAGE_TAG} \
+              ./api/linezolid
+            docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:${IMAGE_TAG}
+          else
+            IMAGE_TAG=${GITHUB_SHA::7}
+            docker build \
+              -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:latest \
+              -t ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:${IMAGE_TAG} \
+              ./api/linezolid
+            docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:latest
+            docker push ${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:${IMAGE_TAG}
+          fi
 
-  deploy:
-    name: Deploy Services
+  deploy-staging:
+    name: Deploy Staging Services
+    needs: build-linezolid
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger staging deploy webhook
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::7}
+          curl -sf -X POST "${{ secrets.STAGING_DEPLOY_WEBHOOK_URL }}" \
+            -H "X-Deploy-Token: ${{ secrets.STAGING_DEPLOY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"service\":\"linezolid\",\"image\":\"${{ secrets.DOCKER_HUB_USERNAME }}/ioeb-linezolid:${IMAGE_TAG}\"}"
+
+  deploy-production:
+    name: Deploy Production Services
     needs: [build-project1, build-project2, build-project3, build-project4, build-linezolid]
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -108,10 +129,10 @@ jobs:
           - service: linezolid
             image_suffix: ioeb-linezolid
     steps:
-      - name: Trigger deploy webhook
+      - name: Trigger production deploy webhook
         run: |
-          SHORT_SHA=${GITHUB_SHA::7}
+          IMAGE_TAG="${GITHUB_REF_NAME}"
           curl -sf -X POST "${{ secrets.DEPLOY_WEBHOOK_URL }}" \
             -H "X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "{\"service\":\"${{ matrix.service }}\",\"image\":\"${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.image_suffix }}:${SHORT_SHA}\"}"
+            -d "{\"service\":\"${{ matrix.service }}\",\"image\":\"${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.image_suffix }}:${IMAGE_TAG}\"}"

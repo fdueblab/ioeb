@@ -150,7 +150,7 @@ export default {
     i18nRender,
     maybeShowSurvey() {
       // 已完成或跳过过则不再弹出
-      if (isSurveyDone()) {
+      if (isSurveyDone() || (this.$route.meta && this.$route.meta.suppressProfileSurvey)) {
         return
       }
       // 确保画像已加载后再判断是否为空

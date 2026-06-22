@@ -12,9 +12,9 @@
     "lint:js": "eslint src/**/*.js --fix",
     "lint:css": "stylelint src/**/*.*ss --fix  --custom-syntax postcss-less",
     "prepare": "husky install",
-    "docs:dev": "vitepress dev docs --host",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:dev": "npm --prefix docs run dev -- --host",
+    "docs:build": "npm --prefix docs run build",
+    "docs:preview": "npm --prefix docs run preview"
   },
   "dependencies": {
     "@ant-design-vue/pro-layout": "^1.0.12",

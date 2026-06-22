@@ -1,7 +1,5 @@
 import request from '@/utils/request'
-
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL
-const AGENT_BASE_URL = process.env.VUE_APP_AGENT_BASE_URL || 'https://fdueblab.cn'
+import { API_BASE_URL, AGENT_BASE_URL } from '@/utils/baseUrl'
 
 /**
  * AI分析评测数据
