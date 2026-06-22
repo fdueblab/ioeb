@@ -105,14 +105,6 @@
             </div>
           </template>
 
-          <!-- workbench 侧栏运行态：只保留用户需要理解的状态 -->
-          <template v-else-if="embedded && hasStarted && isRunning">
-            <div class="step-content embedded-build-status">
-              <div class="embedded-build-status-title">正在仿真构建</div>
-              <div class="embedded-build-status-round">当前第 {{ currentIteration || 1 }} 轮迭代</div>
-            </div>
-          </template>
-
           <!-- 运行中：步骤1-服务匹配 -->
           <template v-else-if="hasStarted && currentMainStep === 0 && isRunning">
             <div class="step-content">
@@ -163,7 +155,7 @@
           <template v-else-if="hasStarted && currentMainStep === 2 && isRunning">
             <div class="step-content simulation-phase">
               <div class="step-title">
-                智能构建 · 第 {{ currentIteration }} 轮
+                正在仿真构建 · 当前第 {{ currentIteration }} 轮迭代
                 <span class="iteration-hint" v-if="currentIteration > 1">持续优化中</span>
               </div>
 
@@ -185,8 +177,8 @@
                       <a-icon v-else-if="phases.exec === 'running'" type="loading" />
                       <span v-else>1</span>
                     </div>
-                    <span class="phase-label">调度执行</span>
-                    <span class="phase-hint">规划 Agent · 工具调用</span>
+                    <span class="phase-label">调度智能体</span>
+                    <span class="phase-hint">编排服务流程</span>
                   </div>
                   <div class="phase-connector"></div>
                   <div
@@ -198,15 +190,18 @@
                       <a-icon v-else-if="phases.check === 'running'" type="loading" />
                       <span v-else>2</span>
                     </div>
-                    <span class="phase-label">目标验收</span>
-                    <span class="phase-hint">验证 Agent · 场景目标</span>
+                    <span class="phase-label">验证智能体</span>
+                    <span class="phase-hint">检查结果质量</span>
                   </div>
                 </div>
 
                 <!-- 当前状态 -->
-                <div class="current-action">{{ currentActionText }}</div>
+                <div class="current-action">
+                  <a-icon v-if="isRunning" type="loading" />
+                  <span>{{ currentActionText }}</span>
+                </div>
 
-                <div class="process-snapshot" v-if="processSnapshotCards.length">
+                <div class="process-snapshot" v-if="!embedded && processSnapshotCards.length">
                   <div
                     v-for="card in processSnapshotCards"
                     :key="card.key"
@@ -232,7 +227,7 @@
           <template v-else-if="hasStarted && currentMainStep === 3 && isRunning">
             <div class="step-content">
               <div class="step-title">方案生成</div>
-              <div class="step-desc">正在生成元应用方案...</div>
+              <div class="step-desc">正在整理可发布的元应用...</div>
               <div class="generation-list">
                 <div
                   v-for="(item, index) in generationItems"
@@ -496,140 +491,11 @@
                 <p class="detail-summary-line detail-summary-line--artifact">
                   artifact.json 仅保留运行必要的 app、taskContract、runtime 与 goldenPaths；构建轨迹、服务选择与验收记录留在 BuildBundle。
                 </p>
-                <!-- 场景解析 -->
-                <div class="detail-subsection detail-subsection--first">
-                  <div class="detail-subtitle">场景解析</div>
-                  <template v-if="scenarioParsedView.hasContent">
-                    <p v-if="scenarioParsedView.goal" class="parsed-intent-goal">{{ scenarioParsedView.goal }}</p>
-                    <p v-if="scenarioParsedView.description" class="detail-summary-line parsed-intent-situation">
-                      {{ scenarioParsedView.description }}
-                    </p>
-                    <div v-if="scenarioParsedView.constraints.length" class="parsed-intent-block">
-                      <span class="parsed-intent-label">约束</span>
-                      <a-tag
-                        v-for="(item, idx) in scenarioParsedView.constraints"
-                        :key="'c-' + idx"
-                        class="parsed-intent-tag"
-                      >{{ item }}</a-tag>
-                    </div>
-                    <div v-if="scenarioParsedView.acceptanceCriteria.length" class="parsed-intent-block">
-                      <span class="parsed-intent-label">验收标准</span>
-                      <ul class="parsed-intent-list">
-                        <li v-for="(item, idx) in scenarioParsedView.acceptanceCriteria" :key="'a-' + idx">{{ item }}</li>
-                      </ul>
-                    </div>
-                    <p
-                      v-if="scenarioParsedView.parserModel || scenarioParsedView.parsedAt"
-                      class="detail-summary-line detail-summary-line--tight parsed-intent-meta"
-                    >
-                      <template v-if="scenarioParsedView.parserModel">解析模型 {{ scenarioParsedView.parserModel }}</template>
-                      <template v-if="scenarioParsedView.parsedAt"> · {{ scenarioParsedView.parsedAt }}</template>
-                    </p>
-                  </template>
-                  <p v-else class="detail-muted detail-subsection-flush">未生成结构化场景（可能无场景描述，或 LLM 解析未执行）</p>
-                </div>
-
-                <!-- 服务契约 -->
-                <div class="detail-subsection">
-                  <div class="detail-subtitle">服务契约</div>
-                  <div v-if="serviceContractRows.length" class="contract-list">
-                    <div
-                      v-for="row in serviceContractRows"
-                      :key="row.serviceId || row.serviceName"
-                      class="contract-card"
-                    >
-                      <div class="contract-head">
-                        <span class="contract-name">{{ row.serviceName }}</span>
-                        <a-tag size="small">{{ row.channelLabel }}</a-tag>
-                      </div>
-                      <p class="detail-summary-line detail-summary-line--tight">
-                        <template v-if="row.boundOnly">已绑定 · 等待运行期调用</template>
-                        <template v-else-if="row.uncalled">本次未调用</template>
-                        <template v-else>调用 {{ row.totalCalls }} 次 · 成功率 {{ row.successRate }}</template>
-                      </p>
-                      <p v-if="row.declaredToolNames.length" class="detail-summary-line">
-                        <span class="contract-field-label">声明工具</span>
-                        {{ row.declaredToolNames.join('、') }}
-                      </p>
-                      <p v-if="row.observedSummaries.length" class="detail-summary-line">
-                        <span class="contract-field-label">实测调用</span>
-                        {{ row.observedSummaries.join('；') }}
-                      </p>
-                    </div>
-                  </div>
-                  <p v-else class="detail-muted detail-subsection-flush">无服务契约数据</p>
-                </div>
-
-                <!-- 运行结论 -->
-                <div class="detail-subsection">
-                  <div class="detail-subtitle">运行模式</div>
-                  <div class="evidence-head">
-                    <a-tag color="blue">{{ artifactView.runtimeMode || 'agent_only' }}</a-tag>
-                    <a-tag
-                      v-if="artifactView.goldenPathExtractable != null"
-                      :color="artifactView.goldenPathExtractable ? 'blue' : 'default'"
-                      style="margin-left: 8px"
-                    >
-                      {{ artifactView.goldenPathExtractable ? '黄金路径' : '无黄金路径' }}
-                    </a-tag>
-                    <span class="evidence-id">{{ artifactView.artifactId }}</span>
-                  </div>
-                </div>
-                <!-- 旧 artifact 可能带 solidificationReport；真实 MetaAppArtifact v1 不包含该字段 -->
-                <div class="detail-subsection" v-if="detailArtifact.data.solidificationReport && detailArtifact.data.solidificationReport.gates">
-                  <div class="detail-subtitle">质量检查</div>
-                  <div class="gate-list">
-                    <div
-                      v-for="gate in detailArtifact.data.solidificationReport.gates"
-                      :key="gate.gate"
-                      class="gate-row"
-                    >
-                      <a-tag :color="gate.passed ? 'green' : 'red'" size="small">
-                        {{ gate.passed ? '通过' : '未通过' }}
-                      </a-tag>
-                      <span class="gate-name">{{ gate.gate }}</span>
-                      <span class="gate-detail">{{ gate.detail }}</span>
-                    </div>
-                  </div>
-                </div>
-                <!-- 黄金路径 / 构建摘要 -->
-                <div class="detail-subsection" v-if="artifactView.buildSummary || goldenPathSteps.length">
-                  <div class="detail-subtitle">可复用路径</div>
-                  <p v-if="artifactView.buildSummary" class="detail-summary-line">
-                    共 {{ artifactView.buildSummary.totalIterations }} 轮迭代 ·
-                    状态 {{ artifactView.buildSummary.finalStatus }}
-                    <template v-if="artifactView.buildSummary.elapsedMs">
-                      · {{ (artifactView.buildSummary.elapsedMs / 1000).toFixed(1) }}s
-                    </template>
-                  </p>
-                  <p v-if="artifactView.goldenPathReason" class="detail-summary-line detail-summary-line--tight">
-                    {{ artifactView.goldenPathReason }}
-                  </p>
-                  <ul v-if="goldenPathSteps.length" class="parsed-intent-list">
-                    <li v-for="step in goldenPathSteps" :key="step.stepId">
-                      {{ step.stepId }} · {{ step.toolName }}
-                    </li>
-                  </ul>
-                  <ul v-else-if="artifactView.remediation.length" class="parsed-intent-list">
-                    <li v-for="(item, idx) in artifactView.remediation" :key="'rem-' + idx">{{ item }}</li>
-                  </ul>
-                </div>
-                <!-- 溯源 -->
-                <div class="detail-subsection" v-if="artifactView.sourceSessionId || artifactView.artifactHash">
-                  <div class="detail-subtitle">溯源信息</div>
-                  <p class="detail-summary-line">
-                    会话 {{ artifactView.sourceSessionId || '—' }} ·
-                    Hash {{ artifactView.artifactHash ? artifactView.artifactHash.slice(0, 16) : '—' }}
-                  </p>
-                </div>
-                <!-- 展开完整 JSON：临时展示，后续可删除 -->
-                <div class="detail-subsection">
-                  <a-collapse :bordered="false">
-                    <a-collapse-panel key="artifact-json" header="完整 MetaAppArtifact JSON">
-                      <pre class="trace-raw-json">{{ artifactJsonPreview }}</pre>
-                    </a-collapse-panel>
-                  </a-collapse>
-                </div>
+                <meta-app-artifact-panel
+                  variant="detail"
+                  :artifact="detailArtifact.data"
+                  show-json-collapse
+                />
               </template>
             </div>
 
@@ -797,6 +663,7 @@ import { getKnowledge } from '@/domain'
 import {
   useMemorySimulation
 } from '@/mock/data/meta_apps_data'
+import MetaAppArtifactPanel from './meta_app_build/MetaAppArtifactPanel.vue'
 
 function mapSetupItems(tasks) {
   return tasks.map((text) => ({ text, done: false, active: false }))
@@ -804,6 +671,7 @@ function mapSetupItems(tasks) {
 
 export default {
   name: 'SimulationBuilder',
+  components: { MetaAppArtifactPanel },
   props: {
     serviceNodes: {
       type: Array,
@@ -896,7 +764,7 @@ export default {
         exec: 'pending',
         check: 'pending'
       },
-      dispatchStatus: '智能体调度执行中',
+      dispatchStatus: '智能体协作中',
       currentActionText: '初始化中...',
       activeServiceCall: null,
       lastServiceCall: null,
@@ -970,65 +838,6 @@ export default {
     callChainTitle() {
       return this.callChainSourceLabel ? `调用链（${this.callChainSourceLabel}）` : '调用链'
     },
-    artifactJsonPreview() {
-      const data = this.detailArtifact && this.detailArtifact.data
-      if (!data) return ''
-      try {
-        const raw = JSON.stringify(data, null, 2)
-        return raw.length > 8000 ? raw.slice(0, 8000) + '\n…' : raw
-      } catch (e) {
-        return ''
-      }
-    },
-    scenarioParsedView() {
-      const data = this.detailArtifact && this.detailArtifact.data
-      const contract = data && data.taskContract
-      const sc = data && (data.parsedIntent || data.scenario || contract)
-      if (!sc || typeof sc !== 'object') {
-        return { hasContent: false }
-      }
-      const goal = sc.goal ? String(sc.goal).trim() : ''
-      const description = sc.description ? String(sc.description).trim() : ((data.app && data.app.description) || '')
-      const constraints = Array.isArray(sc.constraints) ? sc.constraints.filter(Boolean) : []
-      const acceptanceCriteria = Array.isArray(sc.acceptanceCriteria)
-        ? sc.acceptanceCriteria.filter(Boolean)
-        : (Array.isArray(sc.successCriteria) ? sc.successCriteria.filter(Boolean) : [])
-      const source = sc.sourceRef || sc.source || {}
-      return {
-        hasContent: Boolean(goal || description || constraints.length || acceptanceCriteria.length),
-        goal,
-        description,
-        constraints,
-        acceptanceCriteria,
-        parserModel: source.parserModel ? String(source.parserModel) : '',
-        parsedAt: source.parsedAt ? String(source.parsedAt) : ''
-      }
-    },
-    artifactView() {
-      const art = this.detailArtifact && this.detailArtifact.data
-      if (!art) return {}
-      const meta = art.artifactMeta || {}
-      const report = art.solidificationReport || {}
-      const goldenPaths = Array.isArray(art.goldenPaths) ? art.goldenPaths : []
-      return {
-        artifactId: art.artifactId || meta.artifactId || '',
-        schemaVersion: art.schemaVersion || '',
-        runtimeMode: art.runtime && art.runtime.mode,
-        solidifiable: goldenPaths.length > 0,
-        goldenPathExtractable: report.goldenPathExtractable != null ? report.goldenPathExtractable : goldenPaths.length > 0,
-        goldenPathReason: report.goldenPathReason || '',
-        remediation: Array.isArray(report.remediation) ? report.remediation : [],
-        buildSummary: meta.buildSummary || null,
-        artifactHash: meta.artifactHash || (art.provenance && art.provenance.artifactHash) || '',
-        sourceSessionId: meta.sourceSessionId || (art.provenance && art.provenance.sourceSessionId) || ''
-      }
-    },
-    goldenPathSteps() {
-      const art = this.detailArtifact && this.detailArtifact.data
-      const gp = art && (art.goldenPath || (Array.isArray(art.goldenPaths) ? art.goldenPaths[0] : null))
-      if (!gp || !Array.isArray(gp.steps)) return []
-      return gp.steps
-    },
     hasScenarioParsedDraft() {
       const d = this.scenarioParsedDraft || {}
       return Boolean(
@@ -1037,40 +846,6 @@ export default {
         (d.constraints && d.constraints.length) ||
         (d.acceptanceCriteria && d.acceptanceCriteria.length)
       )
-    },
-    serviceContractRows() {
-      const data = this.detailArtifact && this.detailArtifact.data
-      const contracts = data && data.runtime && Array.isArray(data.runtime.serviceBindings)
-        ? data.runtime.serviceBindings
-        : (data && Array.isArray(data.serviceContracts) ? data.serviceContracts : [])
-      return contracts.map((c) => {
-        const declared = Array.isArray(c.tools) ? c.tools : (Array.isArray(c.declaredTools) ? c.declaredTools : [])
-        const observed = Array.isArray(c.observedTools) ? c.observedTools : []
-        const channelParts = [c.source || c.channel, c.transport].filter(Boolean)
-        const totalCalls = typeof c.totalCalls === 'number' ? c.totalCalls : null
-        const successRate = c.overallSuccessRate != null
-          ? `${Math.round(c.overallSuccessRate * 100)}%`
-          : '—'
-        const boundOnly = totalCalls == null && !observed.length
-        return {
-          serviceId: c.serviceId || '',
-          serviceName: c.serviceName || '未命名服务',
-          channelLabel: channelParts.length ? channelParts.join(' · ') : '—',
-          totalCalls: totalCalls != null ? totalCalls : 0,
-          successRate,
-          declaredToolNames: declared.map((t) => t.name || t.toolName).filter(Boolean),
-          observedSummaries: observed.map((o) => {
-            const parts = [`${o.toolName || '?'}×${o.callCount || 0}`]
-            if (o.avgLatencyMs != null) parts.push(`${Math.round(o.avgLatencyMs)}ms`)
-            if (o.successRate != null && o.successRate < 1) {
-              parts.push(`${Math.round(o.successRate * 100)}%`)
-            }
-            return parts.join(' · ')
-          }),
-          boundOnly,
-          uncalled: !boundOnly && totalCalls === 0
-        }
-      })
     },
     evidenceDimensionPanels() {
       const data = this.detailEvidence && this.detailEvidence.data
@@ -1374,7 +1149,7 @@ export default {
       this.currentIteration = 1
       this.totalIterations = 0
       this.phases = { exec: 'pending', check: 'pending' }
-      this.dispatchStatus = '智能体调度执行中'
+      this.dispatchStatus = '智能体协作中'
       this.currentActionText = '初始化中...'
       this.activeServiceCall = null
       this.lastServiceCall = null
@@ -1900,7 +1675,7 @@ export default {
           key,
           (this.serviceCallStats.perService[key] || 0) + 1
         )
-        this.currentActionText = `正在调用：${this.activeServiceCallLabel}`
+        this.currentActionText = '正在仿真调度...'
       } else if (
         status === 'end' &&
         this.activeServiceCall &&
@@ -1908,7 +1683,7 @@ export default {
       ) {
         this.lastServiceCall = { ...this.activeServiceCall }
         this.activeServiceCall = null
-        this.currentActionText = `调用返回：${this.activeServiceCallLabel}`
+        this.currentActionText = '正在整理调度结果...'
       }
       // 驱动画布节点 calling/dimmed 动画
       this.syncCanvasVisual({
@@ -1924,12 +1699,21 @@ export default {
       const list = ctx === 'env' ? this.envSetupItems : this.generationItems
       const item = list[index]
       if (!item) return
-      if (text) item.text = text
+      const displayText = this.progressDisplayText(ctx, index, text)
+      if (displayText) item.text = displayText
       if (active) item.active = true
       if (done) {
         item.active = false
         item.done = true
       }
+    },
+
+    progressDisplayText(ctx, index, text) {
+      if (ctx !== 'env') {
+        const friendly = ['汇总数据', '编译产物', '准备发布']
+        return friendly[index] || text
+      }
+      return text
     },
 
     onStreamPhase({ phase, status }) {
@@ -1940,11 +1724,8 @@ export default {
       if (phase === 'data' || phase === 'logic') {
         if (status === 'running') {
           this.phases.exec = 'running'
-          this.currentActionText =
-            phase === 'data'
-              ? '正在进行：规划 Agent 调度服务…'
-              : '正在进行：核对工具调用与返回…'
-          this.dispatchStatus = '智能体调度执行中'
+          this.currentActionText = phase === 'data' ? '正在数据验证...' : '正在逻辑验证...'
+          this.dispatchStatus = '智能体协作中'
           if (d) d.execPhase = 'running'
         } else if (status === 'done' && phase === 'logic') {
           this.phases.exec = 'done'
@@ -1959,8 +1740,8 @@ export default {
         if (status === 'running') {
           this.activeServiceCall = null
           this.phases.check = 'running'
-          this.currentActionText = '正在进行：验证 Agent 审查目标达成…'
-          this.dispatchStatus = '目标验收中'
+          this.currentActionText = '正在逻辑验证...'
+          this.dispatchStatus = '智能体协作中'
           if (d) d.checkPhase = 'running'
         } else if (status === 'done') {
           this.phases.check = 'done'
@@ -1990,8 +1771,8 @@ export default {
       d.fix = fix || ''
       if (phase) d.phase = phase
       if (plannerDecision) d.plannerDecision = plannerDecision
-      this.dispatchStatus = phase === 'planning' ? '规划失败，准备重试' : '自动修复中'
-      this.currentActionText = `发现: ${message}，正在修复...`
+      this.dispatchStatus = '正在自动优化'
+      this.currentActionText = '发现需要调整的地方，正在自动优化...'
     },
 
     onStreamPlannerDecision(payload) {
@@ -2021,8 +1802,8 @@ export default {
         this.activeServiceCall = null
         this.lastServiceCall = null
         this.phases = { exec: 'pending', check: 'pending' }
-        this.dispatchStatus = '智能体调度执行中'
-        this.currentActionText = `正在准备第 ${iteration} 轮调度…`
+        this.dispatchStatus = '智能体协作中'
+        this.currentActionText = `正在准备第 ${iteration} 轮迭代...`
         this.ensureIterationRows(iteration)
       }
       if (status === 'retry') {
@@ -2105,7 +1886,7 @@ export default {
       this.activeServiceCall = null
       this.lastServiceCall = null
       this.currentActionText = success ? '仿真构建完成' : '仿真构建失败'
-      this.dispatchStatus = success ? '目标验收通过' : '目标验收未通过'
+      this.dispatchStatus = success ? '检查通过' : '检查未通过'
 
       if (metrics) {
         Object.keys(metrics).forEach((k) => {
@@ -2222,12 +2003,7 @@ export default {
         metrics: { ...this.finalMetrics },
         result: this.finalResult,
         artifactRef: this.detailArtifact.data ? {
-          artifactId: this.artifactView.artifactId,
-          solidifiable: this.artifactView.solidifiable,
-          goldenPathExtractable: this.artifactView.goldenPathExtractable,
-          artifactHash: this.artifactView.artifactHash
-            ? this.artifactView.artifactHash.slice(0, 16)
-            : null
+          artifactId: this.detailArtifact.data.artifactId || ''
         } : null
       })
       this.$emit('prePublish')
@@ -2398,10 +2174,7 @@ export default {
         callChain: this.callChainSteps,
         evidenceStatus: evidence && evidence.overallStatus,
         evidenceSummary: this.evidenceSummaryText(evidence),
-        solidifiable: this.artifactView.solidifiable,
-        goldenPathExtractable: this.artifactView.goldenPathExtractable,
-        artifactId: this.artifactView.artifactId,
-        artifactRows: this.isCompleted ? this.buildProductArtifactRows() : []
+        artifactId: (this.detailArtifact.data && this.detailArtifact.data.artifactId) || ''
       }
     },
 
@@ -2412,11 +2185,6 @@ export default {
         Object.assign(row, extra)
       }
       rows.push(row)
-    },
-
-    productGateSize(gateName) {
-      const compactGates = ['noInfrastructureErrors', 'realMcpCallsPresent']
-      return compactGates.includes(gateName) ? 'sm' : 'sm'
     },
 
     buildBuildSummaryRows() {
@@ -2441,146 +2209,11 @@ export default {
       }
 
       if (art) {
-        const av = this.artifactView
-        this.pushProductRow(rows, 'artifact-id', '产物 ID', av.artifactId, 'sm')
-        this.pushProductRow(rows, 'runtime-mode', '运行模式', av.runtimeMode || 'agent_only', 'xs')
-        if (av.goldenPathExtractable != null) {
-          this.pushProductRow(rows, 'golden-path', '黄金路径', av.goldenPathExtractable ? '可用' : '无', 'xs')
-        }
-        if (av.sourceSessionId) {
-          this.pushProductRow(rows, 'session', '来源会话', av.sourceSessionId, 'xs')
-        }
+        this.pushProductRow(rows, 'artifact-id', '产物 ID', art.artifactId, 'sm')
+        this.pushProductRow(rows, 'runtime-mode', '运行模式', (art.runtime && art.runtime.mode) || 'agent_only', 'xs')
       }
 
       this.pushProductRow(rows, 'elapsed', '构建耗时', this.formattedElapsedTime, 'xs')
-      return rows
-    },
-
-    buildProductArtifactRows() {
-      const rows = []
-      const art = this.detailArtifact.data
-
-      this.pushProductRow(rows, 'app-name', '应用名称', this.appName)
-      this.pushProductRow(rows, 'domain', '应用领域', this.domain || 'generic')
-      if (art && art.artifactMeta) {
-        this.pushProductRow(rows, 'mode', '构建模式', art.artifactMeta.mode)
-        this.pushProductRow(rows, 'app-id', '应用 ID', art.artifactMeta.appId)
-      } else if (art && art.metaApp) {
-        this.pushProductRow(rows, 'mode', '构建模式', art.metaApp.mode)
-        this.pushProductRow(rows, 'app-id', '应用 ID', art.metaApp.appId)
-      }
-
-      const sp = this.scenarioParsedView
-      if (sp.hasContent) {
-        this.pushProductRow(rows, 'goal', '场景目标', sp.goal)
-        this.pushProductRow(rows, 'scenario-desc', '场景描述', sp.description, 'lg')
-        if (sp.constraints.length) {
-          this.pushProductRow(rows, 'constraints', '约束', sp.constraints.join('；'), 'lg')
-        }
-        if (sp.acceptanceCriteria.length) {
-          this.pushProductRow(rows, 'acceptance', '验收标准', sp.acceptanceCriteria.join('；'), 'lg')
-        }
-        this.pushProductRow(rows, 'parser-model', '解析模型', sp.parserModel)
-        this.pushProductRow(rows, 'parsed-at', '解析时间', sp.parsedAt)
-      } else {
-        const d = this.scenarioParsedDraft || {}
-        this.pushProductRow(rows, 'goal', '场景目标', d.goal)
-        this.pushProductRow(rows, 'scenario-desc', '场景描述', d.description, 'lg')
-        if (d.constraints && d.constraints.length) {
-          this.pushProductRow(rows, 'constraints', '约束', d.constraints.join('；'), 'lg')
-        }
-        const acc = d.acceptanceCriteria
-        if (acc && acc.length) {
-          this.pushProductRow(rows, 'acceptance', '验收标准', acc.join('；'), 'lg')
-        }
-      }
-
-      if (art) {
-        const av = this.artifactView
-        this.pushProductRow(rows, 'artifact-id', '产物 ID', av.artifactId, 'sm')
-        this.pushProductRow(rows, 'schema', 'Schema 版本', av.schemaVersion || art.schemaVersion, 'xs')
-        this.pushProductRow(rows, 'runtime-mode', '运行模式', av.runtimeMode || 'agent_only', 'xs')
-        if (av.goldenPathExtractable != null) {
-          this.pushProductRow(
-            rows,
-            'golden-path',
-            '黄金路径',
-            av.goldenPathExtractable ? '可用' : '无',
-            'sm'
-          )
-          if (!av.goldenPathExtractable && av.goldenPathReason) {
-            this.pushProductRow(rows, 'golden-path-reason', '说明', av.goldenPathReason, 'lg')
-          }
-        }
-        const gates = art.solidificationReport && art.solidificationReport.gates
-        if (gates && gates.length) {
-          gates.forEach((g, idx) => {
-            this.pushProductRow(
-              rows,
-              `gate-${idx}`,
-              g.gate,
-              g.passed ? '通过' : `未通过：${g.detail || '—'}`,
-              this.productGateSize(g.gate)
-            )
-          })
-        }
-        if (av.artifactHash) {
-          this.pushProductRow(rows, 'hash', '产物 Hash', av.artifactHash, 'sm')
-        }
-      }
-
-      this.serviceContractRows.forEach((c, idx) => {
-        const detail = c.boundOnly
-          ? `已绑定 · ${c.channelLabel}`
-          : c.uncalled
-          ? `未调用 · ${c.channelLabel}`
-          : `调用 ${c.totalCalls} 次 · 成功率 ${c.successRate} · ${c.channelLabel}`
-        const tools = c.declaredToolNames.length ? `声明工具：${c.declaredToolNames.join('、')}` : ''
-        const observed = c.observedSummaries.length ? `实测：${c.observedSummaries.join('；')}` : ''
-        const value = [detail, tools, observed].filter(Boolean).join(' · ')
-        this.pushProductRow(rows, `contract-${idx}`, c.serviceName, value, 'xl', {
-          contract: {
-            channelLabel: c.channelLabel,
-            totalCalls: c.totalCalls,
-            successRate: c.successRate,
-            declaredToolNames: c.declaredToolNames,
-            observedSummaries: c.observedSummaries,
-            boundOnly: c.boundOnly,
-            uncalled: c.uncalled
-          }
-        })
-      })
-
-      const gp = art && (art.goldenPath || (Array.isArray(art.goldenPaths) ? art.goldenPaths[0] : null))
-      if (gp && Array.isArray(gp.steps)) {
-        gp.steps.forEach((step, idx) => {
-          const mapping = step.inputMapping || step.inputBinding || {}
-          const bindingKeys = Object.keys(mapping)
-          const bindingHint = bindingKeys.length ? ` · 入参 ${bindingKeys.join(', ')}` : ''
-          const slots = (step.outputSlots || []).map((s) => (typeof s === 'string' ? s : s.name)).filter(Boolean)
-          const slotHint = slots.length ? ` · 输出 ${slots.join(', ')}` : ''
-          this.pushProductRow(
-            rows,
-            `gp-step-${idx}`,
-            step.stepId || `step_${idx + 1}`,
-            `${step.toolName || '—'}${bindingHint}${slotHint}`,
-            'lg'
-          )
-        })
-      }
-      if (gp && Array.isArray(gp.assertions)) {
-        gp.assertions.forEach((a, idx) => {
-          const result = a.result || a.checkMode || (a.expected ? 'rule' : 'unknown')
-          this.pushProductRow(
-            rows,
-            `gp-assertion-${idx}`,
-            a.assertionId || `assertion_${idx + 1}`,
-            `${a.level || ''} · ${a.type || ''} · ${result}`,
-            'md'
-          )
-        })
-      }
-
       return rows
     },
 
@@ -2588,15 +2221,20 @@ export default {
       const art = this.detailArtifact.data
       const tags = []
       if (art) {
-        tags.push({ label: '场景与意图', tone: 'green' })
-        tags.push({ label: '服务与契约', tone: 'green' })
-        if (Array.isArray(art.goldenPaths) && art.goldenPaths.length) {
-          tags.push({ label: '黄金路径', tone: 'green' })
+        tags.push({ label: '任务契约', tone: 'green' })
+        if (art.runtime && Array.isArray(art.runtime.serviceBindings) && art.runtime.serviceBindings.length) {
+          tags.push({ label: '服务绑定', tone: 'green' })
+        }
+        const hasPath = Array.isArray(art.goldenPaths) && art.goldenPaths.some(
+          (p) => p && Array.isArray(p.steps) && p.steps.length
+        )
+        if (hasPath) {
+          tags.push({ label: '可复用路径', tone: 'green' })
         }
         tags.push({ label: (art.runtime && art.runtime.mode) || 'agent_only', tone: 'blue' })
       }
       return {
-        artifactRows: this.buildProductArtifactRows(),
+        artifact: art || null,
         summaryRows: this.buildBuildSummaryRows(),
         intent: (this.scenarioParsedDraft && this.scenarioParsedDraft.goal) || this.appName,
         services: this.serviceStatuses.map((s) => s.name).join('、'),
@@ -2962,25 +2600,6 @@ export default {
   }
 }
 
-.embedded-build-status {
-  padding: 18px 16px;
-  border: 1px solid #dbeafe;
-  border-radius: 6px;
-  background: #f8fbff;
-}
-
-.embedded-build-status-title {
-  color: #1f2937;
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.embedded-build-status-round {
-  color: #6b7280;
-  font-size: 13px;
-}
-
 // 服务检查列表
 .service-check-list {
   display: flex;
@@ -3163,6 +2782,10 @@ export default {
   background: #fff;
   border-radius: 6px;
   word-break: break-word;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .process-snapshot {
@@ -4042,13 +3665,13 @@ export default {
 @import './meta_app_build/simulation-workbench.less';
 
 .simulation-embedded {
-  height: 100%;
+  height: auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
 
   .simulation-container {
-    flex: 1;
+    flex: 0 0 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -4057,7 +3680,7 @@ export default {
   }
 
   .main-steps {
-    padding: 12px 10px;
+    padding: 10px 10px;
   }
 
   .main-steps-five .step-label {
@@ -4066,9 +3689,32 @@ export default {
   }
 
   .simulation-scroll {
-    flex: 1;
+    flex: 0 0 auto;
     min-height: 0;
-    overflow: auto;
+    overflow: visible;
+  }
+
+  .content-area {
+    padding: 16px;
+    min-height: 0;
+  }
+
+  .step-content .step-title {
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  .simulation-phase .dispatch-box {
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+
+  .simulation-phase .dispatch-header {
+    margin-bottom: 14px;
+  }
+
+  .phase-progress {
+    margin-bottom: 12px;
   }
 
   .footer-buttons--embedded {

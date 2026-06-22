@@ -239,9 +239,6 @@
           <div v-if="build.artifactId" class="wb-row">
             <strong>产物 ID</strong>
             <div class="wb-row-inline">
-              <a-tag :color="build.solidifiable ? 'green' : 'red'">
-                {{ build.solidifiable ? '可固化' : '不可固化' }}
-              </a-tag>
               <span class="wb-small">{{ build.artifactId }}</span>
             </div>
           </div>
@@ -251,7 +248,7 @@
 
     <!-- prepublish：元应用配置 -->
     <template v-else-if="mode === 'prepublish'">
-      <meta-app-config-detail :rows="artifactRows" />
+      <meta-app-config-detail :artifact="productArtifact" />
     </template>
   </div>
 </template>
@@ -312,8 +309,8 @@ export default {
         toolCallCount: 0
       }
     },
-    artifactRows() {
-      return (this.product && this.product.artifactRows) || []
+    productArtifact() {
+      return (this.product && this.product.artifact) || null
     }
   },
   methods: {

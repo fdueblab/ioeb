@@ -55,9 +55,9 @@ export const SIMULATION_BUILD_ENV_TASKS = [
 // 步骤 4「方案生成」：与前端 generationItems 一一对应
 // ---------------------------------------------------------------------------
 export const SIMULATION_BUILD_GEN_TASKS = [
-  '汇总 BuildTrace 轨迹',
-  '编译 MetaAppArtifact v1',
-  '准备预发布配置摘要'
+  '汇总数据',
+  '编译产物',
+  '准备发布'
 ]
 
 // ---------------------------------------------------------------------------

@@ -16,15 +16,15 @@ export default {
 @import './simulation-workbench.less';
 
 .wb-panel-scroll {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
   padding: 0;
   background: #fff;
 }
 
 .wb-build-left {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;

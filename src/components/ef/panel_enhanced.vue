@@ -229,13 +229,7 @@
                 :chrome-locked="workbenchChromeLocked"
                 @nodeRightMenu="nodeRightMenu"
                 @deleteNode="deleteNode"
-                :style="{
-                  position: 'absolute',
-                  left: node.left,
-                  top: node.top,
-                  opacity: nodePositionsCalculated ? 1 : 0,
-                  transition: 'opacity 0.3s ease'
-                }"
+                :style="canvasNodeStyle(node)"
               />
             </div>
           </div>
@@ -274,13 +268,7 @@
           :chrome-locked="simulationChromeLocked"
           @nodeRightMenu="nodeRightMenu"
           @deleteNode="deleteNode"
-          :style="{
-            position: 'absolute',
-            left: node.left,
-            top: node.top,
-            opacity: nodePositionsCalculated ? 1 : 0,
-            transition: 'opacity 0.3s ease'
-          }"
+          :style="canvasNodeStyle(node)"
         />
       </div>
     </div>
@@ -419,11 +407,11 @@ export default {
       if (!this.workbenchMode) return {}
       const nodes = this.workbenchCanvasNodes || []
       const maxBottom = nodes.reduce((max, node) => {
-        const top = Number.parseFloat(String(node.top || '0')) || 0
+        const top = this.canvasNodeVisualTop(node)
         return Math.max(max, top + 140)
       }, 0)
       return {
-        minHeight: `${Math.max(640, maxBottom + 64)}px`
+        minHeight: `${Math.max(420, maxBottom + 24)}px`
       }
     },
     workbenchToolbarDisabled() {
@@ -668,6 +656,23 @@ export default {
     }
   },
   methods: {
+    parseNodeCoord(value) {
+      return Number.parseFloat(String(value || '0')) || 0
+    },
+    canvasNodeVisualTop(node) {
+      const top = this.parseNodeCoord(node && node.top)
+      if (!this.workbenchMode) return top
+      return Math.max(8, top - 48)
+    },
+    canvasNodeStyle(node) {
+      return {
+        position: 'absolute',
+        left: node.left,
+        top: `${this.canvasNodeVisualTop(node)}px`,
+        opacity: this.nodePositionsCalculated ? 1 : 0,
+        transition: 'opacity 0.3s ease'
+      }
+    },
     // 解析初始流程数据
     parseInitialFlowText() {
       const parsedFlow = parseInitialFlow(this.initialFlow, this.statusDict, this.statusStyleDict)

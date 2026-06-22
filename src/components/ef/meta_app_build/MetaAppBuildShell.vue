@@ -243,7 +243,7 @@ export default {
       const b = this.$refs.simulationBuilder
       if (b && b.getProductViewModel) return b.getProductViewModel()
       return {
-        artifactRows: [],
+        artifact: null,
         summaryRows: [],
         intent: this.flowPreDes,
         services: this.parsedServices.map((s) => s.name).join('、'),
