@@ -5,15 +5,20 @@
 ## 🌳 分支管理策略
 
 ### 主要分支
-- **master** - 生产环境分支，只接受来自develop的合并
-- **develop** - 开发主分支，功能开发完成后合并到此分支
-- **feature/xxx** - 功能开发分支，从develop分出，开发完成后合并回develop
+- **默认分支** - 开发测试环境分支，合并后自动部署到 `dev.fdueblab.cn`
+  - `fdueblab/ioeb`: `master`
+  - `fdueblab/ioeb_backend`: `main`
+  - `fdueblab/Micro-Agent`: `master`
+- **生产发布** - 不使用长期生产分支，只通过 GitHub Release 触发生产部署
+- **codex/xxx 或 feature/xxx** - 功能开发分支，从对应仓库默认分支分出，开发完成后通过 PR 合并回默认分支
 
 ### 分支命名规范
-```
+```text
+codex/功能描述
 feature/用户名-功能描述
+
+例如：codex/platform-release-process
 例如：feature/zhangsan-mcp-server-impl
-例如：feature/lisi-agent-simulation-ui
 ```
 
 ## 📝 提交信息规范
@@ -51,9 +56,9 @@ Closes #123
 
 ### 1. 开始新功能开发
 ```bash
-# 切换到develop分支并拉取最新代码
-git checkout develop
-git pull origin develop
+# 切换到默认分支并拉取最新代码
+git checkout master
+git pull origin master
 
 # 创建功能分支
 git checkout -b feature/你的名字-功能描述
@@ -73,13 +78,13 @@ git push origin feature/你的名字-功能描述
 
 ### 3. 功能开发完成
 ```bash
-# 确保develop分支最新
-git checkout develop
-git pull origin develop
+# 确保默认分支最新
+git checkout master
+git pull origin master
 
-# 回到功能分支，rebase到最新develop
+# 回到功能分支，rebase到最新默认分支
 git checkout feature/你的名字-功能描述
-git rebase develop
+git rebase master
 
 # 解决冲突（如果有）
 # ... 解决冲突 ...
@@ -91,7 +96,7 @@ git push origin feature/你的名字-功能描述 --force-with-lease
 ```
 
 ### 4. 创建Pull Request
-1. 在GitHub上创建PR，从你的feature分支到develop
+1. 在GitHub上创建PR，从你的功能分支到对应仓库默认分支
 2. 填写PR描述，说明改动内容
 3. 指定审查者（通常是项目负责人）
 4. 等待代码审查和合并
@@ -105,7 +110,7 @@ git push origin feature/你的名字-功能描述 --force-with-lease
 ```
 
 **优点**：
-- 保持develop分支历史简洁
+- 保持默认分支历史简洁
 - 每个功能对应一个提交记录
 - 易于回滚和代码追踪
 
@@ -127,7 +132,7 @@ git commit --amend
 #### ❌ 避免使用：常规Merge
 ```bash
 # 避免这样做，会产生大量merge记录
-git checkout develop
+git checkout master
 git merge feature/your-branch  # 会创建merge commit
 ```
 
@@ -143,12 +148,12 @@ git push origin --delete feature/你的名字-功能描述
 ## 📈 进阶：定期同步策略
 
 ### 长期功能分支同步
-如果功能开发周期较长，定期同步develop：
+如果功能开发周期较长，定期同步默认分支：
 ```bash
-# 每周同步一次develop分支
+# 每周同步一次默认分支
 git checkout feature/your-branch
 git fetch origin
-git rebase origin/develop
+git rebase origin/master
 
 # 解决冲突后推送
 git push origin feature/your-branch --force-with-lease
@@ -164,7 +169,7 @@ git checkout -b feature/team-shared-feature
 git checkout -b feature/your-name-shared-feature-part
 
 # 完成后先合并到共享分支（使用squash）
-# 最后由负责人将共享分支合并到develop
+# 最后由负责人将共享分支合并到默认分支
 ```
 
 ## 🔍 代码审查流程
@@ -185,7 +190,7 @@ git checkout -b feature/your-name-shared-feature-part
 
 ### ❌ 不要这样做
 ```bash
-# 直接在master分支开发
+# 直接在默认分支开发
 git checkout master
 # 开发代码...
 git commit -m "update"
@@ -195,14 +200,14 @@ git commit -m "fix"
 git commit -m "update code"
 
 # 强制推送到共享分支
-git push origin develop --force
+git push origin master --force
 ```
 
 ### ✅ 正确的做法
 ```bash
-# 从develop创建功能分支
-git checkout develop
-git pull origin develop
+# 从默认分支创建功能分支
+git checkout master
+git pull origin master
 git checkout -b feature/myname-new-feature
 
 # 规范的提交信息
@@ -239,7 +244,7 @@ git rebase -i HEAD~N
 git branch --merged
 
 # 批量删除已合并的本地分支
-git branch --merged | grep -v "\*\|master\|develop" | xargs -n 1 git branch -d
+git branch --merged | grep -v "\*\|master\|main" | xargs -n 1 git branch -d
 
 # 清理远程追踪分支
 git remote prune origin
@@ -305,7 +310,7 @@ git branch -m new-branch-name
 - [ ] 相关文档已更新
 
 创建PR前请确认：
-- [ ] 功能分支已rebase到最新develop
+- [ ] 功能分支已rebase到最新默认分支
 - [ ] 所有测试通过
 - [ ] PR描述清晰完整
 - [ ] 指定了合适的审查者
@@ -315,4 +320,4 @@ git branch -m new-branch-name
 遇到Git问题时，可以：
 1. 查阅本文档
 2. 在团队群询问
-3. 向项目负责人请教 
+3. 向项目负责人请教

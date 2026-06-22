@@ -1,0 +1,37 @@
+{
+  "version": "v2026.06.24",
+  "releaseOrder": ["backend", "agent", "frontend"],
+  "summary": "本周生产发布说明。复制本文件后，将 ref 替换为冻结时验证过的 commit SHA。",
+  "components": [
+    {
+      "name": "backend",
+      "repo": "fdueblab/ioeb_backend",
+      "ref": "main",
+      "deploys": ["backend"],
+      "releaseWorkflows": ["CI"]
+    },
+    {
+      "name": "agent",
+      "repo": "fdueblab/Micro-Agent",
+      "ref": "master",
+      "deploys": ["agent"],
+      "releaseWorkflows": ["CI"]
+    },
+    {
+      "name": "frontend",
+      "repo": "fdueblab/ioeb",
+      "ref": "master",
+      "deploys": ["frontend", "docs", "linezolid", "project-1", "project-2", "project-3", "project-4"],
+      "releaseWorkflows": ["CI", "Build & Deploy Docs", "Build & Deploy Services"]
+    }
+  ],
+  "checks": [
+    "dev smoke test passed",
+    "database backup completed if this release changes data or schema",
+    "rollback target recorded"
+  ],
+  "rollback": {
+    "previousVersion": "v2026.06.17",
+    "databaseBackup": "none"
+  }
+}
