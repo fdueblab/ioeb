@@ -105,6 +105,14 @@
             </div>
           </template>
 
+          <!-- workbench 侧栏运行态：只保留用户需要理解的状态 -->
+          <template v-else-if="embedded && hasStarted && isRunning">
+            <div class="step-content embedded-build-status">
+              <div class="embedded-build-status-title">正在仿真构建</div>
+              <div class="embedded-build-status-round">当前第 {{ currentIteration || 1 }} 轮迭代</div>
+            </div>
+          </template>
+
           <!-- 运行中：步骤1-服务匹配 -->
           <template v-else-if="hasStarted && currentMainStep === 0 && isRunning">
             <div class="step-content">
@@ -212,35 +220,6 @@
                 </div>
               </div>
 
-              <!-- 简洁历史 -->
-              <div class="iteration-history" v-if="iterationHistory.length > 0">
-                <div class="history-title">历史</div>
-                <div class="history-list">
-                  <div
-                    v-for="item in iterationHistory"
-                    :key="item.iteration"
-                    class="history-item"
-                    :class="{ current: !item.completed }"
-                  >
-                    <a-icon
-                      v-if="item.completed && item.success"
-                      type="check-circle"
-                      theme="filled"
-                      class="icon-success"
-                    />
-                    <a-icon
-                      v-else-if="item.completed && !item.success"
-                      type="info-circle"
-                      theme="filled"
-                      class="icon-warning"
-                    />
-                    <a-icon v-else type="loading" class="icon-loading" />
-                    <span class="history-label">第{{ item.iteration }}轮</span>
-                    <span class="history-summary">{{ item.summary }}</span>
-                  </div>
-                </div>
-              </div>
-
               <!-- 提示 -->
               <div class="auto-fix-hint">
                 <a-icon type="bulb" theme="filled" />
@@ -307,7 +286,7 @@
                 </div>
               </div>
 
-              <div class="result-actions" v-if="!showTechDetails">
+              <div class="result-actions" v-if="!embedded && !showTechDetails">
                 <a-button icon="profile" @click="openBuildDetails">查看完整构建详情</a-button>
               </div>
 
@@ -335,7 +314,7 @@
                 </div>
               </div>
 
-              <div class="result-actions" v-if="!showTechDetails">
+              <div class="result-actions" v-if="!embedded && !showTechDetails">
                 <a-button icon="profile" @click="openBuildDetails">查看完整构建详情</a-button>
               </div>
             </div>
@@ -823,18 +802,6 @@ function mapSetupItems(tasks) {
   return tasks.map((text) => ({ text, done: false, active: false }))
 }
 
-/** 开发：fdueblab mcp-proxy → 本机同端口（需 .env 中 VUE_APP_LOCAL_MCP_REWRITE=true） */
-const LOCAL_MCP_REWRITE_SKIP_PORTS = new Set([25013])
-
-function rewriteMcpUrlForLocalDev(url) {
-  if (process.env.VUE_APP_LOCAL_MCP_REWRITE !== 'true' || !url) return url
-  const m = String(url).match(/^https?:\/\/fdueblab\.cn\/mcp-proxy\/(\d+)(\/.*)?$/i)
-  if (!m) return url
-  const port = Number(m[1])
-  if (LOCAL_MCP_REWRITE_SKIP_PORTS.has(port)) return url
-  return `http://127.0.0.1:${port}${m[2] || '/sse'}`
-}
-
 export default {
   name: 'SimulationBuilder',
   props: {
@@ -1243,7 +1210,7 @@ export default {
         },
         {
           key: 'calls',
-          label: '当前调用',
+          label: '调用进度',
           value: this.activeServiceCall ? '执行中' : (this.lastServiceCall ? '已返回' : '待触发'),
           hint: this.activeServiceCallLabel,
           tone: this.activeServiceCall ? 'active' : 'neutral'
@@ -1361,6 +1328,8 @@ export default {
       }
       const meta = this.scenarioParsed && typeof this.scenarioParsed === 'object' ? this.scenarioParsed : {}
       if (meta.source) draft.source = meta.source
+      if (meta.scenarioKey) draft.scenarioKey = meta.scenarioKey
+      if (meta.mockRouteHint) draft.mockRouteHint = meta.mockRouteHint
       return draft
     },
 
@@ -1478,7 +1447,7 @@ export default {
         servicesMeta: this.serviceStatuses.map((s) => ({
           id: String(s.id),
           name: s.name,
-          mcpUrl: rewriteMcpUrlForLocalDev(s.mcpUrl || ''),
+          mcpUrl: s.mcpUrl || '',
           tools: s.tools || [],
           isFake: !!s.isFake,
           mcpMethod: s.mcpMethod || 'sse',
@@ -1488,6 +1457,7 @@ export default {
         maxIterations: this.maxIterations,
         scenarioDescription: this.scenarioDraft,
         scenarioSummary: this.scenarioDraft,
+        mockRouteHint: this.scenarioParsed && this.scenarioParsed.mockRouteHint,
         scenarioParsed: this.hasScenarioParsedDraft ? this.getScenarioParsedForStart() : undefined,
         mode: this.internalMode,
         strategy: this.buildSimulationStrategy()
@@ -1978,6 +1948,7 @@ export default {
           if (d) d.execPhase = 'running'
         } else if (status === 'done' && phase === 'logic') {
           this.phases.exec = 'done'
+          this.activeServiceCall = null
           this.syncCanvasVisual({ type: 'activeCall', targetNodeId: null })
           if (d) d.execPhase = 'done'
         }
@@ -1986,6 +1957,7 @@ export default {
 
       if (phase === 'check') {
         if (status === 'running') {
+          this.activeServiceCall = null
           this.phases.check = 'running'
           this.currentActionText = '正在进行：验证 Agent 审查目标达成…'
           this.dispatchStatus = '目标验收中'
@@ -2046,7 +2018,11 @@ export default {
     onStreamIteration({ iteration, status }) {
       this.currentIteration = iteration
       if (status === 'running') {
+        this.activeServiceCall = null
+        this.lastServiceCall = null
         this.phases = { exec: 'pending', check: 'pending' }
+        this.dispatchStatus = '智能体调度执行中'
+        this.currentActionText = `正在准备第 ${iteration} 轮调度…`
         this.ensureIterationRows(iteration)
       }
       if (status === 'retry') {
@@ -2126,6 +2102,10 @@ export default {
       }
 
       this.hasFailed = !success
+      this.activeServiceCall = null
+      this.lastServiceCall = null
+      this.currentActionText = success ? '仿真构建完成' : '仿真构建失败'
+      this.dispatchStatus = success ? '目标验收通过' : '目标验收未通过'
 
       if (metrics) {
         Object.keys(metrics).forEach((k) => {
@@ -2164,6 +2144,10 @@ export default {
       this.teardownStream()
       this.isCompleted = true
       this.hasFailed = true
+      this.activeServiceCall = null
+      this.lastServiceCall = null
+      this.currentActionText = '仿真构建失败'
+      this.dispatchStatus = '连接异常'
       this.failureMessage = (err && err.message) || '流式连接异常'
       this.failureSuggestion = '请稍后重试或检查网络'
       this.addLog(this.failureMessage, 'ERROR', 'error')
@@ -2365,6 +2349,9 @@ export default {
       const evidence = this.detailEvidence.data
       return {
         currentPhaseLabel: this.isRunning ? '智能构建中' : (this.isCompleted ? '构建完成' : '准备中'),
+        currentIteration: this.currentIteration,
+        isCompleted: this.isCompleted,
+        hasFailed: this.hasFailed,
         currentActionText: this.currentActionText,
         dispatchStatus: this.dispatchStatus,
         iterations: (this.iterationDetails || []).map((i) => {
@@ -2973,6 +2960,25 @@ export default {
     color: #8c8c8c;
     margin-bottom: 16px;
   }
+}
+
+.embedded-build-status {
+  padding: 18px 16px;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+  background: #f8fbff;
+}
+
+.embedded-build-status-title {
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.embedded-build-status-round {
+  color: #6b7280;
+  font-size: 13px;
 }
 
 // 服务检查列表

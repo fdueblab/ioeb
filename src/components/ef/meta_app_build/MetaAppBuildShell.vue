@@ -5,80 +5,80 @@
         <macro-bar :active-index="macroIndex" />
 
         <div class="wb-main-stack">
-        <prepublish-view
-          v-show="phase === 'prepublish'"
-          :app-name="flowAppName"
-          :pre-des="flowPreDes"
-          :pre-input-name="flowPreInputName"
-          :pre-output-name="flowPreOutputName"
-          :input-type="flowInputType"
-          :output-type="flowOutputType"
-          :vertical-type="verticalType"
-          :service-ids="serviceIds"
-          @back="backToEdit"
-          @published="onPublished"
-        />
-
-        <div v-show="phase !== 'prepublish'" class="wb-workbench">
-        <aside class="wb-panel-left">
-          <div class="wb-left-titlebar">
-            <div class="wb-agent-mark"><a-icon type="robot" /></div>
-            <span>{{ leftBarTitle }}</span>
-          </div>
-
-          <div v-show="phase === 'input'" class="wb-chat-host">
-            <smart-chat
-              ref="smartChat"
-              :vertical-type="verticalType"
-              @start-loading="$emit('start-loading')"
-              @stop-loading="$emit('stop-loading')"
-              @update-services="onUpdateServices"
-              @update-flow="onUpdateFlow"
-              @scenario-intake="onScenarioIntake"
-            />
-          </div>
-
-          <simulation-build-left-panel v-show="phase === 'build'">
-            <simulation-builder
-              v-if="buildUiMounted"
-              v-show="phase === 'build'"
-              ref="simulationBuilder"
-              embedded
-              :service-nodes="serviceNodes"
-              :app-name="flowAppName"
-              :app-id="flowAppId"
-              :domain="verticalType"
-              :scenario-description="flowScenarioText"
-              :scenario-parsed="flowScenarioParsed"
-              @success="onBuildSuccess"
-              @prePublish="goPrepublish"
-              @canvas-visual="onCanvasVisual"
-              @scenario-parsed-update="onScenarioParsedUpdate"
-              @cancel-build="onBuildCancelled"
-              @back-to-edit="onBackToEdit"
-            />
-          </simulation-build-left-panel>
-        </aside>
-
-        <section class="wb-panel-right">
-          <flow-panel
-            ref="flowPanel"
-            workbench-mode
-            :workbench-phase="phase"
-            :build-entry-ready="canStartBuild"
-            :initial-flow="initialFlow"
-            :initial-services="initialServices"
-            :loading-services="loadingServices"
-            :loading-flow="loadingFlow"
+          <prepublish-view
+            v-show="phase === 'prepublish'"
+            :app-name="flowAppName"
+            :pre-des="flowPreDes"
+            :pre-input-name="flowPreInputName"
+            :pre-output-name="flowPreOutputName"
+            :input-type="flowInputType"
+            :output-type="flowOutputType"
             :vertical-type="verticalType"
-            :show-toolbar="false"
-            :show-sidebar="false"
-            @import-request="$emit('import-request', $event)"
-            @start-build="startBuild"
-            @flow-synced="onFlowSynced"
+            :service-ids="serviceIds"
+            @back="backToEdit"
+            @published="onPublished"
           />
-        </section>
-        </div>
+
+          <div v-show="phase !== 'prepublish'" class="wb-workbench">
+            <aside class="wb-panel-left">
+              <div class="wb-left-titlebar">
+                <div class="wb-agent-mark"><a-icon type="robot" /></div>
+                <span>{{ leftBarTitle }}</span>
+              </div>
+
+              <div v-show="phase === 'input'" class="wb-chat-host">
+                <smart-chat
+                  ref="smartChat"
+                  :vertical-type="verticalType"
+                  @start-loading="$emit('start-loading')"
+                  @stop-loading="$emit('stop-loading')"
+                  @update-services="onUpdateServices"
+                  @update-flow="onUpdateFlow"
+                  @scenario-intake="onScenarioIntake"
+                />
+              </div>
+
+              <simulation-build-left-panel v-show="phase === 'build'">
+                <simulation-builder
+                  v-if="buildUiMounted"
+                  v-show="phase === 'build'"
+                  ref="simulationBuilder"
+                  embedded
+                  :service-nodes="serviceNodes"
+                  :app-name="flowAppName"
+                  :app-id="flowAppId"
+                  :domain="verticalType"
+                  :scenario-description="flowScenarioText"
+                  :scenario-parsed="flowScenarioParsed"
+                  @success="onBuildSuccess"
+                  @prePublish="goPrepublish"
+                  @canvas-visual="onCanvasVisual"
+                  @scenario-parsed-update="onScenarioParsedUpdate"
+                  @cancel-build="onBuildCancelled"
+                  @back-to-edit="onBackToEdit"
+                />
+              </simulation-build-left-panel>
+            </aside>
+
+            <section class="wb-panel-right">
+              <flow-panel
+                ref="flowPanel"
+                workbench-mode
+                :workbench-phase="phase"
+                :build-entry-ready="canStartBuild"
+                :initial-flow="initialFlow"
+                :initial-services="initialServices"
+                :loading-services="loadingServices"
+                :loading-flow="loadingFlow"
+                :vertical-type="verticalType"
+                :show-toolbar="false"
+                :show-sidebar="false"
+                @import-request="$emit('import-request', $event)"
+                @start-build="startBuild"
+                @flow-synced="onFlowSynced"
+              />
+            </section>
+          </div>
         </div>
       </div>
     </div>
@@ -489,17 +489,16 @@ export default {
 
 .wb-workbench-frame {
   flex: 0 0 auto;
-  height: calc(100vh - 72px);
-  min-height: calc(100vh - 72px);
-  overflow: hidden;
+  min-height: 0;
+  overflow: visible;
 }
 
 .wb-panel-right {
   :deep(.ef-workbench-root) {
-    height: 100%;
+    height: auto;
     border: 0;
     box-shadow: none;
-    overflow: hidden;
+    overflow: visible;
   }
 
   :deep(.wb-stage-header) {

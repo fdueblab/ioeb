@@ -3,7 +3,10 @@
     <div class="wb-preview-col">
       <div class="wb-modal-sec-title">元应用界面预览</div>
       <div class="wb-phone">
-        <div class="wb-phone-top">{{ formName || preName }}</div>
+        <div class="wb-phone-top">
+          <span>{{ formName || preName }}</span>
+          <small v-if="formSubtitle">{{ formSubtitle }}</small>
+        </div>
         <div class="wb-phone-card">
           <div class="wb-phone-label">▎{{ formInputName || preInputName }}</div>
           <textarea
@@ -47,13 +50,17 @@
             <a-form-item label="应用名称">
               <a-input
                 v-decorator="['name', { rules: [{ required: true, message: '请填写元应用名称!' }], initialValue: preName }]"
-                @change="syncPreviewFromForm"
+                @change="onPreviewFieldChange('name', $event)"
               />
             </a-form-item>
           </a-col>
           <a-col :span="24">
             <a-form-item label="应用副标题">
-              <a-input v-decorator="['subtitle']" placeholder="请输入副标题（可选）" />
+              <a-input
+                v-decorator="['subtitle']"
+                placeholder="请输入副标题（可选）"
+                @change="onPreviewFieldChange('subtitle', $event)"
+              />
             </a-form-item>
           </a-col>
           <a-col :span="24">
@@ -66,11 +73,11 @@
               </a-radio-group>
             </a-form-item>
           </a-col>
-          <a-col v-if="localInputType !== 0" :span="12">
+          <a-col :span="12">
             <a-form-item label="输入数据名称">
               <a-input
                 v-decorator="['inputName', { rules: [{ required: true, message: '请填写输入数据名称!' }], initialValue: preInputName }]"
-                @change="syncPreviewFromForm"
+                @change="onPreviewFieldChange('inputName', $event)"
               />
             </a-form-item>
           </a-col>
@@ -84,11 +91,11 @@
               </a-radio-group>
             </a-form-item>
           </a-col>
-          <a-col v-if="localOutputType !== 0" :span="12">
+          <a-col :span="12">
             <a-form-item label="输出数据名称">
               <a-input
                 v-decorator="['outputName', { rules: [{ required: true, message: '请填写输出数据名称!' }], initialValue: preOutputName }]"
-                @change="syncPreviewFromForm"
+                @change="onPreviewFieldChange('outputName', $event)"
               />
             </a-form-item>
           </a-col>
@@ -96,7 +103,7 @@
             <a-form-item label="获取结果按钮文本">
               <a-input
                 v-decorator="['submitButtonText', { rules: [{ required: true, message: '请填写获取结果按钮文本!' }], initialValue: '获取结果' }]"
-                @change="syncPreviewFromForm"
+                @change="onPreviewFieldChange('submitButtonText', $event)"
               />
             </a-form-item>
           </a-col>
@@ -113,7 +120,10 @@
         <a-row>
           <a-col :span="24">
             <a-form-item label="通用描述">
-              <a-textarea v-decorator="['des', { initialValue: preDes }]" />
+              <a-textarea
+                v-decorator="['des', { initialValue: preDes }]"
+                @change="syncPreviewFromForm"
+              />
             </a-form-item>
           </a-col>
         </a-row>
@@ -167,6 +177,7 @@ export default {
       submitting: false,
       form: this.$form.createForm(this),
       formName: '',
+      formSubtitle: '',
       formInputName: '',
       formOutputName: '',
       formSubmitText: '',
@@ -182,6 +193,8 @@ export default {
   },
   watch: {
     preName: { immediate: true, handler(v) { this.formName = v } },
+    preInputName: { immediate: true, handler(v) { this.formInputName = v } },
+    preOutputName: { immediate: true, handler(v) { this.formOutputName = v } },
     inputType: {
       immediate: true,
       handler(v) {
@@ -207,6 +220,15 @@ export default {
     onVisualizationChange(checked) {
       this.formVisualization = !!checked
     },
+    onPreviewFieldChange(field, event) {
+      const value = event && event.target ? event.target.value : event
+      if (field === 'name') this.formName = value || ''
+      if (field === 'subtitle') this.formSubtitle = value || ''
+      if (field === 'inputName') this.formInputName = value || ''
+      if (field === 'outputName') this.formOutputName = value || ''
+      if (field === 'submitButtonText') this.formSubmitText = value || ''
+      this.$nextTick(() => this.syncPreviewFromForm())
+    },
     confirmBackToEdit() {
       this.$confirm(
         '将退出元应用预发布并回到想定解析完成后的编辑界面。当前预发布表单未保存的修改、以及本次构建生成的产物摘要（配置快照、轨迹与证据关联）将不再保留，需要重新完成仿真构建后才能再次预发布。确定继续吗？',
@@ -225,11 +247,12 @@ export default {
         .catch(() => {})
     },
     syncPreviewFromForm() {
-      const v = this.form.getFieldsValue(['visualization', 'inputName', 'outputName', 'submitButtonText', 'name'])
-      if (v.name) this.formName = v.name
-      if (v.inputName) this.formInputName = v.inputName
-      if (v.outputName) this.formOutputName = v.outputName
-      if (v.submitButtonText) this.formSubmitText = v.submitButtonText
+      const v = this.form.getFieldsValue(['visualization', 'inputName', 'outputName', 'submitButtonText', 'name', 'subtitle'])
+      if (Object.prototype.hasOwnProperty.call(v, 'name')) this.formName = v.name || ''
+      if (Object.prototype.hasOwnProperty.call(v, 'subtitle')) this.formSubtitle = v.subtitle || ''
+      if (Object.prototype.hasOwnProperty.call(v, 'inputName')) this.formInputName = v.inputName || ''
+      if (Object.prototype.hasOwnProperty.call(v, 'outputName')) this.formOutputName = v.outputName || ''
+      if (Object.prototype.hasOwnProperty.call(v, 'submitButtonText')) this.formSubmitText = v.submitButtonText || ''
       if (v.visualization != null) this.formVisualization = !!v.visualization
     },
     async loadDicts() {
@@ -300,7 +323,7 @@ export default {
             this.$message.success('预发布成功！部署完成后可进行业务验证')
             this.$emit('published')
           } else {
-            this.$message.error(res?.message || '预发布失败')
+            this.$message.error((res && res.message) || '预发布失败')
           }
         } catch (e) {
           this.$message.error('预发布异常，请稍后重试！')
@@ -341,17 +364,33 @@ export default {
 }
 
 .wb-phone-top {
-  height: 56px;
+  min-height: 56px;
   border-radius: 10px 10px 0 0;
   background: linear-gradient(135deg, #38a2ff, #166ed9);
   color: #fff;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   font-size: 14px;
   font-weight: 800;
   margin: -14px -14px 18px;
-  padding: 0 8px;
+  padding: 8px 10px;
   text-align: center;
+
+  span,
+  small {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+  }
+
+  small {
+    margin-top: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.86;
+  }
 }
 
 .wb-phone-card {

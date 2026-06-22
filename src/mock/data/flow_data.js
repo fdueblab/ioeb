@@ -238,7 +238,8 @@ const aircraftFlow = {
 
 const pj1pj4pj3Flow = {
   name: '新元应用',
-  preName: '课题一课题四课题三金融风险报告生成',
+  preName: '跨境金融风险综合报告生成',
+  mockRouteHint: '课题一 课题四 课题三',
   preInputName: '跨境贸易数据',
   preOutputName: '金融风险报告',
   inputType: 2,

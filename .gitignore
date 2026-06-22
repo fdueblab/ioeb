@@ -42,3 +42,4 @@ package-lock.json
 .codex/
 .agents/
 .claude/
+CLAUDE.md

@@ -6,13 +6,13 @@
 @wb-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
 @wb-soft-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
 .wb-shell {
-  height: 100%;
+  height: auto;
   background: #fff;
   border: 1px solid @wb-line;
   box-shadow: @wb-shadow;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 // MCP 封装模块 publish-steps 风格
@@ -113,11 +113,11 @@
 }
 
 .wb-workbench {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   isolation: isolate;
 }
 
@@ -175,11 +175,11 @@
 }
 
 .wb-main-stack {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .wb-panel-right {
@@ -188,7 +188,7 @@
   flex-direction: column;
   background: #fff;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
   z-index: 1;
 }
@@ -346,7 +346,7 @@
 }
 
 .wb-stage-body {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -356,17 +356,19 @@
 
 .wb-canvas-zone {
   position: relative;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   background: linear-gradient(180deg, #f8fbff, #f5f7fb);
   transition: flex-basis 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 
   .ef-canvas {
     position: relative;
     z-index: 1;
-    height: 100% !important;
+    flex: 0 0 auto !important;
+    height: auto !important;
+    overflow: visible !important;
     background: transparent !important;
   }
 
@@ -746,28 +748,48 @@
 }
 
 .wb-scenario-bubbles {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-items: stretch;
   gap: 10px;
   width: 100%;
   grid-column: 1 / -1;
   flex: 0 0 100%;
 
   > .wb-row {
-    flex: 1 1 180px;
-    width: auto;
+    width: 100%;
+    height: 100%;
     max-width: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   > .wb-row--lg {
-    flex: 1 1 calc(50% - 5px);
     min-width: 260px;
   }
 
   > .wb-row--sm {
-    flex: 1 1 calc(33.333% - 7px);
     min-width: 170px;
+  }
+}
+
+.wb-build-simple {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+  background: #f8fbff;
+
+  > strong {
+    display: block;
+    color: @wb-text;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+
+  > div {
+    color: @wb-muted;
+    font-size: 13px;
   }
 }
 
@@ -1402,6 +1424,11 @@
   li + li {
     margin-top: 4px;
   }
+}
+
+.wb-iter-check-name {
+  color: #333;
+  font-weight: 600;
 }
 
 .wb-iter-block-text--fix {

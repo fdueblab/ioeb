@@ -8,20 +8,6 @@
     </template>
 
     <template v-else>
-      <section v-if="identity.appName" class="wb-artifact-hero">
-        <div class="wb-artifact-hero-main">
-          <h3 class="wb-artifact-title">{{ identity.appName }}</h3>
-          <div class="wb-artifact-tags">
-            <span v-if="identity.domain" class="wb-artifact-tag">{{ identity.domain }}</span>
-            <span v-if="identity.mode" class="wb-artifact-tag wb-artifact-tag--muted">{{ identity.mode }}</span>
-            <a-tag v-if="artifactMeta.solidifiable != null" :color="artifactMeta.solidifiable ? 'green' : 'red'">
-              {{ artifactMeta.solidifiable ? '可固化' : '不可固化' }}
-            </a-tag>
-          </div>
-        </div>
-        <div v-if="identity.appId" class="wb-artifact-id">ID · {{ identity.appId }}</div>
-      </section>
-
       <section v-if="hasScenario" class="wb-artifact-section">
         <h4 class="wb-artifact-section-title">场景解析</h4>
         <div class="wb-detail-band wb-scenario-bubbles">
@@ -280,7 +266,6 @@ export default {
     },
     hasContent() {
       return (
-        this.identity.appName ||
         this.hasScenario ||
         this.serviceContracts.length ||
         this.hasGoldenPath ||

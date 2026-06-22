@@ -114,7 +114,7 @@ function scenarioFromCtx(ctx) {
       parserModel: 'scenario-intake-agent-v1',
       parsedAt: nowIso()
     },
-    scenarioKey: sp.scenarioKey || sp.demoScenarioKey
+    scenarioKey: sp.scenarioKey
   }
 }
 
@@ -632,7 +632,7 @@ export function buildTopicDemoAcceptedTrajectory(ctx) {
 }
 
 export function buildTopicDemoArtifact(ctx) {
-  const scenarioKey = resolveTopicScenarioKeyByAppName(ctx.appName) || 'pj1'
+  const scenarioKey = scenarioFromCtx(ctx).scenarioKey || resolveTopicScenarioKeyByAppName(ctx.appName) || 'pj1'
   const accepted = buildTopicDemoAcceptedTrajectory(ctx)
   const artifact = buildMetaAppArtifact(ctx, accepted)
   artifact.artifactId = `app-topic-${scenarioKey}-${shortHash(ctx.sessionId)}`

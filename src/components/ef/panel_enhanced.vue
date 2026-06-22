@@ -204,6 +204,7 @@
               ref="efContainer"
               class="ef-canvas"
               :class="simulationCanvasClasses"
+              :style="workbenchCanvasStyle"
             >
               <div v-if="loadingFlow" class="loading-overlay">
                 <a-spin size="large" tip="正在生成元应用">
@@ -403,15 +404,26 @@ export default {
   computed: {
     containerStyle() {
       return {
-        height: this.workbenchMode ? '100%' : (this.showToolbar ? 'calc(100vh)' : '100%')
+        height: this.workbenchMode ? 'auto' : (this.showToolbar ? 'calc(100vh)' : '100%')
       }
     },
     mainContainerStyle() {
       if (this.workbenchMode) {
-        return { height: '100%', flex: 1, minHeight: 0, width: '100%' }
+        return { height: 'auto', minHeight: 0, width: '100%' }
       }
       return {
         height: this.showToolbar ? 'calc(100% - 65px)' : '100%'
+      }
+    },
+    workbenchCanvasStyle() {
+      if (!this.workbenchMode) return {}
+      const nodes = this.workbenchCanvasNodes || []
+      const maxBottom = nodes.reduce((max, node) => {
+        const top = Number.parseFloat(String(node.top || '0')) || 0
+        return Math.max(max, top + 140)
+      }, 0)
+      return {
+        minHeight: `${Math.max(640, maxBottom + 64)}px`
       }
     },
     workbenchToolbarDisabled() {
@@ -459,7 +471,7 @@ export default {
       if (this.buildEntryReady && this.workbenchPhase === 'input') {
         return '中间为大画布，右侧为当前场景栏；顶部中间为仿真构建入口。'
       }
-      return '中间为当前调度关系，右侧为轮次详情和当前步骤细节。'
+      return '画布展示服务调度关系，下方详细信息展示轮次、轨迹与证据。'
     },
     /** 无服务节点时显示引导遮罩（与 phase 无关）；有服务后展示智能体与服务 */
     showWorkbenchLockOverlay() {
@@ -2231,24 +2243,24 @@ export default {
 @import './meta_app_build/simulation-workbench.less';
 
 .ef-workbench-root {
-  height: 100%;
+  height: auto;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   min-width: 0;
 }
 
 .ef-main--workbench {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .wb-panel-right-inner {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;

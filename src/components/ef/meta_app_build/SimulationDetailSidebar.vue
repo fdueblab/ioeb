@@ -59,23 +59,24 @@
 
     <!-- build：构建详情 -->
     <template v-else-if="mode === 'build'">
+      <h3 class="wb-detail-section-head">构建概况</h3>
       <div class="wb-detail-band wb-detail-band--status">
         <div class="wb-row">
-          <strong>当前阶段</strong>
-          <div>{{ build.currentPhaseLabel || '—' }}</div>
+          <strong>构建状态</strong>
+          <div>{{ buildStatusTitle }}</div>
         </div>
         <div class="wb-row">
-          <strong>当前调用</strong>
-          <div>{{ build.currentActionText || '—' }}</div>
+          <strong>当前轮次</strong>
+          <div>第 {{ build.currentIteration || 1 }} 轮</div>
         </div>
         <div class="wb-row">
-          <strong>调度状态</strong>
-          <div>{{ build.dispatchStatus || '—' }}</div>
+          <strong>构建结果</strong>
+          <div>{{ build.isCompleted ? (build.hasFailed ? '未通过' : '已通过') : '进行中' }}</div>
         </div>
       </div>
 
       <div class="wb-row wb-row--stats wb-row--xl">
-        <strong>本轮摘要</strong>
+        <strong>累计摘要</strong>
         <div class="wb-mini-stats">
           <div class="wb-stat">
             <strong>{{ buildStats.serviceCount }}</strong>
@@ -86,15 +87,10 @@
             <span>工具调用</span>
           </div>
           <div class="wb-stat">
-            <strong>{{ buildStats.pendingIssues }}</strong>
-            <span>待修正项</span>
+            <strong>{{ build.currentIteration || 1 }}</strong>
+            <span>当前轮次</span>
           </div>
         </div>
-      </div>
-
-      <div v-if="build.activeCallLabel" class="wb-row wb-row--xl">
-        <strong>当前调度</strong>
-        <div>{{ build.activeCallLabel }}</div>
       </div>
 
       <template v-if="build.iterations && build.iterations.length">
@@ -176,8 +172,8 @@
                 </div>
                 <ul v-if="iter.verifierChecks && iter.verifierChecks.length" class="wb-iter-check-list">
                   <li v-for="(chk, ci) in iter.verifierChecks" :key="'chk-' + ci">
-                    <a-tag size="small" :color="verifierTagColor(chk.status)">{{ chk.status || chk.check }}</a-tag>
-                    <span>{{ chk.issue || chk.check }}</span>
+                    <strong class="wb-iter-check-name">{{ chk.check || '检查项' }}</strong>
+                    <span v-if="chk.issue">：{{ chk.issue }}</span>
                   </li>
                 </ul>
                 <ul v-if="iter.verifierIssues && iter.verifierIssues.length" class="wb-iter-check-list">
@@ -304,12 +300,16 @@ export default {
         (p.acceptanceCriteria && p.acceptanceCriteria.length)
       )
     },
+    buildStatusTitle() {
+      if (this.build.hasFailed) return '仿真构建失败'
+      if (this.build.isCompleted) return '仿真构建已完成'
+      return '正在仿真构建'
+    },
     buildStats() {
       return this.build.stats || {
         serviceCount: 0,
         completedCalls: 0,
-        toolCallCount: 0,
-        pendingIssues: 0
+        toolCallCount: 0
       }
     },
     artifactRows() {
@@ -317,10 +317,6 @@ export default {
     }
   },
   methods: {
-    productRowSizeClass(row) {
-      const size = (row && row.size) || (row && row.wide ? 'xl' : 'sm')
-      return `wb-row--${size}`
-    },
     isIterActive(iter) {
       const s = iter && iter.statusLabel
       return s === '进行中' || s === '执行中' || s === '验收中'

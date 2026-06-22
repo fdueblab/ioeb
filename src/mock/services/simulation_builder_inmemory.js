@@ -91,7 +91,7 @@ function buildScenarioParsed(body) {
       parserModel: 'scenario-intake-agent-v1',
       parsedAt: new Date().toISOString()
     },
-    scenarioKey: sp.scenarioKey || sp.demoScenarioKey
+    scenarioKey: sp.scenarioKey
   }
 }
 

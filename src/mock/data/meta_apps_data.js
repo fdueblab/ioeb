@@ -16,6 +16,9 @@ function collectScheduleDemoText(input) {
     input.appName,
     input.preName,
     input.name,
+    input.mockRouteHint,
+    input._mockRouteHint,
+    input.topicHint,
     input.goal,
     input.description,
     input.scenarioDescription,
@@ -528,7 +531,8 @@ const pj4App = {
 
 // 金融风险报告生成（课题一+课题四+课题三）
 const pj1pj4pj3App = {
-  preName: '课题一课题四课题三金融风险报告生成元应用',
+  preName: '跨境金融风险综合报告生成元应用',
+  mockRouteHint: '课题一 课题四 课题三',
   preDes: '基于大模型智能体的元应用，用于在跨境支付场景下实现金融风险报告生成',
   preInputName: '跨境贸易数据',
   preOutputName: '金融风险报告',

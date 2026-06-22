@@ -134,6 +134,7 @@ export function buildTopicScenarioIntake(scenarioKey, flow, userInput) {
 
   const scenarioParsed = {
     ...base,
+    mockRouteHint: '课题',
     source: {
       rawUserInput: String(userInput || '').trim() || flow.preDes || '',
       intakeDialogue: [],
@@ -175,6 +176,7 @@ export function enrichTopicFlowWithScenarioIntake(flow, userInput) {
   const intake = buildTopicScenarioIntake(scenarioKey, flow, userInput)
   return normalizeFlowNodes({
     ...flow,
+    mockRouteHint: flow.mockRouteHint || '课题',
     scenarioSummary: intake.scenarioSummary,
     scenarioParsed: intake.scenarioParsed,
     _topicScenarioKey: scenarioKey
