@@ -93,13 +93,12 @@ export default defineConfig({
     },
 
     // 设置导航栏
-    // nav: [
-    //   { text: '首页', link: '/' },
-    //   { text: '快速开始', link: '/quickstart' },
-    //   { text: '用户指南', link: '/guide/' },
-    //   { text: '开发指南', link: '/dev/' },
-    //   { text: '常见问题', link: '/faq' },
-    // ],
+    nav: [
+      { text: '首页', link: '/' },
+      { text: '用户指南', link: '/guide/' },
+      { text: '开发指南', link: '/dev/' },
+      { text: '常见问题', link: '/faq' },
+    ],
 
     // 设置侧边栏
     sidebar: {
