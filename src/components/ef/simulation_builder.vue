@@ -816,8 +816,6 @@ import {
 } from '@/mock/data/simulation_builder_data'
 import { getKnowledge } from '@/domain'
 import {
-  resolveScheduleDemoKind,
-  SCHEDULE_DEMO_KIND,
   useMemorySimulation
 } from '@/mock/data/meta_apps_data'
 
@@ -846,7 +844,7 @@ export default {
     },
     /**
      * 元应用当前展示名称（画布 `data.preName`，含用户在元应用详情中的修改）。
-     * 演示分流见 `meta_apps_data`（课题→inmemory，【本地MCP】(n)→9017）。
+     * 演示分流见 `meta_apps_data`（课题→inmemory，其余含 health 真实场景→9017）。
      */
     appName: {
       type: String,
@@ -1459,11 +1457,7 @@ export default {
 
     buildSimulationStrategy() {
       // strategy 随 start payload 发送，供 Micro-Agent orchestrator 使用
-      const base = { ...this.strategy }
-      if (resolveScheduleDemoKind(this.appName) === SCHEDULE_DEMO_KIND.LOCAL_MCP) {
-        return { ...base, stabilityPasses: 2 }
-      }
-      return base
+      return { ...this.strategy }
     },
 
     buildStartPayload() {

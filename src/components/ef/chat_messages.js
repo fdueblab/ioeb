@@ -1,8 +1,6 @@
 // 聊天消息管理模块
 // 统一管理各个领域的建议输入、成功回复和错误回复
 
-import { LOCAL_MCP_SUGGESTIONS } from '@/mock/data/meta_apps_data'
-
 // 各领域的建议输入
 const DOMAIN_SUGGESTIONS = {
   aml: [
@@ -18,8 +16,10 @@ const DOMAIN_SUGGESTIONS = {
     { value: '请帮我构建一个智能飞行控制应用' }
   ],
   health: [
-    { value: '我想开发一个乡村医疗AI辅助诊断系统' },
-    ...LOCAL_MCP_SUGGESTIONS
+    { value: '急诊一位疑似感染的患者，GCS 14、呼吸频率 24/min、收缩压 96 mmHg，请帮我做 qSOFA 床旁评分并判断是否需要升级为脓毒症进一步评估' },
+    { value: '门诊患者突发胸痛伴呼吸困难，疑似肺栓塞，请用 Geneva 评分评估临床风险，并检索相关临床试验与文献证据' },
+    { value: '肿瘤 MDT 讨论一位 BRAF 突变患者，请检索 BRAF 靶点关联疾病、在研药物以及相关临床试验证据' },
+    { value: '一位住院患者需要使用利奈唑胺抗感染，请帮我优化给药方案' }
   ],
   agriculture: [
     { value: '请帮我构建一个智能农业分析应用' }
@@ -73,7 +73,7 @@ const PLACEHOLDERS = {
 const INITIAL_MESSAGES = {
   aml: '请告诉我您对跨境支付应用的需求，我将根据您的需求尝试生成元应用',
   aircraft: '请告诉我您对无人飞机应用的需求，我将根据您的需求尝试生成元应用',
-  health: '请描述医疗元应用需求；输入含【本地MCP】(n) 可一键编排本机 external-mcp 节点（n 为服务数）',
+  health: '请告诉我您对乡村医疗应用的需求，我将通过追问澄清想定后推荐合适的医疗 MCP 服务并构建元应用',
   agriculture: '请告诉我您对数字农业应用的需求，我将根据您的需求尝试生成元应用',
   evtol: '请告诉我您对低空飞行应用的需求，我将根据您的需求尝试生成元应用',
   ecommerce: '请告诉我您对跨境电商应用的需求，我将根据您的需求尝试生成元应用',

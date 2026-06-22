@@ -12,7 +12,7 @@ function readAsText (file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(reader.result || '')
-    reader.onerror = reject
+    reader.onerror = () => reject(new Error(reader.error && reader.error.message ? reader.error.message : '文件读取失败'))
     reader.readAsText(file)
   })
 }
@@ -21,7 +21,7 @@ function readAsArrayBuffer (file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(reader.result)
-    reader.onerror = reject
+    reader.onerror = () => reject(new Error(reader.error && reader.error.message ? reader.error.message : '文件读取失败'))
     reader.readAsArrayBuffer(file)
   })
 }

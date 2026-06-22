@@ -1691,7 +1691,7 @@ export default {
       return new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = e => resolve(e.target.result)
-        reader.onerror = e => reject(e)
+        reader.onerror = () => reject(new Error(reader.error && reader.error.message ? reader.error.message : '文件读取失败'))
         reader.readAsText(file)
       })
     },

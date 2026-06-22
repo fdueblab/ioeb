@@ -103,13 +103,7 @@ import {
   resolveScheduleDemoKind,
   SCHEDULE_DEMO_KIND
 } from '@/mock/data/meta_apps_data'
-import { toScenarioIntakeEvent } from '@/mock/data/local_mcp_scenario_intake'
-import {
-  LOCAL_MCP_FAKE_QUESTION,
-  buildLocalMcpCombinedInput,
-  generateLocalMcpIntakeMockSteps,
-  validateLocalMcpFollowUp
-} from '@/mock/data/local_mcp_intake_dialog'
+import { toScenarioIntakeEvent } from '@/mock/data/topic_scenario_intake'
 
 export default {
   name: 'SmartChat',
@@ -154,8 +148,7 @@ export default {
       intakeSessionId: null,
       scenarioSummary: '',
       scenarioParsed: null,
-      userRemark: '',
-      localMcpIntakePending: null
+      userRemark: ''
     }
   },
   watch: {
@@ -224,75 +217,13 @@ export default {
       const input = this.userInput
       this.userInput = ''
 
-      if (this.localMcpIntakePending) {
-        this.handleLocalMcpIntakeFollowUp(input)
-        return
-      }
-
-      // 调度演示（课题 / MCP）→ 统一 mock 推荐；否则先想定追问再推荐
+      // 课题演示 → 进程内 mock 推荐；其余（含 health）→ 真实想定追问再推荐
       if (matchesScheduleDemoInput(input)) {
-        if (resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.LOCAL_MCP) {
-          this.beginLocalMcpIntake(input)
-          return
-        }
         this.$emit('start-loading')
         this.useScheduleDemoData(input)
       } else {
         this.callScenarioIntake(input)
       }
-    },
-
-    beginLocalMcpIntake(input) {
-      if (this.verticalType !== 'health') {
-        this.removeAgentLoadingMessage()
-        this.messages.push({
-          text: '【本地MCP】样例仅在 <b>health</b> 调度页可用。',
-          isUser: false
-        })
-        this.finishAgentTurn()
-        return
-      }
-      this.localMcpIntakePending = { initialInput: input }
-      const steps = generateLocalMcpIntakeMockSteps(input)
-      const runStep = (idx) => {
-        if (idx >= steps.length) return this.finishLocalMcpIntakeQuestion()
-        const step = steps[idx]
-        setTimeout(() => {
-          this.updateThinkingMessage(step.thought, step.step)
-          runStep(idx + 1)
-        }, 800 + Math.random() * 900)
-      }
-      runStep(0)
-    },
-
-    finishLocalMcpIntakeQuestion() {
-      this.isTaskFinishing = true
-      this.handleFinalStep()
-      if (this.thinkingMessageIndex !== -1) {
-        const thinking = this.messages[this.thinkingMessageIndex].thinking
-        if (thinking) {
-          this.$set(thinking, 'title', '需要追问场景')
-        }
-      }
-      this.placeholder = '请补充想定信息（需含场景关键词）…'
-      this.agentTypeWriter(LOCAL_MCP_FAKE_QUESTION)
-    },
-
-    handleLocalMcpIntakeFollowUp(followUpText) {
-      const { initialInput } = this.localMcpIntakePending
-      const validation = validateLocalMcpFollowUp(followUpText)
-      if (!validation.ok) {
-        setTimeout(() => {
-          this.removeAgentLoadingMessage()
-          this.messages.push({ text: validation.message, isUser: false })
-          this.finishAgentTurn()
-          this.scrollToBottom()
-        }, 500)
-        return
-      }
-      this.localMcpIntakePending = null
-      this.$emit('start-loading')
-      this.useScheduleDemoData(buildLocalMcpCombinedInput(initialInput, followUpText))
     },
 
     removeAgentLoadingMessage() {
@@ -616,22 +547,6 @@ export default {
       }
     },
     useScheduleDemoData(input) {
-      if (
-        resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.LOCAL_MCP &&
-        this.verticalType !== 'health'
-      ) {
-        this.$emit('stop-loading')
-        this.isInputLoading = false
-        const i = this.messages.findIndex((msg) => msg.text === 'agentLoading')
-        if (i !== -1) {
-          this.$set(this.messages, i, {
-            text: '【本地MCP】样例仅在 <b>health</b> 调度页可用。',
-            isUser: false
-          })
-        }
-        this.finishAgentTurn()
-        return
-      }
       const steps = generateMockSteps(this.verticalType, input)
       const runStep = (idx) => {
         if (idx >= steps.length) return this.finishScheduleDemo(input)
@@ -646,12 +561,10 @@ export default {
     finishScheduleDemo(input) {
       this.isTaskFinishing = true
       this.handleFinalStep()
-      const demoKind = resolveScheduleDemoKind(input)
-      const isMcp = demoKind === SCHEDULE_DEMO_KIND.LOCAL_MCP
-      const isTopic = demoKind === SCHEDULE_DEMO_KIND.TOPIC
+      const isTopic = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.TOPIC
       getMetaAppNodes(this.verticalType, input)
         .then((flowData) => {
-          if ((isMcp || isTopic) && flowData.scenarioParsed) {
+          if (isTopic && flowData.scenarioParsed) {
             const intakeEvent = toScenarioIntakeEvent({
               scenarioParsed: flowData.scenarioParsed,
               scenarioSummary: flowData.scenarioSummary,
@@ -669,7 +582,7 @@ export default {
           )
           this.$emit('update-services', serviceNodes)
           this.$emit('update-flow', flowData)
-          this.placeholder = isMcp || isTopic
+          this.placeholder = isTopic
             ? '可继续对话补充想定，或点击「开始仿真构建」进入构建'
             : '继续补充或调整需求…'
           this.agentTypeWriter(
@@ -754,7 +667,6 @@ export default {
       this.scenarioSummary = ''
       this.scenarioParsed = null
       this.userRemark = ''
-      this.localMcpIntakePending = null
       const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '智能体未获取到必要信息，请刷新后重试'
       this.messages.push({ text: initialMessage, isUser: false })
     }

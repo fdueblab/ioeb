@@ -152,6 +152,15 @@ export function buildTopicScenarioIntake(scenarioKey, flow, userInput) {
   }
 }
 
+export function toScenarioIntakeEvent(intake) {
+  return {
+    scenarioParsed: intake.scenarioParsed,
+    scenarioSummary: intake.scenarioSummary,
+    userRemark: intake.userRemark,
+    intakeSessionId: intake.intakeSessionId
+  }
+}
+
 function normalizeFlowNodes(flow) {
   const nodeList = (flow.nodeList || []).map((node) => ({
     ...node,

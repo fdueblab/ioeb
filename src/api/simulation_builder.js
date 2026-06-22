@@ -3,8 +3,7 @@
  *
  * 【分流】构建上下文（元应用名 / 想定 / 服务名）见 `@/mock/data/meta_apps_data`：
  * - **课题** → 进程内 inmemory
- * - **【本地MCP】(n)** → HTTP Micro-Agent（真 MCP，n 见元应用名）
- * - **其他** → HTTP + EventSource → `VUE_APP_AGENT_BASE_URL`
+ * - **其他（含 health 真实场景）** → HTTP + EventSource → `VUE_APP_AGENT_BASE_URL`
  *
  * `fetchSimulationRecords` / `compareSimulationRecords` 须传入同一上下文的 `appName`（与 prop 一致）。
  */
