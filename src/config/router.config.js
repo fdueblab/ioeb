@@ -528,6 +528,18 @@ export const asyncRouterMap = [
     meta: { title: 'menu.home' },
     redirect: () => getDefaultLandingPath(),
     children: [
+      {
+        path: '/dashboard/workplace',
+        name: 'workplace',
+        meta: {
+          title: '个人工作台',
+          keepAlive: true,
+          icon: 'dashboard',
+          suppressProfileSurvey: true,
+          permission: ['admin', 'publisher', 'user']
+        },
+        component: () => import('@/views/dashboard/Workplace')
+      },
       // 垂域应用AI资源检索 - 从字典动态获取
       {
         path: '/vertical-user',
