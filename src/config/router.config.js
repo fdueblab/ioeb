@@ -4,6 +4,7 @@ import { bxAnaalyse } from '@/core/icons'
 import { loadDict } from '@/utils/dictionaryCache'
 import { getDefaultLandingPath } from '@/utils/domainContext'
 import { getPreferredVertical } from '@/api/userProfile'
+import { buildDocsUrl } from '@/utils/baseUrl'
 
 const RouteView = {
   name: 'RouteView',
@@ -932,7 +933,7 @@ export const asyncRouterMap = [
       //   ]
       // },
       {
-        path: 'https://fdueblab.cn/docs',
+        path: buildDocsUrl(),
         name: 'guide',
         meta: {
           title: '使用指南',

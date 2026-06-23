@@ -23,8 +23,14 @@ export const resolveRuntimeBaseUrl = (configuredValue, fallbackPath = '') => {
 
 export const API_BASE_URL = resolveRuntimeBaseUrl(process.env.VUE_APP_API_BASE_URL, '/api')
 export const AGENT_BASE_URL = resolveRuntimeBaseUrl(process.env.VUE_APP_AGENT_BASE_URL, '')
+export const DOCS_BASE_URL = resolveRuntimeBaseUrl(process.env.VUE_APP_DOCS_BASE_URL, '/docs')
 
 export const buildServiceApiUrl = (serviceUrl) => {
   const normalizedServiceUrl = String(serviceUrl || '').replace(/^\/+/, '')
   return `${API_BASE_URL}/${normalizedServiceUrl}`
+}
+
+export const buildDocsUrl = (docsPath = '') => {
+  const normalizedDocsPath = String(docsPath || '').replace(/^\/+|\/+$/g, '')
+  return normalizedDocsPath ? `${DOCS_BASE_URL}/${normalizedDocsPath}` : `${DOCS_BASE_URL}/`
 }

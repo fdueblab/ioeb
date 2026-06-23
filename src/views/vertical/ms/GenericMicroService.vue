@@ -17,7 +17,7 @@
                   v-show="submitType === 'algorithm'"
                   type="link"
                   icon="file-text"
-                  href="https://fdueblab.cn/docs/guide/code-template"
+                  :href="codeTemplateDocUrl"
                   target="_blank"
                 >
                   算法代码提交要求文档
@@ -538,6 +538,7 @@ import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
 import dictionaryCache from '@/utils/dictionaryCache'
 import { createService } from '@/api/service'
 import store from '@/store'
+import { buildDocsUrl } from '@/utils/baseUrl'
 
 export default {
   name: 'GenericMicroService',
@@ -642,6 +643,9 @@ export default {
     }
   },
   computed: {
+    codeTemplateDocUrl() {
+      return buildDocsUrl('guide/code-template')
+    },
     uploadServiceDisabled() {
       if (this.submitType === 'microservice') {
         return !this.form.serviceName || this.uploadFiles.length === 0
