@@ -152,6 +152,7 @@ import {
   getDomainModuleEntryPath
 } from '@/utils/domainContext'
 import { getRecentRoutes } from '@/utils/recentRoutes'
+import { buildDocsUrl } from '@/utils/baseUrl'
 
 export default {
   name: 'Workplace',
@@ -306,7 +307,7 @@ export default {
       this.$router.push({ path }).catch(() => {})
     },
     openDocs () {
-      window.open('https://fdueblab.cn/docs', '_blank')
+      window.open(buildDocsUrl(), '_blank')
     }
   }
 }
