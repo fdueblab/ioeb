@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-container">
+  <div class="chat-container" :class="{ 'chat-container--workbench': workbenchLayout }">
     <div class="chat-output" ref="chatOutput">
       <div v-for="(message, index) in messages" :key="index" :class="['chat-message', message.isUser ? 'user-message' : 'bot-message', message.type === 'agent' ? 'agent-message-wrapper' : '', message.text === 'agentLoading' ? 'loading-text-wrapper' : '']">
         <!-- 智能体连接状态 -->
@@ -76,7 +76,7 @@
         />
         <div
           class="suggestion-dropdown"
-          v-if="showSuggestions && filteredSuggestions.length > 0 && isInputEnabled"
+          v-if="allowInputSuggestions && showSuggestions && filteredSuggestions.length > 0 && isInputEnabled"
         >
           <div
             class="suggestion-item"
@@ -103,7 +103,7 @@ import {
   resolveScheduleDemoKind,
   SCHEDULE_DEMO_KIND
 } from '@/mock/data/meta_apps_data'
-import { toScenarioIntakeEvent } from '@/mock/data/topic_scenario_intake'
+import { runTopicMockScenarioIntakeTurn, toScenarioIntakeEvent } from '@/mock/data/topic_scenario_intake'
 
 export default {
   name: 'SmartChat',
@@ -111,6 +111,10 @@ export default {
     verticalType: {
       type: String,
       required: true
+    },
+    workbenchLayout: {
+      type: Boolean,
+      default: false
     }
   },
   mounted() {
@@ -137,6 +141,7 @@ export default {
       isInputEnabled: true,
       isInputLoading: false,
       showSuggestions: false,
+      allowInputSuggestions: true,
       messageManager: null,
       filteredSuggestions: [],
       thinkingMessageIndex: -1,
@@ -146,6 +151,7 @@ export default {
       receivedFinalResult: false,
       agentSessionId: null,
       intakeSessionId: null,
+      topicMockIntakeSession: null,
       scenarioSummary: '',
       scenarioParsed: null,
       userRemark: ''
@@ -169,12 +175,12 @@ export default {
       }
     },
     onInputChange() {
-      if (this.messageManager) {
-        this.filteredSuggestions = this.messageManager.filterSuggestions(this.userInput)
-        this.showSuggestions = true
-      }
+      if (!this.allowInputSuggestions || !this.messageManager) return
+      this.filteredSuggestions = this.messageManager.filterSuggestions(this.userInput)
+      this.showSuggestions = true
     },
     activateSuggestions() {
+      if (!this.allowInputSuggestions) return
       this.showSuggestions = true
     },
     selectSuggestion(value) {
@@ -208,6 +214,8 @@ export default {
 
     handleUserInput() {
       if (!this.userInput.trim() || !this.isInputEnabled || this.isInputLoading) return
+      this.allowInputSuggestions = false
+      this.showSuggestions = false
       this.beginAgentTurn()
       this.isInputLoading = true
       this.isInputEnabled = false
@@ -219,11 +227,110 @@ export default {
 
       // 课题演示 → 进程内 mock 推荐；其余（含 health）→ 真实想定追问再推荐
       if (matchesScheduleDemoInput(input)) {
+        if (this.handleTopicMockScenarioIntake(input)) return
         this.$emit('start-loading')
         this.useScheduleDemoData(input)
       } else {
         this.callScenarioIntake(input)
       }
+    },
+
+    handleTopicMockScenarioIntake(input) {
+      const turn = runTopicMockScenarioIntakeTurn({
+        message: input,
+        session: this.topicMockIntakeSession
+      })
+      if (!turn) return false
+
+      if (turn.status === 'question') {
+        this.topicMockIntakeSession = turn.session
+        this.placeholder = '请补充想定信息（可继续澄清结构化想定）…'
+        this.playMockAgentIntakeReply({
+          thought: '正在解析您的构建需求，并整理需要补充的信息…',
+          result: this.formatIntakeQuestionHtml(turn.text, turn.hint),
+          finishedTitle: '想定待补充'
+        })
+        return true
+      }
+
+      if (turn.status === 'ready') {
+        this.topicMockIntakeSession = null
+        const intakeEvent = toScenarioIntakeEvent(turn.intake)
+        this.scenarioSummary = intakeEvent.scenarioSummary || ''
+        this.scenarioParsed = intakeEvent.scenarioParsed || null
+        this.userRemark = intakeEvent.userRemark || ''
+        this.$emit('scenario-intake', intakeEvent)
+        const initialInput = turn.initialInput || input
+        this.playMockAgentIntakeReply({
+          thought: '想定信息已足够，正在整理结构化场景…',
+          result: turn.text || '想定信息已足够，开始为您匹配 MCP 服务。',
+          finishedTitle: '想定已就绪',
+          onComplete: () => {
+            this.beginAgentTurn()
+            this.isInputLoading = true
+            this.isInputEnabled = false
+            this.messages.push({ text: 'agentLoading', isUser: false })
+            this.scrollToBottom()
+            this.$emit('start-loading')
+            this.useScheduleDemoData(initialInput)
+          }
+        })
+        return true
+      }
+
+      return false
+    },
+
+    formatIntakeQuestionHtml(text, hint) {
+      const body = String(text || '')
+      const tip = String(hint || '')
+      if (!tip) return body
+      return `${body}<br/><br/><span style="color:#888;font-size:12px;">提示：${tip}</span>`
+    },
+
+    /** mock 想定追问：保留连接动画 → 思考步骤打字 → 结果区打字（与推荐链路一致） */
+    playMockAgentIntakeReply({ thought, result, finishedTitle, onComplete }) {
+      const connectMs = 800 + Math.floor(Math.random() * 400)
+      const thoughtText = String(thought || '')
+      const resultHtml = String(result || '')
+
+      setTimeout(() => {
+        this.updateThinkingMessage(thoughtText, 1)
+        const stepMs = Math.max(900, thoughtText.length * 16 + 300)
+        setTimeout(() => {
+          if (this.thinkingMessageIndex !== -1 && finishedTitle) {
+            this.$set(this.messages[this.thinkingMessageIndex].thinking, 'title', finishedTitle)
+          }
+          this.handleFinalStep()
+          this.currentIndex = 0
+          this.typeAgentResult(resultHtml, onComplete)
+        }, stepMs)
+      }, connectMs)
+    },
+
+    typeAgentResult(text, onComplete) {
+      if (this.thinkingMessageIndex === -1) {
+        this.agentTypeWriter(text)
+        if (onComplete) {
+          setTimeout(onComplete, text.length * 20 + 80)
+        }
+        return
+      }
+      const agentMessage = this.messages[this.thinkingMessageIndex]
+      let idx = 0
+      const tick = () => {
+        if (idx < text.length) {
+          this.$set(agentMessage, 'result', text.substring(0, idx + 1))
+          idx += 1
+          this.scrollToBottom()
+          setTimeout(tick, 20)
+          return
+        }
+        this.finishAgentTurn()
+        this.scrollToBottom()
+        if (typeof onComplete === 'function') onComplete()
+      }
+      tick()
     },
 
     removeAgentLoadingMessage() {
@@ -564,7 +671,7 @@ export default {
       const isTopic = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.TOPIC
       getMetaAppNodes(this.verticalType, input)
         .then((flowData) => {
-          if (isTopic && flowData.scenarioParsed) {
+          if (isTopic && flowData.scenarioParsed && !this.scenarioParsed) {
             const intakeEvent = toScenarioIntakeEvent({
               scenarioParsed: flowData.scenarioParsed,
               scenarioSummary: flowData.scenarioSummary,
@@ -658,12 +765,14 @@ export default {
       this.isInputEnabled = true
       this.isInputLoading = false
       this.showSuggestions = false
+      this.allowInputSuggestions = true
       this.filteredSuggestions = this.messageManager ? this.messageManager.getSuggestions() : []
       this.thinkingMessageIndex = -1
       this.isTaskFinishing = false
       this.receivedFinalResult = false
       this.agentSessionId = null
       this.intakeSessionId = null
+      this.topicMockIntakeSession = null
       this.scenarioSummary = ''
       this.scenarioParsed = null
       this.userRemark = ''
@@ -1037,6 +1146,32 @@ export default {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.chat-container--workbench {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-container--workbench .chat-output {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: none !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.chat-container--workbench .chat-input {
+  flex: 0 0 auto;
+  flex-shrink: 0;
 }
 
 </style>

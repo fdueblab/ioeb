@@ -1,6 +1,6 @@
 # 元应用想定式仿真构建设计
 
-更新：2026-06-21。本文描述当前真实实现，不再沿用旧版“ArtifactSpec + solidification gate + CoW 沙箱已实现”的叙述。
+更新：2026-06-22。本文描述当前 BuildBundle / MetaAppArtifact v1 实现。
 
 ## 一、系统定位
 
@@ -89,7 +89,7 @@ GoldenPath 是单个 MetaApp 内部的快路径资产。运行时 LLM 判断当�
 
 - 构建阶段和日志：SSE 驱动。
 - Trace：展示调用链和原始 JSON 预览。
-- Evidence summary：读取 MicroAgent 派生摘要，不运行旧 trace_evidence。
+- Evidence summary：读取 MicroAgent 从 BuildBundle 派生的 `build_evidence_summary.v1`。
 - Artifact：展示 `MetaAppArtifact v1` 摘要与 JSON。
 - 预发布页：展示 service bindings、GoldenPath steps、assertions 的摘要。
 
@@ -151,7 +151,3 @@ ioeb 关键文件：
 - `src/components/ef/meta_app_build/MetaAppConfigDetail.vue`
 - `src/components/ef/meta_app_build/SimulationDetailSidebar.vue`
 - `src/mock/services/simulation_builder_inmemory.js`
-
-## 十、版本备注
-
-2026-06-21：按当前 MicroAgent/ioeb 代码重写。旧文档中关于 `FileTraceStore`、`data/traces`、`SimulatedMCPTool`、`ArtifactSpec v0.x`、`solidificationReport gate`、CoW 沙箱已实现、端口 8000 的表述均已删除。

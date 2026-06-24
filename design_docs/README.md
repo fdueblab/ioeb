@@ -5,7 +5,7 @@
 | 文件 | 用途 | 当前状态 |
 | --- | --- | --- |
 | `build-design4llm.md` | 给 LLM/工程协作者看的当前接口契约和文件定位 | 与 MicroAgent `lyx` 分支当前 API 对齐 |
-| `simulation-build-design.md` | 设计机制、对象边界、前端临时展示与真实链路说明 | 只描述当前真实实现，不再沿用旧 CoW/ArtifactSpec 叙述 |
+| `simulation-build-design.md` | 设计机制、对象边界、前端展示与真实链路说明 | BuildBundle / MetaAppArtifact v1 |
 | `research-guide-execution-traces-to-mcp-apps.md` | 轨迹固化与复用研究执行指南 | 按当前 BuildBundle/MetaAppArtifact/experiment runner 重写 |
 
 维护约定：

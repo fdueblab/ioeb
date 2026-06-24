@@ -113,6 +113,62 @@ export function resolveTopicScenarioKeyByAppName(appName) {
   return null
 }
 
+/** 课题三+课题四组合演示：首句需 mock 追问一轮（与真实想定 intake 一致，不做回答校验） */
+export function needsTopicMockIntakeFollowUp(userInput) {
+  const text = String(userInput || '')
+  return text.includes('课题三') && text.includes('课题四')
+}
+
+export const TOPIC_COMBO_MOCK_INTAKE_QUESTION = {
+  text: '想要使用哪个课题算法进行数据分析？',
+  hint:
+    '课题一：在跨境支付链路中自动识别可疑交易并输出标准化风险报告；' +
+    '课题二：参与机构数据不出域，通过安全多方计算联合建模并汇总风险结论'
+}
+
+/**
+ * 课题 mock 想定追问（纯前端）。返回 null 表示走原有「一次到位」演示。
+ * @param {{ message: string, session: object|null }} params
+ */
+export function runTopicMockScenarioIntakeTurn({ message, session }) {
+  const text = String(message || '').trim()
+  if (!text) return null
+
+  if (session && session.awaitingFollowUp && session.initialInput) {
+    const scenarioKey = resolveTopicScenarioKey(session.initialInput) || 'pj_combo'
+    const intake = buildTopicScenarioIntake(scenarioKey, {}, session.initialInput)
+    const dialogue = [
+      { role: 'user', content: session.initialInput },
+      { role: 'assistant', content: TOPIC_COMBO_MOCK_INTAKE_QUESTION.text },
+      { role: 'user', content: text }
+    ]
+    intake.scenarioParsed.source = {
+      ...(intake.scenarioParsed.source || {}),
+      intakeDialogue: dialogue
+    }
+    intake.scenarioSummary = [session.initialInput, text].filter(Boolean).join('；')
+    intake.userRemark = text.slice(0, 120)
+    return {
+      status: 'ready',
+      text: '想定信息已足够，开始为您匹配 MCP 服务。',
+      initialInput: session.initialInput,
+      intake
+    }
+  }
+
+  if (!needsTopicMockIntakeFollowUp(text)) return null
+
+  return {
+    status: 'question',
+    text: TOPIC_COMBO_MOCK_INTAKE_QUESTION.text,
+    hint: TOPIC_COMBO_MOCK_INTAKE_QUESTION.hint,
+    session: {
+      awaitingFollowUp: true,
+      initialInput: text
+    }
+  }
+}
+
 export function buildTopicScenarioIntake(scenarioKey, flow, userInput) {
   const template = TOPIC_SCENARIO_INTAKE[scenarioKey] || {}
   const base = template.scenarioParsed

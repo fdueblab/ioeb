@@ -19,7 +19,7 @@
       <h3 v-if="hasParsedContent" class="wb-detail-section-head">场景解析</h3>
       <div v-if="hasParsedContent" class="wb-detail-band wb-scenario-bubbles">
         <div v-if="parsed.goal" class="wb-row wb-row--lg">
-          <strong>场景目标</strong>
+          <strong>构建需求</strong>
           <div>{{ parsed.goal }}</div>
         </div>
         <div v-if="parsed.description" class="wb-row wb-row--lg">
@@ -59,47 +59,27 @@
 
     <!-- build：构建详情 -->
     <template v-else-if="mode === 'build'">
-      <h3 class="wb-detail-section-head">构建概况</h3>
-      <div class="wb-detail-band wb-detail-band--status">
-        <div class="wb-row">
-          <strong>构建状态</strong>
-          <div>{{ buildStatusTitle }}</div>
-        </div>
-        <div class="wb-row">
-          <strong>当前轮次</strong>
-          <div>第 {{ build.currentIteration || 1 }} 轮</div>
-        </div>
-        <div class="wb-row">
-          <strong>构建结果</strong>
-          <div>{{ build.isCompleted ? (build.hasFailed ? '未通过' : '已通过') : '进行中' }}</div>
+      <div class="build-process-metrics build-process-metrics--top">
+        <div
+          v-for="metric in executionMetrics"
+          :key="metric.label"
+          class="build-process-metric"
+        >
+          <strong>{{ metric.value }}</strong>
+          <span>{{ metric.label }}</span>
         </div>
       </div>
 
-      <div class="wb-row wb-row--stats wb-row--xl">
-        <strong>累计摘要</strong>
-        <div class="wb-mini-stats">
-          <div class="wb-stat">
-            <strong>{{ buildStats.serviceCount }}</strong>
-            <span>接入服务</span>
-          </div>
-          <div class="wb-stat">
-            <strong>{{ buildStats.toolCallCount || buildStats.completedCalls }}</strong>
-            <span>工具调用</span>
-          </div>
-          <div class="wb-stat">
-            <strong>{{ build.currentIteration || 1 }}</strong>
-            <span>当前轮次</span>
-          </div>
-        </div>
-      </div>
-
+      <h3 class="wb-detail-section-head">仿真构建轨迹</h3>
+      <p class="build-section-note">
+        记录各轮仿真执行、结果验证与自动修正过程，用于说明构建链路如何收敛到可接受结果。
+      </p>
       <template v-if="build.iterations && build.iterations.length">
-        <h3 class="wb-detail-section-head">轮次详情</h3>
-        <div class="wb-detail-band wb-detail-band--iterations">
+        <div class="build-iteration-report">
           <article
             v-for="iter in build.iterations"
             :key="iter.iteration"
-            class="wb-iter-card"
+            class="wb-iter-card build-iter-card"
             :class="{ 'wb-iter-card--active': isIterActive(iter) }"
           >
             <header class="wb-iter-card-head">
@@ -108,14 +88,14 @@
             </header>
             <div class="wb-iter-phases">
               <span class="wb-iter-phase" :class="phaseTone(iter.execPhaseLabel)">调度执行 · {{ iter.execPhaseLabel }}</span>
-              <span class="wb-iter-phase" :class="phaseTone(iter.checkPhaseLabel)">目标验收 · {{ iter.checkPhaseLabel }}</span>
+              <span class="wb-iter-phase" :class="phaseTone(iter.checkPhaseLabel)">结果验证 · {{ iter.checkPhaseLabel }}</span>
             </div>
 
             <div v-if="iter.plannerToolSteps && iter.plannerToolSteps.length" class="wb-iter-block wb-iter-block--plan">
               <div class="wb-iter-block-head">
                 <a-icon type="bulb" />
                 <strong>本轮规划</strong>
-                <span class="wb-iter-block-hint">规划 Agent 选定的工具</span>
+                <span class="wb-iter-block-hint">规划智能体选定的工具</span>
               </div>
               <div class="wb-path-chain">
                 <span
@@ -137,7 +117,7 @@
               <div class="wb-iter-block-head">
                 <a-icon type="deployment-unit" />
                 <strong>实际调用链</strong>
-                <span class="wb-iter-block-hint">本轮真实 MCP 调用路径</span>
+                <span class="wb-iter-block-hint">本轮服务调用路径</span>
               </div>
               <div class="wb-path-chain">
                 <span
@@ -192,63 +172,41 @@
           </article>
         </div>
       </template>
+      <div v-else-if="build.hasFailed" class="build-friendly-empty build-friendly-empty--failed">
+        <a-icon type="info-circle" />
+        <div>
+          <strong>本次仿真构建未通过</strong>
+          <p>暂未形成可接受轨迹。可根据验证反馈调整任务约束或服务配置后重新构建。</p>
+        </div>
+      </div>
+      <p v-else class="wb-subtle">等待仿真构建轨迹写入。</p>
 
-      <template v-if="build.services && build.services.length">
-        <h3 class="wb-detail-section-head">服务状态</h3>
-        <div class="wb-detail-band wb-detail-band--fields">
-          <div v-for="svc in build.services" :key="svc.id" class="wb-row">
-            <strong>{{ svc.name }}</strong>
-            <div>
-              {{ svc.statusText }}
-              <template v-if="svc.latency">，响应 {{ svc.latency }}ms</template>
-            </div>
-          </div>
+      <h3 class="wb-detail-section-head">已验证调用链</h3>
+      <template v-if="hasAcceptedCallChain">
+        <div class="build-accepted-chain">
+          <span
+            v-for="(step, idx) in build.callChain"
+            :key="'accepted-' + idx"
+            class="build-accepted-step"
+          >
+            {{ step }}
+            <a-icon v-if="idx < build.callChain.length - 1" type="arrow-right" />
+          </span>
         </div>
       </template>
-
-      <template v-if="build.showTechDetails">
-        <h3 class="wb-detail-section-head">轨迹与证据</h3>
-        <div class="wb-detail-band wb-detail-band--fields">
-          <div class="wb-row" :class="{ 'wb-row--xl': build.callChain && build.callChain.length }">
-            <strong>轨迹</strong>
-            <div>
-              <template v-if="build.traceLoading">
-                <span class="wb-subtle"><a-icon type="loading" /> 加载中…</span>
-              </template>
-              <template v-else-if="build.traceSkipped">
-                <span class="wb-subtle">构建轨迹暂未生成</span>
-              </template>
-              <template v-else-if="build.traceError">
-                <span class="wb-subtle wb-text-error">{{ build.traceError }}</span>
-              </template>
-              <template v-else-if="build.callChain && build.callChain.length">
-                {{ build.callChain.join(' → ') }}
-              </template>
-              <template v-else>
-                <span class="wb-subtle">暂无轨迹摘要</span>
-              </template>
-            </div>
-          </div>
-          <div v-if="build.evidenceStatus" class="wb-row">
-            <strong>证据结论</strong>
-            <div class="wb-row-inline">
-              <a-tag :color="build.evidenceStatus === 'PASS' ? 'green' : 'orange'">{{ build.evidenceStatus }}</a-tag>
-              <span v-if="build.evidenceSummary" class="wb-subtle">{{ build.evidenceSummary }}</span>
-            </div>
-          </div>
-          <div v-if="build.artifactId" class="wb-row">
-            <strong>产物 ID</strong>
-            <div class="wb-row-inline">
-              <span class="wb-small">{{ build.artifactId }}</span>
-            </div>
-          </div>
+      <div v-else-if="build.hasFailed" class="build-friendly-empty build-friendly-empty--chain">
+        <a-icon type="clock-circle" />
+        <div>
+          <strong>尚未生成已验证调用链</strong>
+          <p>只有通过验证的构建轮次才会沉淀为调用链；当前结果保留在上方仿真构建轨迹中。</p>
         </div>
-      </template>
+      </div>
+      <p v-else class="wb-subtle">验证通过后生成已验证调用链。</p>
     </template>
 
     <!-- prepublish：元应用配置 -->
     <template v-else-if="mode === 'prepublish'">
-      <meta-app-config-detail :artifact="productArtifact" />
+      <meta-app-config-detail :artifact="productArtifact" :product="product" />
     </template>
   </div>
 </template>
@@ -297,11 +255,6 @@ export default {
         (p.acceptanceCriteria && p.acceptanceCriteria.length)
       )
     },
-    buildStatusTitle() {
-      if (this.build.hasFailed) return '仿真构建失败'
-      if (this.build.isCompleted) return '仿真构建已完成'
-      return '正在仿真构建'
-    },
     buildStats() {
       return this.build.stats || {
         serviceCount: 0,
@@ -311,12 +264,27 @@ export default {
     },
     productArtifact() {
       return (this.product && this.product.artifact) || null
+    },
+    executionMetrics() {
+      const toolCalls = this.buildStats.toolCallCount || this.buildStats.completedCalls || 0
+      return [
+        { label: '构建轮次', value: this.build.currentIteration || 1 },
+        { label: '工具调用', value: toolCalls },
+        { label: '接入服务', value: this.buildStats.serviceCount || 0 }
+      ]
+    },
+    hasAcceptedCallChain() {
+      return Boolean(
+        this.build.acceptedStatus === 'accepted' &&
+        this.build.callChain &&
+        this.build.callChain.length
+      )
     }
   },
   methods: {
     isIterActive(iter) {
       const s = iter && iter.statusLabel
-      return s === '进行中' || s === '执行中' || s === '验收中'
+      return s === '进行中' || s === '执行中' || s === '验证中'
     },
     iterStatusColor(label) {
       if (label === '已通过') return 'green'
@@ -331,7 +299,8 @@ export default {
     },
     verifierTagColor(status) {
       const s = String(status || '').toUpperCase()
-      if (s === 'PASS' || s === 'PASSED') return 'green'
+      if (!s) return 'default'
+      if (s === 'PASS' || s === 'PASSED' || s === 'ACCEPTED') return 'green'
       if (s === 'WARN' || s === 'WARNING') return 'orange'
       return 'red'
     },

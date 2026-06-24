@@ -387,17 +387,21 @@ export default {
     buildEntryReady: {
       type: Boolean,
       default: false
+    },
+    workbenchStageHeight: {
+      type: Number,
+      default: 0
     }
   },
   computed: {
     containerStyle() {
       return {
-        height: this.workbenchMode ? 'auto' : (this.showToolbar ? 'calc(100vh)' : '100%')
+        height: this.workbenchMode ? '100%' : (this.showToolbar ? 'calc(100vh)' : '100%')
       }
     },
     mainContainerStyle() {
       if (this.workbenchMode) {
-        return { height: 'auto', minHeight: 0, width: '100%' }
+        return { height: '100%', minHeight: 0, width: '100%' }
       }
       return {
         height: this.showToolbar ? 'calc(100% - 65px)' : '100%'
@@ -405,13 +409,13 @@ export default {
     },
     workbenchCanvasStyle() {
       if (!this.workbenchMode) return {}
-      const nodes = this.workbenchCanvasNodes || []
-      const maxBottom = nodes.reduce((max, node) => {
-        const top = this.canvasNodeVisualTop(node)
-        return Math.max(max, top + 140)
-      }, 0)
+      const headerH = 52
+      const canvasH = this.workbenchStageHeight > headerH
+        ? this.workbenchStageHeight - headerH
+        : 420
       return {
-        minHeight: `${Math.max(420, maxBottom + 24)}px`
+        minHeight: `${canvasH}px`,
+        height: `${canvasH}px`
       }
     },
     workbenchToolbarDisabled() {
@@ -2248,25 +2252,26 @@ export default {
 @import './meta_app_build/simulation-workbench.less';
 
 .ef-workbench-root {
-  height: auto;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: visible;
+  overflow: hidden;
   min-width: 0;
 }
 
 .ef-main--workbench {
-  flex: 0 0 auto;
+  flex: 1 1 0;
   min-height: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .wb-panel-right-inner {
-  flex: 0 0 auto;
+  flex: 1 1 0;
   min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   width: 100%;

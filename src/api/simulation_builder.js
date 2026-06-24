@@ -214,7 +214,7 @@ export function fetchSimulationTrace(sessionId) {
   })
 }
 
-/** 读取 Micro-Agent 从 BuildBundle 派生的 evidence summary，不运行旧 trace_evidence 管道 */
+/** 读取 Micro-Agent 从 BuildBundle 派生的 evidence summary */
 export function fetchSimulationEvidence(sessionId) {
   return request({
     url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/evidence`,

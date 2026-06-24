@@ -1,17 +1,21 @@
 <template>
-  <meta-app-artifact-panel variant="workbench" :artifact="artifact" />
+  <meta-app-prepublish-materials-panel :artifact="artifact" :product="product" />
 </template>
 
 <script>
-import MetaAppArtifactPanel from './MetaAppArtifactPanel.vue'
+import MetaAppPrepublishMaterialsPanel from './MetaAppPrepublishMaterialsPanel.vue'
 
 export default {
   name: 'MetaAppConfigDetail',
-  components: { MetaAppArtifactPanel },
+  components: { MetaAppPrepublishMaterialsPanel },
   props: {
     artifact: {
       type: Object,
       default: null
+    },
+    product: {
+      type: Object,
+      default: () => ({})
     }
   }
 }

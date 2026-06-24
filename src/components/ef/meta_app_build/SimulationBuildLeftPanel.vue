@@ -1,8 +1,6 @@
 <template>
   <div class="wb-build-left">
-    <div class="wb-panel-scroll">
-      <slot />
-    </div>
+    <slot />
   </div>
 </template>
 
@@ -15,19 +13,13 @@ export default {
 <style lang="less" scoped>
 @import './simulation-workbench.less';
 
-.wb-panel-scroll {
-  flex: 0 0 auto;
-  min-height: 0;
-  overflow: visible;
-  padding: 0;
-  background: #fff;
-}
-
 .wb-build-left {
-  flex: 0 0 auto;
+  flex: 1 1 0;
   min-height: 0;
+  height: 0;
   display: flex;
   flex-direction: column;
   background: #fff;
+  overflow: hidden;
 }
 </style>

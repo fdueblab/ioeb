@@ -690,7 +690,7 @@ function generateTopicDemoMockSteps(userInput) {
     },
     {
       step: 2,
-      thought: '已生成课题结构化想定，包含场景目标、约束与验收标准。'
+      thought: '已生成课题结构化想定，包含构建需求、约束与验收标准。'
     },
     {
       step: 3,

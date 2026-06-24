@@ -6,18 +6,20 @@
         <span>{{ appName }}</span>
       </div>
     </div>
-    <meta-app-publish-form
-      :vertical-type="verticalType"
-      :pre-name="appName"
-      :pre-des="preDes"
-      :pre-input-name="preInputName"
-      :pre-output-name="preOutputName"
-      :input-type="inputType"
-      :output-type="outputType"
-      :service-ids="serviceIds"
-      @published="$emit('published')"
-      @back="$emit('back')"
-    />
+    <div class="wb-prepublish-body">
+      <meta-app-publish-form
+        :vertical-type="verticalType"
+        :pre-name="appName"
+        :pre-des="preDes"
+        :pre-input-name="preInputName"
+        :pre-output-name="preOutputName"
+        :input-type="inputType"
+        :output-type="outputType"
+        :service-ids="serviceIds"
+        @published="$emit('published')"
+        @back="$emit('back')"
+      />
+    </div>
   </div>
 </template>
 
@@ -51,8 +53,19 @@ export default {
   font-size: 17px;
 }
 
-.wb-section-actions {
+.wb-prepublish-body {
+  flex: 1 1 0;
+  min-height: 0;
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  overflow: hidden;
+
+  :deep(.wb-publish-form-shell) {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 }
 </style>

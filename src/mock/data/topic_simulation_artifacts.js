@@ -12,6 +12,7 @@ const ARTIFACT_SCHEMA = 'meta_app_artifact.v1'
 const TRACE_SCHEMA = 'build_trace.v1'
 const SERVICE_SELECTION_SCHEMA = 'service_selection_report.v1'
 const ACCEPTED_TRAJECTORY_SCHEMA = 'accepted_trajectory.v1'
+const BUILD_BUNDLE_SCHEMA = 'simulation_build_bundle.v1'
 
 const FALLBACK_POLICY = {
   onApplicabilityMismatch: 'run_slow_mode',
@@ -32,6 +33,10 @@ function shortHash(seed) {
 function longHash(seed) {
   const base = shortHash(seed)
   return (base + shortHash(`a-${seed}`) + shortHash(`b-${seed}`) + shortHash(`c-${seed}`)).padEnd(64, '0').slice(0, 64)
+}
+
+function stableHash(data) {
+  return longHash(JSON.stringify(data || {}))
 }
 
 function nowIso() {
@@ -240,22 +245,31 @@ function buildToolCalls(servicesMeta, scenario) {
 
 export function buildTopicServiceSelectionReport(ctx) {
   const { sessionId, servicesMeta = [] } = ctx
+  const scenario = scenarioFromCtx(ctx)
+  const criteria = (scenario.acceptanceCriteria || []).slice(0, 2).join('；')
   return {
     schemaVersion: SERVICE_SELECTION_SCHEMA,
     selectionId: `sel-topic-${shortHash(sessionId)}`,
     strategy: 'llm_catalog_selection',
-    selectedServices: servicesMeta.map((svc) => ({
-      serviceId: String(svc.id),
-      serviceName: svc.name,
-      reason: '该服务位于候选 catalog 中，并与结构化想定的验收标准匹配',
-      matchedCapabilities: (svc.tools || [])
+    selectedServices: servicesMeta.map((svc) => {
+      const matchedCapabilities = (svc.tools || [])
         .map((t) => t.name || t.id)
         .filter(Boolean)
         .filter((name) => name !== 'healthCheck')
-    })),
+      return {
+        serviceId: String(svc.id),
+        serviceName: svc.name,
+        reason: [
+          `服务能力与任务目标“${scenario.goal || '课题任务'}”相关`,
+          matchedCapabilities.length ? `可调用工具：${matchedCapabilities.join('、')}` : '',
+          criteria ? `覆盖验收标准：${criteria}` : ''
+        ].filter(Boolean).join('；'),
+        matchedCapabilities
+      }
+    }),
     rejectedServices: [],
     missingCapabilities: [],
-    rationale: '在传入 catalog 内完成服务选择，优先保留与场景目标和验收标准直接相关的服务。',
+    rationale: `在传入 catalog 内完成服务选择，优先保留与“${scenario.goal || '结构化想定'}”及验收标准直接相关的服务。`,
     confidence: 0.91,
     model: 'catalog-selection-agent-v1',
     createdAt: nowIso()
@@ -317,17 +331,25 @@ function buildAcceptedTrajectory(ctx, toolCalls) {
 }
 
 function buildTaskContract(app, scenario, accepted) {
-  const slotNames = []
+  const slotNames = {}
+  const inputSlots = []
   ;(accepted.actionSequence || []).forEach((action) => {
     ;(action.inputSlots || []).forEach((slot) => {
-      if (slot.name && !slotNames.includes(slot.name)) slotNames.push(slot.name)
+      if (slot.name && !slotNames[slot.name]) {
+        slotNames[slot.name] = true
+        inputSlots.push({
+          name: slot.name,
+          type: slot.type || 'unknown',
+          required: true
+        })
+      }
     })
   })
   return {
     goal: scenario.goal || app.description || app.name,
     domain: app.domain || scenario.domain || 'aml',
-    inputSlots: slotNames.length
-      ? slotNames.map((name) => ({ name, type: 'unknown', required: true }))
+    inputSlots: inputSlots.length
+      ? inputSlots
       : [{ name: 'task', type: 'string', required: true }],
     outputSlots: [{ name: 'result', type: 'object', required: true }],
     constraints: [...(scenario.constraints || [])],
@@ -338,9 +360,15 @@ function buildTaskContract(app, scenario, accepted) {
 function buildServiceBindings(servicesMeta) {
   return servicesMeta.map((svc) => {
     const tools = declaredTools(svc)
+    const toolSummary = tools
+      .map((tool) => tool.description || tool.toolName)
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('；')
     return {
       serviceId: String(svc.id),
       serviceName: svc.name,
+      description: svc.description || svc.des || toolSummary || '提供元应用运行所需的服务能力',
       source: serviceSource(svc),
       transport: transportOf(svc),
       endpoint: endpointOf(svc),
@@ -375,6 +403,14 @@ function buildGoldenPaths(accepted, taskContract) {
       type: 'tool_call_success',
       target: { stepId: step.stepId },
       expected: { success: true },
+      checkMode: 'rule'
+    })
+    assertions.push({
+      assertionId: `${step.stepId}_output_present`,
+      level: 'L1',
+      type: 'output_slot_present',
+      target: { stepId: step.stepId, slot: `${step.stepId}_output` },
+      expected: { present: true },
       checkMode: 'rule'
     })
     Object.keys(step.inputMapping || {}).forEach((name) => {
@@ -682,12 +718,50 @@ export function buildTopicDemoFrontendState(ctx) {
 }
 
 export function buildTopicDemoArtifacts(ctx) {
+  const trace = buildTopicDemoTrace(ctx)
+  const serviceSelection = buildTopicServiceSelectionReport(ctx)
+  const acceptedTrajectory = buildTopicDemoAcceptedTrajectory(ctx)
+  const artifact = buildTopicDemoArtifact(ctx)
+  const frontendState = buildTopicDemoFrontendState(ctx)
+  const manifest = {
+    schemaVersion: BUILD_BUNDLE_SCHEMA,
+    buildId: ctx.sessionId,
+    artifactId: artifact.artifactId,
+    paths: {
+      trace: 'trace.json',
+      serviceSelection: 'service_selection.json',
+      acceptedTrajectory: 'accepted_trajectory.json',
+      artifact: 'artifact.json',
+      frontendState: 'frontend_state.json',
+      experimentDir: 'experiment'
+    },
+    hashes: {
+      trace: stableHash(trace),
+      serviceSelection: stableHash(serviceSelection),
+      acceptedTrajectory: stableHash(acceptedTrajectory),
+      artifact: stableHash(artifact),
+      frontendState: stableHash(frontendState)
+    },
+    researchEligible: false,
+    ref: {
+      buildId: ctx.sessionId,
+      manifestUrl: `/api/simulation/builds/${ctx.sessionId}/manifest`,
+      traceUrl: `/api/simulation/builds/${ctx.sessionId}/trace`,
+      serviceSelectionUrl: `/api/simulation/builds/${ctx.sessionId}/service-selection`,
+      acceptedTrajectoryUrl: `/api/simulation/builds/${ctx.sessionId}/accepted-trajectory`,
+      artifactUrl: `/api/simulation/builds/${ctx.sessionId}/artifact`,
+      frontendStateUrl: `/api/simulation/builds/${ctx.sessionId}/frontend-state`,
+      runUrl: `/api/simulation/builds/${ctx.sessionId}/run`,
+      experimentUrl: `/api/simulation/builds/${ctx.sessionId}/experiments/run`
+    }
+  }
   return {
-    trace: buildTopicDemoTrace(ctx),
-    serviceSelection: buildTopicServiceSelectionReport(ctx),
-    acceptedTrajectory: buildTopicDemoAcceptedTrajectory(ctx),
+    manifest,
+    trace,
+    serviceSelection,
+    acceptedTrajectory,
     evidence: buildTopicDemoEvidence(ctx),
-    artifact: buildTopicDemoArtifact(ctx),
-    frontendState: buildTopicDemoFrontendState(ctx)
+    artifact,
+    frontendState
   }
 }

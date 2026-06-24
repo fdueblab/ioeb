@@ -522,7 +522,7 @@
                       :class="{ done: iter.checkPhase === 'done', warning: iter.hasIssue, active: iter.checkPhase === 'running' }"
                     >
                       <a-icon :type="iter.checkPhase === 'done' ? (iter.hasIssue ? 'warning' : 'check-circle') : (iter.checkPhase === 'running' ? 'loading' : 'minus-circle')" />
-                      目标验收
+                      结果验证
                     </div>
                   </div>
                   <div class="iter-plan" v-if="iter.plannerDecision">
@@ -825,7 +825,7 @@ export default {
     callChainSourceLabel() {
       const accepted = this.detailAcceptedTrajectory && this.detailAcceptedTrajectory.data
       if (accepted && accepted.status === 'accepted' && Array.isArray(accepted.actionSequence) && accepted.actionSequence.length) {
-        return '最终通过主干'
+        return '轨迹数据'
       }
       if (this.detailTrace.view && Array.isArray(this.detailTrace.view.callChain) && this.detailTrace.view.callChain.length) {
         return '原始轨迹'
@@ -962,12 +962,12 @@ export default {
     },
     currentVerifierState() {
       const detail = this.currentDetail()
-      if (!detail) return '待验收'
+      if (!detail) return '待验证'
       const verification = this.formatIterationVerification(detail)
       if (verification.verifierStatus) return verification.verifierStatus
-      if (detail.checkPhase === 'running') return '验收中'
-      if (detail.execPhase === 'running') return '等待验收'
-      return '待验收'
+      if (detail.checkPhase === 'running') return '验证中'
+      if (detail.execPhase === 'running') return '等待验证'
+      return '待验证'
     },
     processSnapshotCards() {
       if (!this.isRunning || this.currentMainStep !== 2) return []
@@ -978,7 +978,7 @@ export default {
       return [
         {
           key: 'services',
-          label: '服务主干',
+          label: '服务组合',
           value: `${selectedCount} 个服务`,
           hint: selectedHint,
           tone: 'neutral'
@@ -992,7 +992,7 @@ export default {
         },
         {
           key: 'verifier',
-          label: '目标验收',
+          label: '结果验证',
           value: this.currentVerifierState,
           hint: `第 ${this.currentIteration} 轮 · 工具调用 ${this.serviceCallStats.total} 次`,
           tone: this.currentVerifierState === 'FAILED' ? 'warn' : (this.currentVerifierState === 'PASSED' ? 'ok' : 'neutral')
@@ -1278,7 +1278,7 @@ export default {
         if (s.warnings) parts.push(`警告 ${s.warnings}`)
         return parts.join(' · ')
       }
-      if (s.acceptedTrajectory) parts.push(`AcceptedTrajectory ${s.acceptedTrajectory}`)
+      if (s.acceptedTrajectory) parts.push(`轨迹数据 ${s.acceptedTrajectory}`)
       if (s.selectedServices != null) parts.push(`选择服务 ${s.selectedServices}`)
       if (s.researchEligible != null) {
         parts.push(s.researchEligible ? '可计入科研' : '不计入科研')
@@ -1320,22 +1320,38 @@ export default {
       const toolCalls = []
       const plannerDecisions = []
       const verifierResults = []
+      const serviceSelections = []
+      let scenarioParsed = null
       let mcpCallCount = 0
       events.forEach((ev) => {
         if (!ev || !ev.data) return
         const t = ev.type
         const d = ev.data
-        if (t === 'tool_call_record') {
+        if (t === 'scenario_parsed') {
+          scenarioParsed = d
+        } else if (t === 'service_selection') {
+          serviceSelections.push(d)
+        } else if (t === 'tool_call_record') {
           if (d.channel === 'real_mcp') mcpCallCount += 1
           const resultPreview = d.result
             ? String(d.result).replace(/\s+/g, ' ').slice(0, 60)
             : ''
           toolCalls.push({
+            callId: d.call_id || '',
+            actionId: d.action_id || '',
+            iteration: d.iteration,
             toolName: d.tool_name || '—',
             serviceId: d.service_id || '—',
             serviceName: d.service_name || '',
             channel: d.channel || 'unknown',
+            source: d.source || d.channel || 'unknown',
+            transport: d.transport || '',
+            phase: d.phase || '',
+            purpose: d.purpose || '',
             latencyMs: d.latency_ms != null ? d.latency_ms : '—',
+            success: d.success !== false,
+            arguments: d.arguments || {},
+            resultHash: d.result_hash || '',
             resultPreview
           })
         } else if (t === 'planner_decision') {
@@ -1343,7 +1359,8 @@ export default {
             iteration: d.iteration,
             selectedTools: d.selected_tools || [],
             executionPath: d.executionPath || [],
-            reason: d.reason || ''
+            reason: d.reason || '',
+            toolCallDetails: d.tool_call_details || d.toolCallDetails || []
           })
         } else if (t === 'verifier_result') {
           verifierResults.push({
@@ -1368,7 +1385,9 @@ export default {
         toolCalls,
         callChain: this.buildCallChainFromToolCalls(toolCalls),
         plannerDecisions,
-        verifierResults
+        verifierResults,
+        serviceSelection: serviceSelections.length ? serviceSelections[serviceSelections.length - 1] : null,
+        scenarioParsed
       }
     },
 
@@ -1488,6 +1507,7 @@ export default {
           this.detailEvidence = { loading: false, skipped: false, error: null, data: packs.evidence }
           this.detailArtifact = { loading: false, skipped: false, error: null, data: packs.artifact }
           this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: packs.acceptedTrajectory }
+          this.serviceSelectionReport = packs.serviceSelection
         } catch (e) {
           const msg = this.formatArtifactError(e, '课题产物加载失败')
           this.detailTrace = { loading: false, skipped: true, error: msg, view: null, rawJson: '' }
@@ -1525,7 +1545,7 @@ export default {
             data: null
           }
         }
-        // 加载 MetaAppArtifact v1（真实链路来自 BuildBundle；演示 mock 可能是旧形状）
+        // 加载 MetaAppArtifact v1（真实链路与演示 mock 均按 BuildBundle/v1 结构消费）
         this.detailAcceptedTrajectory = { loading: true, skipped: false, error: null, data: null }
         try {
           const accepted = await fetchSimulationAcceptedTrajectory(this.sessionId)
@@ -1534,7 +1554,7 @@ export default {
           this.detailAcceptedTrajectory = {
             loading: false,
             skipped: false,
-            error: this.formatArtifactError(eAccepted, 'AcceptedTrajectory 加载失败'),
+            error: this.formatArtifactError(eAccepted, '轨迹数据加载失败'),
             data: null
           }
         }
@@ -2019,7 +2039,7 @@ export default {
       }
       if (iter.success) return '已通过'
       if (iter.completed && !iter.success) return '需优化'
-      if (iter.execPhase === 'done' && iter.checkPhase !== 'done') return '验收中'
+      if (iter.execPhase === 'done' && iter.checkPhase !== 'done') return '验证中'
       if (iter.execPhase === 'running') return '执行中'
       return '—'
     },
@@ -2123,6 +2143,17 @@ export default {
 
     getDetailViewModel() {
       const evidence = this.detailEvidence.data
+      const accepted = this.detailAcceptedTrajectory && this.detailAcceptedTrajectory.data
+      const acceptedActions = accepted && Array.isArray(accepted.actionSequence)
+        ? accepted.actionSequence
+        : []
+      const scenario = this.scenarioParsedDraft || {}
+      const scenarioInputs = scenario.inputs && typeof scenario.inputs === 'object'
+        ? Object.keys(scenario.inputs)
+        : []
+      const criteria = []
+      if (Array.isArray(scenario.acceptanceCriteria)) criteria.push(...scenario.acceptanceCriteria)
+      if (Array.isArray(scenario.expectedOutputs)) criteria.push(...scenario.expectedOutputs)
       return {
         currentPhaseLabel: this.isRunning ? '智能构建中' : (this.isCompleted ? '构建完成' : '准备中'),
         currentIteration: this.currentIteration,
@@ -2174,8 +2205,27 @@ export default {
         callChain: this.callChainSteps,
         evidenceStatus: evidence && evidence.overallStatus,
         evidenceSummary: this.evidenceSummaryText(evidence),
-        artifactId: (this.detailArtifact.data && this.detailArtifact.data.artifactId) || ''
+        artifactId: (this.detailArtifact.data && this.detailArtifact.data.artifactId) || '',
+        selectedServices: this.selectedServiceNames,
+        acceptedIteration: accepted && accepted.acceptedIteration,
+        acceptedStatus: accepted && accepted.status,
+        acceptedActionCount: acceptedActions.length,
+        scenarioGoal: scenario.goal || scenario.task || this.appName,
+        scenarioInputSummary: scenarioInputs.length
+          ? scenarioInputs.slice(0, 6).join('、')
+          : (scenario.description ? '由场景描述提供' : ''),
+        scenarioCriteriaSummary: criteria.length
+          ? criteria.slice(0, 3).join('；')
+          : ''
       }
+    },
+
+    runtimeModeLabel(mode) {
+      const map = {
+        agent_with_optional_golden_path: '智能体执行 + 候选路径',
+        agent_only: '智能体执行'
+      }
+      return map[mode] || mode || '智能体执行'
     },
 
     pushProductRow(rows, key, label, value, size = 'sm', extra = null) {
@@ -2210,18 +2260,183 @@ export default {
 
       if (art) {
         this.pushProductRow(rows, 'artifact-id', '产物 ID', art.artifactId, 'sm')
-        this.pushProductRow(rows, 'runtime-mode', '运行模式', (art.runtime && art.runtime.mode) || 'agent_only', 'xs')
+        this.pushProductRow(rows, 'runtime-mode', '运行方式', this.runtimeModeLabel(art.runtime && art.runtime.mode), 'xs')
       }
 
       this.pushProductRow(rows, 'elapsed', '构建耗时', this.formattedElapsedTime, 'xs')
       return rows
     },
 
+    collectAcceptedInputSlots(accepted) {
+      const actions = accepted && Array.isArray(accepted.actionSequence)
+        ? accepted.actionSequence
+        : []
+      const seen = {}
+      const slots = []
+      actions.forEach((action) => {
+        ;(action.inputSlots || []).forEach((slot) => {
+          const name = slot && slot.name
+          if (!name || seen[name]) return
+          seen[name] = true
+          slots.push({
+            name,
+            type: (slot && slot.type) || 'unknown',
+            required: true,
+            source: (slot && slot.source) || ''
+          })
+        })
+      })
+      return slots
+    },
+
+    formatMaterialSlots(slots) {
+      return (Array.isArray(slots) ? slots : [])
+        .map((slot) => {
+          if (typeof slot === 'string') return { name: slot, type: '', detail: '' }
+          const type = (slot && slot.type) || ''
+          const source = (slot && slot.source) || ''
+          return {
+            name: (slot && slot.name) || '',
+            type,
+            detail: [type, source].filter(Boolean).join(' · ')
+          }
+        })
+        .filter((slot) => slot.name)
+    },
+
+    buildRequirementMaterial(art, accepted) {
+      const traceScenario = this.detailTrace.view && this.detailTrace.view.scenarioParsed
+      const scenario = Object.assign(
+        {},
+        traceScenario || {},
+        this.scenarioParsedDraft || {}
+      )
+      const task = (art && art.taskContract) || {}
+      const app = (art && art.app) || {}
+      const source = scenario.source || {}
+      const inputSlots = Array.isArray(task.inputSlots) && task.inputSlots.length
+        ? task.inputSlots
+        : this.collectAcceptedInputSlots(accepted)
+      const sourceRows = []
+      if (source.parserModel) sourceRows.push({ label: '解析模型', value: source.parserModel })
+      if (source.parsedAt) sourceRows.push({ label: '解析时间', value: source.parsedAt })
+      if (scenario.scenarioKey) sourceRows.push({ label: '想定标识', value: scenario.scenarioKey })
+      if (scenario.domain || task.domain || app.domain) {
+        sourceRows.push({ label: '领域', value: scenario.domain || task.domain || app.domain })
+      }
+      return {
+        goal: scenario.goal || task.goal || app.name || this.appName,
+        description: scenario.description || app.description || this.scenarioDraft || '',
+        constraints: Array.isArray(scenario.constraints) && scenario.constraints.length
+          ? scenario.constraints
+          : (Array.isArray(task.constraints) ? task.constraints : []),
+        successCriteria: Array.isArray(scenario.acceptanceCriteria) && scenario.acceptanceCriteria.length
+          ? scenario.acceptanceCriteria
+          : (Array.isArray(task.successCriteria) ? task.successCriteria : []),
+        inputSlots: this.formatMaterialSlots(inputSlots),
+        outputSlots: this.formatMaterialSlots(task.outputSlots || []),
+        sourceRows
+      }
+    },
+
+    buildServiceSelectionMaterial(art) {
+      const traceSelection = this.detailTrace.view && this.detailTrace.view.serviceSelection
+      const report = this.serviceSelectionReport || traceSelection || {}
+      const runtime = (art && art.runtime) || {}
+      const bindings = Array.isArray(runtime.serviceBindings) ? runtime.serviceBindings : []
+      let selected = Array.isArray(report.selectedServices) ? report.selectedServices : []
+      if (!selected.length && bindings.length) {
+        selected = bindings.map((binding) => ({
+          serviceId: binding.serviceId,
+          serviceName: binding.serviceName,
+          reason: '已写入运行绑定，来自构建阶段服务选择结果。',
+          matchedCapabilities: (binding.tools || [])
+            .map((tool) => tool && (tool.toolName || tool.name))
+            .filter(Boolean)
+        }))
+      }
+      return {
+        selectionId: report.selectionId || '',
+        strategy: report.strategy || '',
+        rationale: report.rationale || '',
+        confidence: report.confidence != null ? `${Math.round(Number(report.confidence) * 100)}%` : '',
+        model: report.model || '',
+        createdAt: report.createdAt || '',
+        selectedServices: selected.map((svc) => ({
+          serviceId: svc.serviceId || '',
+          serviceName: svc.serviceName || svc.serviceId || '未命名服务',
+          reason: svc.reason || '',
+          matchedCapabilities: Array.isArray(svc.matchedCapabilities)
+            ? svc.matchedCapabilities.filter(Boolean)
+            : []
+        })),
+        rejectedServices: Array.isArray(report.rejectedServices) ? report.rejectedServices : [],
+        missingCapabilities: Array.isArray(report.missingCapabilities) ? report.missingCapabilities : [],
+        bindingCount: bindings.length
+      }
+    },
+
+    buildExecutionMaterial(art, accepted) {
+      const traceView = (this.detailTrace && this.detailTrace.view) || {}
+      const actions = accepted && Array.isArray(accepted.actionSequence)
+        ? accepted.actionSequence
+        : []
+      const runtime = (art && art.runtime) || {}
+      const toolCalls = Array.isArray(traceView.toolCalls) ? traceView.toolCalls : []
+      const plannerDecisions = Array.isArray(traceView.plannerDecisions) ? traceView.plannerDecisions : []
+      return {
+        runtimeMode: this.runtimeModeLabel(runtime.mode),
+        traceVersion: traceView.traceVersion || '',
+        iterationCount: this.totalIterations || this.currentIteration,
+        toolCallCount: traceView.toolCallCount != null ? traceView.toolCallCount : (this.serviceCallStats.total || toolCalls.length),
+        mcpCallCount: traceView.mcpCallCount,
+        elapsedText: this.formattedElapsedTime,
+        callChain: this.callChainSteps,
+        plannerDecisions,
+        toolCalls,
+        acceptedIteration: accepted && accepted.acceptedIteration,
+        acceptedActionCount: actions.length
+      }
+    },
+
+    buildVerificationMaterial(accepted) {
+      const evidence = this.detailEvidence.data || {}
+      const traceView = (this.detailTrace && this.detailTrace.view) || {}
+      const actions = accepted && Array.isArray(accepted.actionSequence)
+        ? accepted.actionSequence
+        : []
+      const verifierResults = Array.isArray(traceView.verifierResults)
+        ? traceView.verifierResults
+        : []
+      return {
+        overallStatus: evidence.overallStatus || (accepted && accepted.verifier && accepted.verifier.status) || '',
+        summaryText: evidence.summary ? this.evidenceSummaryText(evidence) : ((accepted && accepted.verifier && accepted.verifier.summary) || ''),
+        dimensions: this.evidenceDimensionPanels.map((panel) => ({
+          key: panel.key,
+          title: panel.title,
+          status: panel.status,
+          summaryLine: panel.summaryLine
+        })),
+        checks: Array.isArray(evidence.checks) ? evidence.checks : [],
+        failedChecks: Array.isArray(evidence.failedChecks) ? evidence.failedChecks : [],
+        missingEvidence: Array.isArray(evidence.missingEvidence) ? evidence.missingEvidence : [],
+        verifierResults,
+        acceptedTrajectory: {
+          trajectoryId: (accepted && accepted.trajectoryId) || '',
+          status: (accepted && accepted.status) || '',
+          acceptedIteration: accepted && accepted.acceptedIteration,
+          actionCount: actions.length,
+          bindingGaps: (accepted && Array.isArray(accepted.bindingGaps)) ? accepted.bindingGaps : []
+        }
+      }
+    },
+
     getProductViewModel() {
       const art = this.detailArtifact.data
+      const accepted = this.detailAcceptedTrajectory && this.detailAcceptedTrajectory.data
       const tags = []
       if (art) {
-        tags.push({ label: '任务契约', tone: 'green' })
+        tags.push({ label: '任务说明', tone: 'green' })
         if (art.runtime && Array.isArray(art.runtime.serviceBindings) && art.runtime.serviceBindings.length) {
           tags.push({ label: '服务绑定', tone: 'green' })
         }
@@ -2231,14 +2446,18 @@ export default {
         if (hasPath) {
           tags.push({ label: '可复用路径', tone: 'green' })
         }
-        tags.push({ label: (art.runtime && art.runtime.mode) || 'agent_only', tone: 'blue' })
+        tags.push({ label: this.runtimeModeLabel(art.runtime && art.runtime.mode), tone: 'blue' })
       }
       return {
         artifact: art || null,
         summaryRows: this.buildBuildSummaryRows(),
         intent: (this.scenarioParsedDraft && this.scenarioParsedDraft.goal) || this.appName,
         services: this.serviceStatuses.map((s) => s.name).join('、'),
-        tags
+        tags,
+        requirement: this.buildRequirementMaterial(art, accepted),
+        serviceSelection: this.buildServiceSelectionMaterial(art),
+        execution: this.buildExecutionMaterial(art, accepted),
+        verification: this.buildVerificationMaterial(accepted)
       }
     },
 
@@ -3665,14 +3884,14 @@ export default {
 @import './meta_app_build/simulation-workbench.less';
 
 .simulation-embedded {
-  height: auto;
-  display: flex;
-  flex-direction: column;
+  flex: 1 1 0;
+  height: 100%;
   min-height: 0;
 
   .simulation-container {
-    flex: 0 0 auto;
+    flex: 1 1 0;
     min-height: 0;
+    height: 100%;
     display: flex;
     flex-direction: column;
     border: 0;
@@ -3680,6 +3899,7 @@ export default {
   }
 
   .main-steps {
+    flex-shrink: 0;
     padding: 10px 10px;
   }
 
@@ -3689,9 +3909,10 @@ export default {
   }
 
   .simulation-scroll {
-    flex: 0 0 auto;
+    flex: 1 1 0;
     min-height: 0;
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .content-area {
@@ -3718,12 +3939,16 @@ export default {
   }
 
   .footer-buttons--embedded {
+    flex: 0 0 auto;
+    flex-shrink: 0;
     display: flex;
     justify-content: center;
     gap: 12px;
-    padding: 12px 0 4px;
+    padding: 12px 16px;
     border-top: 1px solid #e8edf4;
-    margin-top: 8px;
+    margin-top: 0;
+    background: #fff;
+    z-index: 2;
   }
 }
 </style>

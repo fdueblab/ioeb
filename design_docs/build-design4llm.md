@@ -152,7 +152,7 @@ GET  /api/simulation/{buildId}/frontend-state
 POST /api/simulation/{buildId}/artifact
 ```
 
-`POST /evidence` 当前返回 `build_evidence_summary.v1` 派生摘要，不运行旧 trace_evidence pipeline。
+`POST /evidence` 返回 `build_evidence_summary.v1` 派生摘要。
 
 ## 七、Artifact 运行
 

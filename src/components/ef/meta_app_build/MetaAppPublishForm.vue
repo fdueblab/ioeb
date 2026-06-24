@@ -1,8 +1,9 @@
 <template>
-  <div class="wb-publish-form-grid">
-    <div class="wb-preview-col">
-      <div class="wb-modal-sec-title">元应用界面预览</div>
-      <div class="wb-phone">
+  <div class="wb-publish-form-shell">
+    <div class="wb-publish-form-grid">
+      <div class="wb-preview-col">
+        <div class="wb-modal-sec-title">元应用界面预览</div>
+        <div class="wb-phone">
         <div class="wb-phone-top">
           <span>{{ formName || preName }}</span>
           <small v-if="formSubtitle">{{ formSubtitle }}</small>
@@ -39,11 +40,12 @@
             <span>{{ formOutputName || preOutputName }}可视化区域</span>
           </div>
         </div>
+        </div>
       </div>
-    </div>
-    <div class="wb-form-col">
-      <div class="wb-form-title"><h3>元应用属性</h3></div>
-      <a-form :form="form" layout="vertical">
+      <div class="wb-form-side">
+        <div class="wb-form-col">
+          <div class="wb-form-title"><h3>元应用属性</h3></div>
+          <a-form :form="form" layout="vertical">
         <a-divider>视觉配置</a-divider>
         <a-row :gutter="16">
           <a-col :span="24">
@@ -143,10 +145,28 @@
             </a-form-item>
           </a-col>
         </a-row>
-      </a-form>
-      <div class="wb-publish-actions">
-        <button type="button" class="wb-danger-btn" @click="confirmBackToEdit">返回重新编辑</button>
-        <a-button type="primary" :loading="submitting" @click="submit">完成预发布</a-button>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="场景">
+              <a-select v-decorator="['scenario']" placeholder="请选择元应用场景" allow-clear>
+                <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="item.code">{{ item.text }}</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="行业">
+              <a-select v-decorator="['industry']" placeholder="请选择行业" allow-clear>
+                <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">{{ item.text }}</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+          </a-form>
+        </div>
+        <div class="wb-publish-actions">
+          <button type="button" class="wb-danger-btn" @click="confirmBackToEdit">返回重新编辑</button>
+          <a-button type="primary" :loading="submitting" @click="submit">完成预发布</a-button>
+        </div>
       </div>
     </div>
   </div>
@@ -173,6 +193,8 @@ export default {
   data() {
     return {
       attributeOptions: [],
+      industryOptions: [],
+      scenarioOptions: [],
       technologyOptions: [],
       submitting: false,
       form: this.$form.createForm(this),
@@ -257,6 +279,8 @@ export default {
     },
     async loadDicts() {
       this.attributeOptions = await dictionaryCache.loadDict('attribute') || []
+      this.industryOptions = await dictionaryCache.loadDict(`${this.verticalType}_industry`) || []
+      this.scenarioOptions = await dictionaryCache.loadDict(`${this.verticalType}_scenario`) || []
       this.technologyOptions = await dictionaryCache.loadDict(`${this.verticalType}_technology`) || []
     },
     submit() {
@@ -339,11 +363,22 @@ export default {
 <style lang="less" scoped>
 @import './simulation-workbench.less';
 
+.wb-publish-form-shell {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .wb-publish-form-grid {
+  flex: 1 1 0;
+  min-height: 0;
   display: grid;
   grid-template-columns: 380px 1fr;
   grid-column: 1 / -1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .wb-modal-sec-title {
@@ -489,8 +524,34 @@ export default {
   font-size: 16px;
 }
 
+.wb-preview-col {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.wb-form-side {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+}
+
+.wb-form-col {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 .wb-publish-actions {
-  margin-top: 16px;
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  padding: 12px 24px;
+  border-top: 1px solid #e8edf4;
+  background: #fff;
   display: flex;
   justify-content: flex-end;
   align-items: center;

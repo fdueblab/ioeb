@@ -20,7 +20,7 @@
           />
 
           <div v-show="phase !== 'prepublish'" class="wb-workbench">
-            <aside class="wb-panel-left">
+            <aside class="wb-panel-left" :style="workbenchColumnStyle">
               <div class="wb-left-titlebar">
                 <div class="wb-agent-mark"><a-icon type="robot" /></div>
                 <span>{{ leftBarTitle }}</span>
@@ -29,6 +29,7 @@
               <div v-show="phase === 'input'" class="wb-chat-host">
                 <smart-chat
                   ref="smartChat"
+                  workbench-layout
                   :vertical-type="verticalType"
                   @start-loading="$emit('start-loading')"
                   @stop-loading="$emit('stop-loading')"
@@ -38,7 +39,7 @@
                 />
               </div>
 
-              <simulation-build-left-panel v-show="phase === 'build'">
+              <simulation-build-left-panel v-show="phase === 'build'" class="wb-build-host">
                 <simulation-builder
                   v-if="buildUiMounted"
                   v-show="phase === 'build'"
@@ -60,11 +61,12 @@
               </simulation-build-left-panel>
             </aside>
 
-            <section class="wb-panel-right">
+            <section ref="workbenchRight" class="wb-panel-right" :style="workbenchColumnStyle">
               <flow-panel
                 ref="flowPanel"
                 workbench-mode
                 :workbench-phase="phase"
+                :workbench-stage-height="workbenchStageHeight"
                 :build-entry-ready="canStartBuild"
                 :initial-flow="initialFlow"
                 :initial-services="initialServices"
@@ -128,7 +130,7 @@ export default {
     return {
       phase: 'input',
       detailMinimized: true,
-      prepublishDetailMinimized: false,
+      prepublishDetailMinimized: true,
       detailRefreshKey: 0,
       detailRefreshTimer: null,
       /** 画布数据快照；避免 Vue2 $refs 不触发 computed 重算导致侧栏/构建读不到节点 */
@@ -136,10 +138,18 @@ export default {
       /** 进入预发布前缓存产物详情（builder 卸载后仍可读） */
       cachedProductDetail: null,
       /** 构建面板已挂载：预发布返回时不销毁 builder，避免空白 */
-      buildUiMounted: false
+      buildUiMounted: false,
+      /** 左右栏统一高度（视口 - macro - detail dock） */
+      workbenchStageHeight: 0
     }
   },
   computed: {
+    workbenchColumnStyle() {
+      return {
+        height: '90vh',
+        maxHeight: '90vh'
+      }
+    },
     macroIndex() {
       if (this.phase === 'prepublish') return 2
       if (this.phase === 'build') return 1
@@ -262,31 +272,58 @@ export default {
           this.detailRefreshKey += 1
         }, 1000)
       }
-      if (val === 'build') {
-        this.detailMinimized = false
-      }
-      if (val === 'input' && oldVal === 'build') {
-        if (this.hasStructuredScenarioParse()) {
-          this.detailMinimized = false
-        }
-      }
-      if (val === 'input' && oldVal === 'prepublish') {
-        this.detailMinimized = !this.hasStructuredScenarioParse()
-      }
+      this.$nextTick(() => this.syncWorkbenchStageHeight())
+    },
+    detailDockMinimized() {
+      this.$nextTick(() => this.syncWorkbenchStageHeight())
     },
     loadingFlow(loading) {
       if (!loading) {
         this.$nextTick(() => {
           this.syncFlowFromPanel()
-          this.syncInputPhaseUi()
+          this.syncWorkbenchStageHeight()
         })
       }
     }
   },
+  mounted() {
+    this.syncWorkbenchStageHeight()
+    this.$nextTick(() => this.syncWorkbenchStageHeight())
+    this.bindWorkbenchLayoutMetrics()
+  },
   beforeDestroy() {
     if (this.detailRefreshTimer) clearInterval(this.detailRefreshTimer)
+    this.unbindWorkbenchLayoutMetrics()
   },
   methods: {
+    computeWorkbenchStageHeight() {
+      return Math.floor(window.innerHeight * 0.9)
+    },
+    syncWorkbenchStageHeight() {
+      if (this.phase === 'prepublish') return
+      this.workbenchStageHeight = this.computeWorkbenchStageHeight()
+    },
+    bindWorkbenchLayoutMetrics() {
+      this.unbindWorkbenchLayoutMetrics()
+      this._onWorkbenchLayoutResize = () => this.syncWorkbenchStageHeight()
+      window.addEventListener('resize', this._onWorkbenchLayoutResize)
+      const shell = this.$el
+      const dock = shell && shell.querySelector('.wb-detail-dock')
+      if (dock && typeof ResizeObserver !== 'undefined') {
+        this._dockResizeObs = new ResizeObserver(() => this.syncWorkbenchStageHeight())
+        this._dockResizeObs.observe(dock)
+      }
+    },
+    unbindWorkbenchLayoutMetrics() {
+      if (this._dockResizeObs) {
+        this._dockResizeObs.disconnect()
+        this._dockResizeObs = null
+      }
+      if (this._onWorkbenchLayoutResize) {
+        window.removeEventListener('resize', this._onWorkbenchLayoutResize)
+        this._onWorkbenchLayoutResize = null
+      }
+    },
     initChat() {
       if (this.$refs.smartChat) this.$refs.smartChat.init()
     },
@@ -309,9 +346,9 @@ export default {
     onFlowSynced(payload) {
       const snap = this.cloneFlowSnapshot(payload)
       if (snap) this.canvasFlow = snap
-      if (this.phase === 'input') {
-        this.syncInputPhaseUi()
-      }
+      this.$nextTick(() => {
+        this.syncWorkbenchStageHeight()
+      })
     },
     syncFlowFromPanel() {
       const panel = this.$refs.flowPanel
@@ -334,13 +371,6 @@ export default {
       const summary = (this.canvasFlow && this.canvasFlow.scenarioSummary) || this.flowData.scenarioSummary
       return Boolean(summary && String(summary).trim())
     },
-    /** 想定解析完成后仅更新侧栏等 UI，不切换 macro 步骤 */
-    syncInputPhaseUi() {
-      if (this.phase !== 'input' || this.loadingFlow) return
-      if (this.hasStructuredScenarioParse()) {
-        this.detailMinimized = false
-      }
-    },
     onUpdateServices(services) {
       this.$emit('update-services', services)
     },
@@ -348,17 +378,6 @@ export default {
       const snap = this.cloneFlowSnapshot(flow)
       if (snap) this.canvasFlow = snap
       this.$emit('update-flow', flow)
-      const sp = flow && flow.scenarioParsed
-      const hasScenarioParsed =
-        sp &&
-        (sp.goal ||
-          sp.description ||
-          (Array.isArray(sp.constraints) && sp.constraints.length) ||
-          (Array.isArray(sp.acceptanceCriteria) && sp.acceptanceCriteria.length))
-      const hasScenario = flow && flow.scenarioSummary && String(flow.scenarioSummary).trim()
-      if ((hasScenarioParsed || hasScenario) && this.phase === 'input') {
-        this.detailMinimized = false
-      }
     },
     onScenarioIntake(payload) {
       if (this.panel && this.panel.applyScenarioIntake) {
@@ -371,9 +390,6 @@ export default {
           ...(payload.scenarioSummary ? { scenarioSummary: payload.scenarioSummary } : {}),
           ...(payload.userRemark ? { preDes: payload.userRemark } : {})
         }
-      }
-      if (this.phase === 'input') {
-        this.detailMinimized = false
       }
     },
     startBuild() {
@@ -432,7 +448,6 @@ export default {
         }
       }
       this.syncFlowFromPanel()
-      this.syncInputPhaseUi()
       this.$nextTick(() => {
         if (panel && panel.scheduleCanvasReflow) {
           panel.scheduleCanvasReflow()
@@ -445,7 +460,7 @@ export default {
         this.cachedProductDetail = b.getProductViewModel()
       }
       this.phase = 'prepublish'
-      this.prepublishDetailMinimized = false
+      this.prepublishDetailMinimized = true
     },
     backToEdit() {
       this.returnToParsedInput()
@@ -495,10 +510,10 @@ export default {
 
 .wb-panel-right {
   :deep(.ef-workbench-root) {
-    height: auto;
+    height: 100%;
     border: 0;
     box-shadow: none;
-    overflow: visible;
+    overflow: hidden;
   }
 
   :deep(.wb-stage-header) {
@@ -509,20 +524,16 @@ export default {
 
 // smart_chat 默认 width:30vw，须限制在左栏宽度内
 .wb-chat-host {
-  :deep(.chat-container) {
-    width: 100% !important;
-    max-width: 100%;
-    height: 100% !important;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    overflow: hidden;
+  :deep(.chat-container--workbench) {
     display: flex;
     flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
   }
 
   :deep(.chat-output) {
-    flex: 1 1 auto;
+    flex: 1 1 0;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
@@ -530,6 +541,7 @@ export default {
   }
 
   :deep(.chat-input) {
+    flex: 0 0 auto;
     flex-shrink: 0;
   }
 

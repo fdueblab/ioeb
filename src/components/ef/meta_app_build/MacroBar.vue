@@ -12,7 +12,7 @@
       >
         <div class="wb-macro-step-header">
           <div class="wb-macro-step-indicator">
-            <a-icon v-if="index < activeIndex" type="check-circle" class="wb-macro-icon-done" />
+            <a-icon v-if="index < activeIndex" type="check" class="wb-macro-icon-done" />
             <span v-else class="wb-macro-step-number">{{ index + 1 }}</span>
           </div>
           <div class="wb-macro-step-content">
