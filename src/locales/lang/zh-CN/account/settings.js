@@ -60,7 +60,7 @@ export default {
   'account.settings.profile.major': '专业',
   'account.settings.profile.occupation': '职业',
   'account.settings.profile.tech-needs': '技术需求',
-  'account.settings.profile.bio': '个人简介',
+  'account.settings.profile.bio': '技术背景',
   'account.settings.profile.bio-placeholder': '简要介绍您的研究方向、技术背景或关注点',
   'account.settings.profile.select-placeholder': '请选择',
   'account.settings.profile.multi-placeholder': '可多选',

@@ -165,9 +165,14 @@ export default {
         }
       })
     },
-    handleSurveyDone() {
+    handleSurveyDone(selectedDomain) {
       this.surveyVisible = false
-      window.location.reload()
+      if (selectedDomain && selectedDomain.code) {
+        this.$store.dispatch('SetCurrentDomain', {
+          code: selectedDomain.code,
+          text: selectedDomain.domain || selectedDomain.label
+        })
+      }
     },
     handleMediaQuery(val) {
       this.query = val
