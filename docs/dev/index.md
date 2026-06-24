@@ -9,3 +9,4 @@
 - [生产与开发测试环境隔离及发布流程建设报告](./environment-release-report)
 - [平台项目快速开始](./project-quickstart)
 - [智能体添加指南](./add-agent)
+- [Agent SSE 接口调用指南](./agent-sse-api)
