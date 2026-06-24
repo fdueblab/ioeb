@@ -81,6 +81,7 @@
 import { register } from '@/api/login'
 import { deviceMixin } from '@/store/device-mixin'
 import { scorePassword } from '@/utils/util'
+import { markNewUserSurveyPending } from '@/api/userProfile'
 
 const levelNames = {
   0: 'user.password.strength.short',
@@ -179,6 +180,7 @@ export default {
             password: values.password,
             name: values.name || values.username
           }).then(() => {
+            markNewUserSurveyPending(values.username)
             this.$notification.success({
               message: '注册成功',
               description: '请使用新账户登录'

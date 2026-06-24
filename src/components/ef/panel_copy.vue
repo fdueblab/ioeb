@@ -58,6 +58,7 @@
 </template>
 
 <script>
+/* global jsPlumb */
 import draggable from 'vuedraggable'
 // import { jsPlumb } from 'jsplumb'
 // 使用修改后的jsplumb

@@ -5,7 +5,7 @@ export const DEFAULT_DOMAIN = {
   code: 'aml',
   text: '跨境支付AI监测'
 }
-export const DEFAULT_LANDING_PATH = '/dashboard/workplace'
+export const DEFAULT_LANDING_PATH = '/account/workplace'
 
 const SINGLE_DOMAIN_MENU_PATHS = [
   '/vertical-user',
