@@ -9,24 +9,14 @@
     @cancel="handleSkip"
   >
     <div class="survey-body">
-      <div class="survey-header-row">
-        <div class="survey-title-inline">兴趣调查</div>
-        <div class="survey-target">
-          <span class="survey-target-label">前往</span>
-          <a-radio-group v-model="form.preferredVertical" button-style="solid" class="vertical-group" @change="handleVerticalChange">
-            <a-radio-button
-              v-for="opt in verticalOptions"
-              :key="opt.code"
-              :value="opt.code"
-              :disabled="!opt.enabled"
-            >
-              {{ opt.label }}<span v-if="!opt.enabled" class="disabled-tip">（暂未开通）</span>
-            </a-radio-button>
-          </a-radio-group>
+      <div class="survey-heading">
+        <div>
+          <div class="survey-title-inline">兴趣调查</div>
+          <p>完善画像后，平台会记住您的垂域和技术背景，后续可在个人中心继续修改。</p>
         </div>
         <div class="survey-actions">
-          <a-button type="primary" :loading="saving" @click="handleSave">保存</a-button>
           <a-button @click="handleSkip">跳过</a-button>
+          <a-button type="primary" :loading="saving" @click="handleSave">保存</a-button>
         </div>
       </div>
 
@@ -34,44 +24,97 @@
         type="info"
         show-icon
         class="survey-intro"
-        message="请选择您希望进入的平台垂域。系统会根据您的选择，只展示对应垂域的功能入口。下方兴趣点可选填，也可以直接跳过。"
+        message="请选择您希望进入的平台垂域。"
       />
 
-      <div class="survey-item">
-        <div class="survey-label">{{ currentVerticalLabel }}兴趣点<span class="optional-tip">（可跳过）</span></div>
-        <a-checkbox-group v-model="form.interestPoints" class="opt-group">
-          <a-checkbox v-for="opt in currentInterestOptions" :key="opt" :value="opt">{{ opt }}</a-checkbox>
-        </a-checkbox-group>
-      </div>
-
-      <div class="survey-item">
-        <div class="survey-label">身份情况<span class="optional-tip">（可选）</span></div>
-        <a-radio-group v-model="form.occupation" button-style="solid" class="opt-group">
-          <a-radio-button v-for="opt in occupationOptions" :key="opt" :value="opt">{{ opt }}</a-radio-button>
+      <div class="survey-card survey-card--highlight">
+        <div class="survey-label">前往</div>
+        <a-radio-group v-model="form.preferredVertical" button-style="solid" class="vertical-group" @change="handleVerticalChange">
+          <a-radio-button
+            v-for="opt in verticalOptions"
+            :key="opt.code"
+            :value="opt.code"
+            :disabled="!opt.enabled"
+          >
+            {{ opt.label }}<span v-if="!opt.enabled" class="disabled-tip">（暂未开通）</span>
+          </a-radio-button>
         </a-radio-group>
       </div>
 
-      <div class="survey-item">
-        <div class="survey-label">专业背景<span class="optional-tip">（可选）</span></div>
-        <a-radio-group v-model="form.major" button-style="solid" class="opt-group">
-          <a-radio-button v-for="opt in majorOptions" :key="opt" :value="opt">{{ opt }}</a-radio-button>
-        </a-radio-group>
+      <div class="survey-grid">
+        <div class="survey-item">
+          <div class="survey-label">领域</div>
+          <a-select v-model="form.domain" disabled class="survey-control">
+            <a-select-option v-for="opt in verticalOptions" :key="opt.code" :value="opt.domain">
+              {{ opt.domain }}
+            </a-select-option>
+          </a-select>
+        </div>
+
+        <div class="survey-item survey-upload-card">
+          <div class="survey-label">简历快速填充<span class="optional-tip">（可选）</span></div>
+          <a-upload
+            accept=".pdf,.docx,.txt,.md"
+            :file-list="resumeFiles"
+            :remove="removeResume"
+            :customRequest="handleResumeChoose"
+            :multiple="false"
+          >
+            <a-button :loading="resumeLoading" icon="upload">
+              {{ $t('account.settings.profile.survey-upload') }}
+            </a-button>
+          </a-upload>
+        </div>
       </div>
 
-      <a-divider />
+      <div class="survey-item">
+        <div class="survey-label">专业<span class="optional-tip">（可选）</span></div>
+        <a-select
+          v-model="form.major"
+          allow-clear
+          show-search
+          class="survey-control"
+          placeholder="请选择专业"
+        >
+          <a-select-option v-for="opt in majorOptions" :key="opt" :value="opt">{{ opt }}</a-select-option>
+        </a-select>
+      </div>
 
-      <!-- 简历快速填充 -->
-      <a-upload
-        accept=".pdf,.docx,.txt,.md"
-        :file-list="resumeFiles"
-        :remove="removeResume"
-        :customRequest="handleResumeChoose"
-        :multiple="false"
-      >
-        <a-button :loading="resumeLoading" size="small">
-          <a-icon type="upload" /> {{ $t('account.settings.profile.survey-upload') }}
-        </a-button>
-      </a-upload>
+      <div class="survey-item">
+        <div class="survey-label">职业<span class="optional-tip">（可选）</span></div>
+        <a-select
+          v-model="form.occupation"
+          allow-clear
+          show-search
+          class="survey-control"
+          placeholder="请选择职业"
+        >
+          <a-select-option v-for="opt in occupationOptions" :key="opt" :value="opt">{{ opt }}</a-select-option>
+        </a-select>
+      </div>
+
+      <div class="survey-item">
+        <div class="survey-label">技术需求<span class="optional-tip">（可多选）</span></div>
+        <a-select
+          v-model="form.techNeeds"
+          mode="multiple"
+          allow-clear
+          class="survey-control"
+          placeholder="请选择技术需求"
+        >
+          <a-select-option v-for="opt in techNeedsOptions" :key="opt" :value="opt">{{ opt }}</a-select-option>
+        </a-select>
+      </div>
+
+      <div class="survey-item">
+        <div class="survey-label">技术背景<span class="optional-tip">（可选）</span></div>
+        <a-textarea
+          v-model="form.bio"
+          :rows="3"
+          placeholder="简要介绍您的研究方向、技术背景或关注点"
+        />
+      </div>
+
     </div>
 
   </a-modal>
@@ -80,23 +123,21 @@
 <script>
 import {
   MAJOR_OPTIONS,
-  OCCUPATION_OPTIONS
+  OCCUPATION_OPTIONS,
+  TECH_NEEDS_OPTIONS
 } from '@/utils/profileOptions'
 import { readResumeText } from '@/utils/resumeReader'
 import { extractFromResume, markSurveyDone } from '@/api/userProfile'
 
 const VERTICAL_OPTIONS = [
-  { code: 'aml', label: '跨境支付监测', domain: '跨境支付AI监测', enabled: true },
-  { code: 'health', label: '心理健康分析', domain: '心理健康分析', enabled: true },
-  { code: 'digitalHuman', label: '数智人', domain: '数智人', enabled: false },
-  { code: 'uav', label: '无人飞控', domain: '无人飞控', enabled: false },
-  { code: 'other', label: '其他垂域', domain: '其他垂域', enabled: false }
+  { code: 'aml', label: '跨境支付AI监测', domain: '跨境支付AI监测', enabled: true },
+  { code: 'aircraft', label: '无人飞机AI监控', domain: '无人飞机AI监控', enabled: true },
+  { code: 'health', label: '乡村医疗AI应用', domain: '乡村医疗AI应用', enabled: true },
+  { code: 'agriculture', label: '数字农业AI应用', domain: '数字农业AI应用', enabled: true },
+  { code: 'evtol', label: '低空飞行AI应用', domain: '低空飞行AI应用', enabled: true },
+  { code: 'ecommerce', label: '跨境电商AI应用', domain: '跨境电商AI应用', enabled: true },
+  { code: 'homeAI', label: '家庭陪伴AI应用', domain: '家庭陪伴AI应用', enabled: true }
 ]
-
-const INTEREST_OPTIONS_BY_VERTICAL = {
-  aml: ['反洗钱监测', '异常交易识别', '跨境资金流向', '商户风险画像', '规则与模型结合', '合规报告生成'],
-  health: ['情绪识别', '心理风险筛查', '问卷量表分析', '对话文本分析', '压力趋势观察', '干预建议生成']
-}
 
 export default {
   name: 'UserProfileSurvey',
@@ -114,11 +155,12 @@ export default {
         major: '',
         occupation: '',
         techNeeds: [],
-        interestPoints: []
+        bio: ''
       },
       verticalOptions: VERTICAL_OPTIONS,
       majorOptions: MAJOR_OPTIONS,
       occupationOptions: OCCUPATION_OPTIONS,
+      techNeedsOptions: TECH_NEEDS_OPTIONS,
       resumeFiles: [],
       resumeLoading: false,
       saving: false
@@ -130,17 +172,18 @@ export default {
     },
     currentVerticalLabel() {
       return this.currentVertical ? this.currentVertical.label : '所选垂域'
-    },
-    currentInterestOptions() {
-      return INTEREST_OPTIONS_BY_VERTICAL[this.form.preferredVertical] || []
     }
   },
   methods: {
     handleVerticalChange () {
-      const allowed = new Set(this.currentInterestOptions)
-      this.form.interestPoints = (this.form.interestPoints || []).filter(item => allowed.has(item))
-      this.form.techNeeds = [...this.form.interestPoints]
       this.form.domain = this.currentVertical ? this.currentVertical.domain : ''
+    },
+    syncVerticalByDomain (domain) {
+      const matched = this.verticalOptions.find(opt => opt.domain === domain || opt.label === domain)
+      if (matched) {
+        this.form.preferredVertical = matched.code
+        this.form.domain = matched.domain
+      }
     },
     handleResumeChoose (options) {
       const { file } = options
@@ -161,14 +204,11 @@ export default {
           return
         }
         const s = await extractFromResume(text)
-        if (s.domain && !this.form.domain) this.form.domain = s.domain
+        if (s.domain) this.syncVerticalByDomain(s.domain)
         if (s.major) this.form.major = s.major
         if (s.occupation) this.form.occupation = s.occupation
         if (Array.isArray(s.techNeeds) && s.techNeeds.length) {
-          const merged = Array.from(new Set([...(this.form.interestPoints || []), ...s.techNeeds]))
-          const allowed = new Set(this.currentInterestOptions)
-          this.form.interestPoints = merged.filter(item => allowed.has(item))
-          this.form.techNeeds = [...this.form.interestPoints]
+          this.form.techNeeds = Array.from(new Set([...(this.form.techNeeds || []), ...s.techNeeds]))
         }
         this.$message.success('已根据简历自动填充，请确认后保存')
       } catch (e) {
@@ -197,14 +237,15 @@ export default {
         ...this.form,
         preferredVertical: selected.code,
         domain: selected.domain,
-        techNeeds: [...(this.form.interestPoints || [])],
-        interestPoints: [...(this.form.interestPoints || [])]
+        techNeeds: [...(this.form.techNeeds || [])],
+        interestPoints: [...(this.form.techNeeds || [])],
+        bio: this.form.bio || ''
       }
       this.$store.dispatch('SaveProfile', payload)
         .then(() => {
           markSurveyDone()
           this.$message.success(skipped ? `已跳过兴趣点填写，将进入${selected.label}` : '兴趣调查已保存')
-          this.$emit('done')
+          this.$emit('done', selected)
         })
         .catch(() => {
           this.$message.error('保存失败')
@@ -222,47 +263,71 @@ export default {
   max-height: 60vh;
   overflow-y: auto;
 }
+
+.survey-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 0 8px;
+
+  p {
+    margin: 6px 0 0;
+    color: rgba(0, 0, 0, 0.45);
+  }
+}
+
 .survey-intro {
   margin: 12px 0 16px;
 }
-.survey-header-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-}
+
 .survey-title-inline {
-  flex: 0 0 auto;
   font-size: 16px;
   font-weight: 600;
-  line-height: 32px;
   color: rgba(0, 0, 0, 0.85);
 }
-.survey-target {
-  display: flex;
-  align-items: flex-start;
-  flex: 1;
-  min-width: 0;
+
+.survey-card {
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid #d9ecff;
+  border-radius: 8px;
+  background: #f7fbff;
 }
-.survey-target-label {
-  flex: 0 0 auto;
-  line-height: 32px;
-  margin-right: 8px;
-  color: rgba(0, 0, 0, 0.85);
+
+.survey-card--highlight {
+  border-color: #91d5ff;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
 }
+
+.survey-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
 .vertical-group {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+
+  :deep(.ant-radio-button-wrapper) {
+    margin-bottom: 4px;
+    border-radius: 4px;
+  }
 }
+
 .disabled-tip {
   color: #bfbfbf;
   font-size: 12px;
 }
+
 .survey-actions {
   display: flex;
-  gap: 8px;
   flex: 0 0 auto;
+  gap: 8px;
 }
+
 .survey-item {
   margin-bottom: 16px;
 
@@ -280,6 +345,27 @@ export default {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+  }
+}
+
+.survey-upload-card {
+  padding: 12px;
+  border: 1px dashed #b7d8ff;
+  border-radius: 6px;
+  background: #fbfdff;
+}
+
+.survey-control {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .survey-heading {
+    flex-direction: column;
+  }
+
+  .survey-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

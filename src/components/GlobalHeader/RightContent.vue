@@ -42,12 +42,11 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['nickname', 'avatar', 'profileCompletion']),
+    ...mapGetters(['nickname', 'avatar']),
     currentUser () {
       return {
         name: this.nickname,
-        avatar: this.avatar,
-        completion: this.profileCompletion
+        avatar: this.avatar
       }
     },
     wrpCls () {
