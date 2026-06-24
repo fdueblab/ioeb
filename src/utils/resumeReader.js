@@ -27,13 +27,10 @@ function readAsArrayBuffer (file) {
 }
 
 async function readPdf (file) {
-  const pdfjsLib = await import('pdfjs-dist/build/pdf')
-  try {
-    // 关闭 worker，使用主线程解析，避免 worker 路径配置问题
-    pdfjsLib.GlobalWorkerOptions.workerSrc = ''
-  } catch (e) { /* ignore */ }
+  const pdfjsModule = await import('pdfjs-dist/webpack')
+  const pdfjsLib = pdfjsModule.default || pdfjsModule
   const data = await readAsArrayBuffer(file)
-  const loadingTask = pdfjsLib.getDocument({ data, disableWorker: true })
+  const loadingTask = pdfjsLib.getDocument({ data })
   const pdf = await loadingTask.promise
   let text = ''
   for (let i = 1; i <= pdf.numPages; i++) {

@@ -4,7 +4,7 @@
       <div class="workbench-hero__main">
         <div class="workbench-kicker">
           <span class="workbench-kicker__dot"></span>
-          个人工作台
+          我的工作台
         </div>
         <h1>{{ greeting }}，{{ displayName }}</h1>
         <p>
@@ -217,7 +217,7 @@ export default {
         },
         {
           key: 'scenario-dev',
-          title: '想定式开发',
+          title: '算法模型生成',
           description: '将业务场景拆解为可调用的算法模型方案。',
           icon: 'code',
           path: getDomainModuleEntryPath('/vertical-scenario-dev', this.activeDomainCode, this.permissionList),
@@ -225,7 +225,7 @@ export default {
         },
         {
           key: 'service-publish',
-          title: '发布原子微服务',
+          title: 'MCP服务封装',
           description: '维护当前垂域可被复用的算法服务。',
           icon: 'upload',
           path: getDomainModuleEntryPath('/vertical-ms', this.activeDomainCode, this.permissionList),
@@ -233,7 +233,7 @@ export default {
         },
         {
           key: 'meta-app',
-          title: '元应用仿真构建',
+          title: '智能体生成',
           description: '把检索到的资源组合为可运行的应用流程。',
           icon: 'form',
           path: getDomainModuleEntryPath('/vertical-meta-app', this.activeDomainCode, this.permissionList),
@@ -241,7 +241,7 @@ export default {
         },
         {
           key: 'evaluation',
-          title: '技术评测与验证',
+          title: '测试评估',
           description: '查看模型服务评测或业务数据验证入口。',
           icon: 'radar-chart',
           path: getDomainModuleEntryPath('/evaluation', this.activeDomainCode, this.permissionList),

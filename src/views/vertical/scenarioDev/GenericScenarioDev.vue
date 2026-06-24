@@ -326,7 +326,7 @@
               <a-icon v-else type="loading" class="icon-loading" />
             </div>
             <div class="step-content">
-              <div class="step-title">智能体执行</div>
+              <div class="step-title">算法模型生成进度</div>
               <div class="step-description">{{ generateProgress.description }}</div>
             </div>
             <a-icon
