@@ -24,6 +24,16 @@
               <div class="wb-left-titlebar">
                 <div class="wb-agent-mark"><a-icon type="robot" /></div>
                 <span>{{ leftBarTitle }}</span>
+                <a-button
+                  v-if="phase === 'input' && canRegenerateChat"
+                  type="link"
+                  size="small"
+                  icon="reload"
+                  class="wb-title-regenerate"
+                  @click="requestRegenerate"
+                >
+                  重新生成
+                </a-button>
               </div>
 
               <div v-show="phase === 'input'" class="wb-chat-host">
@@ -36,6 +46,8 @@
                   @update-services="onUpdateServices"
                   @update-flow="onUpdateFlow"
                   @scenario-intake="onScenarioIntake"
+                  @regenerate-available="canRegenerateChat = true"
+                  @regenerate="onRegenerate"
                 />
               </div>
 
@@ -139,6 +151,7 @@ export default {
       cachedProductDetail: null,
       /** 构建面板已挂载：预发布返回时不销毁 builder，避免空白 */
       buildUiMounted: false,
+      canRegenerateChat: false,
       /** 左右栏统一高度（视口 - macro - detail dock） */
       workbenchStageHeight: 0
     }
@@ -325,9 +338,20 @@ export default {
       }
     },
     initChat() {
+      this.canRegenerateChat = false
       if (this.$refs.smartChat) this.$refs.smartChat.init()
     },
+    requestRegenerate() {
+      if (this.$refs.smartChat && this.$refs.smartChat.handleRegenerate) {
+        this.$refs.smartChat.handleRegenerate()
+      }
+    },
+    onRegenerate() {
+      this.canRegenerateChat = false
+      this.clearFlow()
+    },
     clearFlow() {
+      this.canRegenerateChat = false
       if (this.panel) this.panel.dataReloadClear()
       this.canvasFlow = null
       this.phase = 'input'
@@ -377,6 +401,7 @@ export default {
     onUpdateFlow(flow) {
       const snap = this.cloneFlowSnapshot(flow)
       if (snap) this.canvasFlow = snap
+      this.canRegenerateChat = true
       this.$emit('update-flow', flow)
     },
     onScenarioIntake(payload) {

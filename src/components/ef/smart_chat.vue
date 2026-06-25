@@ -59,11 +59,11 @@
           style="width: 100%; padding-right: 44px"
           v-model="userInput"
           :placeholder="placeholder"
-          :disabled="!isInputEnabled"
+          :disabled="!canTypeInput"
           @input="onInputChange"
           @focus="activateSuggestions"
           @blur="hideSuggestionsDelayed"
-          @keydown.enter="handleUserInput"
+          @keydown.enter.prevent="handleUserInput"
           ref="inputElement"
         />
         <a-button
@@ -71,12 +71,12 @@
           icon="deployment-unit"
           @click="handleUserInput"
           :loading="isInputLoading"
-          :disabled="!userInput || !isInputEnabled"
+          :disabled="!canSubmit"
           class="submit-button"
         />
         <div
           class="suggestion-dropdown"
-          v-if="allowInputSuggestions && showSuggestions && filteredSuggestions.length > 0 && isInputEnabled"
+          v-if="allowInputSuggestions && showSuggestions && filteredSuggestions.length > 0 && canTypeInput"
         >
           <div
             class="suggestion-item"
@@ -117,19 +117,10 @@ export default {
       default: false
     }
   },
-  mounted() {
-    // 添加键盘事件监听
-    document.addEventListener('keydown', this.handleKeyDown)
-  },
   beforeDestroy() {
-    // 移除键盘事件监听
-    document.removeEventListener('keydown', this.handleKeyDown)
     // 清理定时器
     if (this.stepTypewriterTimer) {
       clearTimeout(this.stepTypewriterTimer)
-    }
-    if (this.finalCollapseTimer) {
-      clearTimeout(this.finalCollapseTimer)
     }
   },
   data() {
@@ -146,15 +137,25 @@ export default {
       filteredSuggestions: [],
       thinkingMessageIndex: -1,
       stepTypewriterTimer: null,
-      finalCollapseTimer: null,
-      isTaskFinishing: false,
       receivedFinalResult: false,
       agentSessionId: null,
       intakeSessionId: null,
       topicMockIntakeSession: null,
       scenarioSummary: '',
       scenarioParsed: null,
-      userRemark: ''
+      userRemark: '',
+      hasGeneratedRecommendation: false
+    }
+  },
+  computed: {
+    canTypeInput() {
+      return this.isInputEnabled && !this.isInputLoading
+    },
+    canSubmit() {
+      return this.canTypeInput && !!this.userInput.trim()
+    },
+    canRegenerate() {
+      return this.messages.some((m) => m.isUser) && !this.isInputLoading
     }
   },
   watch: {
@@ -169,11 +170,6 @@ export default {
     }
   },
   methods: {
-    handleKeyDown(e) {
-      if (e.key === 'Enter' && this.userInput && !this.isInputLoading && this.isInputEnabled) {
-        this.handleUserInput()
-      }
-    },
     onInputChange() {
       if (!this.allowInputSuggestions || !this.messageManager) return
       this.filteredSuggestions = this.messageManager.filterSuggestions(this.userInput)
@@ -199,7 +195,6 @@ export default {
         this.stepTypewriterTimer = null
       }
       this.thinkingMessageIndex = -1
-      this.isTaskFinishing = false
       this.receivedFinalResult = false
       this.currentIndex = 0
     },
@@ -207,22 +202,30 @@ export default {
     finishAgentTurn() {
       this.isInputLoading = false
       this.isInputEnabled = true
-      this.isTaskFinishing = false
       this.thinkingMessageIndex = -1
       this.currentIndex = 0
     },
 
+    handleRegenerate() {
+      if (!this.canRegenerate) return
+      this.$emit('stop-loading')
+      this.$emit('regenerate')
+      this.init()
+    },
+
     handleUserInput() {
-      if (!this.userInput.trim() || !this.isInputEnabled || this.isInputLoading) return
+      if (!this.canSubmit) return
       this.allowInputSuggestions = false
       this.showSuggestions = false
+      const shouldUseReadyScenario = this.hasGeneratedRecommendation && this.scenarioParsed
       this.beginAgentTurn()
       this.isInputLoading = true
       this.isInputEnabled = false
       this.messages.push({ text: this.userInput, isUser: true })
+      this.$emit('regenerate-available')
       this.messages.push({ text: 'agentLoading', isUser: false })
       this.scrollToBottom()
-      const input = this.userInput
+      const input = this.userInput.trim()
       this.userInput = ''
 
       // 课题演示 → 进程内 mock 推荐；其余（含 health）→ 真实想定追问再推荐
@@ -230,6 +233,9 @@ export default {
         if (this.handleTopicMockScenarioIntake(input)) return
         this.$emit('start-loading')
         this.useScheduleDemoData(input)
+      } else if (shouldUseReadyScenario) {
+        this.$emit('start-loading')
+        this.callAgentForRecommendation(input)
       } else {
         this.callScenarioIntake(input)
       }
@@ -593,7 +599,6 @@ export default {
         onFinalResult: (results) => {
           console.log('智能体推荐结果:', results)
           this.receivedFinalResult = true
-          this.isTaskFinishing = true
           this.handleFinalStep()
           this.handleAgentResponse(results)
         },
@@ -639,6 +644,7 @@ export default {
           // 向父组件发送数据
           this.$emit('update-services', serviceNodes)
           this.$emit('update-flow', flowData)
+          this.hasGeneratedRecommendation = true
           this.placeholder = '可继续对话补充想定，或打开仿真构建前在准备页编辑'
           this.agentTypeWriter(outputMessage)
         } else {
@@ -666,7 +672,6 @@ export default {
       runStep(0)
     },
     finishScheduleDemo(input) {
-      this.isTaskFinishing = true
       this.handleFinalStep()
       const isTopic = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.TOPIC
       getMetaAppNodes(this.verticalType, input)
@@ -689,6 +694,7 @@ export default {
           )
           this.$emit('update-services', serviceNodes)
           this.$emit('update-flow', flowData)
+          this.hasGeneratedRecommendation = true
           this.placeholder = isTopic
             ? '可继续对话补充想定，或点击「开始仿真构建」进入构建'
             : '继续补充或调整需求…'
@@ -699,6 +705,7 @@ export default {
         .catch(() => {
           this.$emit('stop-loading')
           this.agentTypeWriter(this.messageManager.getErrorReply())
+          this.finishAgentTurn()
         })
     },
     typeWriter(text) {
@@ -754,10 +761,6 @@ export default {
         clearTimeout(this.stepTypewriterTimer)
         this.stepTypewriterTimer = null
       }
-      if (this.finalCollapseTimer) {
-        clearTimeout(this.finalCollapseTimer)
-        this.finalCollapseTimer = null
-      }
 
       this.userInput = ''
       this.placeholder = this.messageManager ? this.messageManager.getPlaceholder() : ''
@@ -768,7 +771,6 @@ export default {
       this.allowInputSuggestions = true
       this.filteredSuggestions = this.messageManager ? this.messageManager.getSuggestions() : []
       this.thinkingMessageIndex = -1
-      this.isTaskFinishing = false
       this.receivedFinalResult = false
       this.agentSessionId = null
       this.intakeSessionId = null
@@ -776,6 +778,7 @@ export default {
       this.scenarioSummary = ''
       this.scenarioParsed = null
       this.userRemark = ''
+      this.hasGeneratedRecommendation = false
       const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '智能体未获取到必要信息，请刷新后重试'
       this.messages.push({ text: initialMessage, isUser: false })
     }

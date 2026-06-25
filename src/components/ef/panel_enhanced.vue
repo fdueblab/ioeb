@@ -207,9 +207,10 @@
               :style="workbenchCanvasStyle"
             >
               <div v-if="loadingFlow" class="loading-overlay">
-                <a-spin size="large" tip="正在生成元应用">
-                  <div style="height: 200px;"></div>
-                </a-spin>
+                <div class="meta-app-loading">
+                  <a-spin size="large" />
+                  <span class="meta-app-loading-text">正在生成元应用</span>
+                </div>
               </div>
               <div v-if="connectionLabel.visible"
                    class="connection-hover-label"
@@ -245,9 +246,10 @@
         :class="simulationCanvasClasses"
       >
         <div v-if="loadingFlow" class="loading-overlay">
-          <a-spin size="large" tip="正在生成元应用">
-            <div style="height: 200px;"></div>
-          </a-spin>
+          <div class="meta-app-loading">
+            <a-spin size="large" />
+            <span class="meta-app-loading-text">正在生成元应用</span>
+          </div>
         </div>
         <div class="canvas-grid"></div>
         <div v-if="connectionLabel.visible"
@@ -2220,6 +2222,35 @@ export default {
   z-index: 1000;
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
+}
+
+.meta-app-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 180px;
+  padding: 14px 18px;
+  color: #1f2f46;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(31, 47, 70, 0.12);
+
+  /deep/ .ant-spin {
+    line-height: 1;
+  }
+
+  /deep/ .ant-spin-dot {
+    margin: 0;
+  }
+}
+
+.meta-app-loading-text {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 // 响应式设计
