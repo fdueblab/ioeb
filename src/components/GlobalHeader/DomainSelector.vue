@@ -22,7 +22,6 @@ import { mapGetters } from 'vuex'
 import { loadDict } from '@/utils/dictionaryCache'
 import {
   DEFAULT_DOMAIN,
-  filterOpenedDomains,
   isDomainRoutedPath,
   replaceDomainInPath,
   resolveCurrentDomain
@@ -51,7 +50,7 @@ export default {
   methods: {
     async loadDomains () {
       const domains = await loadDict('domain', [DEFAULT_DOMAIN])
-      this.domains = filterOpenedDomains(domains)
+      this.domains = domains && domains.length ? domains : [DEFAULT_DOMAIN]
       const currentDomain = resolveCurrentDomain(this.domains, this.currentDomainCode)
       this.$store.dispatch('SetCurrentDomain', currentDomain)
     },

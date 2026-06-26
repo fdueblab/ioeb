@@ -4,7 +4,8 @@ const MAX_RECENT_ROUTES = 8
 const ignoredPathRules = [
   /^\/user(\/|$)/,
   /^\/404$/,
-  /^\/dashboard\/workplace$/
+  /^\/dashboard\/workplace$/,
+  /^\/account\/workplace$/
 ]
 
 function isRecordableRoute (route) {
@@ -14,9 +15,17 @@ function isRecordableRoute (route) {
   return !ignoredPathRules.some(rule => rule.test(route.path))
 }
 
+function currentUsername () {
+  return localStorage.getItem('username') || 'anonymous'
+}
+
+function recentRoutesKey () {
+  return `${RECENT_ROUTES_KEY}_${currentUsername()}`
+}
+
 export function getRecentRoutes () {
   try {
-    const raw = localStorage.getItem(RECENT_ROUTES_KEY)
+    const raw = localStorage.getItem(recentRoutesKey())
     const parsed = raw ? JSON.parse(raw) : []
     return Array.isArray(parsed) ? parsed : []
   } catch (e) {
@@ -40,7 +49,7 @@ export function recordRecentRoute (route) {
 
   try {
     localStorage.setItem(
-      RECENT_ROUTES_KEY,
+      recentRoutesKey(),
       JSON.stringify([nextRoute, ...routes].slice(0, MAX_RECENT_ROUTES))
     )
   } catch (e) {}

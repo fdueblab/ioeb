@@ -110,7 +110,8 @@
     "vitepress": "^1.6.3",
     "vue-svg-icon-loader": "^2.1.1",
     "vue-svg-loader": "0.16.0",
-    "webpack-theme-color-replacer": "^1.3.26"
+    "webpack-theme-color-replacer": "^1.3.26",
+    "worker-loader": "^3.0.8"
   },
   "config": {
     "commitizen": {

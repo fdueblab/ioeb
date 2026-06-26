@@ -1,0 +1,233 @@
+name: Platform Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Dry run only, or create the production releases.
+        required: true
+        type: choice
+        default: dry-run
+        options:
+          - dry-run
+          - release
+      version:
+        description: Production version, for example v2026.06.24.
+        required: true
+        type: string
+      confirm_version:
+        description: Type the same version again when mode is release.
+        required: false
+        type: string
+      backend_ref:
+        description: fdueblab/ioeb_backend ref to release.
+        required: true
+        type: string
+        default: main
+      agent_ref:
+        description: fdueblab/Micro-Agent ref to release.
+        required: true
+        type: string
+        default: master
+      ioeb_ref:
+        description: fdueblab/ioeb ref to release.
+        required: true
+        type: string
+        default: master
+      summary:
+        description: Release summary.
+        required: false
+        type: string
+        default: Platform production release.
+      previous_version:
+        description: Previous production platform version for rollback notes.
+        required: false
+        type: string
+      database_backup:
+        description: Database backup identifier, or none.
+        required: false
+        type: string
+        default: none
+      run_health_checks:
+        description: Check dev and production health before release.
+        required: true
+        type: boolean
+        default: true
+      timeout_seconds:
+        description: Per-workflow wait timeout in seconds.
+        required: true
+        type: string
+        default: "2400"
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: Resolve Refs and Build Plan
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.PLATFORM_RELEASE_TOKEN }}
+      VERSION: ${{ inputs.version }}
+      CONFIRM_VERSION: ${{ inputs.confirm_version }}
+      MODE: ${{ inputs.mode }}
+      BACKEND_REF: ${{ inputs.backend_ref }}
+      AGENT_REF: ${{ inputs.agent_ref }}
+      IOEB_REF: ${{ inputs.ioeb_ref }}
+      SUMMARY: ${{ inputs.summary }}
+      PREVIOUS_VERSION: ${{ inputs.previous_version }}
+      DATABASE_BACKUP: ${{ inputs.database_backup }}
+      RUN_HEALTH_CHECKS: ${{ inputs.run_health_checks }}
+      TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate inputs and token
+        run: |
+          set -euo pipefail
+
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::Missing repository secret PLATFORM_RELEASE_TOKEN."
+            exit 1
+          fi
+
+          if [ "${GITHUB_REF_NAME}" != "master" ]; then
+            echo "::error::Run this workflow from the master branch."
+            exit 1
+          fi
+
+          if ! [[ "${VERSION}" =~ ^v[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$ ]]; then
+            echo "::error::version must match vYYYY.MM.DD or vYYYY.MM.DD.N"
+            exit 1
+          fi
+
+          if [ "${MODE}" = "release" ] && [ "${CONFIRM_VERSION}" != "${VERSION}" ]; then
+            echo "::error::confirm_version must match version when mode is release."
+            exit 1
+          fi
+
+          if ! [[ "${TIMEOUT_SECONDS:-2400}" =~ ^[0-9]+$ ]]; then
+            echo "::error::timeout_seconds must be an integer."
+            exit 1
+          fi
+
+          gh auth status
+
+      - name: Run health checks
+        if: inputs.run_health_checks
+        run: |
+          set -euo pipefail
+          curl -fsSL --max-time 20 http://dev.fdueblab.cn/api/health
+          curl -fsSL --max-time 20 https://fdueblab.cn/api/health
+
+      - name: Resolve refs and generate manifest
+        run: |
+          set -euo pipefail
+
+          resolve_commit() {
+            local repo="$1"
+            local ref="$2"
+            local encoded
+            encoded="$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "${ref}")"
+            gh api "repos/${repo}/commits/${encoded}" --jq .sha
+          }
+
+          BACKEND_SHA="$(resolve_commit fdueblab/ioeb_backend "${BACKEND_REF}")"
+          AGENT_SHA="$(resolve_commit fdueblab/Micro-Agent "${AGENT_REF}")"
+          IOEB_SHA="$(resolve_commit fdueblab/ioeb "${IOEB_REF}")"
+
+          export BACKEND_SHA AGENT_SHA IOEB_SHA
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          checks = ["release approved through Platform Release workflow"]
+          if os.environ["RUN_HEALTH_CHECKS"] == "true":
+              checks.extend([
+                  "dev health check passed before release",
+                  "production health check passed before release",
+              ])
+          else:
+              checks.append("health checks skipped by workflow input")
+
+          rollback = {
+              "databaseBackup": os.environ.get("DATABASE_BACKUP") or "none",
+          }
+          previous_version = os.environ.get("PREVIOUS_VERSION")
+          if previous_version:
+              rollback["previousVersion"] = previous_version
+
+          manifest = {
+              "version": os.environ["VERSION"],
+              "releaseOrder": ["backend", "agent", "frontend"],
+              "summary": os.environ.get("SUMMARY") or "Platform production release.",
+              "components": [
+                  {
+                      "name": "backend",
+                      "repo": "fdueblab/ioeb_backend",
+                      "ref": os.environ["BACKEND_SHA"],
+                      "deploys": ["backend"],
+                      "releaseWorkflows": ["CI"],
+                  },
+                  {
+                      "name": "agent",
+                      "repo": "fdueblab/Micro-Agent",
+                      "ref": os.environ["AGENT_SHA"],
+                      "deploys": ["agent"],
+                      "releaseWorkflows": ["CI"],
+                  },
+                  {
+                      "name": "frontend",
+                      "repo": "fdueblab/ioeb",
+                      "ref": os.environ["IOEB_SHA"],
+                      "deploys": ["frontend", "docs"],
+                      "releaseWorkflows": ["CI", "Build & Deploy Docs"],
+                  },
+              ],
+              "checks": checks,
+              "rollback": rollback,
+          }
+
+          Path("platform-release-manifest.json").write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(manifest, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Dry run release plan
+        run: |
+          set -euo pipefail
+          python3 scripts/create-platform-release.py platform-release-manifest.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: platform-release-manifest
+          path: platform-release-manifest.json
+          if-no-files-found: error
+
+  release:
+    name: Create Production Releases
+    if: inputs.mode == 'release'
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      GH_TOKEN: ${{ secrets.PLATFORM_RELEASE_TOKEN }}
+      TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: platform-release-manifest
+
+      - name: Create releases and wait for deployments
+        run: |
+          set -euo pipefail
+          python3 scripts/create-platform-release.py platform-release-manifest.json \
+            --execute \
+            --yes \
+            --timeout "${TIMEOUT_SECONDS}" \
+            --poll-interval 15

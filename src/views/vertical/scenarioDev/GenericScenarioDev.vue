@@ -326,7 +326,7 @@
               <a-icon v-else type="loading" class="icon-loading" />
             </div>
             <div class="step-content">
-              <div class="step-title">智能体执行</div>
+              <div class="step-title">算法模型生成进度</div>
               <div class="step-description">{{ generateProgress.description }}</div>
             </div>
             <a-icon
@@ -619,6 +619,387 @@ const DEFAULT_MODEL_SUMMARY = {
   nextSteps: ['补充更具体的输入输出样例', '明确业务规则和评价指标', '由技术人员结合真实数据进行测试']
 }
 
+const AML_DEMO_VERTICAL_TYPE = 'aml'
+const HEALTH_DEMO_VERTICAL_TYPE = 'health'
+
+const HEALTH_LINEZOLID_DEMO = {
+  modelName: '利奈唑胺个体化给药剂量预测模型',
+  codeFilename: 'linezolid_dose_optimizer.py',
+  narrative: '请面向乡村医疗AI应用中的基层医疗卫生和远程会诊支持场景，生成一个利奈唑胺个体化给药剂量预测模型。模型需要参考开源项目 Linezolid_repo 和 Journal of Antimicrobial Chemotherapy 相关研究资料，接收患者性别、年龄、身高、体重、血清肌酐、总胆红素和目标 AUC24h 范围，输出体表面积、eGFR、推荐单次剂量、给药间隔、每日总剂量和预测 AUC24h，辅助基层医生在远程药学会诊中快速形成可解释的给药建议。',
+  categoryParams: {
+    inputTypes: ['structured_data'],
+    predictionTarget: '利奈唑胺单次推荐剂量、每日总剂量和预测 AUC24h',
+    timeGranularity: 'none',
+    metrics: ['mae', 'rmse'],
+    constraints: ['single_file', 'rule_based']
+  },
+  generatedCode: `import math
+import numpy as np
+from scipy.integrate import solve_ivp
+
+
+POP_PARAMS = {
+    "TVCLNR": 3.27,
+    "TVCLR": 1.71,
+    "TVV": 43.3,
+    "TVKA": 1.34,
+    "TVF1": 1.0,
+}
+
+
+def calculate_bsa(height_cm, weight_kg):
+    """使用 Mosteller 公式计算体表面积。"""
+    return round(math.sqrt(height_cm * weight_kg / 3600), 2)
+
+
+def calculate_egfr(scr_umol_l, sex, age):
+    """使用 CKD-EPI 公式估算 eGFR。sex: 1=男性, 0=女性。"""
+    k = 80 if sex == 1 else 62
+    a = -0.411 if sex == 1 else -0.329
+    c = 1 if sex == 1 else 1.018
+    b = a if scr_umol_l <= k else -1.209
+    return round(141 * c * (scr_umol_l / k) ** b * 0.993 ** age, 2)
+
+
+def linezolid_ode_system(t, y, cl, v, ka, f1):
+    depot, centr, auc = y
+    concentration = centr / v
+    return [-ka * depot, f1 * ka * depot - cl * concentration, concentration]
+
+
+def simulate_linezolid_pk(dose, interval, parameters, simulation_time=240):
+    cl = parameters["indCLNR"] + parameters["indCLR"]
+    v = parameters["indV"]
+    ka = parameters["indKA"]
+    f1 = parameters["indF1"]
+    y0 = [0, 0, 0]
+    time_points = []
+    states = []
+
+    for dose_time in range(0, simulation_time, interval):
+        if states:
+            y0 = states[-1].copy()
+            y0[1] += dose
+        else:
+            y0[1] = dose
+
+        t_span = [dose_time, dose_time + min(interval, simulation_time - dose_time)]
+        t_eval = np.linspace(t_span[0], t_span[1], 100)
+        sol = solve_ivp(
+            linezolid_ode_system,
+            t_span,
+            y0,
+            args=(cl, v, ka, f1),
+            method="RK45",
+            t_eval=t_eval,
+        )
+        time_points.extend(sol.t)
+        states.extend(sol.y[:, i] for i in range(len(sol.t)))
+
+    times = np.array(time_points)
+    results = np.array(states)
+    auc_24h = results[-1][2] - results[np.searchsorted(times, times[-1] - 24)][2]
+    return round(float(auc_24h))
+
+
+def main_process(patient):
+    """
+    输入示例:
+    {
+        "sex": 1, "age": 65, "height": 170, "weight": 70,
+        "scr": 95.0, "tb": 28.0, "auc_range": [160, 240]
+    }
+    """
+    sex = int(patient["sex"])
+    age = int(patient["age"])
+    height = int(patient["height"])
+    weight = int(patient["weight"])
+    scr = float(patient["scr"])
+    tb = float(patient["tb"])
+    auc_range = patient.get("auc_range", [160, 240])
+
+    bsa = calculate_bsa(height, weight)
+    egfr = calculate_egfr(scr, sex, age)
+    interval = 12
+    target_auc_24h = round(math.sqrt(auc_range[0] * auc_range[1]))
+    age_ind = 1 if age > 40 else 0
+    tb_ind = 1 if tb > 400 else 0
+
+    cl_nr = POP_PARAMS["TVCLNR"] + 3.43 * (bsa - 1.89) - 0.0225 * (age - 40) * age_ind - 0.00486 * (tb - 400) * tb_ind
+    cl_r = POP_PARAMS["TVCLR"] * (egfr / 80) ** 0.41
+    cov_dose = round((target_auc_24h / (24 / interval)) * (cl_nr + cl_r))
+
+    parameters = {
+        "indCLNR": cl_nr,
+        "indCLR": cl_r,
+        "indV": POP_PARAMS["TVV"] * math.exp(0.902 * (bsa - 1.89)),
+        "indKA": POP_PARAMS["TVKA"],
+        "indF1": POP_PARAMS["TVF1"],
+    }
+    auc_24 = simulate_linezolid_pk(cov_dose, interval, parameters)
+
+    return {
+        "bsa": bsa,
+        "egfr": egfr,
+        "dose": cov_dose,
+        "interval": interval,
+        "daily_dose": round(cov_dose * (24 / interval)),
+        "auc_24": auc_24,
+        "target_auc": target_auc_24h,
+        "advice": "该结果用于基层医疗远程会诊辅助，不替代医生处方；上线前需结合 TDM 和院内药学规范验证。",
+    }
+`,
+  modelSummary: {
+    purpose: '面向乡村医疗AI应用场景，为基层医疗机构提供利奈唑胺个体化给药剂量预测和远程药学会诊辅助。',
+    inputDescription: '患者结构化数据：性别、年龄、身高、体重、血清肌酐、总胆红素，以及目标 AUC24h 范围。',
+    outputDescription: '输出体表面积、eGFR、推荐单次剂量、给药间隔、每日总剂量、预测 AUC24h 和会诊提示。',
+    usageScenarios: ['基层医疗卫生', '远程会诊支持', '抗菌药个体化给药', '乡村医院药学辅助决策'],
+    limitations: '该模型用于演示和辅助决策，不替代医生处方；临床使用前需要结合治疗药物监测、医院药学规范和真实病例数据进行验证。',
+    nextSteps: [
+      '接入基层医院 HIS/LIS 中的患者基础信息和检验结果',
+      '补充治疗药物监测数据，校准 AUC24h 预测精度',
+      '封装为 MCP 服务，供乡村医疗智能体在远程会诊中调用'
+    ]
+  },
+  testResults: [
+    { name: '功能完整性', status: 'passed', description: '通过', details: '已覆盖患者输入校验、BSA/eGFR 计算、PK 仿真、推荐剂量和 AUC24h 输出。' },
+    { name: '可解释性', status: 'passed', description: '通过', details: '输出中保留体表面积、eGFR、目标 AUC 与预测 AUC，便于药师和医生复核。' },
+    { name: '部署可行性', status: 'passed', description: '通过', details: '单文件 Python 实现，依赖 numpy/scipy，可进一步封装为 FastAPI 或 MCP 工具。' },
+    { name: '隐私安全', status: 'passed', description: '通过', details: '仅使用必要的结构化生理指标，未引入姓名、身份证号等直接身份信息。' },
+    { name: '临床风险', status: 'warning', description: '需人工复核', details: '模型建议必须由医生或临床药师结合病情、合并用药、TDM 和院内规范确认。' },
+    { name: '参考资料一致性', status: 'passed', description: '通过', details: '算法结构参考开源仓库 Linezolid_repo，并结合 JAC 论文中个体化给药与 AUC 目标思路进行展示化整理。' }
+  ],
+  references: [
+    {
+      type: 'repo',
+      title: 'PolarSnowLeopard/Linezolid_repo',
+      source: 'GitHub',
+      summary: '利奈唑胺剂量计算与药代动力学仿真示例仓库。',
+      what_referenced: '参考了 PatientData/DoseResult 输入输出结构、BSA/eGFR 计算、群体药代参数和 AUC24h 仿真流程。',
+      what_added: '补充了平台统一的 main_process 入口、基层医疗会诊提示和隐私合规说明。',
+      what_improved: '将多文件示例整理成便于平台下载和后续 MCP 封装的单文件算法模型。',
+      advantages_vs_existing: '更适合在智能体平台中作为算法模型生成结果展示，并可直接衔接后续 MCP 服务封装。',
+      ip_considerations: '演示结果保留来源说明，并通过接口结构、输出说明和部署形态调整形成差异化表达。'
+    },
+    {
+      type: 'paper',
+      title: 'Journal of Antimicrobial Chemotherapy 80(7):1915 相关研究资料',
+      source: 'Oxford Academic',
+      summary: '围绕利奈唑胺药代动力学、目标暴露和个体化给药优化的参考资料。',
+      what_referenced: '参考其以 AUC24h 为核心目标的个体化给药优化思路。',
+      what_added: '结合乡村医疗场景增加远程会诊、基层医生复核和临床风险提示。',
+      what_improved: '将论文知识转化为可解释、可下载、可封装的算法模型演示资产。',
+      advantages_vs_existing: '更强调基层应用可落地性和平台资源库复用。',
+      ip_considerations: '不复刻论文全文或数据，仅作为算法需求和临床指标设计参考。'
+    }
+  ],
+  differentiationSummary: {
+    overall_strategy: '以开源 Linezolid_repo 为算法基础，围绕乡村医疗远程会诊场景做平台化、单文件化和可解释化改造。',
+    key_innovations: [
+      '增加面向基层医生的 main_process 统一入口，便于被平台、MCP 服务或智能体调用。',
+      '在输出中同时给出剂量、AUC24h、eGFR 和临床复核提示，增强药学会诊可解释性。',
+      '将模型定位为乡村医疗场景下的辅助决策工具，明确不替代医生处方。'
+    ],
+    improvements: [
+      '从示例代码整理为可下载的算法模型源文件。',
+      '补充隐私最小化、临床人工复核和后续 TDM 校准建议。',
+      '更适配平台“生成算法模型 -> MCP服务封装 -> 智能体生成”的演示链路。'
+    ],
+    advantages: [
+      '生成速度稳定，适合现场演示。',
+      '业务故事完整，能体现医疗企业家关注的基层落地价值。',
+      '结果页包含模型说明、测试结果、参考资料和差异化说明，展示效果完整。'
+    ],
+    ip_risk_notes: 'Mock 内容已标注参考来源，并通过场景定位、接口封装、输出说明和合规提示形成展示用途的差异化表达；正式商用前仍需完成开源协议和论文引用合规审查。'
+  }
+}
+
+const AML_TRANSACTION_DEMO = {
+  modelName: '跨境支付可疑交易风险识别模型',
+  codeFilename: 'cross_border_payment_risk_classifier.py',
+  narrative: '请面向跨境支付AI监测中的金融风控和反洗钱场景，生成一个可疑交易风险识别分类模型。模型需要接收跨境支付交易金额、交易频次、国家地区风险、设备风险、收付款方关系、历史拒付记录、制裁名单命中情况等结构化字段，输出风险等级、可疑原因、置信度和处置建议，用于帮助风控人员在大额跨境转账、异常频繁交易和高风险地区交易中快速识别潜在洗钱风险。',
+  categoryParams: {
+    inputTypes: ['structured_data', 'api_response'],
+    outputTypes: ['classification_label', 'confidence_list', 'json_structure'],
+    labels: ['低风险', '中风险复核', '高风险拦截'],
+    multiLabel: false,
+    constraints: ['single_file', 'rule_based']
+  },
+  generatedCode: `import math
+
+
+HIGH_RISK_COUNTRIES = {"IR", "KP", "SY", "MM", "AF"}
+WATCH_COUNTRIES = {"TR", "AE", "VN", "TH", "NG"}
+
+
+def _to_float(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _to_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def score_cross_border_payment(transaction):
+    amount = _to_float(transaction.get("amount_usd"))
+    daily_count = _to_int(transaction.get("daily_txn_count"))
+    monthly_amount = _to_float(transaction.get("monthly_amount_usd"))
+    country = str(transaction.get("destination_country", "")).upper()
+    device_risk = _to_float(transaction.get("device_risk_score"))
+    counterparty_age_days = _to_int(transaction.get("counterparty_age_days"))
+    chargeback_count = _to_int(transaction.get("chargeback_count_90d"))
+    sanctions_hit = bool(transaction.get("sanctions_hit"))
+    same_ip_multi_accounts = bool(transaction.get("same_ip_multi_accounts"))
+
+    score = 0
+    reasons = []
+
+    if sanctions_hit:
+        score += 45
+        reasons.append("命中制裁或重点关注名单")
+    if country in HIGH_RISK_COUNTRIES:
+        score += 28
+        reasons.append("目的地属于高风险国家或地区")
+    elif country in WATCH_COUNTRIES:
+        score += 12
+        reasons.append("目的地属于重点观察国家或地区")
+    if amount >= 50000:
+        score += 18
+        reasons.append("单笔交易金额显著偏高")
+    elif amount >= 10000:
+        score += 8
+        reasons.append("单笔交易金额较高")
+    if daily_count >= 8:
+        score += 15
+        reasons.append("日内交易频次异常")
+    if monthly_amount >= 200000:
+        score += 12
+        reasons.append("月累计跨境交易金额偏高")
+    if device_risk >= 0.8:
+        score += 12
+        reasons.append("设备或登录环境风险较高")
+    if counterparty_age_days < 7:
+        score += 10
+        reasons.append("新收款方建立后短期内发生交易")
+    if chargeback_count >= 2:
+        score += 8
+        reasons.append("近期存在多次拒付或争议记录")
+    if same_ip_multi_accounts:
+        score += 8
+        reasons.append("同一网络环境关联多个账户")
+
+    score = max(0, min(100, score))
+    confidence = round(1 / (1 + math.exp(-(score - 50) / 12)), 3)
+
+    if score >= 70:
+        label = "高风险拦截"
+        recommendation = "建议自动拦截并进入增强尽调流程，必要时提交人工复核。"
+    elif score >= 40:
+        label = "中风险复核"
+        recommendation = "建议补充交易背景、合同发票和收付款方关系材料后人工复核。"
+    else:
+        label = "低风险"
+        recommendation = "可按常规规则放行，并持续监测后续交易行为。"
+
+    return {
+        "risk_label": label,
+        "risk_score": score,
+        "confidence": confidence,
+        "reasons": reasons or ["未发现明显异常风险因子"],
+        "recommendation": recommendation,
+    }
+
+
+def main_process(transaction):
+    """
+    输入示例:
+    {
+        "amount_usd": 68000,
+        "daily_txn_count": 9,
+        "monthly_amount_usd": 260000,
+        "destination_country": "AE",
+        "device_risk_score": 0.82,
+        "counterparty_age_days": 3,
+        "chargeback_count_90d": 1,
+        "sanctions_hit": false,
+        "same_ip_multi_accounts": true
+    }
+    """
+    if not isinstance(transaction, dict):
+        raise ValueError("transaction must be a dict")
+    return score_cross_border_payment(transaction)
+`,
+  modelSummary: {
+    purpose: '面向跨境支付AI监测场景，为金融风控和反洗钱团队提供可疑交易风险等级识别、原因解释和处置建议。',
+    inputDescription: '跨境支付结构化交易数据：交易金额、交易频次、目的国家地区、设备风险、收付款方关系、拒付记录、制裁名单命中等字段。',
+    outputDescription: '输出风险等级、风险分数、置信度、可疑原因列表和业务处置建议。',
+    usageScenarios: ['金融风控', '反洗钱监测', '大额跨境转账审核', '高风险地区交易识别'],
+    limitations: '该模型用于演示和辅助初筛，正式使用前需要接入真实交易样本、名单服务、机构规则库和人工复核闭环进行校准。',
+    nextSteps: [
+      '接入真实跨境支付交易流水和黑白名单服务',
+      '根据机构历史 SAR/STR 案例校准风险阈值',
+      '封装为 MCP 服务，供反洗钱智能体在调查流程中调用'
+    ]
+  },
+  testResults: [
+    { name: '功能完整性', status: 'passed', description: '通过', details: '已覆盖交易特征解析、风险打分、等级分类、原因解释和处置建议输出。' },
+    { name: '可解释性', status: 'passed', description: '通过', details: '每个风险分数均对应可读原因，便于风控人员复核和展示。' },
+    { name: '部署可行性', status: 'passed', description: '通过', details: '单文件 Python 实现，无需模型训练即可作为规则增强型原型部署。' },
+    { name: '合规适配', status: 'passed', description: '通过', details: '结果保留人工复核和增强尽调建议，适合演示反洗钱辅助决策流程。' },
+    { name: '数据安全', status: 'passed', description: '通过', details: '示例仅使用交易风险字段，不包含银行卡号、身份证号等直接敏感标识。' },
+    { name: '模型泛化', status: 'warning', description: '需校准', details: '上线前应使用真实机构样本、名单数据和历史可疑案例调整阈值。' }
+  ],
+  references: [
+    {
+      type: 'model',
+      title: '跨境支付反洗钱风险规则库',
+      source: '平台演示知识库',
+      summary: '围绕大额交易、频繁交易、高风险地区、制裁名单和设备异常等因子构建的演示规则集合。',
+      what_referenced: '参考了反洗钱场景中常见的交易监测指标和增强尽调触发条件。',
+      what_added: '新增了面向平台展示的风险分数、置信度、原因列表和处置建议结构。',
+      what_improved: '将分散规则整理为统一 main_process 算法入口，便于后续服务封装和智能体调用。',
+      advantages_vs_existing: '既能快速演示生成结果，也能讲清楚风控业务人员关心的“为什么判为可疑”。',
+      ip_considerations: '使用通用风险因子构建演示 Mock，不复刻具体机构私有规则或真实客户数据。'
+    },
+    {
+      type: 'url',
+      title: '跨境支付交易监测业务流程示例',
+      source: '平台业务样例',
+      summary: '用于展示从交易数据接入、算法识别、人工复核到处置建议的完整演示链路。',
+      what_referenced: '参考了平台中跨境支付AI监测垂域的行业、场景和异常识别技术配置。',
+      what_added: '补充了可下载源码、测试结果和差异化说明，便于现场演示。',
+      what_improved: '让“算法模型想定式开发”模块可以稳定呈现完整生成成果。',
+      advantages_vs_existing: '无需等待真实智能体执行，演示流程更可控。',
+      ip_considerations: 'Mock 数据为演示用途，不包含真实交易主体和生产规则。'
+    }
+  ],
+  differentiationSummary: {
+    overall_strategy: '围绕跨境支付反洗钱场景，将常见风险因子封装为可解释的分类算法原型，突出平台从需求配置到算法结果展示的能力。',
+    key_innovations: [
+      '将交易金额、频次、国家地区、设备风险和名单命中统一纳入风险评分。',
+      '输出风险等级的同时给出可疑原因和处置建议，便于业务人员理解。',
+      '采用单文件 main_process 入口，便于继续封装为 MCP 服务或智能体工具。'
+    ],
+    improvements: [
+      '相比普通规则列表，结果包含置信度、原因解释和后续复核建议。',
+      '相比真实生成流程，演示时间和结果更稳定。',
+      '更适配“生成算法模型 -> MCP服务封装 -> 智能体生成”的平台展示链路。'
+    ],
+    advantages: [
+      '场景贴近金融科技企业和监管科技企业关注点。',
+      '可直接演示跨境支付风控、反洗钱和异常识别能力。',
+      '结果页包含模型说明、测试结果、参考资料和差异化说明，展示完整。'
+    ],
+    ip_risk_notes: '该 Mock 使用通用反洗钱风险因子和虚构字段，不包含真实机构私有规则、客户数据或生产名单；正式商用前仍需完成合规审查和机构规则校准。'
+  }
+}
+
 const CATEGORY_PARAMS_CONFIG = {
   classification: {
     label: '分类算法参数',
@@ -798,6 +1179,11 @@ export default {
         this.$set(this.programInfo, 'technology', this.technologyOptions[0].code)
       }
 
+      if (this.isHealthDemoMock()) {
+        await this.applyHealthDemoDefaults()
+        return
+      }
+
       if (!this.algorithmCategory && this.algorithmCategoryOptions.length) {
         const preferred = this.algorithmCategoryOptions.find(item => item.code === 'classification')
         this.algorithmCategory = (preferred || this.algorithmCategoryOptions[0]).code
@@ -813,6 +1199,60 @@ export default {
       if (!this.serviceNameTouched && (!this.form.serviceName || this.form.serviceName === this.serviceNameAutoValue)) {
         this.serviceNameAutoValue = this.buildDefaultModelName()
         this.form.serviceName = this.serviceNameAutoValue
+      }
+    },
+
+    isHealthDemoMock() {
+      return this.verticalType === HEALTH_DEMO_VERTICAL_TYPE
+    },
+
+    isAmlDemoMock(modelName = '') {
+      return this.verticalType === AML_DEMO_VERTICAL_TYPE &&
+        String(modelName || '').includes(AML_TRANSACTION_DEMO.modelName)
+    },
+
+    getOptionCodeByText(options, keyword, fallbackCode) {
+      const hit = (options || []).find(item => String(item.text || '').includes(keyword))
+      return (hit && hit.code) || fallbackCode
+    },
+
+    async applyHealthDemoDefaults() {
+      this.$set(this.programInfo, 'industry', this.getOptionCodeByText(this.industryOptions, '基层医疗卫生', this.programInfo.industry))
+      this.$set(this.programInfo, 'scenario', this.getOptionCodeByText(this.scenarioOptions, '远程会诊支持', this.programInfo.scenario))
+      this.$set(this.programInfo, 'technology', this.getOptionCodeByText(this.technologyOptions, '时序数据分析', this.programInfo.technology))
+
+      const regression = this.algorithmCategoryOptions.find(item => item.code === 'regression')
+      this.algorithmCategory = (regression || this.algorithmCategoryOptions[0] || {}).code || 'regression'
+      await this.onCategoryChange(this.algorithmCategory, true)
+      this.categoryParams = { ...HEALTH_LINEZOLID_DEMO.categoryParams }
+      this.customConstraintText = ''
+
+      if (!this.freeNarrative) {
+        this.freeNarrative = HEALTH_LINEZOLID_DEMO.narrative
+      }
+      if (!this.serviceNameTouched && (!this.form.serviceName || this.form.serviceName === this.serviceNameAutoValue)) {
+        this.serviceNameAutoValue = HEALTH_LINEZOLID_DEMO.modelName
+        this.form.serviceName = HEALTH_LINEZOLID_DEMO.modelName
+      }
+    },
+
+    async applyAmlDemoDefaults() {
+      this.$set(this.programInfo, 'industry', this.getOptionCodeByText(this.industryOptions, '金融风控', this.programInfo.industry))
+      this.$set(this.programInfo, 'scenario', this.getOptionCodeByText(this.scenarioOptions, '反洗钱', this.programInfo.scenario))
+      this.$set(this.programInfo, 'technology', this.getOptionCodeByText(this.technologyOptions, '异常识别', this.programInfo.technology))
+
+      const classification = this.algorithmCategoryOptions.find(item => item.code === 'classification')
+      this.algorithmCategory = (classification || this.algorithmCategoryOptions[0] || {}).code || 'classification'
+      await this.onCategoryChange(this.algorithmCategory, true)
+      this.categoryParams = { ...AML_TRANSACTION_DEMO.categoryParams }
+      this.customConstraintText = ''
+
+      if (!this.freeNarrative) {
+        this.freeNarrative = AML_TRANSACTION_DEMO.narrative
+      }
+      if (!this.serviceNameTouched && (!this.form.serviceName || this.form.serviceName === this.serviceNameAutoValue)) {
+        this.serviceNameAutoValue = AML_TRANSACTION_DEMO.modelName
+        this.form.serviceName = AML_TRANSACTION_DEMO.modelName
       }
     },
 
@@ -1013,7 +1453,111 @@ export default {
         )
         return
       }
+      if (this.isHealthDemoMock()) {
+        this.startHealthDemoGenerate(name, narrative)
+        return
+      }
+      if (this.isAmlDemoMock(name, narrative)) {
+        this.startAmlDemoGenerate(name, narrative)
+        return
+      }
       this.startGenerate(name, narrative)
+    },
+
+    startHealthDemoGenerate(modelName) {
+      this.generateLoading = true
+      this.generateProgress = {
+        show: true,
+        status: 'process',
+        description: '正在加载乡村医疗AI应用演示数据，每个步骤约 10 秒，请稍候...',
+        expanded: true,
+        agentSteps: [],
+        friendlySteps: this.buildFriendlySteps(1)
+      }
+      this.generateResult.show = false
+
+      const progressTimers = [
+        [10000, 2, '已识别基层医疗远程会诊场景，正在匹配利奈唑胺给药模型。'],
+        [20000, 3, '正在整理 Linezolid_repo 模型源码与药代动力学计算逻辑。'],
+        [30000, 4, '正在生成测试说明、参考资料和差异化说明。'],
+        [40000, 5, '演示算法模型已生成，可查看说明并下载源文件。']
+      ]
+      progressTimers.forEach(([delay, step, message]) => {
+        window.setTimeout(() => {
+          if (!this.generateProgress.show || !this.isHealthDemoMock()) return
+          this.updateFriendlyProgress(step, message)
+          if (step === 5) {
+            this.generateProgress.status = 'finish'
+            this.generateProgress.description = message
+            this.generateLoading = false
+            this.generateResult = this.buildHealthDemoResult(modelName)
+            this.$message.success('演示算法模型生成成功！')
+          }
+        }, delay)
+      })
+    },
+
+    buildHealthDemoResult(modelName) {
+      return {
+        show: true,
+        generatedCode: HEALTH_LINEZOLID_DEMO.generatedCode,
+        codeFilename: HEALTH_LINEZOLID_DEMO.codeFilename,
+        modelSummary: {
+          ...HEALTH_LINEZOLID_DEMO.modelSummary,
+          outputDescription: `输出名为“${modelName || HEALTH_LINEZOLID_DEMO.modelName}”的算法模型源文件，并提供剂量预测、测试结果、参考资料和差异化说明。`
+        },
+        testResults: HEALTH_LINEZOLID_DEMO.testResults,
+        references: HEALTH_LINEZOLID_DEMO.references,
+        differentiationSummary: HEALTH_LINEZOLID_DEMO.differentiationSummary
+      }
+    },
+
+    startAmlDemoGenerate(modelName) {
+      this.generateLoading = true
+      this.generateProgress = {
+        show: true,
+        status: 'process',
+        description: '正在加载跨境支付AI监测演示数据，每个步骤约 10 秒，请稍候...',
+        expanded: true,
+        agentSteps: [],
+        friendlySteps: this.buildFriendlySteps(1)
+      }
+      this.generateResult.show = false
+
+      const progressTimers = [
+        [10000, 2, '已识别金融风控与反洗钱场景，正在匹配可疑交易风险识别模型。'],
+        [20000, 3, '正在整理跨境支付交易字段、风险因子和分类逻辑。'],
+        [30000, 4, '正在生成测试说明、参考资料和差异化说明。'],
+        [40000, 5, '演示算法模型已生成，可查看说明并下载源文件。']
+      ]
+      progressTimers.forEach(([delay, step, message]) => {
+        window.setTimeout(() => {
+          if (!this.generateProgress.show || this.verticalType !== AML_DEMO_VERTICAL_TYPE) return
+          this.updateFriendlyProgress(step, message)
+          if (step === 5) {
+            this.generateProgress.status = 'finish'
+            this.generateProgress.description = message
+            this.generateLoading = false
+            this.generateResult = this.buildAmlDemoResult(modelName)
+            this.$message.success('演示算法模型生成成功！')
+          }
+        }, delay)
+      })
+    },
+
+    buildAmlDemoResult(modelName) {
+      return {
+        show: true,
+        generatedCode: AML_TRANSACTION_DEMO.generatedCode,
+        codeFilename: AML_TRANSACTION_DEMO.codeFilename,
+        modelSummary: {
+          ...AML_TRANSACTION_DEMO.modelSummary,
+          outputDescription: `输出名为“${modelName || AML_TRANSACTION_DEMO.modelName}”的算法模型源文件，并提供风险分类、测试结果、参考资料和差异化说明。`
+        },
+        testResults: AML_TRANSACTION_DEMO.testResults,
+        references: AML_TRANSACTION_DEMO.references,
+        differentiationSummary: AML_TRANSACTION_DEMO.differentiationSummary
+      }
     },
 
     startGenerate(modelName, narrative) {

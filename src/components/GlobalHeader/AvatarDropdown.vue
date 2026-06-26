@@ -1,19 +1,10 @@
 <template>
   <a-dropdown v-if="currentUser && currentUser.name" placement="bottomRight">
-    <span class="ant-pro-account-avatar ant-pro-account-avatar--with-progress">
+    <span class="ant-pro-account-avatar">
       <div class="avatar-row">
         <a-avatar size="small" :src="currentUser.avatar || '/avatar2.png'" class="antd-pro-global-header-index-avatar" />
         <span class="avatar-name">{{ currentUser.name }}</span>
       </div>
-      <a-tooltip :title="$t('account.settings.profile.completion') + '：' + (currentUser.completion || 0) + '%'">
-        <a-progress
-          class="avatar-progress"
-          :percent="currentUser.completion || 0"
-          :show-info="false"
-          size="small"
-          @click.native.stop="handleToProfile"
-        />
-      </a-tooltip>
     </span>
     <template v-slot:overlay>
       <a-menu class="ant-pro-drop-down menu" :selected-keys="[]">
@@ -60,9 +51,6 @@ export default {
     handleToSettings () {
       this.$router.push({ path: '/account/settings' })
     },
-    handleToProfile () {
-      this.$router.push({ path: '/account/settings/profile' }).catch(() => {})
-    },
     handleLogout (e) {
       Modal.confirm({
         title: this.$t('layouts.usermenu.dialog.title'),
@@ -92,9 +80,9 @@ export default {
   }
 }
 
-.ant-pro-account-avatar--with-progress {
+.ant-pro-account-avatar {
   display: inline-flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
   line-height: 1.2;
   vertical-align: middle;
@@ -105,17 +93,6 @@ export default {
 
     .avatar-name {
       margin-left: 8px;
-    }
-  }
-
-  .avatar-progress {
-    width: 100%;
-    min-width: 90px;
-    margin-top: 2px;
-    cursor: pointer;
-
-    :deep(.ant-progress-inner) {
-      vertical-align: top;
     }
   }
 }

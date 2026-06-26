@@ -3,6 +3,7 @@ import expirePlugin from 'store/plugins/expire'
 import { login, getInfo, logout } from '@/api/login'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { welcome } from '@/utils/util'
+import { consumeNewUserSurveyPending, markSurveyPromptPending } from '@/api/userProfile'
 
 storage.addPlugin(expirePlugin)
 const user = {
@@ -45,6 +46,9 @@ const user = {
           storage.set(ACCESS_TOKEN, result.token, new Date().getTime() + 7 * 24 * 60 * 60 * 1000)
           commit('SET_TOKEN', result.token)
           localStorage.setItem('username', result.username)
+          if (consumeNewUserSurveyPending(result.username)) {
+            markSurveyPromptPending(result.username)
+          }
           resolve(response)
         }).catch(error => {
           reject(error)
@@ -102,7 +106,7 @@ const user = {
           console.log('logout fail:', err)
           resolve()
         }).finally(() => {
-          localStorage.clear()
+          localStorage.removeItem('username')
         })
       })
     }

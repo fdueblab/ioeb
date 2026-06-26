@@ -4,13 +4,13 @@
     <table class="table_default1" >
       <tr>
         <th>序号</th>
-        <th v-for="th in tableTh" >
+        <th v-for="(th, key) in tableTh" :key="key">
           {{ th.title }}
         </th>
       </tr>
-      <tr v-for="(tr,index) in dataList">
+      <tr v-for="(tr,index) in dataList" :key="index">
         <td>{{ index+1 }}</td>
-        <td v-for="td in tr" >
+        <td v-for="(td, key) in tr" :key="key">
           {{ td }}
         </td>
       </tr>

@@ -51,8 +51,8 @@ import cloneDeep from 'lodash.clonedeep'
 import defaultSettings from '@/config/defaultSettings'
 import RightContent from '@/components/GlobalHeader/RightContent'
 import UserProfileSurvey from '@/components/UserProfileSurvey'
-import { isSurveyDone } from '@/api/userProfile'
-import { projectDomainMenus } from '@/utils/domainContext'
+import { consumeSurveyPromptPending, isSurveyDone } from '@/api/userProfile'
+import { DEFAULT_LANDING_PATH, projectDomainMenus } from '@/utils/domainContext'
 // import { asyncRouterMap } from '@/config/router.config.js'
 export default {
   name: 'BasicLayout',
@@ -143,17 +143,19 @@ export default {
     if (process.env.NODE_ENV !== 'production' && process.env.VUE_APP_PREVIEW === 'true') {
       updateTheme(this.settings.primaryColor)
     }
-    // 登录后若未完成/跳过过问卷，且画像为空，则弹出用户画像问卷（可跳过）
+    // 仅在登录成功后的首次进入检查问卷；刷新页面或切换模块不触发。
     this.maybeShowSurvey()
   },
   methods: {
     i18nRender,
     maybeShowSurvey() {
-      // 已完成或跳过过则不再弹出
-      if (isSurveyDone() || (this.$route.meta && this.$route.meta.suppressProfileSurvey)) {
+      if (!consumeSurveyPromptPending() || isSurveyDone()) {
         return
       }
-      // 确保画像已加载后再判断是否为空
+      if (this.$route.path !== DEFAULT_LANDING_PATH) {
+        return
+      }
+      // 已有任意画像内容时不再弹出，保留用户上次填写的最新记录。
       this.$store.dispatch('LoadProfile').then(() => {
         if (!isSurveyDone() && this.$store.getters.profileCompletion === 0) {
           // 略微延迟，等待主界面渲染完成，体验更平滑
@@ -163,9 +165,14 @@ export default {
         }
       })
     },
-    handleSurveyDone() {
+    handleSurveyDone(selectedDomain) {
       this.surveyVisible = false
-      window.location.reload()
+      if (selectedDomain && selectedDomain.code) {
+        this.$store.dispatch('SetCurrentDomain', {
+          code: selectedDomain.code,
+          text: selectedDomain.domain || selectedDomain.label
+        })
+      }
     },
     handleMediaQuery(val) {
       this.query = val

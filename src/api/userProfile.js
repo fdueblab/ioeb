@@ -8,10 +8,16 @@
 
 const PROFILE_PREFIX = 'user_profile_'
 const SURVEY_DONE_PREFIX = 'profile_survey_done_'
+const NEW_USER_SURVEY_PENDING_PREFIX = 'new_user_survey_pending_'
+const SURVEY_PROMPT_PENDING_PREFIX = 'profile_survey_prompt_pending_'
 const DEFAULT_VERTICAL = 'aml'
 
 function currentUsername () {
   return localStorage.getItem('username') || 'anonymous'
+}
+
+function normalizedUsername (username) {
+  return username || currentUsername()
 }
 
 function profileKey () {
@@ -84,6 +90,34 @@ export function markSurveyDone () {
 }
 
 /**
+ * 注册成功后记录：该新账号首次登录时需要弹出兴趣调查。
+ */
+export function markNewUserSurveyPending (username) {
+  localStorage.setItem(`${NEW_USER_SURVEY_PENDING_PREFIX}${normalizedUsername(username)}`, '1')
+}
+
+export function consumeNewUserSurveyPending (username) {
+  const key = `${NEW_USER_SURVEY_PENDING_PREFIX}${normalizedUsername(username)}`
+  const pending = localStorage.getItem(key) === '1'
+  localStorage.removeItem(key)
+  return pending
+}
+
+/**
+ * 登录成功后只允许触发一次兴趣调查检查。
+ */
+export function markSurveyPromptPending (username) {
+  sessionStorage.setItem(`${SURVEY_PROMPT_PENDING_PREFIX}${normalizedUsername(username)}`, '1')
+}
+
+export function consumeSurveyPromptPending (username) {
+  const key = `${SURVEY_PROMPT_PENDING_PREFIX}${normalizedUsername(username)}`
+  const pending = sessionStorage.getItem(key) === '1'
+  sessionStorage.removeItem(key)
+  return pending
+}
+
+/**
  * 从简历文本抽取画像（前端实现）。
  * 预留：后端/LLM 就绪后可改为远程调用以提升准确率。
  * @param {string} text 简历纯文本
@@ -105,5 +139,9 @@ export default {
   setPreferredVertical,
   isSurveyDone,
   markSurveyDone,
+  markNewUserSurveyPending,
+  consumeNewUserSurveyPending,
+  markSurveyPromptPending,
+  consumeSurveyPromptPending,
   extractFromResume
 }

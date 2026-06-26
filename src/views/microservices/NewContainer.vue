@@ -16,7 +16,6 @@
 </template>
 
 <script>
-  import Vue from 'vue'
   import { createContainer, createimage } from '@/api/docker'
   export default {
     name: 'NewContainer',

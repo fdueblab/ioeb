@@ -2,7 +2,7 @@ import { getProfile, saveProfile } from '@/api/userProfile'
 
 // 画像字段定义（用于完成度计算与展示顺序）
 // preferredVertical: 兴趣调查选择的垂域；interestPoints: 垂域兴趣点（可选）
-export const PROFILE_FIELDS = ['preferredVertical', 'domain', 'major', 'occupation', 'techNeeds']
+export const PROFILE_FIELDS = ['domain', 'major', 'occupation', 'techNeeds', 'bio']
 
 const emptyProfile = () => ({
   preferredVertical: '',
