@@ -1,37 +1,38 @@
 # 仿真构建 · 当前接口契约
 
-更新：2026-06-21。本文是 LLM/工程协作者修改仿真构建时的当前契约。产品与研究叙事见同目录其它文档。
+更新：2026-06-28。本文是 LLM/工程协作者修改仿真构建时的当前契约。产品与研究叙事见同目录其它文档；本地联调启停见 `~/.cursor/rules/fdueblab-local-dev.mdc`。
 
 ## 一、仓库职责
 
 | 仓库 | 职责 |
 | --- | --- |
-| ioeb | Vue 2 前端，负责画布、仿真构建面板、临时 JSON/摘要展示 |
+| ioeb | Vue 2 前端，负责画布、仿真构建面板、预发布表单、临时 JSON/摘要展示 |
 | Micro-Agent | FastAPI，负责 LLM+MCP 构建、BuildBundle 落盘、artifact 运行、实验 runner |
-| external-mcp | 本地实验 MCP 服务集合 |
-| ioeb_backend | 系统后端，当前不参与仿真构建、不写 artifact、不写实验结果 |
+| external-mcp | 医疗 MCP 服务集合；元数据 SoT 为 `service_catalog.json` |
+| ioeb_backend | 系统后端：用户/服务 CRUD；当前不承载 BuildBundle/Artifact |
 
 调用关系：
 
 ```text
-ioeb 系统功能      -> VUE_APP_API_BASE_URL   -> ioeb_backend
-ioeb 仿真构建      -> VUE_APP_AGENT_BASE_URL -> Micro-Agent
-Micro-Agent 真实调用 -> 本地/远程 MCP 服务
+ioeb 系统功能 / prepublish -> VUE_APP_API_BASE_URL   -> ioeb_backend
+ioeb 仿真构建              -> VUE_APP_AGENT_BASE_URL -> Micro-Agent
+Micro-Agent 真实调用       -> 远程 MCP（mcpUrl 来自 servicesMeta / 服务库）
 ```
 
-当前本地默认端口：Micro-Agent `9017`，ioeb `6173`。
+**端口（ebLab SSH 本地联调）**：ioeb `6173`，Micro-Agent `9017`，ioeb_backend `5000`（`wsgi_verify.py`）。
+**端口（staging/prod）**：经 nginx；Agent 容器 `8010`，backend `5000`，MCP 经 `/mcp-proxy/{port}/sse`。
 
 ## 二、Micro-Agent 关键文件
 
 | 文件 | 作用 |
 | --- | --- |
 | `api/routes/simulation.py` | `/api/simulation/*` 路由；start/stream/build/run/experiment |
-| `micro_agent/simulation/orchestrator.py` | 想定解析、catalog 内服务选择、MCP 注册、ReAct 慢模式、Verifier 循环 |
+| `micro_agent/simulation/orchestrator.py` | 想定规范化、MCP 注册、ReAct 慢模式、Verifier 循环 |
 | `micro_agent/simulation/logging_mcp_tool.py` | 真实 MCP 工具调用记录 |
 | `micro_agent/simulation/sandbox_tool.py` | demo fake MCP/SandboxTool 调用记录 |
 | `micro_agent/simulation/trace_records.py` | `tool_call_record` 事件和 trace metadata |
 | `micro_agent/simulation/build_bundle.py` | BuildBundle 保存/读取 |
-| `micro_agent/simulation/artifact_compiler.py` | trace -> ServiceSelectionReport / AcceptedTrajectory / MetaAppArtifact / frontend_state |
+| `micro_agent/simulation/artifact_compiler.py` | trace -> AcceptedTrajectory / MetaAppArtifact |
 | `micro_agent/simulation/artifact_runtime.py` | GoldenPath replay + fallback 慢模式 + Eval-time Verifier |
 | `micro_agent/simulation/experiments.py` | `real_mcp_reuse` baseline runner |
 
@@ -43,6 +44,8 @@ Micro-Agent 真实调用 -> 本地/远程 MCP 服务
 | `src/components/ef/simulation_builder.vue` | 主仿真构建面板；读取 trace/evidence summary/artifact，展示临时 JSON/摘要 |
 | `src/components/ef/meta_app_build/MetaAppConfigDetail.vue` | 预发布/构建详情中的产物摘要展示 |
 | `src/components/ef/meta_app_build/SimulationDetailSidebar.vue` | 构建详情侧栏 |
+| `src/components/ef/meta_app_build/MetaAppPublishForm.vue` | 预发布表单 |
+| `src/components/ef/meta_app_build/MetaAppBuildShell.vue` | 构建工作台壳 |
 | `src/mock/services/simulation_builder_inmemory.js` | 课题演示进程内 mock 流 |
 | `src/mock/data/topic_simulation_artifacts.js` | 课题演示产物合成；仍可能是旧演示形状，不计入真实链路 |
 
@@ -55,14 +58,10 @@ interface SimulationStartRequest {
   appId?: string
   appName?: string
   domain?: string
-  serviceIds?: string[]
   servicesMeta?: Record<string, any>[]
   maxIterations?: number
   scenarioDescription?: string
-  scenarioSummary?: string
   scenarioParsed?: Record<string, any>
-  mode?: 'production' | 'research' | string
-  strategy?: Record<string, any>
 }
 ```
 
@@ -75,14 +74,12 @@ interface SimulationStartRequest {
   "buildId": "build-...",
   "streamUrl": "/api/simulation/build-.../stream",
   "buildRef": {
-    "manifestUrl": "/api/simulation/builds/build-.../manifest",
-    "traceUrl": "/api/simulation/builds/build-.../trace",
-    "serviceSelectionUrl": "/api/simulation/builds/build-.../service-selection",
-    "acceptedTrajectoryUrl": "/api/simulation/builds/build-.../accepted-trajectory",
-    "artifactUrl": "/api/simulation/builds/build-.../artifact",
-    "frontendStateUrl": "/api/simulation/builds/build-.../frontend-state",
-    "runUrl": "/api/simulation/builds/build-.../run",
-    "experimentUrl": "/api/simulation/builds/build-.../experiments/run"
+    "manifestUrl": "/api/simulation/build-.../manifest",
+    "traceUrl": "/api/simulation/build-.../trace",
+    "acceptedTrajectoryUrl": "/api/simulation/build-.../accepted-trajectory",
+    "artifactUrl": "/api/simulation/build-.../artifact",
+    "runUrl": "/api/simulation/build-.../run",
+    "experimentUrl": "/api/simulation/build-.../experiments/run"
   }
 }
 ```
@@ -96,9 +93,7 @@ interface SimulationStartRequest {
 ```text
 step
 scenario_parsed
-service_selection
 service
-progress
 iteration
 phase
 service_calling
@@ -106,7 +101,6 @@ planner_decision
 verifier_result
 issue
 log
-metrics
 complete
 ```
 
@@ -114,49 +108,32 @@ complete
 
 ```text
 scenario_parsed?
-step(service matching)
-service_selection
+step(connect services)
 service*
-step(environment)
-progress*
 step(intelligent build)
 iteration/phase/log/service_calling/planner_decision/verifier_result
 issue? + retry iteration*
-step(generation)
 complete
 ```
 
-注意：当前后端在 SSE generator `finally` 中保存 BuildBundle，因此 `complete` 到达后 bundle 可能尚未完全稳定可读。前端当前用读取重试规避。
+后端先保存 BuildBundle/manifest，再发送 `complete`；`complete.publishable=true` 表示可以进入预发布。
 
 ## 六、BuildBundle 读取
 
-新 URL：
-
 ```text
-GET /api/simulation/builds
-GET /api/simulation/builds/{buildId}/manifest
-GET /api/simulation/builds/{buildId}/trace
-GET /api/simulation/builds/{buildId}/service-selection
-GET /api/simulation/builds/{buildId}/accepted-trajectory
-GET /api/simulation/builds/{buildId}/artifact
-GET /api/simulation/builds/{buildId}/frontend-state
-```
-
-当前 ioeb 仍调用部分旧展示 URL，但这些 URL 只读取新 BuildBundle：
-
-```text
-GET  /api/simulation/{buildId}/trace
+GET /api/simulation/records
+GET /api/simulation/{buildId}/manifest
+GET /api/simulation/{buildId}/trace
+GET /api/simulation/{buildId}/accepted-trajectory
+GET /api/simulation/{buildId}/artifact
 POST /api/simulation/{buildId}/evidence
-GET  /api/simulation/{buildId}/artifact
-GET  /api/simulation/{buildId}/frontend-state
-POST /api/simulation/{buildId}/artifact
 ```
 
 `POST /evidence` 返回 `build_evidence_summary.v1` 派生摘要。
 
 ## 七、Artifact 运行
 
-`POST /api/simulation/builds/{buildId}/run`
+`POST /api/simulation/{buildId}/run`
 
 ```json
 {
@@ -187,7 +164,7 @@ POST /api/simulation/{buildId}/artifact
 
 ```text
 GET  /api/simulation/experiments/runners
-POST /api/simulation/builds/{buildId}/experiments/run
+POST /api/simulation/{buildId}/experiments/run
 ```
 
 `POST /experiments/run` body：
@@ -201,34 +178,40 @@ POST /api/simulation/builds/{buildId}/experiments/run
 
 实验结果写入 MicroAgent 本地 BuildBundle 的 `experiment/latest_result.json`，不写 ioeb_backend。
 
-## 九、真实/演示分流
+## 九、平台持久化边界
 
-- 展示名含“课题”：ioeb 走进程内 inmemory demo。
-- 展示名含 `【本地MCP】(n)` 或其它真实路径：ioeb 走 Micro-Agent。
-- `VUE_APP_LOCAL_MCP_REWRITE=true` 是已有本地开发逻辑，用于把 `fdueblab.cn/mcp-proxy/PORT` 改写为本机同端口；不是本次新机制。
+当前预发布仍按既有元应用配置入库，不写 BuildBundle/Artifact 引用。待真实构建、运行和实验链路通过后，再给 ioeb_backend 增加独立 Artifact 表；本阶段不修改现有数据库模型。
+
+## 十、真实/演示分流
+
+- 展示名含「课题」：ioeb 走进程内 inmemory demo。
+- 其它 health 等真实场景：ioeb 走 Micro-Agent。
+- MCP 服务 URL 来自服务库 `service_apis.url`（`https://fdueblab.cn/mcp-proxy/18000–18007/sse`，见 `service_catalog.json`）。`localUrl` 仅本地批量实验直连。
 
 demo/fake MCP 不计入 researchEligible。
 
-## 十、运行命令
+## 十一、本地联调（ebLab）
 
-Micro-Agent：
-
-```bash
-cd /home/lyx/workspace/fdueblab/Micro-Agent
-.venv/bin/uvicorn api.app:app --host 127.0.0.1 --port 9017 --reload
-```
-
-ioeb：
+**勿**在 Cursor Agent 背景 Shell 里起长驻进程（易被 SIGKILL）。在服务器上：
 
 ```bash
-cd /home/lyx/workspace/fdueblab/ioeb
-npm run serve -- --port 6173 --host 127.0.0.1
+bash ~/workspace/fdueblab/.local-dev/server-start.sh
 ```
+
+客户端 SSH 隧道（须含 **6173 + 9017 + 5000**）：
+
+```bash
+bash ~/workspace/fdueblab/.local-dev/ssh-tunnel-from-client.sh
+```
+
+浏览器 `http://127.0.0.1:6173`；env 见 `ioeb/.env.development.local`。
 
 健康检查：
 
 ```bash
+curl http://127.0.0.1:5000/api/health
 curl http://127.0.0.1:9017/docs
-curl http://127.0.0.1:9017/api/simulation/experiments/runners
 curl http://127.0.0.1:6173/
 ```
+
+日志：`/tmp/fdueblab-ioeb-backend.log`、`/tmp/fdueblab-micro-agent.log`、`/tmp/fdueblab-ioeb-serve.log`。

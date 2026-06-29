@@ -16,6 +16,7 @@
         :input-type="inputType"
         :output-type="outputType"
         :service-ids="serviceIds"
+        :build-product="buildProduct"
         @published="$emit('published')"
         @back="$emit('back')"
       />
@@ -37,7 +38,8 @@ export default {
     inputType: { type: Number, default: 1 },
     outputType: { type: Number, default: 1 },
     verticalType: { type: String, required: true },
-    serviceIds: { type: Array, default: () => [] }
+    serviceIds: { type: Array, default: () => [] },
+    buildProduct: { type: Object, required: true }
   }
 }
 </script>

@@ -133,6 +133,10 @@ export default {
     verticalType: {
       type: String,
       required: true
+    },
+    metaAppId: {
+      type: String,
+      required: true
     }
   },
   data () {
@@ -247,22 +251,6 @@ export default {
     },
     // 发送请求（统一流式逻辑入口；非支持类型返回203）
     async onRequestSend() {
-      const api = this.apiList[0]
-      const isFakeApi = api && api.isFake
-      // 假结果部分
-      if (isFakeApi) {
-        this.isStreaming = true
-        this.isCompleted = false
-        setTimeout(() => {
-          console.log(api.response)
-          this.response = api.response
-          const fakeFinalResults = this.response.final_results
-          this.responseHtml = fakeFinalResults.text_result ? this.renderMarkdown(fakeFinalResults.text_result) : fakeFinalResults
-          this.isStreaming = false
-          this.isCompleted = true
-        }, 1000)
-        return
-      }
       try {
         switch (this.apiList[0].parameterType) {
           // 文本输入
@@ -272,19 +260,14 @@ export default {
               this.$message.error('请输入内容')
               return
             }
-            // 需要用到完整服务信息
-            if (!this.fullServices || this.fullServices.length === 0) {
-              this.$message.error('服务列表为空，无法运行')
+            if (!this.metaAppId) {
+              this.$message.error('元应用 ID 缺失，无法运行')
               return
             }
             // 构建表单数据
             const formData = new FormData()
             formData.append('message', this.code.trim())
-            const appConfig = {
-              info: this.apiList[0],
-              services: this.fullServices
-            }
-            formData.append('app_config', JSON.stringify(appConfig))
+            formData.append('meta_app_id', this.metaAppId)
             // UI：显示日志视图 + loading
             this.isStreaming = true
             this.isCompleted = false

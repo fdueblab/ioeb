@@ -161,6 +161,13 @@
             </a-form-item>
           </a-col>
         </a-row>
+        <a-divider>运行环境</a-divider>
+        <div class="wb-runtime-spec">
+          <div v-for="row in runtimeDisplay" :key="row.label" class="wb-runtime-row">
+            <span>{{ row.label }}</span>
+            <code>{{ row.value }}</code>
+          </div>
+        </div>
           </a-form>
         </div>
         <div class="wb-publish-actions">
@@ -176,7 +183,10 @@
 import { prepublishService } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
 import store from '@/store'
-import { resolveTopicPrepublishMock } from '@/mock/data/topic_prepublish_mock'
+import {
+  metaAppRuntimeDisplay
+} from './runtime_spec'
+import { buildMetaAppPrepublishPayload } from './prepublish_payload'
 
 export default {
   name: 'MetaAppPublishForm',
@@ -188,7 +198,8 @@ export default {
     preOutputName: { type: String, default: '输出内容' },
     inputType: { type: Number, default: 1 },
     outputType: { type: Number, default: 1 },
-    serviceIds: { type: Array, default: () => [] }
+    serviceIds: { type: Array, default: () => [] },
+    buildProduct: { type: Object, required: true }
   },
   data() {
     return {
@@ -211,6 +222,9 @@ export default {
   computed: {
     defaultVisualization() {
       return this.verticalType === 'aml'
+    },
+    runtimeDisplay() {
+      return metaAppRuntimeDisplay()
     }
   },
   watch: {
@@ -288,58 +302,27 @@ export default {
       validateFields(async (errors, values) => {
         if (errors) return
         this.submitting = true
-        const { name, subtitle, des, inputName, outputName, visualization, submitButtonText } = values
+        const { name, inputName, outputName, visualization, submitButtonText } = values
         this.formName = name
         this.formInputName = inputName
         this.formOutputName = outputName
         this.formSubmitText = submitButtonText
         this.formVisualization = visualization
-        let url = '/api/agent/meta_app/run'
-        let method = 'sse'
-        let isFake = false
-        let response
-        const topicMock = resolveTopicPrepublishMock(name)
-        if (topicMock) {
-          url = topicMock.url
-          method = topicMock.method
-          isFake = topicMock.isFake
-          response = topicMock.response
-        }
-        const serviceData = {
-          ...values,
-          domain: this.verticalType,
-          type: 'meta',
-          status: 'default',
-          netWork: 'ioeb_app-network',
-          port: '0.0.0.0:1021/TCP → 0.0.0.0:10021',
-          volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/metaApp',
-          source: {
-            popoverTitle: '可信云技术服务溯源',
-            companyName: '复旦大学课题组',
-            companyAddress: '上海市杨浦区邯郸路220号',
-            companyContact: '021-65642222',
-            companyIntroduce: '课题五',
-            msIntroduce: `${store.getters.nickname}构建的元应用。${des ? '应用描述：' + des : ''}`,
-            companyScore: 5,
-            msScore: 5
-          },
-          apiList: [{
-            name,
-            subtitle,
-            des,
-            inputName,
-            outputName,
-            outputVisualization: visualization,
-            submitButtonText,
-            isFake,
-            url,
-            method,
-            services: this.serviceIds,
-            parameterType: this.localInputType,
-            responseType: this.localOutputType,
-            response
-          }],
-          number: 0
+        let serviceData
+        try {
+          serviceData = buildMetaAppPrepublishPayload({
+            values,
+            verticalType: this.verticalType,
+            serviceIds: this.serviceIds,
+            inputType: this.localInputType,
+            outputType: this.localOutputType,
+            buildProduct: this.buildProduct,
+            nickname: store.getters.nickname
+          })
+        } catch (error) {
+          this.$message.error(error.message)
+          this.submitting = false
+          return
         }
         try {
           const res = await prepublishService(serviceData)
@@ -522,6 +505,41 @@ export default {
 .wb-form-title h3 {
   margin: 0;
   font-size: 16px;
+}
+
+.wb-runtime-spec {
+  margin: 0 24px 18px;
+  border: 1px solid #dfe8f3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f8fbff;
+}
+
+.wb-runtime-row {
+  min-height: 42px;
+  padding: 9px 12px;
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e8eef6;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  code {
+    color: #173b65;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
 }
 
 .wb-preview-col {

@@ -15,6 +15,7 @@
             :output-type="flowOutputType"
             :vertical-type="verticalType"
             :service-ids="serviceIds"
+            :build-product="productDetail"
             @back="backToEdit"
             @published="onPublished"
           />
@@ -266,6 +267,7 @@ export default {
       const b = this.$refs.simulationBuilder
       if (b && b.getProductViewModel) return b.getProductViewModel()
       return {
+        build: null,
         artifact: null,
         summaryRows: [],
         intent: this.flowPreDes,

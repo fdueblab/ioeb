@@ -27,7 +27,6 @@
 // 策略默认值（与前端研究面板、POST body.strategy 对齐；生产模式请求体可不带 strategy）
 // ---------------------------------------------------------------------------
 export const SIMULATION_BUILD_DEFAULT_STRATEGY = {
-  sandbox: 'auto',
   planning: 'llm_autonomous',
   verification: 'multi_agent',
   repair: 'llm_repair',

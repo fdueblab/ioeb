@@ -100,8 +100,6 @@
                   </div>
                 </div>
               </div>
-
-              <!-- 研究模式 UI 已移除；mode/strategy 字段仍随 start payload 发送，供 Micro-Agent orchestrator 使用（见 build-design4llm.md §4） -->
             </div>
           </template>
 
@@ -633,8 +631,8 @@
         <template v-else-if="isCompleted && !hasFailed">
           <a-button v-if="!embedded" @click="handleClose">返回编辑</a-button>
           <button v-if="embedded" type="button" class="wb-danger-btn" @click="confirmBackToEdit">返回重新编辑</button>
-          <button v-if="embedded" type="button" class="wb-primary-btn" @click="handlePrePublish">元应用预览与发布</button>
-          <a-button v-else type="primary" icon="rocket" @click="handlePrePublish">
+          <button v-if="embedded" type="button" class="wb-primary-btn" :disabled="!canPrepublish" @click="handlePrePublish">元应用预览与发布</button>
+          <a-button v-else type="primary" icon="rocket" :disabled="!canPrepublish" @click="handlePrePublish">
             元应用预览与发布
           </a-button>
         </template>
@@ -656,8 +654,7 @@ import {
 } from '@/api/simulation_builder'
 import {
   SIMULATION_BUILD_ENV_TASKS,
-  SIMULATION_BUILD_GEN_TASKS,
-  SIMULATION_BUILD_DEFAULT_STRATEGY
+  SIMULATION_BUILD_GEN_TASKS
 } from '@/mock/data/simulation_builder_data'
 import { getKnowledge } from '@/domain'
 import {
@@ -722,7 +719,6 @@ export default {
       /** false：准备页可切换生产/研究；true：已点「开始仿真构建」 */
       hasStarted: false,
 
-      internalMode: 'production',
       scenarioDraft: '',
       scenarioParsedDraft: {
         goal: '',
@@ -735,8 +731,6 @@ export default {
         constraints: '',
         acceptanceCriteria: ''
       },
-      strategy: { ...SIMULATION_BUILD_DEFAULT_STRATEGY },
-
       sessionId: null,
       unsubscribeStream: null,
       /** 用户主动返回编辑 / 取消，或已确认离开页面 */
@@ -744,6 +738,7 @@ export default {
 
       finalMetrics: {},
       finalResult: null,
+      completedBuild: null,
 
       mainSteps: [
         { key: 'prep', title: '准备' },
@@ -791,6 +786,16 @@ export default {
     }
   },
   computed: {
+    canPrepublish() {
+      const build = this.completedBuild || {}
+      return Boolean(
+        build.buildId &&
+        build.artifactId &&
+        build.artifactHash &&
+        this.detailArtifact &&
+        this.detailArtifact.data
+      )
+    },
     formattedElapsedTime() {
       const minutes = Math.floor(this.elapsedTime / 60)
       const seconds = this.elapsedTime % 60
@@ -1008,10 +1013,6 @@ export default {
       const dk = getKnowledge(d)
       return dk && dk.summary ? `已识别领域：${dk.summary}` : ''
     },
-    resultEnhancements() {
-      if (!this.finalResult || !Array.isArray(this.finalResult.enhancements)) return []
-      return this.finalResult.enhancements
-    },
     /** 步骤条高亮：0=准备，1–4 对应后端 currentMainStep 0–3；完成时视为全部走完 */
     stepBarIndex() {
       if (this.isCompleted) return 5
@@ -1030,21 +1031,6 @@ export default {
     }
   },
   methods: {
-    enhancementStageLabel(stage) {
-      const m = { scenarioParsing: '想定解析', planning: '调度规划', verification: '仿真验证' }
-      return m[stage] || stage
-    },
-    strategyLabel(key, value) {
-      const labels = {
-        sandbox: { auto: '真实优先', none: '无回退', full_mock: '全模拟' },
-        planning: { llm_autonomous: 'LLM规划', preset_workflow: '预设流' },
-        verification: { multi_agent: '多Agent', single_agent: '单Agent', rule_based: '规则' },
-        repair: { llm_repair: 'LLM修复', rule_repair: '规则修复', none: '无修复' },
-        solidify: { golden_path: 'GoldenPath', golden_trace: '经验固化', replan: '重规划', static: '静态' }
-      }
-      const group = labels[key] || {}
-      return `${key}: ${group[value] || value}`
-    },
     formatPct(v) {
       if (v == null || Number.isNaN(Number(v))) return '—'
       return `${(Number(v) * 100).toFixed(1)}%`
@@ -1053,11 +1039,8 @@ export default {
     init(nodes) {
       this.visible = true
       this.intentionalClose = false
-      // 研究模式 UI 已移除；固定 production，strategy 默认值仍写入 payload
-      this.internalMode = 'production'
       this.scenarioDraft = this.scenarioDescription || ''
       this.initScenarioParsedDraftFromProp()
-      this.strategy = { ...SIMULATION_BUILD_DEFAULT_STRATEGY }
       this.resetState()
       this.initServiceStatuses(nodes || this.serviceNodes)
     },
@@ -1138,6 +1121,7 @@ export default {
       this.sessionId = null
       this.finalMetrics = {}
       this.finalResult = null
+      this.completedBuild = null
 
       this.hasStarted = false
       this.isRunning = false
@@ -1191,51 +1175,29 @@ export default {
           tools: node.tools || [],
           isFake: !!(node.isFake || node.is_fake),
           mcpMethod: node.mcpMethod || 'sse',
-          mcpCommand: node.mcpCommand || '',
-          mcpArgs: node.mcpArgs || [],
           status: 'pending',
           statusText: '等待中',
           latency: null
         }))
     },
 
-    buildSimulationStrategy() {
-      // strategy 随 start payload 发送，供 Micro-Agent orchestrator 使用
-      return { ...this.strategy }
-    },
-
     buildStartPayload() {
       const domain = this.domain || 'generic'
-      const domainKnowledge = getKnowledge(domain, {
-        appId: this.appId || 'meta-app-draft',
-        appName: this.appName,
-        scenarioDescription: this.scenarioDraft,
-        serviceNames: this.serviceStatuses.map((s) => s.name),
-        mode: this.internalMode
-      })
       return {
         appId: this.appId || 'meta-app-draft',
         appName: this.appName,
         domain,
-        domainKnowledge,
-        serviceIds: this.serviceStatuses.map((s) => String(s.id)),
         servicesMeta: this.serviceStatuses.map((s) => ({
           id: String(s.id),
           name: s.name,
           mcpUrl: s.mcpUrl || '',
           tools: s.tools || [],
           isFake: !!s.isFake,
-          mcpMethod: s.mcpMethod || 'sse',
-          mcpCommand: s.mcpCommand || '',
-          mcpArgs: s.mcpArgs || []
+          mcpMethod: s.mcpMethod || 'sse'
         })),
         maxIterations: this.maxIterations,
         scenarioDescription: this.scenarioDraft,
-        scenarioSummary: this.scenarioDraft,
-        mockRouteHint: this.scenarioParsed && this.scenarioParsed.mockRouteHint,
-        scenarioParsed: this.hasScenarioParsedDraft ? this.getScenarioParsedForStart() : undefined,
-        mode: this.internalMode,
-        strategy: this.buildSimulationStrategy()
+        scenarioParsed: this.hasScenarioParsedDraft ? this.getScenarioParsedForStart() : undefined
       }
     },
 
@@ -1447,34 +1409,13 @@ export default {
       if (!err) return fallback
       if (typeof err === 'string') return err
       const status = err.response && err.response.status
-      if (status === 404) return '轨迹尚未落盘，正在等待服务端写入…'
+      if (status === 404) return '构建产物不存在'
       const detail = err.response && err.response.data
       if (typeof detail === 'string') return detail
       if (detail && detail.detail) return String(detail.detail)
       if (detail && detail.message) return String(detail.message)
       if (err.message) return err.message
       return fallback
-    },
-
-    isRetryableArtifactError(err) {
-      const status = err && err.response && err.response.status
-      return !status || status === 404 || status === 503 || status >= 500
-    },
-
-    async fetchTraceWithRetry(sessionId, attempts = 24, delayMs = 500) {
-      let lastErr = null
-      // complete 事件先于 SSE finally 落盘，先等一拍再轮询
-      await new Promise((resolve) => setTimeout(resolve, 400))
-      for (let i = 0; i < attempts; i += 1) {
-        try {
-          return await fetchSimulationTrace(sessionId)
-        } catch (e) {
-          lastErr = e
-          if (!this.isRetryableArtifactError(e)) throw e
-          await new Promise((resolve) => setTimeout(resolve, delayMs))
-        }
-      }
-      throw lastErr || new Error('轨迹加载超时，请稍后刷新重试')
     },
 
     async loadDetailArtifacts() {
@@ -1486,7 +1427,7 @@ export default {
         this.detailAcceptedTrajectory = { loading: true, skipped: false, error: null, data: null }
         try {
           const { buildTopicDemoArtifacts } = await import('@/mock/data/topic_simulation_artifacts')
-          const packs = buildTopicDemoArtifacts({
+          const packs = await buildTopicDemoArtifacts({
             sessionId: this.sessionId,
             appName: this.appName,
             appId: this.appId,
@@ -1508,6 +1449,11 @@ export default {
           this.detailArtifact = { loading: false, skipped: false, error: null, data: packs.artifact }
           this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: packs.acceptedTrajectory }
           this.serviceSelectionReport = packs.serviceSelection
+          this.completedBuild = {
+            buildId: packs.manifest.buildId,
+            artifactId: packs.manifest.artifactId,
+            artifactHash: packs.manifest.hashes.artifact
+          }
         } catch (e) {
           const msg = this.formatArtifactError(e, '课题产物加载失败')
           this.detailTrace = { loading: false, skipped: true, error: msg, view: null, rawJson: '' }
@@ -1521,7 +1467,7 @@ export default {
       this.detailEvidence = { loading: false, skipped: false, error: null, data: null }
       this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: null }
       try {
-        const trace = await this.fetchTraceWithRetry(this.sessionId)
+        const trace = await fetchSimulationTrace(this.sessionId)
         const view = this.buildTraceView(trace)
         let rawJson = ''
         try {
@@ -1885,7 +1831,12 @@ export default {
         return
       }
 
-      const { success, cancelled, metrics, result } = payload
+      const { success, cancelled, publishable, metrics, result, publishError } = payload
+      this.completedBuild = {
+        buildId: payload.buildId || this.sessionId || '',
+        artifactId: payload.artifactId || '',
+        artifactHash: payload.artifactHash || ''
+      }
 
       if (cancelled && this.aborted) {
         this.syncCanvasVisual({ type: 'build', active: false })
@@ -1902,11 +1853,11 @@ export default {
         return
       }
 
-      this.hasFailed = !success
+      this.hasFailed = !success || publishable === false
       this.activeServiceCall = null
       this.lastServiceCall = null
-      this.currentActionText = success ? '仿真构建完成' : '仿真构建失败'
-      this.dispatchStatus = success ? '检查通过' : '检查未通过'
+      this.currentActionText = success && publishable !== false ? '仿真构建完成' : '仿真构建失败'
+      this.dispatchStatus = success && publishable !== false ? '检查通过' : '检查未通过'
 
       if (metrics) {
         Object.keys(metrics).forEach((k) => {
@@ -1921,6 +1872,10 @@ export default {
         this.finalResult = result
         if (result.error) this.failureMessage = result.error
         if (result.suggestion) this.failureSuggestion = result.suggestion
+      }
+      if (publishError) {
+        this.failureMessage = publishError.error || this.failureMessage
+        this.failureSuggestion = publishError.suggestion || this.failureSuggestion
       }
       this.showTechDetails = false
       this.syncCanvasVisual({ type: 'activeCall', targetNodeId: null })
@@ -2014,6 +1969,7 @@ export default {
     },
 
     handlePrePublish() {
+      if (!this.canPrepublish) return
       this.$emit('success', {
         appName: this.appName,
         appId: this.appId,
@@ -2021,10 +1977,7 @@ export default {
         iterations: this.totalIterations,
         executionTime: this.elapsedTime,
         metrics: { ...this.finalMetrics },
-        result: this.finalResult,
-        artifactRef: this.detailArtifact.data ? {
-          artifactId: this.detailArtifact.data.artifactId || ''
-        } : null
+        result: this.finalResult
       })
       this.$emit('prePublish')
       if (!this.embedded) {
@@ -2449,6 +2402,7 @@ export default {
         tags.push({ label: this.runtimeModeLabel(art.runtime && art.runtime.mode), tone: 'blue' })
       }
       return {
+        build: this.completedBuild || null,
         artifact: art || null,
         summaryRows: this.buildBuildSummaryRows(),
         intent: (this.scenarioParsedDraft && this.scenarioParsedDraft.goal) || this.appName,

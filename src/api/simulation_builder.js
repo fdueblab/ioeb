@@ -235,7 +235,7 @@ export function fetchSimulationArtifact(sessionId) {
 /** 获取 Verifier 接受的最终执行主干（来自 BuildBundle） */
 export function fetchSimulationAcceptedTrajectory(sessionId) {
   return request({
-    url: `${SIMULATION_BASE_URL}/api/simulation/builds/${sessionId}/accepted-trajectory`,
+    url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/accepted-trajectory`,
     method: 'get',
     timeout: 60000
   })

@@ -35,8 +35,23 @@ function longHash(seed) {
   return (base + shortHash(`a-${seed}`) + shortHash(`b-${seed}`) + shortHash(`c-${seed}`)).padEnd(64, '0').slice(0, 64)
 }
 
-function stableHash(data) {
-  return longHash(JSON.stringify(data || {}))
+function canonicalJson(value) {
+  if (Array.isArray(value)) return value.map(canonicalJson)
+  if (value && typeof value === 'object') {
+    return Object.keys(value).sort().reduce((result, key) => {
+      result[key] = canonicalJson(value[key])
+      return result
+    }, {})
+  }
+  return value
+}
+
+async function stableHash(data) {
+  const bytes = new TextEncoder().encode(JSON.stringify(canonicalJson(data || {})))
+  const digest = await window.crypto.subtle.digest('SHA-256', bytes)
+  return Array.from(new Uint8Array(digest))
+    .map((value) => value.toString(16).padStart(2, '0'))
+    .join('')
 }
 
 function nowIso() {
@@ -63,7 +78,7 @@ function endpointOf(service) {
 
 function serviceMetaForTrace(service) {
   const copy = { ...(service || {}) }
-  delete copy.isFake
+  copy.isFake = true
   delete copy.is_fake
   return copy
 }
@@ -90,11 +105,11 @@ function registeredToolName(service) {
 }
 
 function serviceSource() {
-  return 'real_mcp'
+  return 'demo_fake_mcp'
 }
 
 function serviceChannel() {
-  return 'real_mcp'
+  return 'sandbox'
 }
 
 function jsonType(value) {
@@ -368,6 +383,7 @@ function buildServiceBindings(servicesMeta) {
     return {
       serviceId: String(svc.id),
       serviceName: svc.name,
+      isFake: true,
       description: svc.description || svc.des || toolSummary || '提供元应用运行所需的服务能力',
       source: serviceSource(svc),
       transport: transportOf(svc),
@@ -717,12 +733,20 @@ export function buildTopicDemoFrontendState(ctx) {
   }
 }
 
-export function buildTopicDemoArtifacts(ctx) {
+export async function buildTopicDemoArtifacts(ctx) {
   const trace = buildTopicDemoTrace(ctx)
   const serviceSelection = buildTopicServiceSelectionReport(ctx)
   const acceptedTrajectory = buildTopicDemoAcceptedTrajectory(ctx)
   const artifact = buildTopicDemoArtifact(ctx)
   const frontendState = buildTopicDemoFrontendState(ctx)
+  const artifactHash = await stableHash(artifact)
+  frontendState.acceptedTrajectorySummary.generatedArtifact.artifactHash = artifactHash
+  const [traceHash, serviceSelectionHash, acceptedTrajectoryHash, frontendStateHash] = await Promise.all([
+    stableHash(trace),
+    stableHash(serviceSelection),
+    stableHash(acceptedTrajectory),
+    stableHash(frontendState)
+  ])
   const manifest = {
     schemaVersion: BUILD_BUNDLE_SCHEMA,
     buildId: ctx.sessionId,
@@ -736,11 +760,11 @@ export function buildTopicDemoArtifacts(ctx) {
       experimentDir: 'experiment'
     },
     hashes: {
-      trace: stableHash(trace),
-      serviceSelection: stableHash(serviceSelection),
-      acceptedTrajectory: stableHash(acceptedTrajectory),
-      artifact: stableHash(artifact),
-      frontendState: stableHash(frontendState)
+      trace: traceHash,
+      serviceSelection: serviceSelectionHash,
+      acceptedTrajectory: acceptedTrajectoryHash,
+      artifact: artifactHash,
+      frontendState: frontendStateHash
     },
     researchEligible: false,
     ref: {

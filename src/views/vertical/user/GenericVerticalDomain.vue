@@ -5,6 +5,7 @@
       @onGoUse="handleGoUse"
       :is="currentComponent"
       :apiList="apiList"
+      :metaAppId="metaAppId"
       :verticalType="verticalType"
       :key="verticalType"
     >
@@ -38,12 +39,14 @@ export default {
   data() {
     return {
       currentComponent: 'GenericVerticalList',
-      apiList: []
+      apiList: [],
+      metaAppId: ''
     }
   },
   methods: {
     handleGoBack() {
       this.currentComponent = 'GenericVerticalList'
+      this.metaAppId = ''
     },
     handleGoUse(record) {
       console.log('record', record)
@@ -58,6 +61,7 @@ export default {
             return
           }
           this.apiList = record.apiList
+          this.metaAppId = record.id
           this.currentComponent = 'UseMetaApp'
           break
         case 'atomic_mcp':
@@ -124,6 +128,7 @@ export default {
         // 重置为列表组件
         this.currentComponent = 'GenericVerticalList'
         this.apiList = []
+        this.metaAppId = ''
       }
     }
   }

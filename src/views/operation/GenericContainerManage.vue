@@ -49,8 +49,19 @@
         <span slot="status" slot-scope="text">
           <a-badge :status="statusStyleFilter(text)" :text="statusFilter(text)" />
         </span>
+        <span slot="docker" slot-scope="text">
+          <span class="runtime-cell">{{ text || '—' }}</span>
+        </span>
         <span slot="action" slot-scope="text, record">
-          <template>
+          <template v-if="record.type === 'meta'">
+            <a-button v-if="record.status === 'pre_release_unrated'" style="padding: 0" type="link" @click="handleDeploy(record)">部署</a-button>
+            <span v-else-if="record.status === 'deploying'" class="runtime-action-label">部署中</span>
+            <span v-else-if="record.status === 'pre_release_pending'" class="runtime-action-label">待测评</span>
+            <span v-else class="runtime-action-label">—</span>
+            <a-divider type="vertical" />
+            <a-button style="padding: 0;color: orangered" type="link" @click="handleDelete(record)">删除</a-button>
+          </template>
+          <template v-else>
             <a-button v-if="deployingStatusCode.includes(record.status)" style="padding: 0" type="link" @click="handleStop(record)">停止</a-button>
             <a-button v-else style="padding: 0" type="link" @click="handleDeploy(record)">部署</a-button>
             <a-divider type="vertical" />
@@ -103,6 +114,12 @@ export default {
           title: '网络',
           dataIndex: 'network',
           width: '120px'
+        },
+        {
+          title: 'Docker',
+          dataIndex: 'dockerImage',
+          width: '190px',
+          scopedSlots: { customRender: 'docker' }
         },
         {
           title: '端口映射',
@@ -178,7 +195,7 @@ export default {
     handleSearch() {
       this.filteredDataSource = this.dataSource.filter((item) => {
         const nameMatch = item.name.includes(this.queryParam.name)
-        const statusMatch = this.queryParam.status === 'all' || item.status === Number(this.queryParam.status)
+        const statusMatch = this.queryParam.status === 'all' || item.status === this.queryParam.status
         return nameMatch && statusMatch
       })
     },
@@ -226,7 +243,14 @@ export default {
         const response = await this.fetchServicesFromAPI()
         if (response && response.status === 'success') {
           console.log(`成功从API获取到${response.services.length}条服务数据`)
-          this.dataSource = response.services
+          this.dataSource = response.services.map((service) => {
+            const api = service.apiList && service.apiList[0]
+            const runtimeSpec = api && api.runtimeSpec
+            return {
+              ...service,
+              dockerImage: runtimeSpec && runtimeSpec.docker && runtimeSpec.docker.image
+            }
+          })
         } else {
           console.log('API获取失败')
           this.dataSource = []
@@ -332,3 +356,16 @@ export default {
   }
 }
 </script>
+
+<style scoped lang="less">
+.runtime-cell {
+  color: #29445f;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.runtime-action-label {
+  color: #64748b;
+  font-size: 12px;
+}
+</style>

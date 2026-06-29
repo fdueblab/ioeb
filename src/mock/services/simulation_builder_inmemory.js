@@ -79,6 +79,10 @@ function demoToolName(svc) {
   return `${sanitizeId(svc.id || svc.name)}_execute`
 }
 
+/** 课题 inmemory 仅演示，不产生真实 MCP 外呼。 */
+const DEMO_CHANNEL = 'sandbox'
+const DEMO_SOURCE = 'demo_fake_mcp'
+
 function buildScenarioParsed(body) {
   const sp = body.scenarioParsed || {}
   return {
@@ -104,7 +108,8 @@ function buildPlannerPayload(iteration, servicesMeta) {
       call_id: `call-topic-${iteration}-${idx}`,
       tool: toolName,
       service: svc.name,
-      channel: 'real_mcp',
+      channel: DEMO_CHANNEL,
+      source: DEMO_SOURCE,
       transport: 'sse',
       arguments: { iteration, taskRef: `iter-${iteration}-service-${idx + 1}` },
       result_preview: `调用成功 · ${svc.name}`,

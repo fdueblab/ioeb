@@ -91,7 +91,7 @@
 2. 用同一 service catalog 构建 3-5 个源任务，保存 BuildBundle。
 3. 对每个 BuildBundle 检查：artifact schema、service bindings、GoldenPath 是否存在。
 4. 为每个源任务准备 2-3 个同元应用目标任务。
-5. 调 `/api/simulation/builds/{buildId}/experiments/run` 跑四个 baseline。
+5. 调 `/api/simulation/{buildId}/experiments/run` 跑四个 baseline。
 6. 导出 `experiment/latest_result.json` 为 JSONL/CSV。
 7. 按 baseline 聚合成功率、延迟、调用数、fallback 率。
 8. 人工抽查失败 case：BindingPlan 错误、MCP observation error、Verifier false negative、任务不适用。

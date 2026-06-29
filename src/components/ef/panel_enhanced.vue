@@ -299,16 +299,6 @@
       @confirm="handleServiceConfirm"
       @close="handleServiceClose"
     />
-    <meta-app-builder
-      v-if="metaAppBuilderVisible"
-      ref="metaAppBuilder"
-      :vertical-type="verticalType"
-      :pre-name="data.preName"
-      :pre-des="data.preDes"
-      :pre-input-name="data.preInputName"
-      :pre-output-name="data.preOutputName"
-      @close="metaAppBuilderVisible = false"
-    />
   </div>
 </template>
 
@@ -320,7 +310,6 @@ import flowNodeEnhanced from '@/components/ef/node_enhanced'
 import nodeMenu from '@/components/ef/node_menu_enhanced'
 import InfoDisplayEnhanced from '@/components/ef/info_display_enhanced'
 import ServicesAdder from '@/components/ef/services_adder'
-import MetaAppBuilder from '@/components/ef/meta_app_builder'
 import SimulationBuilder from '@/components/ef/simulation_builder'
 import {
   SERVICE_TEXT_MAP,
@@ -526,7 +515,6 @@ export default {
       easyFlowVisible: true,
       flowInfoVisible: false,
       servicesAdderVisible: false,
-      metaAppBuilderVisible: false,
       simulationBuilderVisible: false,
       simulationBuilding: false,
       simulationPassed: false,
@@ -611,7 +599,6 @@ export default {
     nodeMenu,
     InfoDisplayEnhanced,
     ServicesAdder,
-    MetaAppBuilder,
     SimulationBuilder
   },
   mounted() {
@@ -1467,21 +1454,7 @@ export default {
     },
     // 元应用预览与发布
     previewAndPublish() {
-      if (this.workbenchMode) {
-        this.$emit('pre-publish')
-        return
-      }
-      if (this.data.nodeList.length > 1) {
-        const serviceIds = this.data.nodeList
-          .filter(node => node.name !== 'metaAppAgent')
-          .map(node => node.id)
-        this.metaAppBuilderVisible = true
-        this.$nextTick(() => {
-          this.$refs.metaAppBuilder.init(serviceIds)
-        })
-      } else {
-        this.$message.error('请先智能生成应用或添加服务！')
-      }
+      this.$emit('pre-publish')
     },
     scheduleCanvasReflow() {
       this.$nextTick(() => {
