@@ -36,7 +36,10 @@
     <template v-slot:rightContentRender>
       <right-content :top-menu="settings.layout === 'topmenu'" :is-mobile="isMobile" :theme="settings.theme" />
     </template>
-    <router-view />
+    <keep-alive>
+      <router-view v-if="$route.meta.keepAlive" :key="$route.path" />
+    </keep-alive>
+    <router-view v-if="!$route.meta.keepAlive" :key="$route.path" />
     <user-profile-survey :visible="surveyVisible" @close="surveyVisible = false" @done="handleSurveyDone" />
   </pro-layout>
 </template>
