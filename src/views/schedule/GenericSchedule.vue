@@ -64,31 +64,14 @@ export default {
   mounted() {
     this.init()
   },
-  beforeRouteLeave(to, from, next) {
-    const panel = this.$refs.flowPanel
-    const builder = panel && panel.$refs.simulationBuilder
-    if (!builder || !builder.isActiveBuild()) {
-      next()
-      return
-    }
-    this.$confirm(
-      '离开本页后，当前仿真构建将中止且进度不会保留。',
-      '切换页面将停止构建',
-      {
-        confirmButtonText: '离开并停止',
-        cancelButtonText: '继续构建',
-        confirmButtonClass: 'el-button--danger',
-        type: 'warning',
-        closeOnClickModal: false
+  activated() {
+    this.$nextTick(() => {
+      const panel = this.$refs.flowPanel
+      this.simulationChromeOpen = !!(panel && panel.simulationBuilderVisible)
+      if (panel && panel.jsPlumb && panel.jsPlumb.repaintEverything) {
+        panel.jsPlumb.repaintEverything()
       }
-    )
-      .then(() => {
-        builder.cancelBuildForLeave()
-        next()
-      })
-      .catch(() => {
-        next(false)
-      })
+    })
   },
   watch: {
     // 监听垂直领域类型变化，重新加载数据

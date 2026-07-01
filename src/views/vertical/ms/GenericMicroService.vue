@@ -115,8 +115,33 @@
               </a-form-item>
             </a-col>
           </a-row>
-          <a-row :gutter="20">
-            <a-col :span="6">
+          <a-row :gutter="20" class="algorithm-source-row">
+            <a-col :span="24">
+              <div class="algorithm-source-card">
+                <div class="algorithm-source-card__text">
+                  <div class="algorithm-source-card__title">算法来源</div>
+                  <div class="algorithm-source-card__desc">
+                    可上传本地算法源码，也可直接选择平台已生成的算法模型进行 MCP 服务封装。
+                  </div>
+                </div>
+                <a-radio-group
+                  v-model="algorithmSource"
+                  button-style="solid"
+                  class="algorithm-source-switch"
+                  @change="handleAlgorithmSourceChange"
+                >
+                  <a-radio-button value="local">
+                    <a-icon type="upload" /> 本地上传
+                  </a-radio-button>
+                  <a-radio-button value="platform">
+                    <a-icon type="cloud" /> 平台算法模型
+                  </a-radio-button>
+                </a-radio-group>
+              </div>
+            </a-col>
+          </a-row>
+          <a-row :gutter="20" class="algorithm-file-row">
+            <a-col v-if="algorithmSource === 'local'" :span="10">
               <a-form-item label="程序文件">
                 <a-upload
                   accept=".py,.zip,.jar"
@@ -126,6 +151,30 @@
                   :multiple="false">
                   <a-button icon="file-add"> 选择文件 </a-button>
                 </a-upload>
+              </a-form-item>
+            </a-col>
+            <a-col v-else :span="12">
+              <a-form-item label="平台算法">
+                <a-select
+                  v-model="selectedPlatformAlgorithmId"
+                  show-search
+                  allow-clear
+                  placeholder="请选择平台已生成算法模型"
+                  :loading="platformAlgorithmLoading || platformAlgorithmCodeLoading"
+                  :filter-option="filterPlatformAlgorithmOption"
+                  @change="handlePlatformAlgorithmSelect"
+                >
+                  <a-select-option v-for="item in platformAlgorithmOptions" :key="item.id" :value="item.id">
+                    {{ item.name }}
+                  </a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col v-if="algorithmSource === 'platform'" :span="3">
+              <a-form-item label=" ">
+                <a-button icon="reload" :loading="platformAlgorithmLoading" @click="loadPlatformAlgorithms">
+                  刷新
+                </a-button>
               </a-form-item>
             </a-col>
             <a-col :span="6">
@@ -536,7 +585,7 @@ import * as echarts from 'echarts'
 import vChart from 'vue-echarts'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
 import dictionaryCache from '@/utils/dictionaryCache'
-import { createService } from '@/api/service'
+import { createService, downloadScenarioGeneratedAlgorithm, filterServices } from '@/api/service'
 import store from '@/store'
 import { buildDocsUrl } from '@/utils/baseUrl'
 
@@ -638,6 +687,12 @@ export default {
         { key: 'data_pipeline', icon: 'swap', label: '数据处理管道', color: '#fa8c16', desc: '数据 ETL 处理', serviceName: '数据处理管道', serviceDesc: '构建自动化数据清洗、转换和加载流水线', targetUser: 'developer', deploySpec: 'standard' }
       ],
       selectedTemplate: null,
+      algorithmSource: 'local',
+      selectedPlatformAlgorithmId: undefined,
+      selectedPlatformAlgorithm: null,
+      platformAlgorithmOptions: [],
+      platformAlgorithmLoading: false,
+      platformAlgorithmCodeLoading: false,
       showIntentPreview: false,
       editingTools: []
     }
@@ -657,6 +712,9 @@ export default {
     },
     intentPreviewText() {
       const fileName = this.uploadFiles.length > 0 ? this.uploadFiles[0].name : '未选择文件'
+      const sourceText = this.algorithmSource === 'platform'
+        ? `平台算法模型「${(this.selectedPlatformAlgorithm && this.selectedPlatformAlgorithm.name) || fileName}」`
+        : `上传的代码「${fileName}」`
       const industry = this.getIndustryText(this.programInfo.industry)
       const scenario = this.getScenarioText(this.programInfo.scenario)
       const technology = this.getTechnologyText(this.programInfo.technology)
@@ -664,7 +722,7 @@ export default {
       const deploySpec = (this.deploySpecOptions.find(o => o.code === this.form.deploySpec) || {}).text || '未指定'
 
       let parts = []
-      parts.push(`将上传的代码「${fileName}」封装为`)
+      parts.push(`将${sourceText}封装为`)
       let scopeParts = []
       if (industry !== '未设置') scopeParts.push(`${industry}行业`)
       if (scenario !== '未设置') scopeParts.push(`${scenario}场景`)
@@ -697,6 +755,7 @@ export default {
         this.domainTitle = domains.find(domain => domain.code === this.verticalType)?.text || '未知领域'
         // 重置提交类型
         this.submitType = 'algorithm'
+        await this.loadPlatformAlgorithms()
       } catch (error) {
         console.error('加载字典数据失败:', error)
         this.$message.error('加载数据字典失败，请刷新重试')
@@ -713,6 +772,9 @@ export default {
         return false
       }
 
+      this.algorithmSource = 'local'
+      this.selectedPlatformAlgorithmId = undefined
+      this.selectedPlatformAlgorithm = null
       this.uploadFiles = [file]
       this.programFiles = [{
         uid: file.uid,
@@ -726,6 +788,126 @@ export default {
     removeProgramFile() {
       this.uploadFiles = []
       this.programFiles = []
+      if (this.algorithmSource === 'platform') {
+        this.selectedPlatformAlgorithmId = undefined
+        this.selectedPlatformAlgorithm = null
+      }
+    },
+
+    async loadPlatformAlgorithms() {
+      this.platformAlgorithmLoading = true
+      try {
+        const res = await filterServices({
+          domain: this.verticalType,
+          type: 'generated_algorithm'
+        })
+        const services = (res && res.status === 'success' && Array.isArray(res.services))
+          ? res.services
+          : []
+        const checked = await Promise.all(services.map(async service => {
+          try {
+            const sourceBlob = await downloadScenarioGeneratedAlgorithm(service.id)
+            return {
+              ...service,
+              __sourceBlob: sourceBlob,
+              __sourceFilename: this.getGeneratedAlgorithmFilename(service)
+            }
+          } catch (e) {
+            console.warn('平台算法源码不存在，已从封装列表中过滤:', service && service.id, e)
+            return null
+          }
+        }))
+        this.platformAlgorithmOptions = checked.filter(Boolean)
+        if (this.selectedPlatformAlgorithmId && !this.platformAlgorithmOptions.some(item => item.id === this.selectedPlatformAlgorithmId)) {
+          this.selectedPlatformAlgorithmId = undefined
+          this.selectedPlatformAlgorithm = null
+          this.uploadFiles = []
+          this.programFiles = []
+        }
+      } catch (e) {
+        console.error('加载平台算法模型失败:', e)
+        this.platformAlgorithmOptions = []
+        this.$message.warning('平台算法模型加载失败，请稍后重试')
+      } finally {
+        this.platformAlgorithmLoading = false
+      }
+    },
+
+    filterPlatformAlgorithmOption(input, option) {
+      const text = option.componentOptions && option.componentOptions.children
+        ? option.componentOptions.children.map(child => child.text || '').join('')
+        : ''
+      return text.toLowerCase().includes(String(input || '').toLowerCase())
+    },
+
+    handleAlgorithmSourceChange() {
+      this.uploadFiles = []
+      this.programFiles = []
+      this.showIntentPreview = false
+      if (this.algorithmSource === 'platform') {
+        this.selectedPlatformAlgorithmId = undefined
+        this.selectedPlatformAlgorithm = null
+        if (!this.platformAlgorithmOptions.length) {
+          this.loadPlatformAlgorithms()
+        }
+      } else {
+        this.selectedPlatformAlgorithmId = undefined
+        this.selectedPlatformAlgorithm = null
+      }
+    },
+
+    getGeneratedAlgorithmFilename(record) {
+      const fromApi = record && record.apiList && record.apiList[0] && record.apiList[0].responseFileName
+      const fallback = `${(record && record.name) || 'generated_algorithm'}.py`
+      return fromApi || fallback
+    },
+
+    async handlePlatformAlgorithmSelect(id) {
+      const record = this.platformAlgorithmOptions.find(item => item.id === id)
+      this.selectedPlatformAlgorithm = record || null
+      this.uploadFiles = []
+      this.programFiles = []
+      this.showIntentPreview = false
+      if (!record) {
+        return
+      }
+
+      this.form.serviceName = `${record.name}MCP服务`
+      this.form.serviceDesc = record.des || record.description || `${record.name} 的 MCP 服务封装`
+      this.programInfo.industry = record.industry
+      this.programInfo.scenario = record.scenario
+      this.programInfo.technology = record.technology
+      this.form.targetUser = this.form.targetUser || 'developer'
+      this.form.deploySpec = this.form.deploySpec || 'standard'
+
+      await this.preparePlatformAlgorithmFile(record)
+    },
+
+    async preparePlatformAlgorithmFile(record = this.selectedPlatformAlgorithm) {
+      if (!record || !record.id) {
+        return false
+      }
+      this.platformAlgorithmCodeLoading = true
+      try {
+        const blob = record.__sourceBlob || await downloadScenarioGeneratedAlgorithm(record.id)
+        const filename = record.__sourceFilename || this.getGeneratedAlgorithmFilename(record)
+        const sourceFile = new File([blob], filename, { type: 'text/x-python' })
+        this.uploadFiles = [sourceFile]
+        this.programFiles = [{
+          uid: `platform-${record.id}`,
+          name: filename,
+          status: 'done'
+        }]
+        return true
+      } catch (e) {
+        console.error('下载平台算法源码失败:', e)
+        this.uploadFiles = []
+        this.programFiles = []
+        this.$message.error('平台算法源码下载失败，无法封装：' + ((e && e.message) || e))
+        return false
+      } finally {
+        this.platformAlgorithmCodeLoading = false
+      }
     },
 
     // 配置文件选择
@@ -751,8 +933,14 @@ export default {
 
     // 自动发布MCP服务
     async onAutoPublish() {
+      if (this.algorithmSource === 'platform' && this.selectedPlatformAlgorithm && this.uploadFiles.length === 0) {
+        const prepared = await this.preparePlatformAlgorithmFile()
+        if (!prepared) {
+          return
+        }
+      }
       if (this.uploadFiles.length === 0) {
-        this.$message.error('请先选择程序文件！')
+        this.$message.error(this.algorithmSource === 'platform' ? '请先选择平台算法模型！' : '请先选择程序文件！')
         return
       }
 
@@ -1539,6 +1727,10 @@ export default {
       this.options = null
       this.programJson = null
       this.selectedTemplate = null
+      this.algorithmSource = 'local'
+      this.selectedPlatformAlgorithmId = undefined
+      this.selectedPlatformAlgorithm = null
+      this.platformAlgorithmCodeLoading = false
       this.showIntentPreview = false
       this.editingTools = []
     },
@@ -1712,6 +1904,52 @@ export default {
       color: #999;
     }
   }
+}
+
+.algorithm-source-row {
+  margin-top: 4px;
+  margin-bottom: 10px;
+}
+
+.algorithm-source-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid #e6f7ff;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.algorithm-source-card__text {
+  min-width: 0;
+}
+
+.algorithm-source-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+  margin-bottom: 4px;
+}
+
+.algorithm-source-card__desc {
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 1.5;
+}
+
+.algorithm-source-switch {
+  flex-shrink: 0;
+
+  /deep/ .ant-radio-button-wrapper {
+    min-width: 112px;
+    text-align: center;
+  }
+}
+
+.algorithm-file-row {
+  margin-top: 2px;
 }
 
 // 封装意图预览

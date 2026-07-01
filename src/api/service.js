@@ -162,3 +162,15 @@ export function uploadScenarioGeneratedAlgorithm(formData) {
     timeout: 120000
   })
 }
+
+/**
+ * 下载想定式开发生成的算法源码（type=generated_algorithm）
+ * @param {string} serviceId 服务 ID
+ */
+export function downloadScenarioGeneratedAlgorithm(serviceId) {
+  return request({
+    url: `${API_BASE_URL}/services/${serviceId}/scenario-generated-code`,
+    method: 'get',
+    responseType: 'blob'
+  })
+}
