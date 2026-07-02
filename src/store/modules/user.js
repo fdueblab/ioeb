@@ -95,18 +95,22 @@ const user = {
     },
     // 登出
     Logout ({ commit, state, dispatch }) {
+      const clearLocalSession = () => {
+        commit('SET_TOKEN', '')
+        commit('SET_ROLES', [])
+        dispatch('ResetProfile', null, { root: true })
+        storage.remove(ACCESS_TOKEN)
+        localStorage.removeItem('username')
+      }
       return new Promise((resolve) => {
         logout(state.token).then(() => {
-          commit('SET_TOKEN', '')
-          commit('SET_ROLES', [])
-          dispatch('ResetProfile', null, { root: true })
-          storage.remove(ACCESS_TOKEN)
+          clearLocalSession()
           resolve()
         }).catch((err) => {
           console.log('logout fail:', err)
+          // 远端 logout 失败时仍清本地凭据，避免登录页 ↔ 首页重定向死循环
+          clearLocalSession()
           resolve()
-        }).finally(() => {
-          localStorage.removeItem('username')
         })
       })
     }
