@@ -2,6 +2,8 @@
  * 课题演示：结构化想定 mock（纯前端）
  */
 
+import { AML_TOPIC_DEMO_INPUTS } from './topic_demo_inputs'
+
 export const TOPIC_PARSER_MODEL = 'scenario-intake-agent-v1'
 
 export const TOPIC_SCENARIO_INTAKE = {
@@ -113,63 +115,44 @@ export function resolveTopicScenarioKeyByAppName(appName) {
   return null
 }
 
-/** 课题三+课题四组合演示：首句需 mock 追问一轮（与真实想定 intake 一致，不做回答校验） */
-export function needsTopicMockIntakeFollowUp(userInput) {
-  const text = String(userInput || '')
-  return text.includes('课题三') && text.includes('课题四')
-}
-
 export const TOPIC_COMBO_MOCK_INTAKE_QUESTION = {
   text: '想要使用哪个课题算法进行数据分析？',
-  hint:
-    '课题一：在跨境支付链路中自动识别可疑交易并输出标准化风险报告；' +
-    '课题二：参与机构数据不出域，通过安全多方计算联合建模并汇总风险结论'
+  hint: '请选择课题一（风险识别）或课题二（多方安全计算）。'
 }
 
-/**
- * 课题 mock 想定追问（纯前端）。返回 null 表示走原有「一次到位」演示。
- * @param {{ message: string, session: object|null }} params
- */
 export function runTopicMockScenarioIntakeTurn({ message, session }) {
   const text = String(message || '').trim()
   if (!text) return null
 
-  if (session && session.awaitingFollowUp && session.initialInput) {
-    const scenarioKey = resolveTopicScenarioKey(session.initialInput) || 'pj_combo'
-    const intake = buildTopicScenarioIntake(scenarioKey, {}, session.initialInput)
-    const dialogue = [
+  if (session && session.initialInput) {
+    const analysisChoice = text.includes('课题二') ? 'pj2' : text.includes('课题一') ? 'pj1' : null
+    if (!analysisChoice) {
+      return { status: 'question', ...TOPIC_COMBO_MOCK_INTAKE_QUESTION, session }
+    }
+    const intake = buildTopicScenarioIntake('pj_combo', {}, session.initialInput, analysisChoice)
+    intake.scenarioParsed.source.intakeDialogue = [
       { role: 'user', content: session.initialInput },
       { role: 'assistant', content: TOPIC_COMBO_MOCK_INTAKE_QUESTION.text },
       { role: 'user', content: text }
     ]
-    intake.scenarioParsed.source = {
-      ...(intake.scenarioParsed.source || {}),
-      intakeDialogue: dialogue
-    }
-    intake.scenarioSummary = [session.initialInput, text].filter(Boolean).join('；')
-    intake.userRemark = text.slice(0, 120)
     return {
       status: 'ready',
-      text: '想定信息已足够，开始为您匹配 MCP 服务。',
+      text: `已选择${analysisChoice === 'pj2' ? '课题二' : '课题一'}作为数据分析节点，开始生成组合元应用。`,
       initialInput: session.initialInput,
-      intake
+      analysisChoice,
+      intake: { ...intake, userRemark: text.slice(0, 120) }
     }
   }
 
-  if (!needsTopicMockIntakeFollowUp(text)) return null
-
+  if (text !== AML_TOPIC_DEMO_INPUTS[2]) return null
   return {
     status: 'question',
-    text: TOPIC_COMBO_MOCK_INTAKE_QUESTION.text,
-    hint: TOPIC_COMBO_MOCK_INTAKE_QUESTION.hint,
-    session: {
-      awaitingFollowUp: true,
-      initialInput: text
-    }
+    ...TOPIC_COMBO_MOCK_INTAKE_QUESTION,
+    session: { initialInput: text }
   }
 }
 
-export function buildTopicScenarioIntake(scenarioKey, flow, userInput) {
+export function buildTopicScenarioIntake(scenarioKey, flow, userInput, analysisChoice = null) {
   const template = TOPIC_SCENARIO_INTAKE[scenarioKey] || {}
   const base = template.scenarioParsed
     ? cloneScenarioParsed(template.scenarioParsed)
@@ -181,12 +164,14 @@ export function buildTopicScenarioIntake(scenarioKey, flow, userInput) {
         domain: 'aml'
       }
 
-  const scenarioSummary =
-    String(userInput || '').trim() ||
-    template.scenarioSummary ||
-    flow.scenarioSummary ||
-    flow.preDes ||
-    ''
+  if (scenarioKey === 'pj_combo' && analysisChoice === 'pj2') {
+    base.description = '跨境贸易场景需先通过课题二多方安全计算识别风险、再评测模型安全性，最后汇总为统一金融报告'
+    base.acceptanceCriteria[0] = '课题二多方安全计算完成联合风险识别'
+  }
+
+  const scenarioSummary = scenarioKey === 'pj_combo' && analysisChoice
+    ? `综合${analysisChoice === 'pj2' ? '课题二多方安全计算' : '课题一风险识别'}、课题四安全评测与课题三报告生成，形成端到端金融风险报告流水线。`
+    : String(userInput || '').trim() || template.scenarioSummary || flow.scenarioSummary || flow.preDes || ''
 
   const scenarioParsed = {
     ...base,
@@ -226,10 +211,10 @@ function normalizeFlowNodes(flow) {
   return { ...flow, nodeList }
 }
 
-export function enrichTopicFlowWithScenarioIntake(flow, userInput) {
+export function enrichTopicFlowWithScenarioIntake(flow, userInput, analysisChoice = null) {
   const scenarioKey = resolveTopicScenarioKey(userInput)
   if (!scenarioKey) return normalizeFlowNodes(flow)
-  const intake = buildTopicScenarioIntake(scenarioKey, flow, userInput)
+  const intake = buildTopicScenarioIntake(scenarioKey, flow, userInput, analysisChoice)
   return normalizeFlowNodes({
     ...flow,
     mockRouteHint: flow.mockRouteHint || '课题',

@@ -1573,7 +1573,18 @@ export default {
       return this.iterationDetails.filter((d) => d.iteration === this.currentIteration).pop()
     },
 
-    onStreamStep({ step }) {
+    mapMainStepFromStream({ step, name }) {
+      const n = Number(step)
+      if (Number.isFinite(n) && n >= 2) return n
+      if (name === '智能构建') return 2
+      if (name === '方案生成') return 3
+      if (name === '环境准备') return 1
+      if (name === '连接服务' || name === '服务匹配') return 0
+      return Number.isFinite(n) ? n : 0
+    },
+
+    onStreamStep(payload) {
+      const step = this.mapMainStepFromStream(payload)
       this.currentMainStep = step
       this.syncCanvasVisual({ type: 'step', step })
       if (step === 0) {

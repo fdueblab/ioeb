@@ -209,7 +209,7 @@
               <div v-if="loadingFlow" class="loading-overlay">
                 <div class="meta-app-loading">
                   <a-spin size="large" />
-                  <span class="meta-app-loading-text">正在生成元应用</span>
+                  <span class="meta-app-loading-text">正在加载元应用</span>
                 </div>
               </div>
               <div v-if="connectionLabel.visible"
@@ -237,41 +237,45 @@
         </div>
       </div>
 
-      <!-- 非 workbench：原有画布 -->
+      <!-- 非 workbench：原有画布（只读展示时套 wb-canvas-zone，与仿真构建页同源） -->
       <div
         v-else
-        id="efContainer"
-        ref="efContainer"
-        class="ef-canvas"
-        :class="simulationCanvasClasses"
+        :class="standaloneWorkbenchCanvas ? 'wb-canvas-zone' : 'ef-legacy-canvas-host'"
       >
-        <div v-if="loadingFlow" class="loading-overlay">
-          <div class="meta-app-loading">
-            <a-spin size="large" />
-            <span class="meta-app-loading-text">正在生成元应用</span>
+        <div
+          id="efContainer"
+          ref="efContainer"
+          class="ef-canvas"
+          :class="simulationCanvasClasses"
+        >
+          <div v-if="loadingFlow" class="loading-overlay">
+            <div class="meta-app-loading">
+              <a-spin size="large" />
+              <span class="meta-app-loading-text">正在加载元应用</span>
+            </div>
           </div>
+          <div class="canvas-grid"></div>
+          <div v-if="connectionLabel.visible"
+               class="connection-hover-label"
+               :class="`label-${connectionLabel.type}`"
+               :style="{
+                 left: connectionLabel.x + 'px',
+                 top: connectionLabel.y + 'px'
+               }">
+            {{ connectionLabel.text }}
+          </div>
+          <flow-node-enhanced
+            v-for="node in data.nodeList"
+            :key="node.id"
+            :node="node"
+            :app-name="metaAppDisplayNameForSimulation"
+            :sim-visual="simulationVisualForNode(node)"
+            :chrome-locked="simulationChromeLocked"
+            @nodeRightMenu="nodeRightMenu"
+            @deleteNode="deleteNode"
+            :style="canvasNodeStyle(node)"
+          />
         </div>
-        <div class="canvas-grid"></div>
-        <div v-if="connectionLabel.visible"
-             class="connection-hover-label"
-             :class="`label-${connectionLabel.type}`"
-             :style="{
-               left: connectionLabel.x + 'px',
-               top: connectionLabel.y + 'px'
-             }">
-          {{ connectionLabel.text }}
-        </div>
-        <flow-node-enhanced
-          v-for="node in data.nodeList"
-          :key="node.id"
-          :node="node"
-          :app-name="metaAppDisplayNameForSimulation"
-          :sim-visual="simulationVisualForNode(node)"
-          :chrome-locked="simulationChromeLocked"
-          @nodeRightMenu="nodeRightMenu"
-          @deleteNode="deleteNode"
-          :style="canvasNodeStyle(node)"
-        />
       </div>
     </div>
 
@@ -507,6 +511,10 @@ export default {
     /** 仿真用完整想定摘要；preDes 仅作用户可改备注 */
     simulationScenarioText() {
       return this.data.scenarioSummary || this.data.preDes || ''
+    },
+    /** 只读展示（如元应用运行页）：复用 workbench 的 wb-canvas-zone 画布样式 */
+    standaloneWorkbenchCanvas() {
+      return !this.workbenchMode && !this.showToolbar && !this.showSidebar
     }
   },
   data() {
@@ -2141,6 +2149,14 @@ export default {
   background: #f8f9fa;
   overflow: hidden !important;  // 防止滚动
   min-width: 0;
+}
+
+.ef-legacy-canvas-host {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 仿真构建进行时：背景网格轻微呼吸，突出「流水线」感 */

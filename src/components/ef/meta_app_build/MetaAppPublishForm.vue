@@ -188,6 +188,8 @@ import {
 } from './runtime_spec'
 import { buildMetaAppPrepublishPayload } from './prepublish_payload'
 
+const PREPUBLISH_FIELD_ORDER = ['name', 'inputName', 'outputName', 'submitButtonText', 'technology']
+
 export default {
   name: 'MetaAppPublishForm',
   props: {
@@ -297,10 +299,61 @@ export default {
       this.scenarioOptions = await dictionaryCache.loadDict(`${this.verticalType}_scenario`) || []
       this.technologyOptions = await dictionaryCache.loadDict(`${this.verticalType}_technology`) || []
     },
+    firstErrorField(errors) {
+      return PREPUBLISH_FIELD_ORDER.find((fieldKey) => errors[fieldKey]) || Object.keys(errors)[0]
+    },
+    scrollToFormField(fieldKey) {
+      this.$nextTick(() => {
+        const scroller = this.$el.querySelector('.wb-form-col')
+        const label = this.$el.querySelector(`label[for="${fieldKey}"]`)
+        const errorItem = scroller && scroller.querySelector('.ant-form-item-has-error')
+        const target = (label && label.closest('.ant-form-item')) || errorItem
+        if (!target) return
+        if (scroller && scroller.contains(target)) {
+          const scrollerRect = scroller.getBoundingClientRect()
+          const targetRect = target.getBoundingClientRect()
+          const top = scroller.scrollTop + (targetRect.top - scrollerRect.top) - 16
+          scroller.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+          return
+        }
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      })
+    },
+    warnValidation(errors) {
+      const fieldKey = this.firstErrorField(errors)
+      const message = (errors[fieldKey] && errors[fieldKey][0] && errors[fieldKey][0].message) || '请完善必填项'
+      this.scrollToFormField(fieldKey)
+      this.$message.warning({
+        content: (h) => h('span', [
+          message,
+          ' ',
+          h(
+            'a',
+            {
+              attrs: { href: 'javascript:;' },
+              on: {
+                click: (event) => {
+                  event.preventDefault()
+                  this.scrollToFormField(fieldKey)
+                }
+              }
+            },
+            '前往填写'
+          )
+        ]),
+        duration: 5
+      })
+    },
+    goToSearchPage() {
+      this.$router.push(`/vertical-user/${this.verticalType}`)
+    },
     submit() {
       const { validateFields } = this.form
       validateFields(async (errors, values) => {
-        if (errors) return
+        if (errors) {
+          this.warnValidation(errors)
+          return
+        }
         this.submitting = true
         const { name, inputName, outputName, visualization, submitButtonText } = values
         this.formName = name
@@ -329,6 +382,7 @@ export default {
           if (res && res.status === 'success') {
             this.$message.success('预发布成功！部署完成后可进行业务验证')
             this.$emit('published')
+            this.goToSearchPage()
           } else {
             this.$message.error((res && res.message) || '预发布失败')
           }

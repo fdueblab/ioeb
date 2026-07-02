@@ -230,9 +230,13 @@ export default {
 
       // 课题演示 → 进程内 mock 推荐；其余（含 health）→ 真实想定追问再推荐
       if (matchesScheduleDemoInput(input)) {
+        // 新的演示示例优先，不能被上一次待补充会话当成回答。
+        this.topicMockIntakeSession = null
         if (this.handleTopicMockScenarioIntake(input)) return
         this.$emit('start-loading')
         this.useScheduleDemoData(input)
+      } else if (this.topicMockIntakeSession) {
+        this.handleTopicMockScenarioIntake(input)
       } else if (shouldUseReadyScenario) {
         this.$emit('start-loading')
         this.callAgentForRecommendation(input)
@@ -250,91 +254,75 @@ export default {
 
       if (turn.status === 'question') {
         this.topicMockIntakeSession = turn.session
-        this.placeholder = '请补充想定信息（可继续澄清结构化想定）…'
+        this.placeholder = '请补充想定信息…'
         this.playMockAgentIntakeReply({
-          thought: '正在解析您的构建需求，并整理需要补充的信息…',
+          thought: '正在解析课题一报告生成需求…',
           result: this.formatIntakeQuestionHtml(turn.text, turn.hint),
           finishedTitle: '想定待补充'
         })
         return true
       }
 
-      if (turn.status === 'ready') {
-        this.topicMockIntakeSession = null
-        const intakeEvent = toScenarioIntakeEvent(turn.intake)
-        this.scenarioSummary = intakeEvent.scenarioSummary || ''
-        this.scenarioParsed = intakeEvent.scenarioParsed || null
-        this.userRemark = intakeEvent.userRemark || ''
-        this.$emit('scenario-intake', intakeEvent)
-        const initialInput = turn.initialInput || input
-        this.playMockAgentIntakeReply({
-          thought: '想定信息已足够，正在整理结构化场景…',
-          result: turn.text || '想定信息已足够，开始为您匹配 MCP 服务。',
-          finishedTitle: '想定已就绪',
-          onComplete: () => {
-            this.beginAgentTurn()
-            this.isInputLoading = true
-            this.isInputEnabled = false
-            this.messages.push({ text: 'agentLoading', isUser: false })
-            this.scrollToBottom()
-            this.$emit('start-loading')
-            this.useScheduleDemoData(initialInput)
-          }
-        })
-        return true
-      }
-
-      return false
+      this.topicMockIntakeSession = null
+      const intakeEvent = toScenarioIntakeEvent(turn.intake)
+      this.scenarioSummary = intakeEvent.scenarioSummary || ''
+      this.scenarioParsed = intakeEvent.scenarioParsed || null
+      this.userRemark = intakeEvent.userRemark || ''
+      this.$emit('scenario-intake', intakeEvent)
+      this.playMockAgentIntakeReply({
+        thought: '已将补充要求写入课题一结构化想定…',
+        result: turn.text,
+        finishedTitle: '想定已就绪',
+        onComplete: () => {
+          this.beginAgentTurn()
+          this.isInputLoading = true
+          this.isInputEnabled = false
+          this.messages.push({ text: 'agentLoading', isUser: false })
+          this.scrollToBottom()
+          this.$emit('start-loading')
+          this.useScheduleDemoData(turn.initialInput, turn.analysisChoice)
+        }
+      })
+      return true
     },
 
     formatIntakeQuestionHtml(text, hint) {
-      const body = String(text || '')
-      const tip = String(hint || '')
-      if (!tip) return body
-      return `${body}<br/><br/><span style="color:#888;font-size:12px;">提示：${tip}</span>`
+      if (!hint) return text
+      return `${text}<br/><br/><span style="color:#888;font-size:12px;">提示：${hint}</span>`
     },
 
-    /** mock 想定追问：保留连接动画 → 思考步骤打字 → 结果区打字（与推荐链路一致） */
     playMockAgentIntakeReply({ thought, result, finishedTitle, onComplete }) {
-      const connectMs = 800 + Math.floor(Math.random() * 400)
-      const thoughtText = String(thought || '')
-      const resultHtml = String(result || '')
-
       setTimeout(() => {
-        this.updateThinkingMessage(thoughtText, 1)
-        const stepMs = Math.max(900, thoughtText.length * 16 + 300)
+        this.updateThinkingMessage(thought, 1)
         setTimeout(() => {
-          if (this.thinkingMessageIndex !== -1 && finishedTitle) {
+          if (this.thinkingMessageIndex !== -1) {
             this.$set(this.messages[this.thinkingMessageIndex].thinking, 'title', finishedTitle)
           }
           this.handleFinalStep()
           this.currentIndex = 0
-          this.typeAgentResult(resultHtml, onComplete)
-        }, stepMs)
-      }, connectMs)
+          this.typeAgentResult(result, onComplete)
+        }, 900)
+      }, 800)
     },
 
     typeAgentResult(text, onComplete) {
       if (this.thinkingMessageIndex === -1) {
         this.agentTypeWriter(text)
-        if (onComplete) {
-          setTimeout(onComplete, text.length * 20 + 80)
-        }
+        if (onComplete) setTimeout(onComplete, text.length * 20 + 80)
         return
       }
-      const agentMessage = this.messages[this.thinkingMessageIndex]
-      let idx = 0
+      const message = this.messages[this.thinkingMessageIndex]
+      let index = 0
       const tick = () => {
-        if (idx < text.length) {
-          this.$set(agentMessage, 'result', text.substring(0, idx + 1))
-          idx += 1
+        if (index < text.length) {
+          this.$set(message, 'result', text.substring(0, ++index))
           this.scrollToBottom()
           setTimeout(tick, 20)
           return
         }
         this.finishAgentTurn()
         this.scrollToBottom()
-        if (typeof onComplete === 'function') onComplete()
+        if (onComplete) onComplete()
       }
       tick()
     },
@@ -398,7 +386,7 @@ export default {
         console.error('想定追问失败:', error)
         this.removeAgentLoadingMessage()
         this.$emit('stop-loading')
-        const outputMessage = this.messageManager.getErrorReply()
+        const outputMessage = this.messageManager.getErrorReply(error.kind)
         this.messages.push({ text: outputMessage, isUser: false })
         this.finishAgentTurn()
       }
@@ -584,16 +572,16 @@ export default {
             this.updateThinkingMessage(data.thought, data.step)
           }
         },
-        onError: (error) => {
+        onError: (error, kind) => {
           console.error('智能体推荐失败:', error)
           this.$emit('stop-loading')
-          const outputMessage = this.messageManager.getErrorReply()
+          const outputMessage = this.messageManager.getErrorReply(kind)
           this.agentTypeWriter(outputMessage)
         },
         onWarning: (warning) => {
           console.warn('智能体推荐警告:', warning)
           this.$emit('stop-loading')
-          const outputMessage = this.messageManager.getErrorReply()
+          const outputMessage = this.messageManager.getErrorReply('server')
           this.agentTypeWriter(outputMessage)
         },
         onFinalResult: (results) => {
@@ -606,14 +594,14 @@ export default {
           console.log('智能体推荐完成')
           this.$emit('stop-loading')
           if (this.isInputLoading && !this.receivedFinalResult) {
-            const outputMessage = this.messageManager.getErrorReply()
+            const outputMessage = this.messageManager.getErrorReply('server')
             this.agentTypeWriter(outputMessage)
           }
         },
         onDataProcessError: (error) => {
           console.error('智能体数据处理错误:', error)
           this.$emit('stop-loading')
-          const outputMessage = this.messageManager.getErrorReply()
+          const outputMessage = this.messageManager.getErrorReply('server')
           this.agentTypeWriter(outputMessage)
         }
       })
@@ -648,21 +636,23 @@ export default {
           this.placeholder = '可继续对话补充想定，或打开仿真构建前在准备页编辑'
           this.agentTypeWriter(outputMessage)
         } else {
+          if (typeof recommendation_result.result !== 'string' || !recommendation_result.result.trim()) {
+            throw new Error('推荐失败结果缺少可展示内容')
+          }
           this.$emit('stop-loading')
-          const outputMessage = this.messageManager.getErrorReply()
-          this.agentTypeWriter(outputMessage)
+          this.agentTypeWriter(recommendation_result.result)
         }
       } catch (error) {
         console.error('处理智能体返回数据失败:', error)
         this.$emit('stop-loading')
-        const outputMessage = this.messageManager.getErrorReply(true)
+        const outputMessage = this.messageManager.getErrorReply('server')
         this.agentTypeWriter(outputMessage)
       }
     },
-    useScheduleDemoData(input) {
-      const steps = generateMockSteps(this.verticalType, input)
+    useScheduleDemoData(input, analysisChoice = null) {
+      const steps = generateMockSteps(this.verticalType, input, analysisChoice)
       const runStep = (idx) => {
-        if (idx >= steps.length) return this.finishScheduleDemo(input)
+        if (idx >= steps.length) return this.finishScheduleDemo(input, analysisChoice)
         const step = steps[idx]
         setTimeout(() => {
           this.updateThinkingMessage(step.thought, step.step)
@@ -671,10 +661,10 @@ export default {
       }
       runStep(0)
     },
-    finishScheduleDemo(input) {
+    finishScheduleDemo(input, analysisChoice = null) {
       this.handleFinalStep()
       const isTopic = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.TOPIC
-      getMetaAppNodes(this.verticalType, input)
+      getMetaAppNodes(this.verticalType, input, analysisChoice)
         .then((flowData) => {
           if (isTopic && flowData.scenarioParsed && !this.scenarioParsed) {
             const intakeEvent = toScenarioIntakeEvent({
@@ -704,7 +694,7 @@ export default {
         })
         .catch(() => {
           this.$emit('stop-loading')
-          this.agentTypeWriter(this.messageManager.getErrorReply())
+          this.agentTypeWriter(this.messageManager.getErrorReply('server'))
           this.finishAgentTurn()
         })
     },

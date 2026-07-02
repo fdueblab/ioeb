@@ -24,6 +24,7 @@ export function buildMetaAppPrepublishPayload({
     ...values,
     domain: verticalType,
     type: 'meta',
+    status: 'pre_release_unrated',
     network: META_APP_NETWORK,
     port: META_APP_PORT,
     volume: META_APP_VOLUME,

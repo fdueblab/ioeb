@@ -53,20 +53,21 @@
           <span class="runtime-cell">{{ text || '—' }}</span>
         </span>
         <span slot="action" slot-scope="text, record">
-          <template v-if="record.type === 'meta'">
-            <a-button v-if="record.status === 'pre_release_unrated'" style="padding: 0" type="link" @click="handleDeploy(record)">部署</a-button>
-            <span v-else-if="record.status === 'deploying'" class="runtime-action-label">部署中</span>
-            <span v-else-if="record.status === 'pre_release_pending'" class="runtime-action-label">待测评</span>
-            <span v-else class="runtime-action-label">—</span>
-            <a-divider type="vertical" />
-            <a-button style="padding: 0;color: orangered" type="link" @click="handleDelete(record)">删除</a-button>
-          </template>
-          <template v-else>
-            <a-button v-if="deployingStatusCode.includes(record.status)" style="padding: 0" type="link" @click="handleStop(record)">停止</a-button>
-            <a-button v-else style="padding: 0" type="link" @click="handleDeploy(record)">部署</a-button>
-            <a-divider type="vertical" />
-            <a-button style="padding: 0;color: orangered" type="link" @click="handleDelete(record)">删除</a-button>
-          </template>
+          <a-button
+            v-if="canStop(record)"
+            style="padding: 0"
+            type="link"
+            @click="handleStop(record)"
+          >停止</a-button>
+          <a-button
+            v-else-if="canDeploy(record)"
+            style="padding: 0"
+            type="link"
+            @click="handleDeploy(record)"
+          >部署</a-button>
+          <span v-else class="runtime-action-label">—</span>
+          <a-divider type="vertical" />
+          <a-button style="padding: 0;color: orangered" type="link" @click="handleDelete(record)">删除</a-button>
         </span>
       </a-table>
     </a-card>
@@ -97,7 +98,8 @@ export default {
       },
       statusDict: [],
       statusStyleDict: [],
-      deployingStatusCode: [],
+      stopStatuses: ['pre_release_unrated', 'pre_release_pending', 'released', 'deploying'],
+      deployStatuses: ['not_deployed', 'error'],
       columns: [
         {
           title: '#',
@@ -169,24 +171,18 @@ export default {
   },
   methods: {
     statusFilter(type) {
-      if (type === undefined) {
-        return '未知状态'
-      }
-      if (!this.statusDict || !Array.isArray(this.statusDict)) {
-        return '未知状态'
-      }
       const statusItem = this.statusDict.find(item => item && item.code === type)
-      return statusItem ? statusItem.text : '未知状态'
+      return statusItem.text
     },
     statusStyleFilter(type) {
-      if (type === undefined) {
-        return 'default'
-      }
-      if (!this.statusStyleDict || !Array.isArray(this.statusStyleDict)) {
-        return 'default'
-      }
       const statusItem = this.statusStyleDict.find(item => item && item.code === type)
-      return statusItem ? statusItem.text : 'default'
+      return statusItem.text
+    },
+    canStop(record) {
+      return this.stopStatuses.includes(record.status)
+    },
+    canDeploy(record) {
+      return this.deployStatuses.includes(record.status)
     },
     handleAdd() {
       this.$router.push({ path: `/vertical-ms/${this.verticalType}` })
@@ -226,7 +222,6 @@ export default {
         // 加载字典缓存
         this.statusDict = await dictionaryCache.loadDict('status') || []
         this.statusStyleDict = await dictionaryCache.loadDict('status_style') || []
-        this.deployingStatusCode = this.statusStyleDict.filter(item => ['processing', 'warning', 'success'].includes(item.text)).map(item => item.code)
       } catch (error) {
         console.error('加载字典数据失败:', error)
         this.$message.error('加载数据字典失败，请刷新重试')
@@ -315,9 +310,15 @@ export default {
         }
       })
     },
-    // 停止
+    // 停止 / 终止部署
     handleStop(record) {
-      this.$confirm('确认停止', `确定要停止服务 ${record.name} 吗？`, {
+      const deploying = record.status === 'deploying'
+      this.$confirm(
+        deploying ? '确认终止部署' : '确认停止',
+        deploying
+          ? `确定要终止服务 ${record.name} 的部署吗？`
+          : `确定要停止服务 ${record.name} 吗？`,
+        {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning',

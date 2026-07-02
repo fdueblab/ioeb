@@ -1,4 +1,5 @@
 import { enrichTopicFlowWithScenarioIntake } from './topic_scenario_intake'
+import { matchesTopicDemoInput } from './topic_demo_inputs'
 
 // 调度页演示：元应用 flow、SmartChat 推理步骤、关键字与仿真分流
 // - 课题 → getMetaAppNodes / generateMockSteps + 仿真 inmemory
@@ -47,7 +48,7 @@ export function resolveScheduleDemoKind(text) {
 }
 
 export function matchesScheduleDemoInput(text) {
-  return resolveScheduleDemoKind(text) != null
+  return matchesTopicDemoInput(text)
 }
 
 /** 仿真 API：课题演示走进程内 mock */
@@ -611,6 +612,14 @@ const pj1pj4pj3App = {
   ]
 }
 
+const pj2pj4pj3App = {
+  ...pj1pj4pj3App,
+  preName: '跨境金融联合风控综合报告生成元应用',
+  mockRouteHint: '课题二 课题四 课题三',
+  preDes: '先由课题二多方安全计算完成联合风险识别，再经课题四安全评测，最终由课题三生成金融风险报告',
+  nodeList: [pj2App.nodeList[0], ...pj1pj4pj3App.nodeList.slice(1)]
+}
+
 // 围标检测元应用
 const bidRiggingDetectionApp = {
   preName: '课题五围标检测元应用',
@@ -674,9 +683,13 @@ const bidRiggingDetectionApp = {
  * @param {string} userInput - 用户输入
  * @returns {Array} - 返回推理步骤数组
  */
-function generateTopicDemoMockSteps(userInput) {
+function generateTopicDemoMockSteps(userInput, analysisChoice) {
   const flowName =
-    userInput.includes('课题二')
+    analysisChoice === 'pj2'
+      ? '课题二联合风险识别 + 课题四安全评测 + 课题三报告生成'
+      : analysisChoice === 'pj1'
+        ? '课题一风险识别 + 课题四安全评测 + 课题三报告生成'
+        : userInput.includes('课题二')
       ? '课题二风险识别'
       : userInput.includes('课题四') && !userInput.includes('课题三')
         ? '课题四安全评测'
@@ -699,9 +712,9 @@ function generateTopicDemoMockSteps(userInput) {
   ]
 }
 
-export function generateMockSteps(serviceType, userInput) {
+export function generateMockSteps(serviceType, userInput, analysisChoice = null) {
   if (resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.TOPIC) {
-    return generateTopicDemoMockSteps(userInput)
+    return generateTopicDemoMockSteps(userInput, analysisChoice)
   }
   return [
     {
@@ -743,13 +756,13 @@ export function generateMockSteps(serviceType, userInput) {
  * @param {string} userInput - 用户输入
  * @returns {Promise<Object>} - 返回flowData对象
  */
-export function getMetaAppNodes(serviceType, userInput) {
+export function getMetaAppNodes(serviceType, userInput, analysisChoice = null) {
   return new Promise((resolve, reject) => {
     let flowData
     // 对于金融领域，根据用户输入选择不同的应用
     if (serviceType === 'aml') {
       if (userInput.includes('课题三')) {
-        flowData = pj1pj4pj3App
+        flowData = analysisChoice === 'pj2' ? pj2pj4pj3App : pj1pj4pj3App
       } else if (userInput.includes('课题四')) {
         flowData = pj4App
       } else if (userInput.includes('课题一')) {
@@ -801,7 +814,7 @@ export function getMetaAppNodes(serviceType, userInput) {
         serviceType === 'aml' &&
         resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.TOPIC
       ) {
-        resolve(enrichTopicFlowWithScenarioIntake(flowData, userInput))
+        resolve(enrichTopicFlowWithScenarioIntake(flowData, userInput, analysisChoice))
         return
       }
       resolve(flowData)

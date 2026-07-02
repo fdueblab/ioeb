@@ -19,7 +19,7 @@ ioeb 仿真构建              -> VUE_APP_AGENT_BASE_URL -> Micro-Agent
 Micro-Agent 真实调用       -> 远程 MCP（mcpUrl 来自 servicesMeta / 服务库）
 ```
 
-**端口（ebLab SSH 本地联调）**：ioeb `6173`，Micro-Agent `9017`，ioeb_backend `5000`（`wsgi_verify.py`）。
+**端口（ebLab SSH 本地联调）**：ioeb `6173`，Micro-Agent `9017`，ioeb_backend `5000`（`wsgi.py` + `.env_dev` → `ioeb-dev` MySQL）。
 **端口（staging/prod）**：经 nginx；Agent 容器 `8010`，backend `5000`，MCP 经 `/mcp-proxy/{port}/sse`。
 
 ## 二、Micro-Agent 关键文件

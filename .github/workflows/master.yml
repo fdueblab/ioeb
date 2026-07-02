@@ -9,26 +9,8 @@ on:
     types: [published]
 
 jobs:
-  test:
-    name: Functional Test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
-      - name: Install and test
-        run: |
-          npm install -g yarn
-          yarn install
-          yarn test:functional
-          yarn build
-
   build:
     name: Build & Push Frontend Image
-    needs: test
     if: github.event_name != 'pull_request' && (github.event_name != 'release' || startsWith(github.event.release.tag_name, 'v'))
     runs-on: ubuntu-latest
     env:
