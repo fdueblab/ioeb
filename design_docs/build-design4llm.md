@@ -1,255 +1,217 @@
-# 仿真构建 · 后端接入（LLM 契约）
+# 仿真构建 · 当前接口契约
 
-> **本文目的**：当你（LLM / AI 助手）需要**修改、扩展或调试**仿真构建系统时，阅读本文即可理解**所有接口约定和代码位置**。
->
-> 产品叙事见 `design_docs/simulation-build-design.md`。本文约定 **HTTP + SSE**。领域知识由 Micro-Agent 通过 Skill 机制注入（`workspace/skills/domain_*`），前端只传 `domain` 标识。
+更新：2026-06-28。本文是 LLM/工程协作者修改仿真构建时的当前契约。产品与研究叙事见同目录其它文档；本地联调启停见 `~/.cursor/rules/fdueblab-local-dev.mdc`。
 
----
+## 一、仓库职责
 
-## 1. 三仓库职责
+| 仓库 | 职责 |
+| --- | --- |
+| ioeb | Vue 2 前端，负责画布、仿真构建面板、预发布表单、临时 JSON/摘要展示 |
+| Micro-Agent | FastAPI，负责 LLM+MCP 构建、BuildBundle 落盘、artifact 运行、实验 runner |
+| external-mcp | 医疗 MCP 服务集合；元数据 SoT 为 `service_catalog.json` |
+| ioeb_backend | 系统后端：用户/服务 CRUD；当前不承载 BuildBundle/Artifact |
 
-| 仓库 | 技术栈 | 职责 |
-|------|--------|------|
-| **ioeb**（前端） | Vue 2 | 系统 UI、画布编辑、仿真面板（`simulation_builder.vue`）、对话（`smart_chat.vue`） |
-| **ioeb_backend** | Flask | **系统后端**：用户、微服务、字典等。**不参与仿真构建与研究功能** |
-| **Micro-Agent** | FastAPI | **Agent 服务 + 仿真构建**：双 Agent（Planner/Verifier）、轨迹持久化、SSE 事件流 |
+调用关系：
 
-**调用关系**
+```text
+ioeb 系统功能 / prepublish -> VUE_APP_API_BASE_URL   -> ioeb_backend
+ioeb 仿真构建              -> VUE_APP_AGENT_BASE_URL -> Micro-Agent
+Micro-Agent 真实调用       -> 远程 MCP（mcpUrl 来自 servicesMeta / 服务库）
+```
 
-- **系统 API** → `VUE_APP_API_BASE_URL` → **ioeb_backend**（axios `request`）
-- **仿真构建 + 智能体** → `VUE_APP_AGENT_BASE_URL` → **Micro-Agent**（`fetch` / `EventSource`），**与 ioeb_backend 解耦**
+**端口（ebLab SSH 本地联调）**：ioeb `6173`，Micro-Agent `9017`，ioeb_backend `5000`（`wsgi.py` + `.env_dev` → `ioeb-dev` MySQL）。
+**端口（staging/prod）**：经 nginx；Agent 容器 `8010`，backend `5000`，MCP 经 `/mcp-proxy/{port}/sse`。
 
----
+## 二、Micro-Agent 关键文件
 
-## 2. 仿真构建架构
+| 文件 | 作用 |
+| --- | --- |
+| `api/routes/simulation.py` | `/api/simulation/*` 路由；start/stream/build/run/experiment |
+| `micro_agent/simulation/orchestrator.py` | 想定规范化、MCP 注册、ReAct 慢模式、Verifier 循环 |
+| `micro_agent/simulation/logging_mcp_tool.py` | 真实 MCP 工具调用记录 |
+| `micro_agent/simulation/sandbox_tool.py` | demo fake MCP/SandboxTool 调用记录 |
+| `micro_agent/simulation/trace_records.py` | `tool_call_record` 事件和 trace metadata |
+| `micro_agent/simulation/build_bundle.py` | BuildBundle 保存/读取 |
+| `micro_agent/simulation/artifact_compiler.py` | trace -> AcceptedTrajectory / MetaAppArtifact |
+| `micro_agent/simulation/artifact_runtime.py` | GoldenPath replay + fallback 慢模式 + Eval-time Verifier |
+| `micro_agent/simulation/experiments.py` | `real_mcp_reuse` baseline runner |
 
-### 2.1 Micro-Agent 侧
+## 三、ioeb 关键文件
 
-| 模块 | 路径 | 说明 |
-|------|------|------|
-| `SimulationOrchestrator` | `micro_agent/simulation/orchestrator.py` | 4 阶段编排器，Phase 2 使用 Planner + Verifier 双 Agent |
-| `TraceStore` / `FileTraceStore` | `micro_agent/simulation/trace_store.py` | 轨迹持久化接口 + JSON 文件实现 |
-| 仿真路由 | `api/routes/simulation.py` | `POST /start`、`GET /{id}/stream`、`POST /{id}/cancel`、`GET /records`、`POST /records/compare` |
+| 文件 | 作用 |
+| --- | --- |
+| `src/api/simulation_builder.js` | 仿真构建 API/SSE 客户端；按 appName 分流 inmemory demo 或 Micro-Agent |
+| `src/components/ef/simulation_builder.vue` | 主仿真构建面板；读取 trace/evidence summary/artifact，展示临时 JSON/摘要 |
+| `src/components/ef/meta_app_build/MetaAppConfigDetail.vue` | 预发布/构建详情中的产物摘要展示 |
+| `src/components/ef/meta_app_build/SimulationDetailSidebar.vue` | 构建详情侧栏 |
+| `src/components/ef/meta_app_build/MetaAppPublishForm.vue` | 预发布表单 |
+| `src/components/ef/meta_app_build/MetaAppBuildShell.vue` | 构建工作台壳 |
+| `src/mock/services/simulation_builder_inmemory.js` | 课题演示进程内 mock 流 |
+| `src/mock/data/topic_simulation_artifacts.js` | 课题演示产物合成；仍可能是旧演示形状，不计入真实链路 |
 
-**Planner Agent**：注册 `SimulatedMCPTool`（mock），按服务列表逐一调用，产出执行轨迹。
+## 四、Start 请求
 
-**Verifier Agent**：审查 Planner 轨迹，判断完整性和正确性。不通过则反馈问题，Planner 重新执行。
+`POST {VUE_APP_AGENT_BASE_URL}/api/simulation/start`
 
-**SimulatedMCPTool**：当前为 mock 实现，返回结构化模拟数据。后续替换为真实 MCP 只需改 `orchestrator._build_planner()` 中的 tool 注册逻辑。
+```ts
+interface SimulationStartRequest {
+  appId?: string
+  appName?: string
+  domain?: string
+  servicesMeta?: Record<string, any>[]
+  maxIterations?: number
+  scenarioDescription?: string
+  scenarioParsed?: Record<string, any>
+}
+```
 
-### 2.2 前端侧
+返回：
 
-| 文件 | 变更 |
-|------|------|
-| `src/api/simulation_builder.js` | 按 `topicDemo.js`：展示名含「课题」→ 进程内 mock，否则 `VUE_APP_AGENT_BASE_URL` |
-| `src/components/ef/smart_chat.vue` | 新增 `agentSessionId`，支持多轮对话 session |
-| `src/utils/request.js` | `streamAgent` 新增 `onSessionInfo` 回调，捕获 session_id |
-
-### 2.3 环境变量
-
-| 变量 | 用途 |
-|------|------|
-| `VUE_APP_API_BASE_URL` | axios `request` → ioeb_backend（用户、字典等系统功能） |
-| `VUE_APP_AGENT_BASE_URL` | 仿真构建 + 智能体 → Micro-Agent（仿真 SSE、Agent 推理） |
-
----
-
-## 3. HTTP 路径与方法
-
-所有仿真接口均在 Micro-Agent 上，前缀 `VUE_APP_AGENT_BASE_URL`：
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/api/simulation/start` | body 见 §4；返回 `{ success, sessionId, streamUrl }` |
-| GET | `/api/simulation/{sessionId}/stream` | SSE 命名事件流（EventSource 兼容） |
-| POST | `/api/simulation/{sessionId}/cancel` | 取消；流内尽快发 `complete` 且 `cancelled: true` |
-| GET | `/api/simulation/records` | 历史轨迹列表 |
-| POST | `/api/simulation/records/compare` | body `{ recordIds: string[] }` |
-
----
-
-## 4. `POST .../start` body
-
-```typescript
-interface StartSimulationRequest {
-  appId: string
-  appName: string
-  domain: string                // Micro-Agent 按此值加载 workspace/skills/domain_{domain} 的 Skill
-  serviceIds: string[]
-  servicesMeta: { id: string; name: string }[]
-  maxIterations: number
-  scenarioDescription: string
-  mode: 'production' | 'research'
-  strategy?: {
-    sandbox: 'cow' | 'none' | 'full_mock'
-    planning: 'llm_autonomous' | 'preset_workflow'
-    verification: 'multi_agent' | 'single_agent' | 'rule_based'
-    repair: 'llm_repair' | 'rule_repair' | 'none'
-    solidify: 'golden_trace' | 'replan' | 'static'
+```json
+{
+  "success": true,
+  "sessionId": "build-...",
+  "buildId": "build-...",
+  "streamUrl": "/api/simulation/build-.../stream",
+  "buildRef": {
+    "manifestUrl": "/api/simulation/build-.../manifest",
+    "traceUrl": "/api/simulation/build-.../trace",
+    "acceptedTrajectoryUrl": "/api/simulation/build-.../accepted-trajectory",
+    "artifactUrl": "/api/simulation/build-.../artifact",
+    "runUrl": "/api/simulation/build-.../run",
+    "experimentUrl": "/api/simulation/build-.../experiments/run"
   }
 }
 ```
 
----
+## 五、SSE 事件
 
-## 5. SSE 事件
+`GET {VUE_APP_AGENT_BASE_URL}/api/simulation/{buildId}/stream`
 
-- `Content-Type: text/event-stream`；UTF-8
-- SSE **`event:` 具名事件**；`data:` **单行** JSON
-- 事件名：`step` `iteration` `phase` `issue` `service` `log` `metrics` `progress` `complete`
-- **最后一条须为 `complete`**，然后关流
+当前前端监听：
 
-| event | payload |
-|-------|---------|
-| `step` | `{ step: 0..3, name: string }` |
-| `iteration` | `{ iteration: number, status: 'running'\|'retry'\|'passed'\|'failed' }` |
-| `phase` | `{ phase: 'data'\|'logic'\|'check', status: 'running'\|'done' }` |
-| `issue` | `{ message: string, fix?: string }` |
-| `service` | `{ id: string, status: string, latency?: number }` |
-| `log` | `{ level: string, message: string }` |
-| `metrics` | `{ metric: string, value: number }` |
-| `progress` | `{ ctx: 'env'\|'generate', index: number, text: string, active?: boolean, done?: boolean }` |
-| `complete` | 见 §6 |
-
-**推荐顺序**：`step:0` → `service`/`log` → `step:1` → `progress(env*)` → `step:2` → `iteration` → `phase` → `iteration` → `step:3` → `progress(generate*)` → 可选 `metrics*` → **`complete`**。
-
-**实际事件流示例**（1 个服务、1 轮、生产模式）：
-
-```
-event: step
-data: {"step": 0, "name": "服务匹配"}
-
-event: log
-data: {"level": "INFO", "message": "检测服务: 数据采集服务"}
-
-event: service
-data: {"id": "s1", "status": "online", "latency": 120}
-
-event: step
-data: {"step": 1, "name": "环境准备"}
-
-event: progress
-data: {"ctx": "env", "index": 0, "text": "初始化仿真运行时", "active": true}
-
-event: progress
-data: {"ctx": "env", "index": 0, "text": "初始化仿真运行时", "done": true}
-
-event: step
-data: {"step": 2, "name": "智能构建"}
-
-event: iteration
-data: {"iteration": 1, "status": "running"}
-
-event: phase
-data: {"phase": "data", "status": "running"}
-
-event: log
-data: {"level": "INFO", "message": "规划 Agent 执行中…"}
-
-event: log
-data: {"level": "INFO", "message": "[Planner] think: 分析服务调度方案…"}
-
-event: phase
-data: {"phase": "data", "status": "done"}
-
-event: phase
-data: {"phase": "check", "status": "running"}
-
-event: log
-data: {"level": "INFO", "message": "验证 Agent 执行中…"}
-
-event: phase
-data: {"phase": "check", "status": "done"}
-
-event: iteration
-data: {"iteration": 1, "status": "passed"}
-
-event: step
-data: {"step": 3, "name": "方案生成"}
-
-event: progress
-data: {"ctx": "generate", "index": 0, "text": "编译执行方案", "done": true}
-
-event: complete
-data: {"success": true, "metrics": {"iterations": 1, "elapsedMs": 3200}, "result": {"executionPath": ["用户输入", "数据采集服务", "输出结果"], "appName": "测试"}}
+```text
+step
+scenario_parsed
+service
+iteration
+phase
+service_calling
+planner_decision
+verifier_result
+issue
+log
+complete
 ```
 
----
+典型真实顺序：
 
-## 6. `complete` 与轨迹持久化
+```text
+scenario_parsed?
+step(connect services)
+service*
+step(intelligent build)
+iteration/phase/log/service_calling/planner_decision/verifier_result
+issue? + retry iteration*
+complete
+```
 
-```typescript
-interface CompleteEvent {
-  success: boolean
-  cancelled?: boolean
-  metrics?: {
-    iterations: number
-    elapsedMs: number
-    sandboxFidelity?: number
-    planningAccuracy?: number
-    verificationAccuracy?: number
-    repairEffectiveness?: number
-  }
-  result?: {
-    executionPath?: string[]
-    strategy?: object
-    appName?: string
-    domain?: string
-    error?: string
-    suggestion?: string
-  }
+后端先保存 BuildBundle/manifest，再发送 `complete`；`complete.publishable=true` 表示可以进入预发布。
+
+## 六、BuildBundle 读取
+
+```text
+GET /api/simulation/records
+GET /api/simulation/{buildId}/manifest
+GET /api/simulation/{buildId}/trace
+GET /api/simulation/{buildId}/accepted-trajectory
+GET /api/simulation/{buildId}/artifact
+POST /api/simulation/{buildId}/evidence
+```
+
+`POST /evidence` 返回 `build_evidence_summary.v1` 派生摘要。
+
+## 七、Artifact 运行
+
+`POST /api/simulation/{buildId}/run`
+
+```json
+{
+  "message": "当前用户任务",
+  "preferGoldenPath": true
 }
 ```
 
-仿真完成后，`FileTraceStore` 自动将完整事件序列 + 元数据写入 `data/traces/{sessionId}.json`。
+返回：
 
----
+```json
+{
+  "schemaVersion": "artifact_run_result.v1",
+  "artifactId": "app-...",
+  "mode": "golden_path | slow_mode | slow_mode_after_fallback",
+  "success": true,
+  "fastPathSuccess": true,
+  "fallbackUsed": false,
+  "fastPathError": null,
+  "latencyMs": 0,
+  "result": {},
+  "bindingPlan": {},
+  "toolCalls": []
+}
+```
 
-## 7. 多轮对话（smart_chat）
+## 八、实验入口
 
-`smart_chat.vue` 通过 `streamAgent('/api/agent/mcp_service_recommendation', ...)` 与 Micro-Agent 交互。新增 session 支持：
+```text
+GET  /api/simulation/experiments/runners
+POST /api/simulation/{buildId}/experiments/run
+```
 
-1. 首次请求不带 `session_id`，Micro-Agent 返回 `{status: "components", session_id: "xxx"}` 事件
-2. 前端通过 `onSessionInfo` 回调捕获并存储 `agentSessionId`
-3. 后续请求 FormData 中附带 `session_id`，Agent 从 `FileMemory` 恢复上下文
+`POST /experiments/run` body：
 
----
+```json
+{
+  "tasks": [{"taskId": "t1", "message": "..."}],
+  "baselines": ["no_reuse", "raw_trace_prompt", "workflow_memory", "golden_path"]
+}
+```
 
-## 8. `domain` 枚举
+实验结果写入 MicroAgent 本地 BuildBundle 的 `experiment/latest_result.json`，不写 ioeb_backend。
 
-`generic` `aircraft` `health` `agriculture` `evtol` `ecommerce` `homeAI` `aml`；未知按 `generic`。
+## 九、平台持久化边界
 
----
+当前预发布仍按既有元应用配置入库，不写 BuildBundle/Artifact 引用。待真实构建、运行和实验链路通过后，再给 ioeb_backend 增加独立 Artifact 表；本阶段不修改现有数据库模型。
 
-## 9. 代码修改速查
+## 十、真实/演示分流
 
-> LLM 接到任务后，按此表定位需要修改的文件。
+- 展示名含「课题」：ioeb 走进程内 inmemory demo。
+- 其它 health 等真实场景：ioeb 走 Micro-Agent。
+- MCP 服务 URL 来自服务库 `service_apis.url`（`https://fdueblab.cn/mcp-proxy/18000–18007/sse`，见 `service_catalog.json`）。`localUrl` 仅本地批量实验直连。
 
-| 修改意图 | 涉及文件（Micro-Agent） | 涉及文件（ioeb 前端） |
-|----------|------------------------|---------------------|
-| 修改 Planner/Verifier 的 prompt | `micro_agent/simulation/orchestrator.py` → `_planner_system_prompt()`, `_build_verifier()` | — |
-| 修改领域知识 | `workspace/skills/domain_*/SKILL.md` | — |
-| 替换 mock 工具为真实 MCP | `orchestrator.py` → `_build_planner()` 中 `SimulatedMCPTool` → `MCPAgent.connect()` | — |
-| 增加新 SSE 事件类型 | `orchestrator.py` → `yield SimulationEvent("新类型", {...})` | `simulation_builder.vue` → `subscribeSimulationStream` 里增加 handler |
-| 修改轨迹存储格式/后端 | `micro_agent/simulation/trace_store.py` → `FileTraceStore`（或新建实现类） | — |
-| 添加新仿真端点 | `api/routes/simulation.py` | `src/api/simulation_builder.js` |
-| 修改策略配置选项 | `orchestrator.py` → `__init__` 和对应 phase | `simulation_builder.vue` → 策略面板 |
-| 多轮对话 / session | `api/routes/agent.py` → `build_agent(enable_session=True, session_id=...)` | `smart_chat.vue` → `agentSessionId` |
+demo/fake MCP 不计入 researchEligible。
 
-### 9.1 运行方式
+## 十一、本地联调（ebLab）
+
+**勿**在 Cursor Agent 背景 Shell 里起长驻进程（易被 SIGKILL）。在服务器上：
 
 ```bash
-# Micro-Agent（FastAPI）
-cd Micro-Agent && source .venv/bin/activate
-cp .env.example .env  # 填入 LLM_API_KEY
-uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
-
-# ioeb_backend（Flask）
-cd ioeb_backend && source .venv/bin/activate
-# 环境变量：FLASK_DEBUG=1, DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD
-python wsgi.py
-
-# ioeb（Vue）
-cd ioeb && nvm use && npm run serve
-# .env.development.local 中 VUE_APP_AGENT_BASE_URL=http://localhost:8000
+bash ~/workspace/fdueblab/.local-dev/server-start.sh
 ```
+
+客户端 SSH 隧道（须含 **6173 + 9017 + 5000**）：
+
+```bash
+bash ~/workspace/fdueblab/.local-dev/ssh-tunnel-from-client.sh
+```
+
+浏览器 `http://127.0.0.1:6173`；env 见 `ioeb/.env.development.local`。
+
+健康检查：
+
+```bash
+curl http://127.0.0.1:5000/api/health
+curl http://127.0.0.1:9017/docs
+curl http://127.0.0.1:6173/
+```
+
+日志：`/tmp/fdueblab-ioeb-backend.log`、`/tmp/fdueblab-micro-agent.log`、`/tmp/fdueblab-ioeb-serve.log`。

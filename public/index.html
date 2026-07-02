@@ -11,8 +11,8 @@
     <% for (var i in htmlWebpackPlugin.options.cdn && htmlWebpackPlugin.options.cdn.css) { %>
     <link rel="stylesheet" href="<%= htmlWebpackPlugin.options.cdn.css[i] %>" />
     <% } %>
-    <script src="./EasyPlayer-lib.min.js"></script>
-    <script src="./jsplumb.js"></script>
+    <script src="<%= BASE_URL %>EasyPlayer-lib.min.js"></script>
+    <script src="<%= BASE_URL %>jsplumb.js"></script>
   </head>
   <body>
     <noscript>

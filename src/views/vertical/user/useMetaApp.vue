@@ -71,9 +71,20 @@
               </div>
             </div>
           </div>
-          <div class="error-box" v-else>
-            <a-icon type="exclamation-circle" style="font-size: 24px; margin-bottom: 8px; color: #ff4d4f;" />
-            <div>数据缺失</div>
+          <div class="app-preview" v-else>
+            <div class="app-header">
+              <span class="app-title">元应用不可用</span>
+            </div>
+            <div class="input-output-container">
+              <div class="section-container">
+                <div class="section-header">
+                  <span class="section-title">运行结果</span>
+                </div>
+                <div class="output-box">
+                  <div class="markdown-box" v-html="bootstrapErrorHtml" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div style="flex: 1; min-width: 0">
@@ -100,7 +111,7 @@
               :vertical-type="verticalType"
               :show-toolbar="false"
               :show-sidebar="false"
-              style="flex: 1; position: relative; background-color: #f0f2f7"
+              style="flex: 1; position: relative"
               v-show="!showLogs"
               @simulation-ui="onSimulationUi"
             />
@@ -120,6 +131,8 @@ import PanelEnhanced from '@/components/ef/panel_enhanced'
 import { batchGetServices } from '@/api/service'
 import { buildImportedFlowData } from '@/components/ef/utils'
 
+const MAX_INPUT_FILE_SIZE = 50 * 1024 * 1024
+
 export default {
   name: 'UseMetaApp',
   components: {
@@ -131,6 +144,10 @@ export default {
       default: () => []
     },
     verticalType: {
+      type: String,
+      required: true
+    },
+    metaAppId: {
       type: String,
       required: true
     }
@@ -186,13 +203,16 @@ export default {
     }
   },
   computed: {
+    bootstrapErrorHtml () {
+      return this.renderMarkdown('元应用配置数据缺失，暂时无法运行。请返回列表重新进入，或联系管理员检查服务配置。')
+    },
     // 发送按钮禁用逻辑：当显示输入框且输入为空时禁用
     isSendDisabled () {
       const api = this.apiList && this.apiList[0]
-      if (!api) return true
-      const showInput = api.parameterType === 1 || api.parameterType === 3
-      if (!showInput) return false
-      return !this.code || this.code.trim().length === 0 || this.isStreaming
+      if (!api || this.isStreaming) return true
+      const needsText = api.parameterType === 1 || api.parameterType === 3
+      const needsFile = api.parameterType === 2 || api.parameterType === 3
+      return (needsText && !this.code.trim()) || (needsFile && this.uploadFiles.length === 0)
     },
     submitButtonLabel () {
       const api = this.apiList && this.apiList[0]
@@ -232,6 +252,11 @@ export default {
       if (!file) {
         return false
       }
+      if (file.size > MAX_INPUT_FILE_SIZE) {
+        this.presentAgentMessage('文件大小不能超过 50 MB，请换一份较小的数据文件再试。')
+        return false
+      }
+      this.removeFile()
       this.uploadFiles = [file]
       const url = URL.createObjectURL(file)
       this.fileList = [{
@@ -242,120 +267,90 @@ export default {
       }]
     },
     removeFile () {
+      this.fileList.forEach(file => {
+        if (file.url) URL.revokeObjectURL(file.url)
+      })
       this.fileList = []
       this.uploadFiles = []
     },
-    // 发送请求（统一流式逻辑入口；非支持类型返回203）
+    // 发送请求（文本、文件和混合输入共用同一条元应用运行链）
     async onRequestSend() {
-      const api = this.apiList[0]
-      const isFakeApi = api && api.isFake
-      // 假结果部分
-      if (isFakeApi) {
+      try {
+        const api = this.apiList && this.apiList[0]
+        if (!api || !this.metaAppId) {
+          this.presentAgentMessage('元应用 ID 缺失，无法运行。请返回列表重新进入。')
+          return
+        }
+        const needsText = api.parameterType === 1 || api.parameterType === 3
+        const needsFile = api.parameterType === 2 || api.parameterType === 3
+        if (needsText && !this.code.trim()) {
+          this.presentAgentMessage('请先输入您希望元应用完成的任务描述。')
+          return
+        }
+        if (needsFile && this.uploadFiles.length === 0) {
+          this.presentAgentMessage('请先选择要分析的数据文件（支持 CSV、Excel、JSON、JSONL）。')
+          return
+        }
+
+        this.response = ''
+        this.responseHtml = ''
+        const formData = new FormData()
+        formData.append('message', this.code.trim())
+        formData.append('meta_app_id', this.metaAppId)
+        this.uploadFiles.forEach(file => formData.append('input_files', file))
         this.isStreaming = true
         this.isCompleted = false
-        setTimeout(() => {
-          console.log(api.response)
-          this.response = api.response
-          const fakeFinalResults = this.response.final_results
-          this.responseHtml = fakeFinalResults.text_result ? this.renderMarkdown(fakeFinalResults.text_result) : fakeFinalResults
-          this.isStreaming = false
-          this.isCompleted = true
-        }, 1000)
-        return
-      }
-      try {
-        switch (this.apiList[0].parameterType) {
-          // 文本输入
-          case 1: {
-            // 校验输入
-            if (!this.code || this.code.trim().length === 0) {
-              this.$message.error('请输入内容')
-              return
-            }
-            // 需要用到完整服务信息
-            if (!this.fullServices || this.fullServices.length === 0) {
-              this.$message.error('服务列表为空，无法运行')
-              return
-            }
-            // 构建表单数据
-            const formData = new FormData()
-            formData.append('message', this.code.trim())
-            const appConfig = {
-              info: this.apiList[0],
-              services: this.fullServices
-            }
-            formData.append('app_config', JSON.stringify(appConfig))
-            // UI：显示日志视图 + loading
-            this.isStreaming = true
-            this.isCompleted = false
-            this.progressSteps = 0
-            this.sseLogs = ''
+        this.progressSteps = 0
+        this.sseLogs = ''
 
-            await streamAgent('/api/agent/meta_app/run', formData, {
-              onStart: () => {
-                this.showLogs = true
-                this.appendSseEvent({ type: 'start', text: '开始执行' })
-              },
-              onStep: (event) => {
-                const stepNo = event && event.step ? event.step : null
-                const thought = event && event.thought ? event.thought : ''
-                const action = event && event.action ? event.action : ''
-                const result = event && event.action_result ? event.action_result : ''
-                this.appendSseEvent({ type: 'step', stepNo, thought, action, result })
-                if (this.progressSteps < 8) this.progressSteps += 1
-              },
-              onError: (error) => {
-                this.appendSseEvent({ type: 'error', text: (error?.message || error) })
-                this.$message.error('运行失败')
-                this.isStreaming = false
-              },
-              onWarning: (warning) => {
-                this.appendSseEvent({ type: 'warning', text: warning })
-              },
-              onFinalResult: (results) => {
-                console.log(results)
-                // 结果按 Markdown 渲染
-                this.response = results && results.text_result ? results.text_result : ''
-                this.responseHtml = this.renderMarkdown(this.response)
-                this.appendSseEvent({ type: 'complete', text: '执行结束' })
-                this.isStreaming = false
-                this.isCompleted = true
-              },
-              onComplete: () => {
-                console.log('智能体执行完成')
-              },
-              onDataProcessError: (error) => {
-                this.appendSseEvent({ type: 'error', text: '数据处理错误: ' + (error?.message || error) })
-                this.$message.error('数据处理错误')
-                this.isStreaming = false
-              }
-            })
-            return
+        await streamAgent('/api/agent/meta_app/run', formData, {
+          onStart: () => {
+            this.showLogs = true
+            this.appendSseEvent({ type: 'start', text: '开始执行' })
+          },
+          onStep: (event) => {
+            const stepNo = event && event.step ? event.step : null
+            const thought = event && event.thought ? event.thought : ''
+            const action = event && event.action ? event.action : ''
+            const result = event && event.action_result ? event.action_result : ''
+            this.appendSseEvent({ type: 'step', stepNo, thought, action, result })
+            if (this.progressSteps < 8) this.progressSteps += 1
+          },
+          onError: (error) => {
+            this.presentAgentMessage(this.normalizeAgentErrorText(error))
+            this.isStreaming = false
+          },
+          onWarning: (warning) => {
+            console.warn('元应用运行警告:', warning)
+          },
+          onFinalResult: (results) => {
+            this.response = results && results.text_result ? results.text_result : ''
+            this.responseHtml = this.renderMarkdown(this.response)
+            this.isStreaming = false
+            this.isCompleted = true
+          },
+          onComplete: () => {
+            console.log('智能体执行完成')
+          },
+          onDataProcessError: (error) => {
+            this.presentAgentMessage('数据处理异常：' + this.normalizeAgentErrorText(error))
+            this.isStreaming = false
           }
-          // case 2: { // 文件输入
-          //   // 校验输入
-          //   if (!this.fileList || this.fileList.length === 0) {
-          //     this.$message.error('请选择文件')
-          //     return
-          //   }
-          // }
-          // 其他参数类型暂不支持，返回203
-          default: {
-            this.isStreaming = true
-            this.isCompleted = false
-            setTimeout(() => {
-              this.response = { code: 203, message: '计算资源不足，暂时无法处理文件输入！', success: false }
-              this.responseHtml = this.response.data ? this.response.data.result : this.response.message
-              this.isStreaming = false
-              this.isCompleted = true
-            }, 1000)
-            return
-          }
-        }
+        })
       } catch (error) {
-        this.response = error
-        this.$message.error('请求失败，请检查网络或参数')
+        this.presentAgentMessage(this.normalizeAgentErrorText(error))
+        this.isStreaming = false
       }
+    },
+    normalizeAgentErrorText(error) {
+      const raw = (error && error.message) ? error.message : String(error || '运行未能完成')
+      return raw.replace(/^请求错误:\s*/, '').trim() || '运行未能完成，请稍后重试。'
+    },
+    presentAgentMessage(text) {
+      const normalized = String(text || '').trim() || '操作未能完成'
+      this.response = normalized
+      this.responseHtml = this.renderMarkdown(normalized)
+      this.isCompleted = false
     },
     appendSseStep (text) {
       this.sseLogs += text
@@ -367,15 +362,16 @@ export default {
       })
     },
     appendSseEvent (evt) {
-      // 仅保留思考内容
       const cleaned = { ...evt }
-      // 仅当为 step 且存在思考时记录
       if (cleaned.type === 'step' && cleaned.thought) {
-        this.sseItems.push({ type: 'step', stepNo: cleaned.step || cleaned.stepNo, thought: cleaned.thought, time: new Date().toLocaleTimeString() })
-        // 文本日志也只保留思考
+        this.sseItems.push({
+          type: 'step',
+          stepNo: cleaned.step || cleaned.stepNo,
+          thought: cleaned.thought,
+          time: new Date().toLocaleTimeString()
+        })
         this.appendSseStep(cleaned.thought + '\n\n')
       }
-      // start/complete/warn/error 仅作为时间线标识，不追加到可视文本
     },
     // 简易 Markdown 渲染（兼容常见语法），如需更强可引入 markdown-it
     renderMarkdown (text) {
@@ -425,6 +421,7 @@ export default {
       this.code = ''
       this.response = ''
       this.responseHtml = ''
+      this.removeFile()
       this.sseLogs = ''
       this.sseItems = []
       this.isCompleted = false
@@ -447,7 +444,7 @@ export default {
         // 构建节点数据
         await this.loadFlowFromServices(metaAppConfig)
       } catch (error) {
-        this.$message.error(error.message)
+        this.presentAgentMessage(error.message)
         // 清空面板数据
         this.$refs.flowPanel.dataReloadClear()
       } finally {
@@ -777,23 +774,6 @@ export default {
 .visualization-box:hover {
   border-color: #40a9ff;
   background: linear-gradient(135deg, #ffffff 0%, #e6f7ff 100%);
-}
-
-/* 错误状态 */
-.error-box {
-  width: 100%;
-  aspect-ratio: 9 / 19;
-  background: linear-gradient(135deg, #fff2f0 0%, #fff1f0 100%);
-  border: 1px solid #ffccc7;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #ff4d4f;
-  font-size: 14px;
-  font-weight: 500;
 }
 
 /* 日志容器 */

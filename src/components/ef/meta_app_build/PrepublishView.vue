@@ -1,0 +1,73 @@
+<template>
+  <div class="wb-prepublish">
+    <div class="wb-section-top">
+      <div class="wb-left-title">
+        <div class="wb-mark"><span></span><span></span><span></span><span></span></div>
+        <span>{{ appName }}</span>
+      </div>
+    </div>
+    <div class="wb-prepublish-body">
+      <meta-app-publish-form
+        :vertical-type="verticalType"
+        :pre-name="appName"
+        :pre-des="preDes"
+        :pre-input-name="preInputName"
+        :pre-output-name="preOutputName"
+        :input-type="inputType"
+        :output-type="outputType"
+        :service-ids="serviceIds"
+        :build-product="buildProduct"
+        @published="$emit('published')"
+        @back="$emit('back')"
+      />
+    </div>
+  </div>
+</template>
+
+<script>
+import MetaAppPublishForm from './MetaAppPublishForm.vue'
+
+export default {
+  name: 'PrepublishView',
+  components: { MetaAppPublishForm },
+  props: {
+    appName: { type: String, default: '' },
+    preDes: { type: String, default: '' },
+    preInputName: { type: String, default: '输入内容' },
+    preOutputName: { type: String, default: '输出内容' },
+    inputType: { type: Number, default: 1 },
+    outputType: { type: Number, default: 1 },
+    verticalType: { type: String, required: true },
+    serviceIds: { type: Array, default: () => [] },
+    buildProduct: { type: Object, required: true }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+@import './simulation-workbench.less';
+
+.wb-left-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.wb-prepublish-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  :deep(.wb-publish-form-shell) {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+}
+</style>

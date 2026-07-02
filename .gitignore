@@ -36,3 +36,10 @@ yarn-error.log*
 *.sln
 *.sw*
 package-lock.json
+
+# Local agent/editor configuration (never commit)
+.cursor/
+.codex/
+.agents/
+.claude/
+CLAUDE.md

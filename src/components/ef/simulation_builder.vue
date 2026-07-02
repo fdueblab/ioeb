@@ -1,7 +1,7 @@
 <template>
-  <div class="simulation-inline-root">
+  <div class="simulation-inline-root" :class="{ 'simulation-embedded': embedded }">
     <div class="simulation-container">
-      <!-- 顶部：整体流程步骤条（含「准备」） -->
+      <!-- 顶部：整体流程步骤条（workbench 嵌入时由 shell macrobar 承担） -->
       <div class="main-steps main-steps-five">
         <div
           v-for="(step, index) in mainSteps"
@@ -29,7 +29,7 @@
         <!-- 内容区域 -->
         <div class="content-area">
           <!-- 准备：说明 + 生产/研究 + 策略（模块化插拔，仅研究展示） -->
-          <template v-if="showPreStart">
+          <template v-if="showPreStart && !embedded">
             <div class="pre-start-panel">
               <div class="pre-start-title">准备就绪</div>
               <p class="pre-start-lead">
@@ -56,69 +56,49 @@
                 <a-icon type="bulb" /> {{ domainHint }}
               </div>
 
-              <div class="pre-start-config">
-                <div class="toolbar-row">
-                  <span class="toolbar-label">研究模式</span>
-                  <a-switch
-                    :checked="internalMode === 'research'"
-                    size="small"
-                    @change="(val) => { internalMode = val ? 'research' : 'production' }"
-                  />
+              <div v-if="hasScenarioParsedDraft" class="pre-start-parsed-intent">
+                <div class="pre-start-parsed-title">
+                  结构化想定
+                  <span class="pre-start-parsed-hint">经追问收敛；可在此或左侧对话继续补充，开始构建后锁定</span>
                 </div>
-
-                <template v-if="internalMode === 'research'">
-                  <div class="toolbar-row scenario-row">
-                    <span class="toolbar-label">场景描述</span>
+                <div class="parsed-intent-form">
+                  <div class="parsed-intent-field">
+                    <span class="parsed-intent-field-label">目标</span>
                     <a-input
-                      v-model="scenarioDraft"
+                      v-model="scenarioParsedDraft.goal"
                       size="small"
-                      placeholder="可选：用一句话描述你的业务场景"
+                      placeholder="核心业务目标"
+                      @change="emitScenarioParsedUpdate"
                     />
                   </div>
-                  <div class="research-strategy-panel">
-                    <div class="strategy-grid">
-                      <div class="strategy-field">
-                        <span>M1 沙箱</span>
-                        <a-select v-model="strategy.sandbox" size="small" style="width: 100%">
-                          <a-select-option value="cow">CoW</a-select-option>
-                          <a-select-option value="none">无沙箱</a-select-option>
-                          <a-select-option value="full_mock">全模拟</a-select-option>
-                        </a-select>
-                      </div>
-                      <div class="strategy-field">
-                        <span>M2 规划</span>
-                        <a-select v-model="strategy.planning" size="small" style="width: 100%">
-                          <a-select-option value="llm_autonomous">LLM 自主</a-select-option>
-                          <a-select-option value="preset_workflow">预设流程</a-select-option>
-                        </a-select>
-                      </div>
-                      <div class="strategy-field">
-                        <span>M3 验证</span>
-                        <a-select v-model="strategy.verification" size="small" style="width: 100%">
-                          <a-select-option value="multi_agent">多 Agent</a-select-option>
-                          <a-select-option value="single_agent">单 Agent</a-select-option>
-                          <a-select-option value="rule_based">规则</a-select-option>
-                        </a-select>
-                      </div>
-                      <div class="strategy-field">
-                        <span>M4 修复</span>
-                        <a-select v-model="strategy.repair" size="small" style="width: 100%">
-                          <a-select-option value="llm_repair">LLM</a-select-option>
-                          <a-select-option value="rule_repair">规则</a-select-option>
-                          <a-select-option value="none">禁用</a-select-option>
-                        </a-select>
-                      </div>
-                      <div class="strategy-field">
-                        <span>M5 固化</span>
-                        <a-select v-model="strategy.solidify" size="small" style="width: 100%">
-                          <a-select-option value="golden_trace">经验固化</a-select-option>
-                          <a-select-option value="replan">重规划</a-select-option>
-                          <a-select-option value="static">静态</a-select-option>
-                        </a-select>
-                      </div>
-                    </div>
+                  <div class="parsed-intent-field">
+                    <span class="parsed-intent-field-label">场景描述</span>
+                    <a-textarea
+                      v-model="scenarioParsedDraft.description"
+                      :auto-size="{ minRows: 2, maxRows: 4 }"
+                      placeholder="完整场景描述"
+                      @change="emitScenarioParsedUpdate"
+                    />
                   </div>
-                </template>
+                  <div class="parsed-intent-field">
+                    <span class="parsed-intent-field-label">约束</span>
+                    <a-textarea
+                      v-model="scenarioParsedListDraft.constraints"
+                      :auto-size="{ minRows: 2, maxRows: 5 }"
+                      placeholder="每行一条"
+                      @change="onScenarioParsedListChange('constraints')"
+                    />
+                  </div>
+                  <div class="parsed-intent-field">
+                    <span class="parsed-intent-field-label">验收标准</span>
+                    <a-textarea
+                      v-model="scenarioParsedListDraft.acceptanceCriteria"
+                      :auto-size="{ minRows: 2, maxRows: 5 }"
+                      placeholder="每行一条（可检查，非最终成败判定）"
+                      @change="onScenarioParsedListChange('acceptanceCriteria')"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </template>
@@ -173,7 +153,7 @@
           <template v-else-if="hasStarted && currentMainStep === 2 && isRunning">
             <div class="step-content simulation-phase">
               <div class="step-title">
-                智能构建 · 第 {{ currentIteration }} 轮
+                正在仿真构建 · 当前第 {{ currentIteration }} 轮迭代
                 <span class="iteration-hint" v-if="currentIteration > 1">持续优化中</span>
               </div>
 
@@ -195,8 +175,8 @@
                       <a-icon v-else-if="phases.exec === 'running'" type="loading" />
                       <span v-else>1</span>
                     </div>
-                    <span class="phase-label">调度执行</span>
-                    <span class="phase-hint">规划 Agent · 工具调用</span>
+                    <span class="phase-label">调度智能体</span>
+                    <span class="phase-hint">编排服务流程</span>
                   </div>
                   <div class="phase-connector"></div>
                   <div
@@ -208,40 +188,27 @@
                       <a-icon v-else-if="phases.check === 'running'" type="loading" />
                       <span v-else>2</span>
                     </div>
-                    <span class="phase-label">目标验收</span>
-                    <span class="phase-hint">验证 Agent · 场景目标</span>
+                    <span class="phase-label">验证智能体</span>
+                    <span class="phase-hint">检查结果质量</span>
                   </div>
                 </div>
 
                 <!-- 当前状态 -->
-                <div class="current-action">{{ currentActionText }}</div>
-              </div>
+                <div class="current-action">
+                  <a-icon v-if="isRunning" type="loading" />
+                  <span>{{ currentActionText }}</span>
+                </div>
 
-              <!-- 简洁历史 -->
-              <div class="iteration-history" v-if="iterationHistory.length > 0">
-                <div class="history-title">历史</div>
-                <div class="history-list">
+                <div class="process-snapshot" v-if="!embedded && processSnapshotCards.length">
                   <div
-                    v-for="item in iterationHistory"
-                    :key="item.iteration"
-                    class="history-item"
-                    :class="{ current: !item.completed }"
+                    v-for="card in processSnapshotCards"
+                    :key="card.key"
+                    class="process-snapshot-card"
+                    :class="'process-snapshot-card--' + card.tone"
                   >
-                    <a-icon
-                      v-if="item.completed && item.success"
-                      type="check-circle"
-                      theme="filled"
-                      class="icon-success"
-                    />
-                    <a-icon
-                      v-else-if="item.completed && !item.success"
-                      type="info-circle"
-                      theme="filled"
-                      class="icon-warning"
-                    />
-                    <a-icon v-else type="loading" class="icon-loading" />
-                    <span class="history-label">第{{ item.iteration }}轮</span>
-                    <span class="history-summary">{{ item.summary }}</span>
+                    <span class="process-snapshot-label">{{ card.label }}</span>
+                    <strong>{{ card.value }}</strong>
+                    <span class="process-snapshot-hint">{{ card.hint }}</span>
                   </div>
                 </div>
               </div>
@@ -258,7 +225,7 @@
           <template v-else-if="hasStarted && currentMainStep === 3 && isRunning">
             <div class="step-content">
               <div class="step-title">方案生成</div>
-              <div class="step-desc">正在生成元应用方案...</div>
+              <div class="step-desc">正在整理可发布的元应用...</div>
               <div class="generation-list">
                 <div
                   v-for="(item, index) in generationItems"
@@ -312,47 +279,10 @@
                 </div>
               </div>
 
-              <div v-if="internalMode === 'research'" class="strategy-summary">
-                <div class="path-label">策略摘要</div>
-                <div class="strategy-tags">
-                  <a-tag v-for="(v, k) in strategy" :key="k">{{ strategyLabel(k, v) }}</a-tag>
-                </div>
+              <div class="result-actions" v-if="!embedded && !showTechDetails">
+                <a-button icon="profile" @click="openBuildDetails">查看完整构建详情</a-button>
               </div>
 
-              <div v-if="internalMode === 'research' && resultEnhancements.length" class="strategy-summary">
-                <div class="path-label">领域知识增强</div>
-                <div class="strategy-tags">
-                  <a-tag v-for="en in resultEnhancements" :key="en.stage" color="blue">
-                    {{ enhancementStageLabel(en.stage) }} ✓
-                  </a-tag>
-                </div>
-              </div>
-
-              <div v-if="internalMode === 'research' && hasModuleMetrics" class="research-metrics">
-                <div class="path-label">模块级指标</div>
-                <div class="metrics-grid">
-                  <div v-if="finalMetrics.sandboxFidelity != null" class="metric-cell">
-                    <span class="m-v">{{ formatPct(finalMetrics.sandboxFidelity) }}</span>
-                    <span class="m-l">沙箱保真度</span>
-                  </div>
-                  <div v-if="finalMetrics.planningAccuracy != null" class="metric-cell">
-                    <span class="m-v">{{ formatPct(finalMetrics.planningAccuracy) }}</span>
-                    <span class="m-l">规划合理率</span>
-                  </div>
-                  <div v-if="finalMetrics.verificationAccuracy != null" class="metric-cell">
-                    <span class="m-v">{{ formatPct(finalMetrics.verificationAccuracy) }}</span>
-                    <span class="m-l">验证准确率</span>
-                  </div>
-                  <div v-if="finalMetrics.repairEffectiveness != null" class="metric-cell">
-                    <span class="m-v">{{ formatPct(finalMetrics.repairEffectiveness) }}</span>
-                    <span class="m-l">修复有效率</span>
-                  </div>
-                </div>
-              </div>
-
-              <div v-if="internalMode === 'research'" class="research-actions">
-                <a-button size="small" @click="openCompareModal">实验记录对比</a-button>
-              </div>
             </div>
           </template>
 
@@ -376,26 +306,30 @@
                   </div>
                 </div>
               </div>
+
+              <div class="result-actions" v-if="!embedded && !showTechDetails">
+                <a-button icon="profile" @click="openBuildDetails">查看完整构建详情</a-button>
+              </div>
             </div>
           </template>
         </div>
 
         <!-- 技术详情（构建开始后才显示） -->
-        <div class="tech-toggle" v-if="hasStarted">
+        <div class="tech-toggle" v-if="hasStarted && !embedded">
           <a-button type="link" size="small" @click="showTechDetails = !showTechDetails">
             <a-icon :type="showTechDetails ? 'up' : 'down'" />
-            {{ showTechDetails ? '收起详情' : '查看详情' }}
+            {{ showTechDetails ? '收起完整详情' : '查看完整构建详情' }}
           </a-button>
         </div>
 
         <transition name="slide-fade">
-          <div class="tech-details" v-if="hasStarted && showTechDetails">
+          <div class="tech-details" v-if="hasStarted && showTechDetails && !embedded">
             <template v-if="isCompleted">
               <div class="detail-section detail-section-card">
                 <div class="detail-title">轨迹</div>
 
                 <div v-if="callChainSteps.length" class="detail-subsection">
-                  <div class="detail-subtitle">调用链</div>
+                  <div class="detail-subtitle">{{ callChainTitle }}</div>
                   <div class="path-nodes path-nodes-block">
                     <span v-for="(node, index) in callChainSteps" :key="'path-' + index" class="path-node">
                       {{ node }}
@@ -404,7 +338,7 @@
                   </div>
                 </div>
 
-                <div v-if="detailTrace.skipped" class="detail-muted detail-subsection">进程内演示无落盘轨迹</div>
+                <div v-if="detailTrace.skipped" class="detail-muted detail-subsection">构建轨迹暂未生成</div>
                 <div v-else-if="detailTrace.loading" class="detail-muted detail-subsection">
                   <a-icon type="loading" /> 轨迹加载中…
                 </div>
@@ -450,6 +384,9 @@
                       class="trace-text-block"
                     >
                       第{{ p.iteration }}轮 · 选中 {{ (p.selectedTools || []).join(', ') || '—' }}
+                      <div v-if="p.executionPath && p.executionPath.length" class="trace-sub">
+                        路径：{{ p.executionPath.join(' → ') }}
+                      </div>
                       <div v-if="p.reason" class="trace-sub">{{ p.reason }}</div>
                     </div>
                   </div>
@@ -468,6 +405,12 @@
                         {{ v.status }}
                       </a-tag>
                       {{ v.summary || v.reason || '—' }}
+                      <div
+                        v-if="v.plannerDecision && v.plannerDecision.executionPath && v.plannerDecision.executionPath.length"
+                        class="trace-sub"
+                      >
+                        基于规划：{{ v.plannerDecision.executionPath.join(' → ') }}
+                      </div>
                     </div>
                   </div>
 
@@ -484,7 +427,7 @@
 
               <div class="detail-section detail-section-card">
                 <div class="detail-title">证据</div>
-                <div v-if="detailEvidence.skipped" class="detail-muted">进程内演示无证据分析</div>
+                <div v-if="detailEvidence.skipped" class="detail-muted">证据分析暂未生成</div>
                 <div v-else-if="detailEvidence.loading" class="detail-muted"><a-icon type="loading" /> 分析中…</div>
                 <div v-else-if="detailEvidence.error" class="detail-error">{{ detailEvidence.error }}</div>
                 <template v-else-if="detailEvidence.data">
@@ -496,15 +439,8 @@
                       </a-tag>
                       <span class="evidence-id">{{ detailEvidence.data.evidenceId }}</span>
                     </div>
-                    <p v-if="detailEvidence.data.summary" class="detail-summary-line detail-summary-line--tight">
-                      共 {{ detailEvidence.data.summary.total_checks }} 项检查 ·
-                      通过 {{ detailEvidence.data.summary.passed }}
-                      <template v-if="detailEvidence.data.summary.failed">
-                        · 失败 {{ detailEvidence.data.summary.failed }}
-                      </template>
-                      <template v-if="detailEvidence.data.summary.warnings">
-                        · 警告 {{ detailEvidence.data.summary.warnings }}
-                      </template>
+                    <p v-if="evidenceSummaryText(detailEvidence.data)" class="detail-summary-line detail-summary-line--tight">
+                      {{ evidenceSummaryText(detailEvidence.data) }}
                     </p>
                   </div>
 
@@ -540,10 +476,31 @@
               </div>
             </template>
 
+            <!-- MetaAppArtifact v1 临时 JSON 展示 -->
+            <div class="detail-section detail-section-card" v-if="isCompleted && !detailArtifact.skipped">
+              <div class="detail-title">元应用产物（最小运行包）</div>
+              <div v-if="detailArtifact.loading" class="detail-muted detail-subsection">
+                <a-icon type="loading" /> 产物编译中…
+              </div>
+              <div v-else-if="detailArtifact.error" class="detail-error detail-subsection">
+                {{ detailArtifact.error }}
+              </div>
+              <template v-else-if="detailArtifact.data">
+                <p class="detail-summary-line detail-summary-line--artifact">
+                  artifact.json 仅保留运行必要的 app、taskContract、runtime 与 goldenPaths；构建轨迹、服务选择与验收记录留在 BuildBundle。
+                </p>
+                <meta-app-artifact-panel
+                  variant="detail"
+                  :artifact="detailArtifact.data"
+                  show-json-collapse
+                />
+              </template>
+            </div>
+
             <div class="detail-section detail-section-card" v-if="iterationDetails.length > 0">
               <div class="detail-title">轮次详情</div>
               <div class="iteration-details">
-                <div v-for="iter in iterationDetails" :key="iter.iteration" class="iter-detail-item">
+                <div v-for="iter in iterationDetailsForView" :key="iter.iteration" class="iter-detail-item">
                   <div class="iter-header">
                     <span class="iter-num">第{{ iter.iteration }}轮</span>
                     <a-tag v-if="iter.success" color="green">通过</a-tag>
@@ -563,14 +520,45 @@
                       :class="{ done: iter.checkPhase === 'done', warning: iter.hasIssue, active: iter.checkPhase === 'running' }"
                     >
                       <a-icon :type="iter.checkPhase === 'done' ? (iter.hasIssue ? 'warning' : 'check-circle') : (iter.checkPhase === 'running' ? 'loading' : 'minus-circle')" />
-                      目标验收
+                      结果验证
                     </div>
                   </div>
-                  <div class="iter-issue" v-if="iter.issue">
-                    <span class="issue-label">问题：</span>{{ iter.issue }}
+                  <div class="iter-plan" v-if="iter.plannerDecision">
+                    <span class="plan-label">本轮规划：</span>
+                    <span>{{ formatPlannerTools(iter.plannerDecision) }}</span>
+                    <div
+                      v-if="iter.plannerDecision.executionPath && iter.plannerDecision.executionPath.length"
+                      class="iter-exec-path"
+                    >
+                      {{ iter.plannerDecision.executionPath.join(' → ') }}
+                    </div>
                   </div>
-                  <div class="iter-fix" v-if="iter.fix">
-                    <span class="fix-label">修复：</span>{{ iter.fix }}
+                  <div class="iter-verifier" v-if="iter.hasVerification">
+                    <div class="iter-verifier-main">
+                      <span class="verifier-label">验证</span>
+                      <a-tag
+                        v-if="iter.verifierStatus"
+                        size="small"
+                        :color="iter.verifierStatus === 'PASSED' ? 'green' : 'red'"
+                      >
+                        {{ iter.verifierStatus }}
+                      </a-tag>
+                      <span v-if="iter.verifierSummary" class="iter-verifier-summary">{{ iter.verifierSummary }}</span>
+                    </div>
+                    <ul v-if="iter.verifierChecks && iter.verifierChecks.length" class="iter-check-list">
+                      <li v-for="(chk, ci) in iter.verifierChecks" :key="'c-' + ci">
+                        {{ chk.status || chk.check }}：{{ chk.issue || chk.check }}
+                      </li>
+                    </ul>
+                    <ul v-if="iter.verifierIssues && iter.verifierIssues.length" class="iter-check-list">
+                      <li v-for="(iss, ii) in iter.verifierIssues" :key="'iss-' + ii">
+                        {{ iss.description }}
+                      </li>
+                    </ul>
+                    <div v-if="iter.fix" class="iter-fix-inline">修复：{{ iter.fix }}</div>
+                  </div>
+                  <div class="iter-issue" v-if="iter.issue && !iter.hasVerification">
+                    <span class="issue-label">问题：</span>{{ iter.issue }}
                   </div>
                 </div>
               </div>
@@ -616,8 +604,8 @@
       </div>
 
       <!-- 底部按钮 -->
-      <div class="footer-buttons">
-        <template v-if="showPreStart">
+      <div class="footer-buttons" :class="{ 'footer-buttons--embedded': embedded }">
+        <template v-if="showPreStart && !embedded">
           <a-button @click="handleClose">返回编辑</a-button>
           <a-button
             type="primary"
@@ -630,80 +618,27 @@
         </template>
 
         <template v-else-if="isRunning">
-          <a-button type="danger" @click="handleCancel">取消构建</a-button>
+          <button v-if="embedded" type="button" class="wb-danger-btn" @click="handleCancel">取消构建</button>
+          <a-button v-else type="danger" @click="handleCancel">取消构建</a-button>
         </template>
 
         <template v-else-if="isCompleted && hasFailed">
-          <a-button @click="handleClose">返回编辑</a-button>
+          <a-button v-if="!embedded" @click="handleClose">返回编辑</a-button>
+          <button v-if="embedded" type="button" class="wb-danger-btn" @click="confirmBackToEdit">返回重新编辑</button>
           <a-button type="primary" @click="retrySimulation">重新构建</a-button>
         </template>
 
         <template v-else-if="isCompleted && !hasFailed">
-          <a-button @click="handleClose">返回编辑</a-button>
-          <a-button type="primary" icon="rocket" @click="handlePrePublish">
+          <a-button v-if="!embedded" @click="handleClose">返回编辑</a-button>
+          <button v-if="embedded" type="button" class="wb-danger-btn" @click="confirmBackToEdit">返回重新编辑</button>
+          <button v-if="embedded" type="button" class="wb-primary-btn" :disabled="!canPrepublish" @click="handlePrePublish">元应用预览与发布</button>
+          <a-button v-else type="primary" icon="rocket" :disabled="!canPrepublish" @click="handlePrePublish">
             元应用预览与发布
           </a-button>
         </template>
       </div>
     </div>
 
-    <a-modal
-      :visible="compareModalVisible"
-      title="实验记录对比"
-      width="720px"
-      :footer="null"
-      :destroy-on-close="true"
-      :get-container="compareModalGetContainer"
-      @cancel="compareModalVisible = false"
-    >
-      <a-spin :spinning="compareLoading">
-        <div class="compare-toolbar">
-          <a-button type="primary" size="small" :disabled="compareSelectedIds.length < 2" @click="runCompare">
-            对比选中
-          </a-button>
-          <a-button size="small" @click="loadRecordList">刷新列表</a-button>
-        </div>
-        <a-checkbox-group v-model="compareSelectedIds" class="compare-check-group">
-          <div v-for="r in recordList" :key="r.recordId" class="compare-row">
-            <a-checkbox :value="r.recordId">
-              {{ r.createdAt }} · {{ r.success ? '成功' : '失败' }} · 轮次 {{ (r.metrics && r.metrics.iterations) || 0 }}
-            </a-checkbox>
-          </div>
-        </a-checkbox-group>
-        <div v-if="!recordList.length" class="compare-empty">暂无记录，请先完成至少一次研究模式构建</div>
-
-        <div v-if="compareResultRows.length" class="compare-table-wrap">
-          <table class="compare-table">
-            <thead>
-              <tr>
-                <th>记录</th>
-                <th>沙箱</th>
-                <th>规划</th>
-                <th>验证</th>
-                <th>修复</th>
-                <th>固化</th>
-                <th>迭代</th>
-                <th>耗时(ms)</th>
-                <th>保真度</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in compareResultRows" :key="row.recordId">
-                <td>{{ row.recordId.slice(-8) }}</td>
-                <td>{{ row.strategy && row.strategy.sandbox }}</td>
-                <td>{{ row.strategy && row.strategy.planning }}</td>
-                <td>{{ row.strategy && row.strategy.verification }}</td>
-                <td>{{ row.strategy && row.strategy.repair }}</td>
-                <td>{{ row.strategy && row.strategy.solidify }}</td>
-                <td>{{ row.metrics && row.metrics.iterations }}</td>
-                <td>{{ row.metrics && row.metrics.elapsedMs }}</td>
-                <td>{{ formatPct(row.metrics && row.metrics.sandboxFidelity) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </a-spin>
-    </a-modal>
   </div>
 </template>
 
@@ -712,37 +647,28 @@ import {
   startSimulation,
   cancelSimulation,
   subscribeSimulationStream,
-  fetchSimulationRecords,
-  compareSimulationRecords,
   fetchSimulationTrace,
-  fetchSimulationEvidence
+  fetchSimulationEvidence,
+  fetchSimulationArtifact,
+  fetchSimulationAcceptedTrajectory
 } from '@/api/simulation_builder'
 import {
   SIMULATION_BUILD_ENV_TASKS,
-  SIMULATION_BUILD_GEN_TASKS,
-  SIMULATION_BUILD_DEFAULT_STRATEGY
+  SIMULATION_BUILD_GEN_TASKS
 } from '@/mock/data/simulation_builder_data'
 import { getKnowledge } from '@/domain'
 import {
-  resolveScheduleDemoKind,
-  SCHEDULE_DEMO_KIND,
   useMemorySimulation
 } from '@/mock/data/meta_apps_data'
+import MetaAppArtifactPanel from './meta_app_build/MetaAppArtifactPanel.vue'
 
 function mapSetupItems(tasks) {
   return tasks.map((text) => ({ text, done: false, active: false }))
 }
 
-/** 开发：fdueblab mcp-proxy → 本机同端口（需 .env 中 VUE_APP_LOCAL_MCP_REWRITE=true） */
-function rewriteMcpUrlForLocalDev(url) {
-  if (process.env.VUE_APP_LOCAL_MCP_REWRITE !== 'true' || !url) return url
-  const m = String(url).match(/^https?:\/\/fdueblab\.cn\/mcp-proxy\/(\d+)(\/.*)?$/i)
-  if (!m) return url
-  return `http://127.0.0.1:${m[1]}${m[2] || '/sse'}`
-}
-
 export default {
   name: 'SimulationBuilder',
+  components: { MetaAppArtifactPanel },
   props: {
     serviceNodes: {
       type: Array,
@@ -750,7 +676,7 @@ export default {
     },
     /**
      * 元应用当前展示名称（画布 `data.preName`，含用户在元应用详情中的修改）。
-     * 演示分流见 `meta_apps_data`（课题→inmemory，【本地MCP】(n)→9017）。
+     * 演示分流见 `meta_apps_data`（课题→inmemory，其余含 health 真实场景→9017）。
      */
     appName: {
       type: String,
@@ -771,6 +697,15 @@ export default {
     scenarioDescription: {
       type: String,
       default: ''
+    },
+    scenarioParsed: {
+      type: Object,
+      default: () => ({})
+    },
+    /** workbench 左栏嵌入：隐藏步骤条与准备页，详情迁到右侧栏 */
+    embedded: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -784,10 +719,18 @@ export default {
       /** false：准备页可切换生产/研究；true：已点「开始仿真构建」 */
       hasStarted: false,
 
-      internalMode: 'production',
       scenarioDraft: '',
-      strategy: { ...SIMULATION_BUILD_DEFAULT_STRATEGY },
-
+      scenarioParsedDraft: {
+        goal: '',
+        description: '',
+        constraints: [],
+        acceptanceCriteria: [],
+        domain: ''
+      },
+      scenarioParsedListDraft: {
+        constraints: '',
+        acceptanceCriteria: ''
+      },
       sessionId: null,
       unsubscribeStream: null,
       /** 用户主动返回编辑 / 取消，或已确认离开页面 */
@@ -795,12 +738,7 @@ export default {
 
       finalMetrics: {},
       finalResult: null,
-
-      compareModalVisible: false,
-      compareLoading: false,
-      recordList: [],
-      compareSelectedIds: [],
-      compareResultRows: [],
+      completedBuild: null,
 
       mainSteps: [
         { key: 'prep', title: '准备' },
@@ -821,8 +759,11 @@ export default {
         exec: 'pending',
         check: 'pending'
       },
-      dispatchStatus: '智能体调度执行中',
+      dispatchStatus: '智能体协作中',
       currentActionText: '初始化中...',
+      activeServiceCall: null,
+      lastServiceCall: null,
+      serviceCallStats: { total: 0, perService: {} },
 
       iterationHistory: [],
       iterationDetails: [],
@@ -831,7 +772,10 @@ export default {
 
       detailTrace: { loading: false, skipped: false, error: null, view: null, rawJson: '' },
       detailEvidence: { loading: false, skipped: false, error: null, data: null },
+      detailArtifact: { loading: false, skipped: false, error: null, data: null },
+      detailAcceptedTrajectory: { loading: false, skipped: false, error: null, data: null },
       failureSuggestion: '',
+      serviceSelectionReport: null,
 
       serviceStatuses: [],
 
@@ -842,6 +786,16 @@ export default {
     }
   },
   computed: {
+    canPrepublish() {
+      const build = this.completedBuild || {}
+      return Boolean(
+        build.buildId &&
+        build.artifactId &&
+        build.artifactHash &&
+        this.detailArtifact &&
+        this.detailArtifact.data
+      )
+    },
     formattedElapsedTime() {
       const minutes = Math.floor(this.elapsedTime / 60)
       const seconds = this.elapsedTime % 60
@@ -863,11 +817,40 @@ export default {
       )
     },
     callChainSteps() {
-      const path = this.finalResult && this.finalResult.executionPath
-      if (Array.isArray(path) && path.length) return path
+      const accepted = this.buildCallChainFromAcceptedTrajectory(
+        this.detailAcceptedTrajectory && this.detailAcceptedTrajectory.data
+      )
+      if (accepted.length) return accepted
       const fromTrace = this.detailTrace.view && this.detailTrace.view.callChain
       if (Array.isArray(fromTrace) && fromTrace.length) return fromTrace
+      const path = this.finalResult && this.finalResult.executionPath
+      if (Array.isArray(path) && path.length) return path
       return []
+    },
+    callChainSourceLabel() {
+      const accepted = this.detailAcceptedTrajectory && this.detailAcceptedTrajectory.data
+      if (accepted && accepted.status === 'accepted' && Array.isArray(accepted.actionSequence) && accepted.actionSequence.length) {
+        return '轨迹数据'
+      }
+      if (this.detailTrace.view && Array.isArray(this.detailTrace.view.callChain) && this.detailTrace.view.callChain.length) {
+        return '原始轨迹'
+      }
+      if (this.finalResult && Array.isArray(this.finalResult.executionPath) && this.finalResult.executionPath.length) {
+        return '完成事件'
+      }
+      return ''
+    },
+    callChainTitle() {
+      return this.callChainSourceLabel ? `调用链（${this.callChainSourceLabel}）` : '调用链'
+    },
+    hasScenarioParsedDraft() {
+      const d = this.scenarioParsedDraft || {}
+      return Boolean(
+        (d.goal && String(d.goal).trim()) ||
+        (d.description && String(d.description).trim()) ||
+        (d.constraints && d.constraints.length) ||
+        (d.acceptanceCriteria && d.acceptanceCriteria.length)
+      )
     },
     evidenceDimensionPanels() {
       const data = this.detailEvidence && this.detailEvidence.data
@@ -906,6 +889,12 @@ export default {
         }
       })
     },
+    iterationDetailsForView() {
+      return (this.iterationDetails || []).map((i) => ({
+        ...i,
+        ...this.formatIterationVerification(i)
+      }))
+    },
     buildDimensionCards() {
       if (!this.isCompleted) return []
       const cards = []
@@ -919,7 +908,7 @@ export default {
           key: 'data',
           label: '数据保真',
           value: this.formatPct(m.sandboxFidelity),
-          hint: '沙箱/返回保真度',
+          hint: '返回保真度',
           tone: m.sandboxFidelity >= 0.8 ? 'ok' : 'warn'
         })
       } else if (dataPanel) {
@@ -961,18 +950,68 @@ export default {
 
       return cards
     },
+    selectedServiceNames() {
+      const selected = this.serviceSelectionReport && Array.isArray(this.serviceSelectionReport.selectedServices)
+        ? this.serviceSelectionReport.selectedServices
+        : []
+      return selected
+        .map((s) => s.serviceName || s.serviceId)
+        .filter(Boolean)
+    },
+    activeServiceCallLabel() {
+      const call = this.activeServiceCall || this.lastServiceCall
+      if (!call) return '等待工具调用'
+      const service = call.serviceName || call.serviceId || '服务'
+      const tool = call.toolName || ''
+      return tool ? `${service} · ${tool}` : service
+    },
+    currentVerifierState() {
+      const detail = this.currentDetail()
+      if (!detail) return '待验证'
+      const verification = this.formatIterationVerification(detail)
+      if (verification.verifierStatus) return verification.verifierStatus
+      if (detail.checkPhase === 'running') return '验证中'
+      if (detail.execPhase === 'running') return '等待验证'
+      return '待验证'
+    },
+    processSnapshotCards() {
+      if (!this.isRunning || this.currentMainStep !== 2) return []
+      const selectedCount = this.selectedServiceNames.length || this.serviceStatuses.length
+      const selectedHint = this.selectedServiceNames.length
+        ? this.selectedServiceNames.slice(0, 3).join('、')
+        : '画布服务已进入候选集'
+      return [
+        {
+          key: 'services',
+          label: '服务组合',
+          value: `${selectedCount} 个服务`,
+          hint: selectedHint,
+          tone: 'neutral'
+        },
+        {
+          key: 'calls',
+          label: '调用进度',
+          value: this.activeServiceCall ? '执行中' : (this.lastServiceCall ? '已返回' : '待触发'),
+          hint: this.activeServiceCallLabel,
+          tone: this.activeServiceCall ? 'active' : 'neutral'
+        },
+        {
+          key: 'verifier',
+          label: '结果验证',
+          value: this.currentVerifierState,
+          hint: `第 ${this.currentIteration} 轮 · 工具调用 ${this.serviceCallStats.total} 次`,
+          tone: this.currentVerifierState === 'FAILED' ? 'warn' : (this.currentVerifierState === 'PASSED' ? 'ok' : 'neutral')
+        }
+      ]
+    },
     showPreStart() {
-      return !this.hasStarted && !this.isCompleted
+      return !this.embedded && !this.hasStarted && !this.isCompleted
     },
     domainHint() {
       const d = this.domain || 'generic'
       if (d === 'generic') return ''
       const dk = getKnowledge(d)
       return dk && dk.summary ? `已识别领域：${dk.summary}` : ''
-    },
-    resultEnhancements() {
-      if (!this.finalResult || !Array.isArray(this.finalResult.enhancements)) return []
-      return this.finalResult.enhancements
     },
     /** 步骤条高亮：0=准备，1–4 对应后端 currentMainStep 0–3；完成时视为全部走完 */
     stepBarIndex() {
@@ -981,25 +1020,17 @@ export default {
       return 1 + this.currentMainStep
     }
   },
-  methods: {
-    compareModalGetContainer() {
-      return document.body
-    },
-    enhancementStageLabel(stage) {
-      const m = { scenarioParsing: '想定解析', planning: '调度规划', verification: '仿真验证' }
-      return m[stage] || stage
-    },
-    strategyLabel(key, value) {
-      const labels = {
-        sandbox: { cow: 'CoW', none: '无沙箱', full_mock: '全模拟' },
-        planning: { llm_autonomous: 'LLM规划', preset_workflow: '预设流' },
-        verification: { multi_agent: '多Agent', single_agent: '单Agent', rule_based: '规则' },
-        repair: { llm_repair: 'LLM修复', rule_repair: '规则修复', none: '无修复' },
-        solidify: { golden_trace: '经验固化', replan: '重规划', static: '静态' }
+  watch: {
+    scenarioParsed: {
+      deep: true,
+      handler() {
+        if (!this.hasStarted) {
+          this.initScenarioParsedDraftFromProp()
+        }
       }
-      const group = labels[key] || {}
-      return `${key}: ${group[value] || value}`
-    },
+    }
+  },
+  methods: {
     formatPct(v) {
       if (v == null || Number.isNaN(Number(v))) return '—'
       return `${(Number(v) * 100).toFixed(1)}%`
@@ -1008,11 +1039,61 @@ export default {
     init(nodes) {
       this.visible = true
       this.intentionalClose = false
-      this.internalMode = this.mode === 'research' ? 'research' : 'production'
       this.scenarioDraft = this.scenarioDescription || ''
-      this.strategy = { ...SIMULATION_BUILD_DEFAULT_STRATEGY }
+      this.initScenarioParsedDraftFromProp()
       this.resetState()
       this.initServiceStatuses(nodes || this.serviceNodes)
+    },
+
+    linesToList(text) {
+      return String(text || '')
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    },
+
+    listToLines(list) {
+      return Array.isArray(list) ? list.filter(Boolean).join('\n') : ''
+    },
+
+    initScenarioParsedDraftFromProp() {
+      const sp = this.scenarioParsed && typeof this.scenarioParsed === 'object' ? this.scenarioParsed : {}
+      this.scenarioParsedDraft = {
+        goal: sp.goal ? String(sp.goal) : '',
+        description: sp.description ? String(sp.description) : '',
+        constraints: Array.isArray(sp.constraints) ? [...sp.constraints] : [],
+        acceptanceCriteria: Array.isArray(sp.acceptanceCriteria) ? [...sp.acceptanceCriteria] : [],
+        domain: sp.domain ? String(sp.domain) : (this.domain || 'generic')
+      }
+      this.scenarioParsedListDraft = {
+        constraints: this.listToLines(this.scenarioParsedDraft.constraints),
+        acceptanceCriteria: this.listToLines(this.scenarioParsedDraft.acceptanceCriteria)
+      }
+    },
+
+    onScenarioParsedListChange(field) {
+      this.scenarioParsedDraft[field] = this.linesToList(this.scenarioParsedListDraft[field])
+      this.emitScenarioParsedUpdate()
+    },
+
+    getScenarioParsedForStart() {
+      const draft = {
+        goal: String(this.scenarioParsedDraft.goal || '').trim(),
+        description: String(this.scenarioParsedDraft.description || '').trim(),
+        constraints: [...(this.scenarioParsedDraft.constraints || [])],
+        acceptanceCriteria: [...(this.scenarioParsedDraft.acceptanceCriteria || [])],
+        domain: String(this.scenarioParsedDraft.domain || this.domain || 'generic').trim() || 'generic'
+      }
+      const meta = this.scenarioParsed && typeof this.scenarioParsed === 'object' ? this.scenarioParsed : {}
+      if (meta.source) draft.source = meta.source
+      if (meta.scenarioKey) draft.scenarioKey = meta.scenarioKey
+      if (meta.mockRouteHint) draft.mockRouteHint = meta.mockRouteHint
+      return draft
+    },
+
+    emitScenarioParsedUpdate() {
+      if (this.hasStarted) return
+      this.$emit('scenario-parsed-update', this.getScenarioParsedForStart())
     },
 
     confirmStartBuild() {
@@ -1040,6 +1121,7 @@ export default {
       this.sessionId = null
       this.finalMetrics = {}
       this.finalResult = null
+      this.completedBuild = null
 
       this.hasStarted = false
       this.isRunning = false
@@ -1051,13 +1133,19 @@ export default {
       this.currentIteration = 1
       this.totalIterations = 0
       this.phases = { exec: 'pending', check: 'pending' }
-      this.dispatchStatus = '智能体调度执行中'
+      this.dispatchStatus = '智能体协作中'
       this.currentActionText = '初始化中...'
+      this.activeServiceCall = null
+      this.lastServiceCall = null
+      this.serviceCallStats = { total: 0, perService: {} }
       this.iterationHistory = []
       this.iterationDetails = []
       this.failureMessage = ''
       this.detailTrace = { loading: false, skipped: false, error: null, view: null, rawJson: '' }
       this.detailEvidence = { loading: false, skipped: false, error: null, data: null }
+      this.detailArtifact = { loading: false, skipped: false, error: null, data: null }
+      this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: null }
+      this.serviceSelectionReport = null
       this.failureSuggestion = ''
       this.logs = []
       this.elapsedTime = 0
@@ -1085,55 +1173,38 @@ export default {
           name: node.name,
           mcpUrl: node.url || node.mcpUrl || '',
           tools: node.tools || [],
-          isFake: !!node.isFake,
+          isFake: !!(node.isFake || node.is_fake),
           mcpMethod: node.mcpMethod || 'sse',
-          mcpCommand: node.mcpCommand || '',
-          mcpArgs: node.mcpArgs || [],
           status: 'pending',
           statusText: '等待中',
           latency: null
         }))
     },
 
-    buildSimulationStrategy() {
-      const base =
-        this.internalMode === 'research' ? { ...this.strategy } : {}
-      if (resolveScheduleDemoKind(this.appName) === SCHEDULE_DEMO_KIND.LOCAL_MCP) {
-        return { ...base, minIterations: 2 }
-      }
-      return Object.keys(base).length ? base : undefined
-    },
-
     buildStartPayload() {
       const domain = this.domain || 'generic'
-      const domainKnowledge = getKnowledge(domain, {
-        appId: this.appId || 'meta-app-draft',
-        appName: this.appName,
-        scenarioDescription: this.scenarioDraft,
-        serviceNames: this.serviceStatuses.map((s) => s.name),
-        mode: this.internalMode
-      })
       return {
         appId: this.appId || 'meta-app-draft',
         appName: this.appName,
         domain,
-        domainKnowledge,
-        serviceIds: this.serviceStatuses.map((s) => String(s.id)),
         servicesMeta: this.serviceStatuses.map((s) => ({
           id: String(s.id),
           name: s.name,
-          mcpUrl: rewriteMcpUrlForLocalDev(s.mcpUrl || ''),
+          mcpUrl: s.mcpUrl || '',
           tools: s.tools || [],
           isFake: !!s.isFake,
-          mcpMethod: s.mcpMethod || 'sse',
-          mcpCommand: s.mcpCommand || '',
-          mcpArgs: s.mcpArgs || []
+          mcpMethod: s.mcpMethod || 'sse'
         })),
         maxIterations: this.maxIterations,
         scenarioDescription: this.scenarioDraft,
-        mode: this.internalMode,
-        strategy: this.buildSimulationStrategy()
+        scenarioParsed: this.hasScenarioParsedDraft ? this.getScenarioParsedForStart() : undefined
       }
+    },
+
+    formatPlannerTools(plannerDecision) {
+      if (!plannerDecision) return '—'
+      const tools = plannerDecision.selected_tools || plannerDecision.selectedTools || []
+      return tools.length ? tools.join(' → ') : '—'
     },
 
     addLog(message, level = 'INFO', type = 'info') {
@@ -1156,6 +1227,25 @@ export default {
       if (status === 'PASS') return 'green'
       if (status === 'WARN') return 'orange'
       return 'red'
+    },
+
+    evidenceSummaryText(evidence) {
+      const s = evidence && evidence.summary
+      if (!s) return ''
+      const parts = []
+      if (s.total_checks != null) {
+        parts.push(`共 ${s.total_checks} 项检查`)
+        if (s.passed != null) parts.push(`通过 ${s.passed}`)
+        if (s.failed) parts.push(`失败 ${s.failed}`)
+        if (s.warnings) parts.push(`警告 ${s.warnings}`)
+        return parts.join(' · ')
+      }
+      if (s.acceptedTrajectory) parts.push(`轨迹数据 ${s.acceptedTrajectory}`)
+      if (s.selectedServices != null) parts.push(`选择服务 ${s.selectedServices}`)
+      if (s.researchEligible != null) {
+        parts.push(s.researchEligible ? '可计入科研' : '不计入科研')
+      }
+      return parts.join(' · ')
     },
 
     classifyEvidenceDimension(check) {
@@ -1192,35 +1282,57 @@ export default {
       const toolCalls = []
       const plannerDecisions = []
       const verifierResults = []
+      const serviceSelections = []
+      let scenarioParsed = null
       let mcpCallCount = 0
       events.forEach((ev) => {
         if (!ev || !ev.data) return
         const t = ev.type
         const d = ev.data
-        if (t === 'tool_call_record') {
+        if (t === 'scenario_parsed') {
+          scenarioParsed = d
+        } else if (t === 'service_selection') {
+          serviceSelections.push(d)
+        } else if (t === 'tool_call_record') {
           if (d.channel === 'real_mcp') mcpCallCount += 1
           const resultPreview = d.result
             ? String(d.result).replace(/\s+/g, ' ').slice(0, 60)
             : ''
           toolCalls.push({
+            callId: d.call_id || '',
+            actionId: d.action_id || '',
+            iteration: d.iteration,
             toolName: d.tool_name || '—',
             serviceId: d.service_id || '—',
             serviceName: d.service_name || '',
             channel: d.channel || 'unknown',
+            source: d.source || d.channel || 'unknown',
+            transport: d.transport || '',
+            phase: d.phase || '',
+            purpose: d.purpose || '',
             latencyMs: d.latency_ms != null ? d.latency_ms : '—',
+            success: d.success !== false,
+            arguments: d.arguments || {},
+            resultHash: d.result_hash || '',
             resultPreview
           })
         } else if (t === 'planner_decision') {
           plannerDecisions.push({
             iteration: d.iteration,
             selectedTools: d.selected_tools || [],
-            reason: d.reason || ''
+            executionPath: d.executionPath || [],
+            reason: d.reason || '',
+            toolCallDetails: d.tool_call_details || d.toolCallDetails || []
           })
         } else if (t === 'verifier_result') {
           verifierResults.push({
+            iteration: d.iteration,
             status: d.status || 'UNKNOWN',
             summary: d.summary || '',
-            reason: d.reason || ''
+            reason: d.reason || '',
+            checks: d.checks || [],
+            issues: d.issues || [],
+            plannerDecision: d.plannerDecision || null
           })
         }
       })
@@ -1235,7 +1347,9 @@ export default {
         toolCalls,
         callChain: this.buildCallChainFromToolCalls(toolCalls),
         plannerDecisions,
-        verifierResults
+        verifierResults,
+        serviceSelection: serviceSelections.length ? serviceSelections[serviceSelections.length - 1] : null,
+        scenarioParsed
       }
     },
 
@@ -1247,6 +1361,21 @@ export default {
         const label =
           tc.toolName && tc.toolName !== svc ? `${svc} · ${tc.toolName}` : svc
         steps.push(label)
+      })
+      steps.push('输出结果')
+      return steps
+    },
+
+    buildCallChainFromAcceptedTrajectory(trajectory) {
+      const actions = trajectory && Array.isArray(trajectory.actionSequence)
+        ? trajectory.actionSequence
+        : []
+      if (!actions.length) return []
+      const steps = ['用户输入']
+      actions.forEach((action) => {
+        const svc = action.serviceName || action.serviceId || '—'
+        const tool = action.toolName || ''
+        steps.push(tool && tool !== svc ? `${svc} · ${tool}` : svc)
       })
       steps.push('输出结果')
       return steps
@@ -1276,30 +1405,69 @@ export default {
       return null
     },
 
-    async fetchTraceWithRetry(sessionId, attempts = 8) {
-      let lastErr = null
-      for (let i = 0; i < attempts; i += 1) {
-        try {
-          return await fetchSimulationTrace(sessionId)
-        } catch (e) {
-          lastErr = e
-          await new Promise((resolve) => setTimeout(resolve, 300))
-        }
-      }
-      throw lastErr || new Error('轨迹加载失败')
+    formatArtifactError(err, fallback = '加载失败') {
+      if (!err) return fallback
+      if (typeof err === 'string') return err
+      const status = err.response && err.response.status
+      if (status === 404) return '构建产物不存在'
+      const detail = err.response && err.response.data
+      if (typeof detail === 'string') return detail
+      if (detail && detail.detail) return String(detail.detail)
+      if (detail && detail.message) return String(detail.message)
+      if (err.message) return err.message
+      return fallback
     },
 
     async loadDetailArtifacts() {
       if (!this.sessionId) return
-      if (useMemorySimulation(this.appName)) {
-        this.detailTrace = { loading: false, skipped: true, error: null, view: null, rawJson: '' }
-        this.detailEvidence = { loading: false, skipped: true, error: null, data: null }
+      if (useMemorySimulation(this.buildStartPayload())) {
+        this.detailTrace = { loading: true, skipped: false, error: null, view: null, rawJson: '' }
+        this.detailEvidence = { loading: true, skipped: false, error: null, data: null }
+        this.detailArtifact = { loading: true, skipped: false, error: null, data: null }
+        this.detailAcceptedTrajectory = { loading: true, skipped: false, error: null, data: null }
+        try {
+          const { buildTopicDemoArtifacts } = await import('@/mock/data/topic_simulation_artifacts')
+          const packs = await buildTopicDemoArtifacts({
+            sessionId: this.sessionId,
+            appName: this.appName,
+            appId: this.appId,
+            scenarioParsed: this.hasScenarioParsedDraft ? this.getScenarioParsedForStart() : undefined,
+            scenarioDescription: this.scenarioDraft,
+            servicesMeta: this.serviceStatuses,
+            finalResult: this.finalResult
+          })
+          const view = this.buildTraceView(packs.trace)
+          let rawJson = ''
+          try {
+            rawJson = JSON.stringify(packs.trace, null, 2)
+            if (rawJson.length > 12000) rawJson = `${rawJson.slice(0, 12000)}\n…`
+          } catch (e) {
+            rawJson = ''
+          }
+          this.detailTrace = { loading: false, skipped: false, error: null, view, rawJson }
+          this.detailEvidence = { loading: false, skipped: false, error: null, data: packs.evidence }
+          this.detailArtifact = { loading: false, skipped: false, error: null, data: packs.artifact }
+          this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: packs.acceptedTrajectory }
+          this.serviceSelectionReport = packs.serviceSelection
+          this.completedBuild = {
+            buildId: packs.manifest.buildId,
+            artifactId: packs.manifest.artifactId,
+            artifactHash: packs.manifest.hashes.artifact
+          }
+        } catch (e) {
+          const msg = this.formatArtifactError(e, '课题产物加载失败')
+          this.detailTrace = { loading: false, skipped: true, error: msg, view: null, rawJson: '' }
+          this.detailEvidence = { loading: false, skipped: true, error: null, data: null }
+          this.detailArtifact = { loading: false, skipped: true, error: null, data: null }
+          this.detailAcceptedTrajectory = { loading: false, skipped: true, error: null, data: null }
+        }
         return
       }
       this.detailTrace = { loading: true, skipped: false, error: null, view: null, rawJson: '' }
       this.detailEvidence = { loading: false, skipped: false, error: null, data: null }
+      this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: null }
       try {
-        const trace = await this.fetchTraceWithRetry(this.sessionId)
+        const trace = await fetchSimulationTrace(this.sessionId)
         const view = this.buildTraceView(trace)
         let rawJson = ''
         try {
@@ -1312,21 +1480,48 @@ export default {
         }
         this.detailTrace = { loading: false, skipped: false, error: null, view, rawJson }
         this.detailEvidence = { loading: true, skipped: false, error: null, data: null }
-        const data = await fetchSimulationEvidence(this.sessionId)
-        this.detailEvidence = { loading: false, skipped: false, error: null, data }
+        try {
+          const data = await fetchSimulationEvidence(this.sessionId)
+          this.detailEvidence = { loading: false, skipped: false, error: null, data }
+        } catch (eEvidence) {
+          this.detailEvidence = {
+            loading: false,
+            skipped: false,
+            error: this.formatArtifactError(eEvidence, '证据分析加载失败'),
+            data: null
+          }
+        }
+        // 加载 MetaAppArtifact v1（真实链路与演示 mock 均按 BuildBundle/v1 结构消费）
+        this.detailAcceptedTrajectory = { loading: true, skipped: false, error: null, data: null }
+        try {
+          const accepted = await fetchSimulationAcceptedTrajectory(this.sessionId)
+          this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: accepted }
+        } catch (eAccepted) {
+          this.detailAcceptedTrajectory = {
+            loading: false,
+            skipped: false,
+            error: this.formatArtifactError(eAccepted, '轨迹数据加载失败'),
+            data: null
+          }
+        }
+        this.detailArtifact = { loading: true, skipped: false, error: null, data: null }
+        try {
+          const artifact = await fetchSimulationArtifact(this.sessionId)
+          this.detailArtifact = { loading: false, skipped: false, error: null, data: artifact }
+        } catch (e2) {
+          this.detailArtifact = {
+            loading: false,
+            skipped: false,
+            error: this.formatArtifactError(e2, 'Artifact 加载失败'),
+            data: null
+          }
+        }
       } catch (e) {
-        const msg = (e && e.message) || '加载失败'
-        if (!this.detailTrace.view) {
-          this.detailTrace = { loading: false, skipped: false, error: msg, view: null, rawJson: '' }
-        } else {
-          this.detailTrace = { ...this.detailTrace, loading: false }
-        }
-        this.detailEvidence = {
-          loading: false,
-          skipped: false,
-          error: msg,
-          data: null
-        }
+        const msg = this.formatArtifactError(e, '轨迹加载失败')
+        this.detailTrace = { loading: false, skipped: false, error: msg, view: null, rawJson: '' }
+        this.detailEvidence = { loading: false, skipped: false, error: null, data: null }
+        this.detailArtifact = { loading: false, skipped: false, error: null, data: null }
+        this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: null }
       }
     },
 
@@ -1366,6 +1561,8 @@ export default {
           hasIssue: false,
           issue: '',
           fix: '',
+          plannerDecision: null,
+          verifierResult: null,
           completed: false,
           success: false
         })
@@ -1376,7 +1573,18 @@ export default {
       return this.iterationDetails.filter((d) => d.iteration === this.currentIteration).pop()
     },
 
-    onStreamStep({ step }) {
+    mapMainStepFromStream({ step, name }) {
+      const n = Number(step)
+      if (Number.isFinite(n) && n >= 2) return n
+      if (name === '智能构建') return 2
+      if (name === '方案生成') return 3
+      if (name === '环境准备') return 1
+      if (name === '连接服务' || name === '服务匹配') return 0
+      return Number.isFinite(n) ? n : 0
+    },
+
+    onStreamStep(payload) {
+      const step = this.mapMainStepFromStream(payload)
       this.currentMainStep = step
       this.syncCanvasVisual({ type: 'step', step })
       if (step === 0) {
@@ -1403,16 +1611,86 @@ export default {
       }
     },
 
+    onStreamScenarioParsed(payload) {
+      if (!payload || typeof payload !== 'object') return
+      this.scenarioParsedDraft = {
+        goal: payload.goal ? String(payload.goal) : '',
+        description: payload.description ? String(payload.description) : '',
+        constraints: Array.isArray(payload.constraints) ? [...payload.constraints] : [],
+        acceptanceCriteria: Array.isArray(payload.acceptanceCriteria) ? [...payload.acceptanceCriteria] : [],
+        domain: payload.domain ? String(payload.domain) : (this.domain || 'generic')
+      }
+      this.scenarioParsedListDraft = {
+        constraints: this.listToLines(this.scenarioParsedDraft.constraints),
+        acceptanceCriteria: this.listToLines(this.scenarioParsedDraft.acceptanceCriteria)
+      }
+      this.addLog(`场景解析完成: ${this.scenarioParsedDraft.goal || this.appName}`, 'INFO', 'info')
+    },
+
+    onStreamServiceSelection(payload) {
+      if (!payload || typeof payload !== 'object') return
+      this.serviceSelectionReport = payload
+      const selected = Array.isArray(payload.selectedServices) ? payload.selectedServices : []
+      const names = selected.map((s) => s.serviceName || s.serviceId).filter(Boolean)
+      this.addLog(`服务选择完成: ${names.join('、') || '无'}`, 'INFO', 'info')
+    },
+
+    onStreamServiceCalling({ serviceId, serviceName, toolName, status }) {
+      if (this.aborted || !this.isRunning) return
+      const call = {
+        serviceId: String(serviceId),
+        serviceName,
+        toolName
+      }
+      if (status === 'start') {
+        this.activeServiceCall = call
+        this.lastServiceCall = call
+        this.serviceCallStats.total += 1
+        const key = call.serviceId
+        this.$set(
+          this.serviceCallStats.perService,
+          key,
+          (this.serviceCallStats.perService[key] || 0) + 1
+        )
+        this.currentActionText = '正在仿真调度...'
+      } else if (
+        status === 'end' &&
+        this.activeServiceCall &&
+        this.activeServiceCall.serviceId === call.serviceId
+      ) {
+        this.lastServiceCall = { ...this.activeServiceCall }
+        this.activeServiceCall = null
+        this.currentActionText = '正在整理调度结果...'
+      }
+      // 驱动画布节点 calling/dimmed 动画
+      this.syncCanvasVisual({
+        type: 'serviceCall',
+        serviceId: String(serviceId),
+        serviceName,
+        toolName,
+        status // 'start' | 'end'
+      })
+    },
+
     onStreamProgress({ ctx, index, text, active, done }) {
       const list = ctx === 'env' ? this.envSetupItems : this.generationItems
       const item = list[index]
       if (!item) return
-      if (text) item.text = text
+      const displayText = this.progressDisplayText(ctx, index, text)
+      if (displayText) item.text = displayText
       if (active) item.active = true
       if (done) {
         item.active = false
         item.done = true
       }
+    },
+
+    progressDisplayText(ctx, index, text) {
+      if (ctx !== 'env') {
+        const friendly = ['汇总数据', '编译产物', '准备发布']
+        return friendly[index] || text
+      }
+      return text
     },
 
     onStreamPhase({ phase, status }) {
@@ -1423,14 +1701,12 @@ export default {
       if (phase === 'data' || phase === 'logic') {
         if (status === 'running') {
           this.phases.exec = 'running'
-          this.currentActionText =
-            phase === 'data'
-              ? '正在进行：规划 Agent 调度服务…'
-              : '正在进行：核对工具调用与返回…'
-          this.dispatchStatus = '智能体调度执行中'
+          this.currentActionText = phase === 'data' ? '正在数据验证...' : '正在逻辑验证...'
+          this.dispatchStatus = '智能体协作中'
           if (d) d.execPhase = 'running'
         } else if (status === 'done' && phase === 'logic') {
           this.phases.exec = 'done'
+          this.activeServiceCall = null
           this.syncCanvasVisual({ type: 'activeCall', targetNodeId: null })
           if (d) d.execPhase = 'done'
         }
@@ -1439,9 +1715,10 @@ export default {
 
       if (phase === 'check') {
         if (status === 'running') {
+          this.activeServiceCall = null
           this.phases.check = 'running'
-          this.currentActionText = '正在进行：验证 Agent 审查目标达成…'
-          this.dispatchStatus = '目标验收中'
+          this.currentActionText = '正在逻辑验证...'
+          this.dispatchStatus = '智能体协作中'
           if (d) d.checkPhase = 'running'
         } else if (status === 'done') {
           this.phases.check = 'done'
@@ -1450,20 +1727,60 @@ export default {
       }
     },
 
-    onStreamIssue({ message, fix }) {
-      const d = this.currentDetail()
+    onStreamIssue(payload) {
+      const {
+        message,
+        fix,
+        plannerDecision,
+        iteration,
+        phase
+      } = payload || {}
+      if (iteration) {
+        this.currentIteration = iteration
+        this.ensureIterationRows(iteration)
+      }
+      const d = iteration
+        ? this.iterationDetails.find((x) => x.iteration === iteration)
+        : this.currentDetail()
       if (!d) return
       d.hasIssue = true
       d.issue = message
       d.fix = fix || ''
-      this.dispatchStatus = '自动修复中'
-      this.currentActionText = `发现: ${message}，正在修复...`
+      if (phase) d.phase = phase
+      if (plannerDecision) d.plannerDecision = plannerDecision
+      this.dispatchStatus = '正在自动优化'
+      this.currentActionText = '发现需要调整的地方，正在自动优化...'
+    },
+
+    onStreamPlannerDecision(payload) {
+      const iteration = payload && payload.iteration
+      if (!iteration) return
+      this.ensureIterationRows(iteration)
+      const d = this.iterationDetails.find((x) => x.iteration === iteration)
+      if (d) d.plannerDecision = payload
+    },
+
+    onStreamVerifierResult(payload) {
+      const iteration = payload && payload.iteration
+      if (iteration) {
+        this.ensureIterationRows(iteration)
+        const d = this.iterationDetails.find((x) => x.iteration === iteration)
+        if (d) {
+          d.verifierResult = payload
+          if (payload.plannerDecision) d.plannerDecision = payload.plannerDecision
+          if (payload.status === 'FAILED') d.hasIssue = true
+        }
+      }
     },
 
     onStreamIteration({ iteration, status }) {
       this.currentIteration = iteration
       if (status === 'running') {
+        this.activeServiceCall = null
+        this.lastServiceCall = null
         this.phases = { exec: 'pending', check: 'pending' }
+        this.dispatchStatus = '智能体协作中'
+        this.currentActionText = `正在准备第 ${iteration} 轮迭代...`
         this.ensureIterationRows(iteration)
       }
       if (status === 'retry') {
@@ -1525,7 +1842,12 @@ export default {
         return
       }
 
-      const { success, cancelled, metrics, result } = payload
+      const { success, cancelled, publishable, metrics, result, publishError } = payload
+      this.completedBuild = {
+        buildId: payload.buildId || this.sessionId || '',
+        artifactId: payload.artifactId || '',
+        artifactHash: payload.artifactHash || ''
+      }
 
       if (cancelled && this.aborted) {
         this.syncCanvasVisual({ type: 'build', active: false })
@@ -1542,7 +1864,11 @@ export default {
         return
       }
 
-      this.hasFailed = !success
+      this.hasFailed = !success || publishable === false
+      this.activeServiceCall = null
+      this.lastServiceCall = null
+      this.currentActionText = success && publishable !== false ? '仿真构建完成' : '仿真构建失败'
+      this.dispatchStatus = success && publishable !== false ? '检查通过' : '检查未通过'
 
       if (metrics) {
         Object.keys(metrics).forEach((k) => {
@@ -1558,11 +1884,23 @@ export default {
         if (result.error) this.failureMessage = result.error
         if (result.suggestion) this.failureSuggestion = result.suggestion
       }
-      this.showTechDetails = true
+      if (publishError) {
+        this.failureMessage = publishError.error || this.failureMessage
+        this.failureSuggestion = publishError.suggestion || this.failureSuggestion
+      }
+      this.showTechDetails = false
       this.syncCanvasVisual({ type: 'activeCall', targetNodeId: null })
       this.syncCanvasVisual({ type: 'build', active: false })
       this.syncCanvasVisual({ type: 'clear' })
       this.loadDetailArtifacts()
+    },
+
+    openBuildDetails() {
+      this.showTechDetails = true
+      this.$nextTick(() => {
+        const el = this.$el && this.$el.querySelector && this.$el.querySelector('.tech-details')
+        if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' })
+      })
     },
 
     onStreamError(err) {
@@ -1573,9 +1911,34 @@ export default {
       this.teardownStream()
       this.isCompleted = true
       this.hasFailed = true
+      this.activeServiceCall = null
+      this.lastServiceCall = null
+      this.currentActionText = '仿真构建失败'
+      this.dispatchStatus = '连接异常'
       this.failureMessage = (err && err.message) || '流式连接异常'
       this.failureSuggestion = '请稍后重试或检查网络'
       this.addLog(this.failureMessage, 'ERROR', 'error')
+    },
+
+    subscribeToStream(sessionId, streamUrl) {
+      this.sessionId = sessionId
+      this.unsubscribeStream = subscribeSimulationStream(sessionId, streamUrl, {
+        step: this.onStreamStep,
+        scenario_parsed: this.onStreamScenarioParsed,
+        service_selection: this.onStreamServiceSelection,
+        iteration: this.onStreamIteration,
+        phase: this.onStreamPhase,
+        issue: this.onStreamIssue,
+        planner_decision: this.onStreamPlannerDecision,
+        verifier_result: this.onStreamVerifierResult,
+        service: this.onStreamService,
+        service_calling: this.onStreamServiceCalling,
+        log: this.onStreamLog,
+        metrics: this.onStreamMetrics,
+        progress: this.onStreamProgress,
+        complete: this.onStreamComplete,
+        error: this.onStreamError
+      })
     },
 
     async startSimulation() {
@@ -1606,27 +1969,18 @@ export default {
         return
       }
 
-      this.sessionId = res.sessionId
-      this.unsubscribeStream = subscribeSimulationStream(res.sessionId, res.streamUrl, {
-        step: this.onStreamStep,
-        iteration: this.onStreamIteration,
-        phase: this.onStreamPhase,
-        issue: this.onStreamIssue,
-        service: this.onStreamService,
-        log: this.onStreamLog,
-        metrics: this.onStreamMetrics,
-        progress: this.onStreamProgress,
-        complete: this.onStreamComplete,
-        error: this.onStreamError
-      })
+      this.subscribeToStream(res.sessionId, res.streamUrl)
     },
 
     retrySimulation() {
       this.resetState()
+      this.resetProgressLists()
       this.initServiceStatuses(this.serviceNodes)
+      this.confirmStartBuild()
     },
 
     handlePrePublish() {
+      if (!this.canPrepublish) return
       this.$emit('success', {
         appName: this.appName,
         appId: this.appId,
@@ -1637,7 +1991,439 @@ export default {
         result: this.finalResult
       })
       this.$emit('prePublish')
-      this.handleClose()
+      if (!this.embedded) {
+        this.handleClose()
+      }
+    },
+
+    iterationStatusLabel(iter) {
+      if (!iter) return '—'
+      if (!iter.completed && (iter.execPhase === 'running' || iter.checkPhase === 'running')) {
+        return '进行中'
+      }
+      if (iter.success) return '已通过'
+      if (iter.completed && !iter.success) return '需优化'
+      if (iter.execPhase === 'done' && iter.checkPhase !== 'done') return '验证中'
+      if (iter.execPhase === 'running') return '执行中'
+      return '—'
+    },
+
+    iterationPhaseLabel(phase) {
+      if (phase === 'done') return '已完成'
+      if (phase === 'running') return '进行中'
+      if (phase === 'pending') return '待开始'
+      return '—'
+    },
+
+    iterationPlannerToolSteps(plannerDecision) {
+      if (!plannerDecision) return []
+      const tools = plannerDecision.selected_tools || plannerDecision.selectedTools || []
+      return Array.isArray(tools) ? tools.filter(Boolean) : []
+    },
+
+    iterationExecutionPathSteps(plannerDecision) {
+      if (!plannerDecision) return []
+      const path = plannerDecision.executionPath || plannerDecision.execution_path
+      return Array.isArray(path) && path.length ? path.filter(Boolean) : []
+    },
+
+    iterationExecutionPath(plannerDecision) {
+      const steps = this.iterationExecutionPathSteps(plannerDecision)
+      return steps.length ? steps.join(' → ') : ''
+    },
+
+    compactVerifierText(text) {
+      return String(text || '').replace(/\s+/g, ' ').trim()
+    },
+
+    verifierStatusSame(a, b) {
+      const x = String(a || '').toUpperCase()
+      const y = String(b || '').toUpperCase()
+      if (!x || !y) return false
+      if (x === y) return true
+      return (x === 'PASS' && y === 'PASSED') || (x === 'PASSED' && y === 'PASS')
+    },
+
+    normalizeVerifierIssues(rawIssues, hiddenTexts = []) {
+      const hidden = hiddenTexts.map((x) => this.compactVerifierText(x)).filter(Boolean)
+      const seen = new Set()
+      return (Array.isArray(rawIssues) ? rawIssues : [])
+        .map((item) => {
+          const description = this.compactVerifierText(
+            typeof item === 'string' ? item : (item.description || item.issue || item.detail)
+          )
+          if (!description || hidden.includes(description) || seen.has(description)) return null
+          seen.add(description)
+          return typeof item === 'string' ? { description } : { ...item, description }
+        })
+        .filter(Boolean)
+    },
+
+    normalizeVerifierChecks(rawChecks, overallStatus, issues = []) {
+      const issueTexts = issues
+        .map((x) => this.compactVerifierText(x && x.description))
+        .filter(Boolean)
+      return (Array.isArray(rawChecks) ? rawChecks : [])
+        .map((check) => {
+          const checkName = this.compactVerifierText(check.check || check.name || '')
+          const issue = this.compactVerifierText(check.issue || check.detail || check.message || '')
+          return { ...check, check: checkName || check.check, issue }
+        })
+        .filter((check) => {
+          if (check.check === 'overall_verification') return false
+          if (check.issue && issueTexts.includes(check.issue)) return false
+          if (!check.issue && this.verifierStatusSame(check.status, overallStatus)) return false
+          return Boolean(check.issue || check.check)
+        })
+    },
+
+    formatIterationVerification(iterDetail) {
+      const vr = iterDetail && iterDetail.verifierResult
+      const status = vr && vr.status
+      const summary = (vr && (vr.summary || vr.reason)) || ''
+      const reason = (vr && vr.reason) || ''
+      const streamIssue = (iterDetail && iterDetail.issue) || ''
+      const rawIssues = (vr && vr.issues) || []
+      const fix = (iterDetail && iterDetail.fix) || ''
+      const hasVerifier = Boolean(vr && vr.status)
+      const distinctIssue = streamIssue && streamIssue !== summary ? streamIssue : ''
+      let issues = this.normalizeVerifierIssues(rawIssues, [summary])
+      if (!issues.length && reason && this.compactVerifierText(reason) !== this.compactVerifierText(summary)) {
+        issues = this.normalizeVerifierIssues([{ description: reason }], [summary])
+      }
+      if (!issues.length && distinctIssue) {
+        issues = this.normalizeVerifierIssues([{ description: distinctIssue }], [summary])
+      }
+      const checks = this.normalizeVerifierChecks((vr && vr.checks) || [], status, issues)
+      return {
+        verifierStatus: hasVerifier ? vr.status : (distinctIssue ? 'FAILED' : ''),
+        verifierSummary: summary || distinctIssue,
+        verifierChecks: checks,
+        verifierIssues: issues,
+        fix,
+        hasVerification: Boolean(hasVerifier || summary || distinctIssue || checks.length || issues.length || fix)
+      }
+    },
+
+    getDetailViewModel() {
+      const evidence = this.detailEvidence.data
+      const accepted = this.detailAcceptedTrajectory && this.detailAcceptedTrajectory.data
+      const acceptedActions = accepted && Array.isArray(accepted.actionSequence)
+        ? accepted.actionSequence
+        : []
+      const scenario = this.scenarioParsedDraft || {}
+      const scenarioInputs = scenario.inputs && typeof scenario.inputs === 'object'
+        ? Object.keys(scenario.inputs)
+        : []
+      const criteria = []
+      if (Array.isArray(scenario.acceptanceCriteria)) criteria.push(...scenario.acceptanceCriteria)
+      if (Array.isArray(scenario.expectedOutputs)) criteria.push(...scenario.expectedOutputs)
+      return {
+        currentPhaseLabel: this.isRunning ? '智能构建中' : (this.isCompleted ? '构建完成' : '准备中'),
+        currentIteration: this.currentIteration,
+        isCompleted: this.isCompleted,
+        hasFailed: this.hasFailed,
+        currentActionText: this.currentActionText,
+        dispatchStatus: this.dispatchStatus,
+        iterations: (this.iterationDetails || []).map((i) => {
+          const vr = i.verifierResult
+          const verification = this.formatIterationVerification(i)
+          const executionPathSteps = this.iterationExecutionPathSteps(i.plannerDecision)
+          const plannerToolSteps = this.iterationPlannerToolSteps(i.plannerDecision)
+          const plannerTools = plannerToolSteps.length ? plannerToolSteps.join(' → ') : ''
+          const executionPath = executionPathSteps.length ? executionPathSteps.join(' → ') : ''
+          return {
+            iteration: i.iteration,
+            statusLabel: this.iterationStatusLabel(i),
+            execPhaseLabel: this.iterationPhaseLabel(i.execPhase),
+            checkPhaseLabel: this.iterationPhaseLabel(i.checkPhase),
+            plannerTools,
+            plannerToolSteps,
+            executionPath,
+            executionPathSteps,
+            verifierStatus: verification.verifierStatus,
+            verifierSummary: verification.verifierSummary,
+            verifierChecks: verification.verifierChecks,
+            verifierIssues: verification.verifierIssues,
+            fix: verification.fix,
+            hasVerification: verification.hasVerification,
+            issue: '',
+            summary: (vr && (vr.reason || vr.summary)) || ''
+          }
+        }),
+        services: this.serviceStatuses,
+        stats: {
+          serviceCount: this.serviceStatuses.length,
+          completedCalls: this.serviceStatuses.filter((s) => s.status === 'online').length,
+          pendingIssues: (this.iterationDetails || []).filter((i) => {
+            const v = this.formatIterationVerification(i)
+            return v.verifierStatus === 'FAILED' || Boolean(v.fix)
+          }).length,
+          toolCallCount: this.serviceCallStats.total
+        },
+        activeCallLabel: this.activeServiceCallLabel,
+        showTechDetails: this.hasStarted,
+        traceLoading: this.detailTrace.loading,
+        traceSkipped: this.detailTrace.skipped,
+        traceError: this.detailTrace.error,
+        callChain: this.callChainSteps,
+        evidenceStatus: evidence && evidence.overallStatus,
+        evidenceSummary: this.evidenceSummaryText(evidence),
+        artifactId: (this.detailArtifact.data && this.detailArtifact.data.artifactId) || '',
+        selectedServices: this.selectedServiceNames,
+        acceptedIteration: accepted && accepted.acceptedIteration,
+        acceptedStatus: accepted && accepted.status,
+        acceptedActionCount: acceptedActions.length,
+        scenarioGoal: scenario.goal || scenario.task || this.appName,
+        scenarioInputSummary: scenarioInputs.length
+          ? scenarioInputs.slice(0, 6).join('、')
+          : (scenario.description ? '由场景描述提供' : ''),
+        scenarioCriteriaSummary: criteria.length
+          ? criteria.slice(0, 3).join('；')
+          : ''
+      }
+    },
+
+    runtimeModeLabel(mode) {
+      const map = {
+        agent_with_optional_golden_path: '智能体执行 + 候选路径',
+        agent_only: '智能体执行'
+      }
+      return map[mode] || mode || '智能体执行'
+    },
+
+    pushProductRow(rows, key, label, value, size = 'sm', extra = null) {
+      if (value == null || value === '') return
+      const row = { key, label, value: String(value), size }
+      if (extra && typeof extra === 'object') {
+        Object.assign(row, extra)
+      }
+      rows.push(row)
+    },
+
+    buildBuildSummaryRows() {
+      const rows = []
+      const art = this.detailArtifact.data
+      const evidence = this.detailEvidence.data
+
+      if (this.detailTrace.loading) {
+        this.pushProductRow(rows, 'trace', '轨迹', '加载中…', 'xl')
+      } else if (this.detailTrace.skipped) {
+        this.pushProductRow(rows, 'trace', '轨迹', '构建轨迹暂未生成', 'lg')
+      } else if (this.detailTrace.error) {
+        this.pushProductRow(rows, 'trace', '轨迹', this.detailTrace.error, 'xl')
+      } else if (this.callChainSteps.length) {
+        this.pushProductRow(rows, 'trace', '轨迹', this.callChainSteps.join(' → '), 'xl')
+      }
+
+      if (evidence) {
+        const statusText = evidence.overallStatus || '—'
+        const summaryText = [statusText, this.evidenceSummaryText(evidence)].filter(Boolean).join(' · ')
+        this.pushProductRow(rows, 'evidence-status', '证据结论', summaryText, 'lg')
+      }
+
+      if (art) {
+        this.pushProductRow(rows, 'artifact-id', '产物 ID', art.artifactId, 'sm')
+        this.pushProductRow(rows, 'runtime-mode', '运行方式', this.runtimeModeLabel(art.runtime && art.runtime.mode), 'xs')
+      }
+
+      this.pushProductRow(rows, 'elapsed', '构建耗时', this.formattedElapsedTime, 'xs')
+      return rows
+    },
+
+    collectAcceptedInputSlots(accepted) {
+      const actions = accepted && Array.isArray(accepted.actionSequence)
+        ? accepted.actionSequence
+        : []
+      const seen = {}
+      const slots = []
+      actions.forEach((action) => {
+        ;(action.inputSlots || []).forEach((slot) => {
+          const name = slot && slot.name
+          if (!name || seen[name]) return
+          seen[name] = true
+          slots.push({
+            name,
+            type: (slot && slot.type) || 'unknown',
+            required: true,
+            source: (slot && slot.source) || ''
+          })
+        })
+      })
+      return slots
+    },
+
+    formatMaterialSlots(slots) {
+      return (Array.isArray(slots) ? slots : [])
+        .map((slot) => {
+          if (typeof slot === 'string') return { name: slot, type: '', detail: '' }
+          const type = (slot && slot.type) || ''
+          const source = (slot && slot.source) || ''
+          return {
+            name: (slot && slot.name) || '',
+            type,
+            detail: [type, source].filter(Boolean).join(' · ')
+          }
+        })
+        .filter((slot) => slot.name)
+    },
+
+    buildRequirementMaterial(art, accepted) {
+      const traceScenario = this.detailTrace.view && this.detailTrace.view.scenarioParsed
+      const scenario = Object.assign(
+        {},
+        traceScenario || {},
+        this.scenarioParsedDraft || {}
+      )
+      const task = (art && art.taskContract) || {}
+      const app = (art && art.app) || {}
+      const source = scenario.source || {}
+      const inputSlots = Array.isArray(task.inputSlots) && task.inputSlots.length
+        ? task.inputSlots
+        : this.collectAcceptedInputSlots(accepted)
+      const sourceRows = []
+      if (source.parserModel) sourceRows.push({ label: '解析模型', value: source.parserModel })
+      if (source.parsedAt) sourceRows.push({ label: '解析时间', value: source.parsedAt })
+      if (scenario.scenarioKey) sourceRows.push({ label: '想定标识', value: scenario.scenarioKey })
+      if (scenario.domain || task.domain || app.domain) {
+        sourceRows.push({ label: '领域', value: scenario.domain || task.domain || app.domain })
+      }
+      return {
+        goal: scenario.goal || task.goal || app.name || this.appName,
+        description: scenario.description || app.description || this.scenarioDraft || '',
+        constraints: Array.isArray(scenario.constraints) && scenario.constraints.length
+          ? scenario.constraints
+          : (Array.isArray(task.constraints) ? task.constraints : []),
+        successCriteria: Array.isArray(scenario.acceptanceCriteria) && scenario.acceptanceCriteria.length
+          ? scenario.acceptanceCriteria
+          : (Array.isArray(task.successCriteria) ? task.successCriteria : []),
+        inputSlots: this.formatMaterialSlots(inputSlots),
+        outputSlots: this.formatMaterialSlots(task.outputSlots || []),
+        sourceRows
+      }
+    },
+
+    buildServiceSelectionMaterial(art) {
+      const traceSelection = this.detailTrace.view && this.detailTrace.view.serviceSelection
+      const report = this.serviceSelectionReport || traceSelection || {}
+      const runtime = (art && art.runtime) || {}
+      const bindings = Array.isArray(runtime.serviceBindings) ? runtime.serviceBindings : []
+      let selected = Array.isArray(report.selectedServices) ? report.selectedServices : []
+      if (!selected.length && bindings.length) {
+        selected = bindings.map((binding) => ({
+          serviceId: binding.serviceId,
+          serviceName: binding.serviceName,
+          reason: '已写入运行绑定，来自构建阶段服务选择结果。',
+          matchedCapabilities: (binding.tools || [])
+            .map((tool) => tool && (tool.toolName || tool.name))
+            .filter(Boolean)
+        }))
+      }
+      return {
+        selectionId: report.selectionId || '',
+        strategy: report.strategy || '',
+        rationale: report.rationale || '',
+        confidence: report.confidence != null ? `${Math.round(Number(report.confidence) * 100)}%` : '',
+        model: report.model || '',
+        createdAt: report.createdAt || '',
+        selectedServices: selected.map((svc) => ({
+          serviceId: svc.serviceId || '',
+          serviceName: svc.serviceName || svc.serviceId || '未命名服务',
+          reason: svc.reason || '',
+          matchedCapabilities: Array.isArray(svc.matchedCapabilities)
+            ? svc.matchedCapabilities.filter(Boolean)
+            : []
+        })),
+        rejectedServices: Array.isArray(report.rejectedServices) ? report.rejectedServices : [],
+        missingCapabilities: Array.isArray(report.missingCapabilities) ? report.missingCapabilities : [],
+        bindingCount: bindings.length
+      }
+    },
+
+    buildExecutionMaterial(art, accepted) {
+      const traceView = (this.detailTrace && this.detailTrace.view) || {}
+      const actions = accepted && Array.isArray(accepted.actionSequence)
+        ? accepted.actionSequence
+        : []
+      const runtime = (art && art.runtime) || {}
+      const toolCalls = Array.isArray(traceView.toolCalls) ? traceView.toolCalls : []
+      const plannerDecisions = Array.isArray(traceView.plannerDecisions) ? traceView.plannerDecisions : []
+      return {
+        runtimeMode: this.runtimeModeLabel(runtime.mode),
+        traceVersion: traceView.traceVersion || '',
+        iterationCount: this.totalIterations || this.currentIteration,
+        toolCallCount: traceView.toolCallCount != null ? traceView.toolCallCount : (this.serviceCallStats.total || toolCalls.length),
+        mcpCallCount: traceView.mcpCallCount,
+        elapsedText: this.formattedElapsedTime,
+        callChain: this.callChainSteps,
+        plannerDecisions,
+        toolCalls,
+        acceptedIteration: accepted && accepted.acceptedIteration,
+        acceptedActionCount: actions.length
+      }
+    },
+
+    buildVerificationMaterial(accepted) {
+      const evidence = this.detailEvidence.data || {}
+      const traceView = (this.detailTrace && this.detailTrace.view) || {}
+      const actions = accepted && Array.isArray(accepted.actionSequence)
+        ? accepted.actionSequence
+        : []
+      const verifierResults = Array.isArray(traceView.verifierResults)
+        ? traceView.verifierResults
+        : []
+      return {
+        overallStatus: evidence.overallStatus || (accepted && accepted.verifier && accepted.verifier.status) || '',
+        summaryText: evidence.summary ? this.evidenceSummaryText(evidence) : ((accepted && accepted.verifier && accepted.verifier.summary) || ''),
+        dimensions: this.evidenceDimensionPanels.map((panel) => ({
+          key: panel.key,
+          title: panel.title,
+          status: panel.status,
+          summaryLine: panel.summaryLine
+        })),
+        checks: Array.isArray(evidence.checks) ? evidence.checks : [],
+        failedChecks: Array.isArray(evidence.failedChecks) ? evidence.failedChecks : [],
+        missingEvidence: Array.isArray(evidence.missingEvidence) ? evidence.missingEvidence : [],
+        verifierResults,
+        acceptedTrajectory: {
+          trajectoryId: (accepted && accepted.trajectoryId) || '',
+          status: (accepted && accepted.status) || '',
+          acceptedIteration: accepted && accepted.acceptedIteration,
+          actionCount: actions.length,
+          bindingGaps: (accepted && Array.isArray(accepted.bindingGaps)) ? accepted.bindingGaps : []
+        }
+      }
+    },
+
+    getProductViewModel() {
+      const art = this.detailArtifact.data
+      const accepted = this.detailAcceptedTrajectory && this.detailAcceptedTrajectory.data
+      const tags = []
+      if (art) {
+        tags.push({ label: '任务说明', tone: 'green' })
+        if (art.runtime && Array.isArray(art.runtime.serviceBindings) && art.runtime.serviceBindings.length) {
+          tags.push({ label: '服务绑定', tone: 'green' })
+        }
+        const hasPath = Array.isArray(art.goldenPaths) && art.goldenPaths.some(
+          (p) => p && Array.isArray(p.steps) && p.steps.length
+        )
+        if (hasPath) {
+          tags.push({ label: '可复用路径', tone: 'green' })
+        }
+        tags.push({ label: this.runtimeModeLabel(art.runtime && art.runtime.mode), tone: 'blue' })
+      }
+      return {
+        build: this.completedBuild || null,
+        artifact: art || null,
+        summaryRows: this.buildBuildSummaryRows(),
+        intent: (this.scenarioParsedDraft && this.scenarioParsedDraft.goal) || this.appName,
+        services: this.serviceStatuses.map((s) => s.name).join('、'),
+        tags,
+        requirement: this.buildRequirementMaterial(art, accepted),
+        serviceSelection: this.buildServiceSelectionMaterial(art),
+        execution: this.buildExecutionMaterial(art, accepted),
+        verification: this.buildVerificationMaterial(accepted)
+      }
     },
 
     isActiveBuild() {
@@ -1647,6 +2433,7 @@ export default {
     /** 用户确认离开调度页后调用 */
     cancelBuildForLeave() {
       this.intentionalClose = true
+      this.aborted = true
       if (this.sessionId) {
         cancelSimulation(this.sessionId)
       }
@@ -1655,8 +2442,33 @@ export default {
       this.isRunning = false
       this.syncCanvasVisual({ type: 'build', active: false })
       this.syncCanvasVisual({ type: 'clear' })
-      this.visible = false
-      this.$emit('close')
+      this.finishClose()
+    },
+
+    confirmBackToEdit() {
+      this.$confirm(
+        '将回到想定解析完成后的编辑界面。本次仿真构建进度与产物摘要将不再保留，需要重新完成仿真构建后才能再次预发布。确定继续吗？',
+        '返回重新编辑？',
+        {
+          confirmButtonText: '返回重新编辑',
+          cancelButtonText: '留在此页',
+          confirmButtonClass: 'el-button--danger',
+          type: 'warning',
+          closeOnClickModal: false
+        }
+      )
+        .then(() => {
+          this.intentionalClose = true
+          this.aborted = true
+          this.teardownStream()
+          this.stopTimer()
+          this.isRunning = false
+          this.syncCanvasVisual({ type: 'build', active: false })
+          this.syncCanvasVisual({ type: 'clear' })
+          this.resetState()
+          this.$emit('back-to-edit')
+        })
+        .catch(() => {})
     },
 
     handleCancel() {
@@ -1674,8 +2486,10 @@ export default {
         }
         this.teardownStream()
         this.stopTimer()
-        this.visible = false
-        this.$emit('close')
+        this.isRunning = false
+        this.syncCanvasVisual({ type: 'build', active: false })
+        this.syncCanvasVisual({ type: 'clear' })
+        this.finishClose()
       }).catch(() => {})
     },
 
@@ -1687,42 +2501,17 @@ export default {
         cancelSimulation(this.sessionId)
       }
       this.teardownStream()
+      this.stopTimer()
+      this.isRunning = false
+      this.finishClose()
+    },
+
+    finishClose() {
       this.visible = false
-      this.$emit('close')
-    },
-
-    async openCompareModal() {
-      this.compareModalVisible = true
-      this.compareSelectedIds = []
-      this.compareResultRows = []
-      await this.loadRecordList()
-    },
-
-    async loadRecordList() {
-      this.compareLoading = true
-      try {
-        this.recordList = await fetchSimulationRecords(this.appName)
-      } catch (e) {
-        this.recordList = []
-        this.$message.error('加载实验记录失败')
-      } finally {
-        this.compareLoading = false
-      }
-    },
-
-    async runCompare() {
-      if (this.compareSelectedIds.length < 2) return
-      this.compareLoading = true
-      try {
-        const { records } = await compareSimulationRecords(
-          this.compareSelectedIds,
-          this.appName
-        )
-        this.compareResultRows = records || []
-      } catch (e) {
-        this.$message.error('对比失败')
-      } finally {
-        this.compareLoading = false
+      if (this.embedded) {
+        this.$emit('cancel-build')
+      } else {
+        this.$emit('close')
       }
     }
   },
@@ -1896,50 +2685,50 @@ export default {
   }
 }
 
-.pre-start-config {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid #f0f0f0;
-
-  .toolbar-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 10px;
-  }
-
-  .toolbar-label {
-    font-size: 13px;
-    color: #595959;
-    flex-shrink: 0;
-  }
-
-  .scenario-row .ant-input {
-    flex: 1;
-    max-width: 100%;
-  }
-}
-
-.research-strategy-panel {
-  margin-top: 8px;
-  padding: 10px 12px;
+.pre-start-parsed-intent {
+  margin-top: 14px;
+  padding: 12px 14px;
   background: #fafafa;
-  border-radius: 4px;
   border: 1px solid #f0f0f0;
+  border-radius: 6px;
 }
 
-.pre-start-config .strategy-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 10px 12px;
+.pre-start-parsed-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 10px;
 }
 
-.pre-start-config .strategy-field {
+.pre-start-parsed-hint {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #8c8c8c;
+}
+
+.parsed-intent-form {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
+}
+
+.parsed-intent-field-label {
+  display: block;
   font-size: 12px;
   color: #8c8c8c;
+  margin-bottom: 4px;
+}
+
+.parsed-intent-field--io {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.parsed-intent-situation {
+  color: #595959;
+  margin-bottom: 8px;
 }
 
 .pre-start-services {
@@ -2176,6 +2965,65 @@ export default {
   padding: 8px 12px;
   background: #fff;
   border-radius: 6px;
+  word-break: break-word;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.process-snapshot {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.process-snapshot-card {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  background: #fff;
+  text-align: left;
+
+  &--active {
+    border-color: #91d5ff;
+    background: #f0f7ff;
+  }
+
+  &--ok {
+    border-color: #b7eb8f;
+    background: #f6ffed;
+  }
+
+  &--warn {
+    border-color: #ffe58f;
+    background: #fffbe6;
+  }
+}
+
+.process-snapshot-label {
+  display: block;
+  font-size: 11px;
+  color: #8c8c8c;
+  margin-bottom: 4px;
+}
+
+.process-snapshot-card strong {
+  display: block;
+  font-size: 14px;
+  color: #262626;
+  line-height: 1.25;
+}
+
+.process-snapshot-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #8c8c8c;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 // 迭代历史
@@ -2314,6 +3162,10 @@ export default {
   font-size: 10px;
   color: #bfbfbf;
   margin-top: 4px;
+}
+
+.result-actions {
+  margin-top: 16px;
 }
 
 .stats-row {
@@ -2557,6 +3409,13 @@ export default {
   &--tight {
     margin-top: 6px;
   }
+
+  &--artifact {
+    padding: 8px 10px;
+    background: #fcfcfc;
+    border: 1px solid #f0f0f0;
+    border-radius: 6px;
+  }
 }
 
 .evidence-dimension-panel {
@@ -2584,6 +3443,97 @@ export default {
   &:last-child {
     margin-bottom: 0;
   }
+}
+
+.detail-subsection--first {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.detail-subsection-flush {
+  margin: 6px 0 0;
+}
+
+.parsed-intent-goal {
+  font-size: 13px;
+  font-weight: 500;
+  color: #262626;
+  line-height: 1.5;
+  margin: 6px 0 0;
+}
+
+.parsed-intent-block {
+  margin-top: 10px;
+}
+
+.parsed-intent-label {
+  display: block;
+  font-size: 11px;
+  color: #8c8c8c;
+  margin-bottom: 4px;
+}
+
+.parsed-intent-tag {
+  margin-bottom: 4px;
+}
+
+.parsed-intent-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #595959;
+  line-height: 1.5;
+}
+
+.parsed-intent-io {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.parsed-intent-io-col {
+  flex: 1;
+  min-width: 120px;
+}
+
+.parsed-intent-meta {
+  color: #8c8c8c;
+  font-size: 11px;
+}
+
+.contract-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.contract-card {
+  padding: 10px 12px;
+  background: #fcfcfc;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+}
+
+.contract-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.contract-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #262626;
+}
+
+.contract-field-label {
+  color: #8c8c8c;
+  margin-right: 4px;
 }
 
 .detail-subsection {
@@ -2674,13 +3624,62 @@ export default {
     }
   }
 
-  .iter-issue, .iter-fix {
+  .iter-plan, .iter-verifier, .iter-issue, .iter-fix {
     font-size: 12px;
     color: #595959;
     margin-top: 4px;
 
+    .plan-label { color: #1890ff; }
+    .verifier-label { color: #722ed1; }
     .issue-label { color: #faad14; }
     .fix-label { color: #52c41a; }
+  }
+
+  .iter-verifier {
+    padding: 8px 10px;
+    background: #fafafa;
+    border: 1px solid #f0f0f0;
+    border-radius: 6px;
+  }
+
+  .iter-verifier-main {
+    display: grid;
+    grid-template-columns: max-content max-content minmax(0, 1fr);
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .iter-verifier-summary {
+    min-width: 0;
+    line-height: 1.55;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  .iter-check-list {
+    margin: 8px 0 0 64px;
+    padding-left: 16px;
+    line-height: 1.55;
+    color: #666;
+    word-break: break-word;
+
+    li + li {
+      margin-top: 4px;
+    }
+  }
+
+  .iter-fix-inline {
+    margin: 8px 0 0 64px;
+    color: #ad6800;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  .iter-exec-path {
+    margin-top: 2px;
+    color: #8c8c8c;
+    font-size: 11px;
+    word-break: break-all;
   }
 }
 
@@ -2820,94 +3819,101 @@ export default {
   }
 }
 
-.strategy-summary {
-  margin-bottom: 16px;
-  text-align: left;
-
-  .strategy-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
+// 旧演示 artifact 的门禁列表；真实 MetaAppArtifact v1 不依赖 gate
+.gate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.research-metrics {
-  margin-bottom: 16px;
-  text-align: left;
+.gate-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
 
-  .metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
+.gate-name {
+  color: #262626;
+  font-weight: 500;
+  min-width: 140px;
+  word-break: break-all;
+}
 
-  .metric-cell {
-    background: #fafafa;
-    border-radius: 8px;
-    padding: 10px 12px;
+.gate-detail {
+  color: #8c8c8c;
+  flex: 1;
+}
+
+@import './meta_app_build/simulation-workbench.less';
+
+.simulation-embedded {
+  flex: 1 1 0;
+  height: 100%;
+  min-height: 0;
+
+  .simulation-container {
+    flex: 1 1 0;
+    min-height: 0;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-
-    .m-v {
-      font-size: 20px;
-      font-weight: 600;
-      color: #1890ff;
-    }
-
-    .m-l {
-      font-size: 12px;
-      color: #8c8c8c;
-    }
-  }
-}
-
-.research-actions {
-  margin-top: 12px;
-}
-
-.compare-toolbar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.compare-check-group {
-  display: block;
-  max-height: 200px;
-  overflow-y: auto;
-  margin-bottom: 12px;
-}
-
-.compare-row {
-  padding: 4px 0;
-}
-
-.compare-empty {
-  color: #8c8c8c;
-  font-size: 13px;
-  margin-bottom: 12px;
-}
-
-.compare-table-wrap {
-  overflow-x: auto;
-}
-
-.compare-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-
-  th,
-  td {
-    border: 1px solid #f0f0f0;
-    padding: 8px 6px;
-    text-align: left;
+    border: 0;
+    box-shadow: none;
   }
 
-  th {
-    background: #fafafa;
-    color: #595959;
+  .main-steps {
+    flex-shrink: 0;
+    padding: 10px 10px;
+  }
+
+  .main-steps-five .step-label {
+    font-size: 10px;
+    max-width: 64px;
+  }
+
+  .simulation-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .content-area {
+    padding: 16px;
+    min-height: 0;
+  }
+
+  .step-content .step-title {
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  .simulation-phase .dispatch-box {
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+
+  .simulation-phase .dispatch-header {
+    margin-bottom: 14px;
+  }
+
+  .phase-progress {
+    margin-bottom: 12px;
+  }
+
+  .footer-buttons--embedded {
+    flex: 0 0 auto;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-top: 1px solid #e8edf4;
+    margin-top: 0;
+    background: #fff;
+    z-index: 2;
   }
 }
 </style>

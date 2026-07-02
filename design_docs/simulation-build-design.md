@@ -1,891 +1,189 @@
-# 垂域元应用仿真构建机制
+# 元应用想定式仿真构建设计
 
-> **读者**：自用设计文档——**可**写产品叙事、交互与线框、前端工程落点及实现路径（目录/模块级）；**与后端可对齐的 HTTP/SSE 字段与路由** 以 **`build-design4llm.md`** 为唯一契约，本文引用而不另抄一份协议表。  
-> **版本**: v4.3 | **更新**: 2026-06-03 | **状态**: Micro-Agent 已实现真实双 Agent 仿真编排（Planner + Verifier）+ 轨迹持久化 + SSE 命名事件流；前端直连 Micro-Agent；smart_chat 多轮对话；ioeb_backend 仅系统后端。**后端 HTTP/SSE 接入契约** 以 `design_docs/build-design4llm.md` 为准。
+更新：2026-06-28。本文描述当前 BuildBundle / MetaAppArtifact v1 实现。
 
----
+## 一、系统定位
 
-## 一、项目概述
+目标：从用户想定和已知 MCP 服务池出发，构建一个任务级最小元应用，并为同一元应用内部的简单任务提供可复用 GoldenPath 快路径。
 
-### 1.1 目标
+完整系统逻辑：
 
-**让非技术人员能够零代码地、基于MCP服务组件构建出直接可用的智能体应用。**
-
-用户只需用自然语言描述业务场景和需求，系统自动完成服务编排、调度验证和应用生成。
-
-### 1.2 核心方法
-
-在智能体与MCP服务之间建立**沙箱化仿真中间层**：
-- 拦截写操作、注入拟真数据
-- 让智能体在安全环境中自主规划和验证调度方案
-- 迭代发现问题并自动修复
-- 最终生成稳定的执行配置
-
-### 1.3 关键特性
-
-| 特性 | 说明 |
-|------|------|
-| **大模型自主推理** | 不预设固定工作流，让智能体自主规划调度顺序 |
-| **沙箱化仿真** | Copy-on-Write中间层保护真实数据，同时验证业务逻辑 |
-| **迭代式自修复** | 自动检测异常并修复，减少人工介入 |
-| **零代码构建** | 非技术人员通过自然语言描述即可完成 |
-
-### 1.4 核心概念
-
-| 概念 | 说明 |
-|------|------|
-| **元应用** | 面向任务的最小粒度智能体应用，由一个智能体核心和若干MCP服务组成 |
-| **MCP服务** | 遵循Model Context Protocol的后端服务，提供工具供智能体调用 |
-| **想定式构建** | 用户描述场景需求，系统自动完成服务选择、调度验证、应用生成 |
-| **拟真数据** | 用于仿真验证的模拟业务数据，不影响生产环境 |
-| **经验固化** | 将验证通过的调度成果（轨迹、配置、模式等）提取为确定性的可复用执行配置 |
-
----
-
-## 二、当前状态
-
-### 2.1 已完成
-
-**仿真构建组件**（`src/components/ef/simulation_builder.vue`）
-- [x] 准备阶段 + 四阶段主流程展示；生产/研究模式、策略 M1–M5、场景描述
-- [x] 智能构建循环（数据仿真→逻辑仿真→链路检视）；迭代历史与技术详情；服务状态与日志
-- [x] 成功/失败与预发布；流式事件订阅（`src/api/simulation_builder.js`，可接内存 mock）
-- [x] 研究模式：实验记录列表与对比（独立 Modal，挂载 `body`）
-
-**与画布及页面集成**（`panel_enhanced.vue`、`node_enhanced.vue` 及调度/使用页）
-- [x] **布局**：仿真 UI 嵌入主区域 **左侧栏**，与右侧流程画布 **flex 并排**，无全屏遮罩；仿真开启时隐藏画布左侧服务列表
-- [x] **联动**：`canvas-visual` 事件驱动画布步骤/节点/阶段动效；`simulation-ui` 通知父页面：`GenericSchedule` 隐藏左侧 `smart-chat`，`useMetaApp` 隐藏左侧预览区并禁用相关控件
-- [x] **仿真中编辑约束**：工具栏按钮禁用（除流程内操作）、节点删除隐藏、禁止新连线与拖拽分离连线、屏蔽节点右键菜单
-
-**数据与接口**
-- [x] `src/mock/data/simulation_builder_data.js`、`src/mock/services/simulation_builder_inmemory.js`
-
-**仿真构建后端（Micro-Agent）— 真实双 Agent 实现**
-- [x] **SimulationOrchestrator**（`micro_agent/simulation/orchestrator.py`）：4 阶段编排器。Phase 2 使用真实 Planner Agent（带 SimulatedMCPTool）+ Verifier Agent 循环，复用框架的 `Agent.run()` ReAct 引擎
-- [x] **TraceStore / FileTraceStore**（`micro_agent/simulation/trace_store.py`）：轨迹持久化接口 + JSON 文件实现（`data/traces/{sessionId}.json`），每次仿真自动保存完整事件序列
-- [x] **仿真路由**（`api/routes/simulation.py`）：`POST /start`、`GET /{id}/stream`（SSE 命名事件）、`POST /{id}/cancel`、`GET /records`、`POST /records/compare`
-- [x] **前端直连**：`simulation_builder.js` 通过 `VUE_APP_AGENT_BASE_URL` 直接调用 Micro-Agent，不经 ioeb_backend
-
-**多轮对话 session（smart_chat）**
-- [x] `mcp_service_recommendation` 端点支持 `session_id`（FileMemory 持久化）
-- [x] `smart_chat.vue` 存储 `agentSessionId`，后续请求自动附带
-- [x] `streamAgent()` 增加 `onSessionInfo` 回调捕获 session_id
-
-**ioeb_backend**
-- [x] **不参与仿真**：已移除所有仿真相关代码，仅保留系统后端职能
-
-**领域知识注入**
-- [x] **唯一来源在 Micro-Agent**：`workspace/skills/domain_*/SKILL.md`（每个领域一份 Markdown，含术语、约束、编排建议、合规说明）
-- [x] **编排器自动加载**：`SimulationOrchestrator` 按请求中的 `domain` 字段，通过 `Agent.load_skill()` 将领域知识写入 Planner / Verifier 的 system prompt
-- [x] **前端只传标识**：`buildStartPayload` 仅发送 `domain` 字符串，不再组装 `domainKnowledge`
-- [x] **进程内 mock**：三阶段领域增强文案集中在 `src/mock/data/simulation_builder_data.js`（`SIMULATION_BUILD_MOCK_ENHANCEMENTS`），`simulation_builder_inmemory.js` 按 `body.domain` 读取；与真链路无关
-
-**SmartChat 演示与仿真分流**（`src/mock/data/meta_apps_data.js`）
-
-| 用户输入 / 元应用 `preName` | SmartChat | 仿真 API |
-|---------------------------|-----------|----------|
-| 含 **「课题」** | 进程内 mock 推荐（`getMetaAppNodes`） | **inmemory**（`simulation_builder_inmemory.js`） |
-| 含 **`【本地MCP】(n)`**（n 为画布节点数） | 本机 external-mcp 场景 flow；仅 **health** 垂域 | **Micro-Agent**（`VUE_APP_AGENT_BASE_URL`，真 MCP / 失败回退 Sandbox） |
-| 其他 | 可走 Agent API（若可用） | Micro-Agent |
-
-- **识别规则**：正则 `【本地MCP】\(\d+\)`（`LOCAL_MCP_MARK_RE`），与下拉样例前缀一致；`preName` 形如 `【本地MCP】(3) 肾功能减退肺炎患者用药`。
-- **样例场景**（health 下拉，均为临床叙述，非「全链路/五服务」类工程话术）：(1) 利奈唑胺给药、(1) SOFA、(1) 说明书查询、(1) 靶点 MDT、(2) 脓毒症评分+给药、(3) 肾衰肺炎三联、(5) 重症感染多学科（五类本机 MCP）。
-- **本机依赖**：节点 URL / stdio 命令指向 `workspace/fdueblab/external-mcp/`；仿真前需启动对应 MCP 进程。
-
-### 2.2 当前可运行状态
-
-```
-前端(ioeb)  ──EventSource──>  Micro-Agent(:8000)
-                              ├─ POST /api/simulation/start
-                              ├─ GET  /api/simulation/{id}/stream (SSE)
-                              ├─ POST /api/simulation/{id}/cancel
-                              ├─ GET  /api/simulation/records
-                              └─ POST /api/simulation/records/compare
-
-前端(ioeb)  ──streamAgent──>  Micro-Agent(:8000)
-                              └─ POST /api/agent/mcp_service_recommendation (支持 session_id)
-
-前端(ioeb)  ──axios──>  ioeb_backend(:5000)
-                        └─ 用户/字典/微服务等系统 API（与仿真无关）
+```text
+算法/模型想定式生成
+-> 标准 MCP 服务封装
+-> 从既有 MCP 服务池选择与组合服务
+-> 元应用想定式仿真构建
+-> 后续多元应用/多智能体系统组合
 ```
 
-**已验证**：SSE 全流程事件输出（step/service/progress/iteration/phase/log/complete）、轨迹自动持久化、cancel 中断、records 查询。LLM 调用需配置 API key。
+本文只覆盖“元应用想定式仿真构建”。算法开发、MCP 自动封装、服务池数据库管理属于其它模块。
 
-### 2.3 下一步
+## 二、端到端语义（推荐 → 构建 → 路径固化）
 
-| 优先级 | 内容 | 说明 |
-|--------|------|------|
-| P0 | **配置 LLM API key 跑通真实 Agent** | `.env` 里填 `LLM_API_KEY`，验证 Planner/Verifier 能正常推理 |
-| P0 | **评测任务集** | 设计 2-3 个具体场景（不同服务数/复杂度），作为实验基准 |
-| P1 | **SimulatedMCPTool → 真实 MCP** | `orchestrator._build_planner()` 中替换 tool 注册逻辑 |
-| P1 | **CoW 沙箱中间层** | 操作分类（读/写）+ 写操作拦截 + 沙箱状态存储 |
-| P1 | **验证标准量化** | L1-L3 各层级判定标准，当前 Verifier 仅靠 LLM 判断 |
-| P2 | **智能终止** | 连续同问题指纹检测 → 提前退出 |
-| P2 | **经验固化** | 成功轨迹 → 确定性执行配置 |
-| P3 | **指标体系真实化** | 当前研究模式指标为 mock 值，需接入真实度量 |
+系统分两段，不要混为一谈：
 
----
+```text
+【阶段 A · 服务推荐智能体】想定 ready 之后
+  根据业务想定，从平台 MCP 服务池完成匹配与绑定
+  → 形成「元应用可调度服务边界」（画布 catalog / servicesMeta）
+  语义：这些服务是本元应用允许调度的能力集合，不是 GoldenPath 的最终清单
 
-## 三、整体架构
-
-### 3.1 系统位置
-
-```
-算法代码 → MCP服务封装 → 想定式对话构建 → 预发布 → 业务验证 → 已发布
-           (上游系统)      (本模块所在)        ↑         (后续模块)
-                                              │
-                          ┌───────────────────┘
-                          │
-              服务匹配 → 【仿真构建】→ 可视化交互/编辑 → 确认发布
+【阶段 B · 仿真构建】用户进入构建、传入上述 catalog 之后
+  构建智能体在能力集合内多轮仿真调度（ReAct + 工具调用）
+  验证智能体检查是否满足业务目标（Verifier 迭代）
+  → 对验证通过的执行过程，提取稳定且必要的调用步骤
+  → 编译为带适用条件的高置信度执行路径（GoldenPath）
+  GoldenPath 可只使用绑定集合中的部分服务；
+  其余已绑定服务仍可在输入变化、执行异常或慢模式重新规划时参与调度
 ```
 
-**本模块核心职责**：从游离的服务组件和不确定的大模型 → 确定的智能体应用
+**服务推荐**的准确定义是：**根据业务想定确定元应用的可调度服务边界**，而不是「只挑出高置信路径会用到的那几个服务」。推荐结果进入画布后，仿真构建直接注册 `servicesMeta`，不再用第二个 LLM 改写边界。
 
-### 3.2 整体流程
+**GoldenPath** 是运行期快路径资产：从 AcceptedTrajectory（Verifier 最终 PASSED 的主干调用）提炼；**`runtime.serviceBindings`** 是运行期可注册、可回退慢模式调度的绑定集合，二者粒度不同——路径可瘦，绑定可宽。
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                      基于大模型智能体的想定式应用构建系统                         │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  用户需求          想定场景解析模块          构建执行模块                        │
-│    │              ┌──────────────┐      ┌───────────────────┐               │
-│    ▼              │ 领域知识增强  │      │  调度规划模块       │               │
-│  ┌──────┐   →    │    模块      │      │       │           │               │
-│  │ 自然 │        ├──────────────┤  →   │  仿真验证模块      │               │
-│  │ 语言 │        │ 服务匹配模块  │      │  ┌────┬────┬────┐ │               │
-│  │ 描述 │        └──────────────┘      │  │服务 │验证 │异常│ │               │
-│  └──────┘                              │  │请求 │评估 │修复│ │               │
-│                                        │  │处理 │    │   │ │               │
-│                                        │  └────┴────┴────┘ │               │
-│                                        └─────────┬─────────┘               │
-│                                                  │                          │
-│    ┌────────────────┐      ┌─────────┐           ▼                          │
-│    │ 可视化交互模块  │ ←─→ │ 经验固化 │  ←──  验证通过的                      │
-│    │  (用户确认/     │      │  模块   │       调度方案                        │
-│    │   反馈修正)    │      └────┬────┘                                      │
-│    └────────────────┘           │                                           │
-│                            ┌────┴────┐                                      │
-│                            │ 元应用  │                                      │
-│                            │配置中心 │     可用MCP服务与工具                   │
-│                            └─────────┘                                      │
-└──────────────────────────────────────────────────────────────────────────────┘
+## 三、第一性原理对象边界
+
+当前实现不靠末端 gate 补丁制造语义，而是用对象边界区分事实、中间数据和产物：
+
+```text
+BuildTrace             完整事实链，本地中间数据
+tool_call_record       唯一调用事实源
+AcceptedTrajectory     Verifier 接受的最终成功主干，本地中间数据
+MetaAppArtifact        最小可运行元应用产物
+ExperimentRun          本地科研实验结果
 ```
 
----
+最终 `MetaAppArtifact` 是最小运行闭包，只保留 `app`、`taskContract`、`runtime`、`goldenPaths` 四类运行必需信息；不包含 trace、accepted trajectory、verifier refs、experiment result、产物哈希反向引用。完整详情入口展示的是 BuildBundle 视图，不等于把这些中间数据写进 artifact。
 
-## 四、仿真构建机制
+## 四、当前真实流程
 
-### 4.1 沙箱化仿真（核心机制）
-
-在智能体与MCP服务之间建立 **Copy-on-Write 语义**的沙箱中间层：以真实数据为基础，写操作被拦截并保存为沙箱内部状态，后续读操作优先从沙箱状态中查询，未命中时再透传到真实服务。
-
-```
-┌─────────────┐      ┌──────────────────────────────┐      ┌─────────────┐
-│   智能体     │ ←→  │       沙箱中间层              │  ←→  │  MCP服务    │
-│  (Agent)    │      │    (Sandbox Layer)           │      │  (真实服务)  │
-└─────────────┘      │                              │      └─────────────┘
-                     │  ┌────────────────────────┐  │
-                     │  │    沙箱状态存储          │  │
-                     │  │  (Copy-on-Write Store) │  │
-                     │  └───────┬────────────────┘  │
-                     │          │                    │
-                     │   ┌──────┴──────┐            │
-                     │   │  操作分类    │            │
-                     │   └──┬───────┬──┘            │
-                     │      │       │               │
-                     │  ┌───┴───┐ ┌─┴──────────┐   │
-                     │  │ 读操作 │ │  写操作     │   │
-                     │  │       │ │  拦截+存储  │   │
-                     │  │ 优先查 │ │  生成模拟   │   │
-                     │  │ 沙箱  │ │  回执       │   │
-                     │  │ 未命中 │ └────────────┘   │
-                     │  │ 透传真 │                   │
-                     │  │ 实服务 │                   │
-                     │  └───────┘                   │
-                     └──────────────────────────────┘
+```text
+ioeb 想定追问 / 解析（scenario_intake）
+-> 服务推荐智能体（mcp_service_recommendation：查服务池 → 画布 catalog）
+-> 用户进入仿真构建，传入 servicesMeta
+-> MicroAgent 注册全部 servicesMeta（isFake=true 才走 Sandbox，其余必须连接真实 MCP）
+-> ReAct 慢模式 Agent 在已注册工具集内多轮调度
+-> Verifier 审查并驱动迭代修正
+-> 保存 BuildTrace
+-> 编译 AcceptedTrajectory / MetaAppArtifact
+-> 原子保存 manifest，随后发送 complete
+-> ioeb 展示 BuildBundle 摘要
+-> /run：GoldenPath 快路径；失败则慢模式（仍基于 artifact 绑定集合）
+-> /experiments/run：本地 baseline（可选）
 ```
 
-**中间层功能**：
-1. 健康检查：连接真实服务确认可用性和响应延迟
-2. 操作分类：判断每个MCP调用是读操作还是写操作
-3. 写操作拦截：拦截写操作，生成模拟回执，并将结果写入沙箱状态存储
-4. 读操作路由：优先从沙箱状态中查询（命中则返回沙箱数据），未命中时透传到真实服务
-5. 结果校验：根据验证标准检验执行结果
+### 服务推荐 vs 路径固化
 
-**设计要点**：沙箱维护独立的虚拟状态层，确保多步调度中后续读操作能正确获取先前写操作的结果，从而保证沙箱内的状态流与真实执行一致。
+| 环节 | 职责 | 产出 |
+| --- | --- | --- |
+| **服务推荐**（构建前） | 据业务想定从服务池确定**可调度边界** | 画布 `nodeList` / 请求 `servicesMeta` |
+| **构建连接阶段** | 直接注册给定边界，不再做服务选择 | 构建期实际注册的工具集 |
+| **AcceptedTrajectory + GoldenPath** | 从验证通过的主干提取**高置信步骤**（可用绑定集合的真子集） | `accepted_trajectory.json`；`artifact.goldenPaths` |
+| **artifact.serviceBindings** | 保留完整 `servicesMeta` 边界，供慢模式重规划 | `artifact.json` → `/run` 注册 MCP |
 
-**关键理解**：服务调度是实现数据仿真和逻辑仿真的手段，而这些仿真是实现应用可靠性验证的手段。
+服务推荐通过 Micro-Agent 的 `mcp_service_recommendation`（MySQL MCP 查 ioeb 服务库）实现，**不在仿真构建模块内查库**（见 `data-structures-spec.md`）。
 
-### 4.2 执行流程（四步骤）
+### 慢模式
 
-```
-服务匹配 → 环境准备 → 智能构建 → 方案生成
-    │          │          │          │
-    ▼          ▼          ▼          ▼
- 健康检查    沙箱初始化   核心循环    路径固化
- 响应验证    拦截配置    (见4.3)    配置生成
- 替代寻优    数据加载
-```
+慢模式保留 ReAct/tool-calling 探索范式。Planner 不先生成完整 step graph，而是在工具调用过程中形成轨迹，最终由 Verifier 判断是否通过。
 
-| 步骤 | 名称 | 职责 | 产出 |
-|------|------|------|------|
-| 1 | **服务匹配** | 检查服务可用性、响应延迟；不可用时寻找替代 | 可用服务列表 |
-| 2 | **环境准备** | 初始化沙箱、配置拦截规则、加载拟真数据 | 就绪的仿真环境 |
-| 3 | **智能构建** | 智能体自主规划调度、执行验证、发现问题自动修复 | 验证通过的调度方案 |
-| 4 | **方案生成** | 固化执行路径、生成配置文件、保存验证报告 | 可部署的元应用配置 |
+### Verifier
 
-### 4.3 智能构建（核心循环）
+构建期 Verifier 是最终裁判。只有最终 PASSED iteration 的业务 tool call 会进入 AcceptedTrajectory；失败尝试留在 BuildTrace 中。
 
-体现"大模型自主推理代替预设规则"。采用**多 Agent 协作**架构：规划智能体（Planner）负责调度方案的生成与修复，验证智能体（Verifier）独立评估方案的正确性，二者具有独立的输入上下文，避免自我评估盲区。
+当前 Verifier 的通过条件是“任务目标、关键服务、数据流和调用顺序看起来成立”，不是“轨迹已经最短/最优”。因此 AcceptedTrajectory 表示被接受的成功主干，不等价于优化后的主干；无效重复调用、参数试错、discover/schema 探索等剪枝应在后续 `OptimizedTrajectory`/GoldenPath 编译阶段处理，而不应由前端展示层伪装成已优化。
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    智能构建（单轮）                           │
-│                                                             │
-│   ┌───────────────────┐                                    │
-│   │  规划智能体         │                                    │
-│   │  (Planner Agent)  │                                    │
-│   │                   │                                    │
-│   │  基于任务目标、可用  │                                    │
-│   │  服务和拟真数据，    │                                    │
-│   │  自主规划调度方案    │                                    │
-│   └────────┬──────────┘                                    │
-│            │ 调度方案 + 执行结果                              │
-│            ▼                                               │
-│   ┌───────────────────┐                                    │
-│   │  验证智能体         │                                    │
-│   │  (Verifier Agent) │                                    │
-│   │                   │                                    │
-│   │  独立上下文，评估：  │                                    │
-│   │  ├─ 数据仿真正确性  │  ← 检查输入输出格式                  │
-│   │  ├─ 逻辑仿真正确性  │  ← 检查业务规则满足                  │
-│   │  └─ 链路合理性      │  ← 冗余/遗漏/顺序                   │
-│   └────────┬──────────┘                                    │
-│            │                                               │
-│       ┌────┴────┐                                          │
-│    通过         发现问题                                     │
-│       │              │                                     │
-│       ▼              ▼                                     │
-│    完成        反馈至规划智能体 → 下一轮                       │
-│               ├─ 数据适配（格式转换）                         │
-│               ├─ 类型转换（参数修正）                         │
-│               └─ 替代寻优（更换服务）                         │
-└─────────────────────────────────────────────────────────────┘
-```
+### GoldenPath
 
-**与预设工作流的区别**：
+GoldenPath 是单个 MetaApp 内部的快路径资产：从验证通过的主干中抽取**稳定且必要**的调用步骤，并附带适用条件（`applicability`）。运行时 LLM 判断当前任务是否适用，并生成 BindingPlan；确定性 executor 执行；失败则回退慢模式，**仍可在完整 `serviceBindings` 范围内重新规划工具调用**。
 
-| 维度 | 预设工作流 | 本方案（自主规划） |
-|------|-----------|------------------|
-| 流程定义 | 事先定义节点和连线 | 智能体根据任务目标自主决定 |
-| 灵活性 | 固定，难以适应需求变化 | 灵活，可处理多样化需求 |
-| 验证方式 | 按图执行，检查结果 | 仿真执行，验证可行性，迭代修复 |
-| 错误处理 | 依赖预设的异常分支 | 智能体自主调整规划 |
+当前 GoldenPath 主要支持最小 replay，泛化数据流仍是后续研究重点。
 
-### 4.4 验证分层
+### 与当前实现的对照（简要）
 
-| 层级 | 名称 | 验证内容 | 本模块覆盖 | 说明 |
-|------|------|---------|-----------|------|
-| L1 | 结构正确 | 调用链完整、响应格式正确 | ✅ | 基础可用性 |
-| L2 | 基础逻辑 | 输出类型正确、无空值异常 | ✅ | 数据完整性 |
-| L3 | 简单用例 | 1-2个典型场景能正确执行 | ✅ | 业务正确性 |
-| L4 | 数据集评测 | 在测试集上达到预期指标 | ❌ | 后续业务验证模块 |
+「绑定集合 ⊇ 路径所用服务」已经由代码直接保证：GoldenPath 只覆盖最终验收主干，`artifact.runtime.serviceBindings` 则保留完整 `servicesMeta`。快路径只连接自身所需服务；失败后的慢模式重新连接完整绑定集合。
 
-**L1-L3验证通过**意味着元应用可进入预发布，接受更深入的业务验证。
+## 五、当前工程状态
 
-> **待定义**：L1-L3 各层级的量化判定标准尚未确定，需要结合具体业务场景设计可操作的通过条件（如 L1 的"调用链完整"需明确完整性的判定规则，L3 的"典型场景"需明确场景来源和覆盖要求）。这是后续研究的关键输入，见 8.3 节。
-
-### 4.5 最大轮次策略
-
-- 存在最大轮次（当前5轮），防止无限循环
-- 不向用户显示具体轮数限制
-- **智能终止（待实现）**：连续多轮相同问题无法修复时提前退出
-
----
-
-## 五、关键技术问题
-
-### 5.1 操作分类（读/写判断）
-
-**问题**：如何准确判断MCP工具调用是读操作还是写操作？
-
-**重要性**：误判导致读操作被拦截（智能体获取不到数据）或写操作未拦截（影响生产数据）。
-
-| 方案 | 优点 | 缺点 |
-|------|------|------|
-| **Schema标注** | 准确、明确 | 需要服务提供方配合 |
-| **命名约定** | 简单 | 可能不准确 |
-| **LLM推断** | 灵活 | 有延迟、可能出错 |
-
-**建议**：优先Schema标注，回退到命名约定+LLM推断
-
-### 5.2 模拟回执生成
-
-**问题**：拦截写操作后，如何生成符合预期的模拟响应？
-
-**重要性**：模拟回执需要足够真实，否则影响智能体后续决策。
-
-| 方案 | 优点 | 缺点 |
-|------|------|------|
-| **Schema推导** | 类型正确 | 可能缺少业务语义 |
-| **LLM生成** | 语义丰富 | 有延迟 |
-| **历史采样** | 真实 | 需要历史数据 |
-
-**建议**：Schema推导为主，LLM生成兜底
-
-### 5.3 智能终止判断
-
-**问题**：如何判断问题无法自动修复，应提前终止？
-
-**方案**：
-1. 定义问题指纹（issue fingerprint）用于去重
-2. 连续N轮（2-3轮）相同指纹 → 判定无法自动修复
-3. 区分问题类别：
-   - **可自动修复**：数据格式、类型转换、响应结构
-   - **需人工介入**：服务不可用、权限不足、逻辑错误
-
-### 5.4 自主规划实现
-
-**问题**：如何实现"大模型自主推理代替预设规则"？
-
-**实现方式**：
-```
-输入：任务目标 + 可用服务列表 + 拟真数据
-输出：验证通过的调度序列
-
-过程：
-1. 智能体分析任务，决定需要调用的服务
-2. 智能体决定调用顺序和参数
-3. 在沙箱中执行，收集结果
-4. 验证结果是否符合预期
-5. 如有问题，分析原因，调整规划，重试
-6. 直到验证通过或达到最大轮次
-```
-
----
+| 能力 | 当前状态 |
+| --- | --- |
+| 平台入口 | ioeb 可调用 MicroAgent start/stream，展示构建阶段 |
+| 真实 MCP | `isFake=true` 才注册 SandboxTool；其余服务必须通过远程 SSE/streamable HTTP 成功连接，否则构建失败 |
+| BuildBundle | 按 build 目录保存 manifest、trace、accepted trajectory、artifact |
+| MetaAppArtifact | v1 最小运行产物，可通过 `/run` 本地运行 |
+| GoldenPath | 已支持 replay + fallback 慢模式；单次 medical-calc smoke run 验证过成功路径 |
+| 实验 runner | 四个 baseline 名称与 runner 入口已实现，批量实验还未完成 |
+| ioeb 展示 | 临时摘要/JSON 展示；不改 ioeb_backend |
 
 ## 六、前端展示设计
 
-### 6.1 设计原则
+当前前端不做正式产物 UI，只证明对象存在：
 
-- **非技术用户友好**：一眼感受到流程和价值
-- **双层信息**：默认简洁展示 + 可展开技术详情
-- **隐式复杂度**：最大轮次等不直接暴露
-- **研究与工程同构**：同一套组件支持生产模式和研究模式
+- 构建阶段和日志：SSE 驱动。
+- Trace：展示调用链和原始 JSON 预览。
+- Evidence summary：读取 MicroAgent 从 BuildBundle 派生的 `build_evidence_summary.v1`。
+- Artifact：展示 `MetaAppArtifact v1` 摘要与 JSON。
+- 预发布页：展示 service bindings、GoldenPath steps、assertions 的摘要。
 
-### 6.2 双模式设计
+ioeb 中仍保留“课题”进程内 mock 路线；它用于演示，不代表真实链路和科研实验。
 
-系统通过模式切换支持两种使用场景，共享核心流程展示、SSE 事件驱动、日志和迭代历史等基础能力。
+## 七、当前明确未实现
 
-| 维度 | 生产模式（默认） | 研究模式（可切换） |
-|------|----------------|------------------|
-| 目标用户 | 非技术用户 | 研究人员 |
-| 策略配置 | 隐藏，使用默认配置 | 开放，可选择各模块策略组合 |
-| 完成状态 | 简洁统计（服务数、轮次、耗时） | 完整指标看板（含模块级指标） |
-| 历史对比 | 无 | 支持多次运行结果并排对比 |
-| 技术详情 | 可展开 | 默认展开，信息更详细 |
+- CoW 沙箱读写拦截层。
+- ioeb_backend artifact 入库。
+- 平台级统一服务池检索 API / 向量索引（推荐智能体当前经 MySQL MCP 查库，见阶段 A）。
+- 批量 source-target reuse benchmark。
+- 完整 token/cost/LLM call metrics。
+- 强数据流依赖归纳与可执行 L2 断言。
+- 成功轨迹优化：剪掉无效重复调用、失败试错、无产出的 schema/discover 探索，并保留必要证据链。
+- 多 GoldenPath 管理策略。
 
-### 6.3 与元应用画布集成（当前工程实现）
+## 八、研究目标
 
-在「想定式调度」等嵌入 `panel_enhanced` 的页面中，用户点击 **开始仿真构建** 后：
+大论文聚焦“元应用想定式仿真构建方法及系统”：
 
-1. **主工作区**分为左右两列：左侧为仿真构建面板（步骤条 + 内容 + 详情 + 底部按钮），右侧为 **jsPlumb 画布**；二者同级，**不使用** 覆盖全屏的 Drawer/Modal 作为外壳。
-2. **左侧服务目录**（`ef-sidebar`）在仿真打开时隐藏，避免与构建面板争宽。
-3. **页面级**：`panel_enhanced` 抛出 `simulation-ui`（`{ open: true|false }`），调度页隐藏智能聊天，元应用使用页可隐藏左侧输入/输出预览并禁用底部「返回」等与编辑冲突的控件。
-4. **画布级**：通过 `canvas-visual` 同步构建进度，便于连线动效与节点高亮；仿真进行中限制结构性编辑（见 §2.1）。
+- 从想定到元应用产物的 LLM+MCP 构建链路。
+- BuildTrace/AcceptedTrajectory/MetaAppArtifact 分层对象模型。
+- 快慢模式运行与可复用 GoldenPath。
+- 平台展示与科研实验双入口系统。
 
-详细事件与载荷与 `design_docs/build-design4llm.md` 中 **SSE**、**complete 与 result** 两节一致；事件顺序参考该文档所列 `runStream`。
+小论文优先聚焦“轨迹固化、复用、优化”：
 
-### 6.4 构建面板内部结构（线框）
+- 从成功 ReAct 轨迹固化为 verified executable artifact。
+- 在固化前识别并压缩无效重复调用和试错片段，比较 raw accepted trajectory 与 optimized trajectory 的调用数、延迟和成功率。
+- 对比 no reuse、raw trace prompt、workflow memory、golden path。
+- 指标包括成功率、延迟、成本、MCP 调用数、fallback 率、Verifier 通过率和错误类型。
 
-与工程实现一致：步骤条为 **五步**（准备 → 服务匹配 → 环境准备 → 智能构建 → 方案生成）；未点击「开始仿真构建」前停留在准备页，可切换生产/研究模式并配置策略（研究模式）。
+## 九、下一步工程顺序
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  顶部：五步步骤条（准备为第 1 步，其后为四阶段）                  │
-│  ─○─────○─────○─────●─────○───                               │
-│   准备  服务匹配 环境准备 智能构建 方案生成                      │
-├─────────────────────────────────────────────────────────────┤
-│  [生产模式 / 研究模式]  ← 准备页内切换；研究模式展开策略 M1–M5    │
-├─────────────────────────────────────────────────────────────┤
-│  内容区域（准备说明 / 当前阶段进度 / 完成或失败态）               │
-├─────────────────────────────────────────────────────────────┤
-│                    [查看详情]（构建开始后可展开）                 │
-├─────────────────────────────────────────────────────────────┤
-│  技术详情（展开后）                                            │
-│  ├─ 轮次详情（每轮的三阶段状态、问题、修复）                     │
-│  ├─ 服务状态（带延迟信息）                                     │
-│  └─ 运行日志                                                 │
-├─────────────────────────────────────────────────────────────┤
-│  [返回编辑] [开始仿真构建] / [取消构建] / [预发布] …           │
-└─────────────────────────────────────────────────────────────┘
-```
+1. 固定真实 MCP 任务集，重复构建与运行。
+2. 批量跑四个 baseline，输出 JSONL/CSV。
+3. 构造 GoldenPath 失败用例，验证 fallback 慢模式。
+4. 增强 BindingPlan 与 L2 数据流断言。
+5. 增加轨迹优化编译阶段，先处理重复调用、失败试错和无效 discover/schema 探索。
+6. 真实链路和实验入口稳定后，再为 ioeb_backend 设计独立 artifact 表适配。
 
-### 6.5 完成状态
+## 十、数据库适配边界（暂缓）
 
-**生产模式——成功**：
-```
-✓ 仿真构建成功
-经过 N 轮优化，已生成稳定的执行方案
+当前不修改 ioeb_backend 数据模型，BuildBundle 与 artifact 只在 Micro-Agent 落盘。待真实构建、运行和实验链路通过后，再新增独立表适配 MetaAppArtifact；不在现有 `service_apis` 上继续叠加临时 runtime 引用。BuildTrace、AcceptedTrajectory 和实验结果仍留在本地科研环境。
 
-[统计卡片：服务数、优化轮次、耗时]
-[执行路径：用户输入 → 服务A → 服务B → 输出结果]
+## 十一、代码定位
 
-        [返回编辑]  [🚀 元应用预览与发布]
-```
+接口契约见 `design_docs/build-design4llm.md`。
 
-**研究模式——成功**：
-```
-✓ 仿真构建成功
-策略配置: CoW沙箱 / LLM自主规划 / 多Agent验证 / LLM修复 / 黄金轨迹
+MicroAgent 关键文件：
 
-[端到端指标：成功率、迭代轮次、构建耗时]
-[模块级指标：沙箱保真度、规划合理率、验证准确率、修复有效率]
+- `api/routes/simulation.py`
+- `micro_agent/simulation/orchestrator.py`
+- `micro_agent/simulation/artifact_compiler.py`
+- `micro_agent/simulation/build_bundle.py`
+- `micro_agent/simulation/artifact_runtime.py`
+- `micro_agent/simulation/experiments.py`
 
-    [保存实验记录]  [与历史记录对比]  [元应用预览与发布]
-```
+ioeb 关键文件：
 
-**失败**（两种模式共享）：
-```
-✗ 构建失败
-经过 N 轮尝试，仍存在以下问题
-
-⚠️ [问题描述]
-💡 [建议措施]
-
-    [返回编辑]  [重新构建]
-```
-
-### 6.6 对比视图（仅研究模式）
-
-支持选择多次实验记录进行并排对比，直观展示不同策略配置对各指标的影响。
-
-```
-┌───────────────────────────────────────────────────────┐
-│  实验对比                                              │
-│  选择记录: [✓ #12 CoW+多Agent]  [✓ #13 CoW+单Agent]  │
-├─────────────────────┬─────────────────────────────────┤
-│  指标               │  #12          │  #13            │
-├─────────────────────┼───────────────┼─────────────────┤
-│  构建成功率          │  85%          │  62%            │
-│  平均迭代轮次        │  2.3          │  3.8            │
-│  验证准确率          │  91%          │  74%            │
-│  ...               │  ...          │  ...            │
-└─────────────────────┴───────────────┴─────────────────┘
-```
-
----
-
-## 七、API接口定义
-
-> **说明**：以下为概念设计。**与当前前端 `buildStartPayload` 一致的请求体、SSE 事件名与载荷** 以 `design_docs/build-design4llm.md` 为准；下表可作产品级速查。
-
-### 7.1 启动仿真
-
-```
-POST /api/simulation/start
-```
-
-```typescript
-interface StartSimulationRequest {
-  appId: string;
-  appName: string;
-  domain: string;                // 业务领域；Micro-Agent 映射为 Skill `domain_{domain}`（见 workspace/skills/）
-  serviceIds: string[];
-  maxIterations?: number;        // 默认5
-  scenarioDescription?: string;
-  // 策略配置（研究模式使用，生产模式使用默认值）
-  strategy?: {
-    sandbox?: 'cow' | 'none' | 'full_mock';         // 默认 'cow'
-    planning?: 'llm_autonomous' | 'preset_workflow';  // 默认 'llm_autonomous'
-    verification?: 'multi_agent' | 'single_agent' | 'rule_based';  // 默认 'multi_agent'
-    repair?: 'llm_repair' | 'rule_repair' | 'none';  // 默认 'llm_repair'
-    solidify?: 'golden_trace' | 'replan' | 'static';  // 默认 'golden_trace'
-  };
-}
-
-interface StartSimulationResponse {
-  success: boolean;
-  sessionId: string;
-  streamUrl: string;             // SSE订阅地址
-  error?: string;
-}
-```
-
-### 7.2 订阅进度（SSE）
-
-```
-GET /api/simulation/{sessionId}/stream
-Accept: text/event-stream
-```
-
-| 事件 | 说明 | 数据结构 |
-|------|------|---------|
-| `step` | 主步骤变更 | `{ step: number, name: string }` |
-| `iteration` | 迭代轮次更新 | `{ iteration: number, status: string }` |
-| `phase` | 验证阶段更新 | `{ phase: 'data'\|'logic'\|'check', status: string }` |
-| `issue` | 发现问题 | `{ type: string, message: string, fix?: string }` |
-| `service` | 服务状态变更 | `{ id: string, status: string, latency?: number }` |
-| `log` | 日志消息 | `{ level: string, message: string }` |
-| `metrics` | 模块级指标更新 | `{ module: string, metric: string, value: number }` |
-| `complete` | 仿真完成 | `{ success: boolean, result?: object, metrics?: object }` |
-
-`complete` 事件的 `metrics` 字段结构：
-```typescript
-interface SimulationMetrics {
-  iterations: number;
-  elapsedMs: number;
-  sandboxFidelity?: number;     // 沙箱保真度
-  planningAccuracy?: number;    // 规划合理率（首轮通过率）
-  verificationAccuracy?: number; // 验证准确率
-  repairEffectiveness?: number;  // 修复有效率
-}
-```
-
-### 7.3 取消
-
-```
-POST /api/simulation/{sessionId}/cancel
-```
-
-仿真最终结果仅通过 SSE `complete` 事件下发，**不提供**按会话 ID 的独立 HTTP 结果查询。
-
-### 7.4 实验记录（研究模式）
-
-```
-GET  /api/simulation/records                  // 获取实验记录列表
-POST /api/simulation/records/compare          // 对比多条记录
-```
-
-单条记录详情由列表中的 `recordId` 在对比接口或落盘轨迹中查看；当前 Agent 侧未单独暴露 `GET /records/{recordId}`。
-
-```typescript
-interface CompareRequest {
-  recordIds: string[];           // 要对比的记录ID列表
-}
-
-interface CompareResponse {
-  records: Array<{
-    recordId: string;
-    strategy: object;            // 策略配置
-    metrics: SimulationMetrics;  // 指标数据
-    createdAt: string;
-  }>;
-}
-```
-
----
-
-## 八、研究方向
-
-### 8.1 智能体自主规划的可靠性
-
-**问题**：如何确保智能体的自主规划在仿真环境中可靠，且与真实环境行为一致？
-
-**已知局限——LLM 非确定性**：LLM 的输出具有随机性，相同输入可能产生不同的调度方案。本设计通过**经验固化**（见 8.4）将验证通过的方案转化为确定性执行配置来解决这一问题——仿真阶段允许非确定性探索，最终产出的是确定性的执行路径。
-
-**研究点**：
-- 拟真数据的代表性和覆盖度设计
-- 模拟回执对智能体决策的影响分析
-- 沙箱与真实环境的行为差异量化
-- 非确定性探索的效率：多次仿真是否收敛到等价方案
-
-### 8.2 异常检测与自动修复策略
-
-**问题**：如何设计有效的自动修复策略，最大化自动化程度？
-
-**研究点**：
-- 问题分类体系（可自动修复 vs 需人工介入）
-- 修复策略选择算法
-- 修复知识的积累与复用
-
-### 8.3 验证标准的量化
-
-**问题**：如何量化"仿真通过"的标准，使其具有业务意义？
-
-**研究点**：
-- L1-L3各层级的具体判定指标
-- 验证结果与真实业务表现的相关性
-
-### 8.4 经验固化（黄金轨迹与状态机固化）
-
-**问题**：如何将成功的调度轨迹固化为可复用的执行模式？
-
-**设计思路**：轨迹固化与自主规划并非对立关系——固化是保证执行一致性的手段，解决 LLM 非确定性导致的不可复现问题；在固化轨迹的基础上，通过异常识别机制实现灵活性，即当运行时实际输入偏离预期时，触发异常处理分支进行动态调整。
-
-```
-黄金轨迹（确定性骨架）
-    │
-    ├─ 正常执行：按固化路径调度，保证一致性
-    │
-    └─ 异常识别：输入偏离 / 服务异常 / 数据不匹配
-         │
-         └─ 动态调整：基于异常类型选择修复策略
-```
-
-**研究点**：
-- 轨迹记录与状态转换图生成
-- 异常识别机制的设计（何时判定偏离、偏离程度的量化）
-- 固化轨迹上的动态调整策略（局部修复 vs 全局重规划）
-- 黄金轨迹的泛化能力评估
-
----
-
-## 九、实验设计
-
-> 系统采用**研究与工程同构**的设计：实验系统即生产系统，通过模式切换和策略配置支持两种使用场景，避免重复建设。
-
-### 9.1 模块化拆解（支撑消融实验）
-
-将系统拆解为独立可替换的策略模块，每个模块提供"本方案"和若干"退化基线"，消融实验通过逐个切换模块策略来观察指标变化。
-
-| 模块 | 代号 | 本方案 | 退化基线 |
-|------|------|--------|---------|
-| 沙箱策略 | M1 | CoW 沙箱 | 无沙箱（直连真实服务）/ 全模拟（纯虚拟数据） |
-| 规划策略 | M2 | LLM 自主规划 | 预设工作流模板 / 人工指定 |
-| 验证策略 | M3 | 多 Agent 分离验证 | 单 Agent 自验证 / 基于规则的静态校验 |
-| 修复策略 | M4 | LLM 自主修复 | 基于规则的修复 / 无修复（单次执行） |
-| 固化策略 | M5 | 经验固化（黄金轨迹 + 异常识别） | 每次重新规划 / 静态配置 |
-
-**后端实现要求**：各策略模块通过统一接口抽象，运行时根据配置参数注入具体实现，支持任意组合。
-
-### 9.2 评估指标体系
-
-| 层级 | 指标 | 度量对象 | 说明 |
-|------|------|---------|------|
-| 端到端 | 构建成功率 | 整体系统 | 仿真通过且真实环境也通过的比例 |
-| 端到端 | 平均迭代轮次 | 整体系统 | 收敛效率 |
-| 端到端 | 构建耗时 | 整体系统 | 实用性 |
-| 模块级 | 沙箱保真度 | M1 | 沙箱执行结果与真实执行结果的一致率 |
-| 模块级 | 规划合理率 | M2 | 首轮方案即通过验证的比例 |
-| 模块级 | 验证准确率 | M3 | 验证判定与人工标注的一致率 |
-| 模块级 | 修复有效率 | M4 | 发现问题后成功修复的比例 |
-| 模块级 | 轨迹泛化率 | M5 | 固化轨迹在新输入上仍正确的比例 |
-
-### 9.3 基线定义
-
-| 对比维度 | 本方案 | Baseline 1 | Baseline 2 |
-|---------|--------|-----------|-----------|
-| 整体方法 | 仿真构建（全模块开启） | 直接让 LLM 生成配置（无仿真） | 人工编排工作流 |
-| 沙箱 (M1) | CoW 沙箱 | 无沙箱（直连真实服务） | 全模拟（纯虚拟数据） |
-| 验证 (M3) | 多 Agent 分离验证 | 单 Agent 自验证 | 基于规则的静态校验 |
-| 修复 (M4) | LLM 迭代自修复 | 单次执行无修复 | — |
-
-### 9.4 评测任务集设计方向
-
-按维度设计难度梯度，确保覆盖不同复杂度的场景：
-
-| 维度 | 简单 | 中等 | 复杂 |
-|------|------|------|------|
-| 服务数量 | 2 个 | 4 个 | 8 个 |
-| 调用关系 | 线性链 | 有分支 | 有循环依赖 |
-| 数据兼容性 | 完全兼容 | 需适配 | 格式冲突 |
-| 写操作比例 | 纯读 | 读写混合 | 写密集 |
-
----
-
-## 十、组件接口（前端）
-
-以下为 **`simulation_builder`** 与父级 **`panel_enhanced`** 的约定；构建面板由父组件嵌入左侧栏，**不是** 独立 teleport 全屏层。
-
-**Props**（`simulation_builder.vue`）
-```javascript
-{
-  serviceNodes: Array,
-  appName: String,
-  appId: String,
-  domain: String,
-  scenarioDescription: String,
-  mode: String            // 'production' | 'research'
-}
-```
-
-**Events**（`simulation_builder`）
-```javascript
-@success        // 构建成功
-@prePublish     // 预发布
-@close          // 结束构建会话
-@canvas-visual  // 画布联动，见下
-```
-
-**`@canvas-visual` 载荷（节选）**
-```javascript
-{ type: 'build', active: boolean }   // 构建会话是否进行中
-{ type: 'clear' }                    // 清除画布联动态
-{ type: 'step', step: number }      // 主流程步骤（与后端 currentMainStep 对应）
-{ type: 'node', id: string, status: string }
-{ type: 'simulatePhase', phase: 'data'|'logic'|'check', status: string }
-```
-
-**Events**（`panel_enhanced` → 页面）
-```javascript
-@simulation-ui   // { open: boolean }
-```
-
-**Methods**（`simulation_builder` ref）
-```javascript
-init(nodes)     // 初始化；父级在展示嵌入区后于 $nextTick 调用
-```
-
----
-
-## 十一、示例场景
-
-> 基于跨境支付领域和课题组MCP服务。
-
-### 11.1 跨境支付交易监控元应用
-
-**用户需求**：
-> 我想做一个跨境支付交易监控应用，能够实时监测跨境交易，自动识别异常交易并生成风险报告。
-
-**服务匹配**：
-1. 交易查询服务（读取）
-2. 汇率查询服务（读取）
-3. 风控规则服务（读取）
-4. 异常检测服务（读取）
-5. 报告生成服务（写入）
-
-**仿真过程**：
-1. 服务匹配：检查五个服务可用性 ✓
-2. 环境准备：加载跨境支付拟真数据 ✓
-3. 智能构建：
-   - 第1轮：交易查询→汇率查询→异常检测→风控规则→报告生成
-   - 问题：异常检测输出格式与风控规则输入不匹配
-   - 修复：添加数据适配器
-   - 第2轮：验证通过 ✓
-4. 方案生成：生成元应用配置 ✓
-
-### 11.2 跨境汇款智能助手
-
-**用户需求**：
-> 我想做一个跨境汇款助手，帮助用户查询汇率、估算手续费，并完成汇款申请。
-
-**服务匹配**：
-1. 汇率查询服务（读取）
-2. 费率计算服务（读取）
-3. 合规检查服务（读取）
-4. 汇款申请服务（写入）
-
-**仿真过程**：
-1. 服务匹配：检查四个服务可用性 ✓
-2. 环境准备：加载跨境支付拟真数据 ✓
-3. 智能构建：
-   - 第1轮：汇率查询→费率计算→合规检查→汇款申请
-   - 问题：未处理合规检查不通过的情况
-   - 修复：增加条件分支
-   - 第2轮：验证通过 ✓
-4. 方案生成：生成元应用配置 ✓
-
----
-
-## 十二、傻瓜式研究路线（从 0 到出论文）
-
-> 写给未来的自己：别想太多，按顺序一步步来。
-
-### Phase 1：跑通（1-2 天）
-
-**目标**：本地三个服务全起来，点一下按钮能看到仿真全流程。
-
-```
-1. 配环境
-   cd Micro-Agent && source .venv/bin/activate
-   cp .env.example .env   # 填入 LLM_API_KEY
-   uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
-
-   cd ioeb_backend && source .venv/bin/activate
-   # PyCharm 环境变量设 FLASK_DEBUG=1, DB_HOST/DB_PORT/...
-   python wsgi.py
-
-   cd ioeb
-   # .env.development.local 里 VUE_APP_AGENT_BASE_URL=http://localhost:8000
-   npm run serve
-
-2. 打开浏览器 → 登录 → 调度页面 → 画布上拖几个服务 → 点「开始仿真构建」
-3. 看到 4 个阶段跑完 → 成功界面 → 说明跑通了
-4. 去 Micro-Agent/data/traces/ 看看有没有 JSON 文件 → 持久化也通了
-```
-
-### Phase 2：出基线数据（3-5 天）
-
-**目标**：设计 3 个评测场景，跑出第一组可对比的数据。
-
-```
-1. 设计 3 个评测场景（简单/中等/复杂）
-   - 简单：2 个服务，线性链
-   - 中等：4 个服务，有分支
-   - 复杂：6+ 个服务，有依赖
-
-2. 每个场景跑 5 次（统计方差），记录：
-   - 成功/失败
-   - 迭代轮次
-   - 耗时
-   - Planner 的 tool_call 序列（从 trace JSON 里提取）
-   - Verifier 的判定结果
-
-3. 切换策略跑消融实验
-   - 前端研究模式 → 切换 M3（验证策略）= 多Agent / 单Agent
-   - 对比数据填到表格里
-   - 这就是你的第一组实验数据
-```
-
-### Phase 3：深入一个方向（1-2 周）
-
-**选一个方向深挖**（别贪多）：
-
-| 方向 | 做什么 | 写什么 |
-|------|--------|--------|
-| **A. 双 Agent 验证** | 对比 Planner 自验证 vs Planner+Verifier 分离验证，量化验证准确率 | 多 Agent 分离验证对仿真构建可靠性的影响 |
-| **B. 沙箱保真度** | 把 SimulatedMCPTool 换成真实 MCP + CoW 沙箱，对比 mock vs 真实 | 沙箱化仿真中间层的设计与保真度评估 |
-| **C. 经验固化** | 从成功 trace 提取执行模板，在新输入上复用，测泛化率 | 基于执行轨迹的经验固化与泛化 |
-
-### Phase 4：写论文（1 周）
-
-```
-标题方向：基于双智能体仿真验证的零代码智能体应用构建方法
-
-故事线：
-1. 问题：非技术人员想用 MCP 服务组装智能体应用，但不会编排、不会调试
-2. 方案：仿真构建 = 沙箱 + Planner/Verifier 双 Agent + 迭代修复
-3. 实验：N 个场景 × M 种策略组合 → 消融表格
-4. 结论：双 Agent 分离验证比单 Agent 自验证好 X%，沙箱保真度达 Y%
-```
-
-### 关键文件速查
-
-| 要改什么 | 改哪里 |
-|----------|--------|
-| Planner 的 prompt | `Micro-Agent/micro_agent/simulation/orchestrator.py` → `_planner_system_prompt()` |
-| Verifier 的 prompt | 同上 → `_build_verifier()` |
-| mock 工具换真实 MCP | 同上 → `_build_planner()` 里把 `SimulatedMCPTool` 换成 `MCPAgent.connect()` |
-| 调整最大迭代轮次 | 前端 `simulation_builder.vue` → `maxIterations` 或请求 body |
-| 轨迹存在哪 | `Micro-Agent/data/traces/*.json` |
-| 研究模式策略 | 前端 `simulation_builder.vue` → `strategy` 对象 |
-| SSE 事件格式 | `build-design4llm.md` §5 |
-| 前端 mock / 真实分流 | `meta_apps_data.js`（「课题」/ `【本地MCP】(n)`）+ `simulation_builder.js` 的 `useMemorySimulation(appName)` |
-| SmartChat 本地 MCP 样例 | `meta_apps_data.js` → `LOCAL_MCP_SUGGESTIONS`、`LOCAL_MCP_SCENARIOS` |
-
----
-
-## 更新日志
-
-| 日期 | 版本 | 更新内容 |
-|------|------|---------|
-| 2026-01-06 | v0.1~v0.3 | 初始版本及架构迭代 |
-| 2026-01-07 | v0.4~v0.8 | 模块架构、前端原型、想定式构建模式 |
-| 2026-01-07 | v1.0~v1.1 | 完善为自包含文档；明确边界与示例场景 |
-| 2026-01-07 | v2.0 | 重构为LLM上下文文档：删除研究背景等学术内容；聚焦当前状态、技术方案、研究方向 |
-| 2026-03-04 | v3.0 | **面向研究的设计增强**：沙箱机制改为 CoW 语义；智能构建引入多 Agent 协作验证；黄金轨迹明确固化与灵活性的关系；新增实验设计章节（模块化拆解、评估指标、基线、评测任务集）；前端/API 支持研究模式与生产模式双模式 |
-| 2026-03-04 | v3.1 | **与专利模块结构对齐**：整体流程图更新为嵌套模块结构（想定场景解析模块含领域知识增强+服务匹配，构建执行模块含调度规划+仿真验证）；术语统一（服务推荐→服务匹配，黄金轨迹→经验固化）；沙箱描述修正为 CoW |
-| 2026-03-31 | v3.2 | **工程现状**：仿真构建与画布左右并排、无遮罩；`canvas-visual` / `simulation-ui`；调度页与使用页联动；API 与内存 mock；工程要点与 `build-design4llm.md`（现为 v4.0 压缩版 §2、§5、§7）对应 |
-| 2026-03-31 | v3.3 | §6.4 线框改为五步准备 + 四阶段；§十 补充 `canvas-visual` 载荷；与当时 LLM 精简版对齐 |
-| 2026-03-31 | v3.4 | 文首说明：`build-design4llm.md` 已压缩为 v4.0；交叉引用改为 §7（组件接口）；API 约定见该文档 §5 |
-| 2026-04-01 | v3.5 | 领域知识：`enhanceForStage` 三阶段注入（想定解析 / 调度规划 / 仿真验证）；mock 日志与 `complete.result.enhancements`；`build-design4llm.md` §2、§5 同步 |
-| 2026-04-08 | v3.6 | 文档对齐：`domain/` 与 `simulationStages.js` 拆分；`build-design4llm.md` 压缩为纯契约（后端可不实现领域知识增强）；交叉引用改为节名 |
-| 2026-04-10 | v3.7 | `build-design4llm.md` 增补双后端：[ioeb_backend](https://github.com/fdueblab/ioeb_backend)（系统）、[Micro-Agent](https://github.com/fdueblab/Micro-Agent)（Agent）；交叉引用路径统一为 `design_docs/` |
-| 2026-04-10 | v3.8 | `build-design4llm.md` 细化：本仓库 `VUE_APP_*`、simulation_builder 与 Agent 请求分流、ioeb_backend 中建议文件路径、Micro-Agent 被调用方式、`/api/api` 路径注意 |
-| 2026-04-10 | v3.9 | `build-design4llm.md`：明确 **ioeb_backend 不调用 Micro-Agent**；智能体均为 **前端直连** `VUE_APP_AGENT_BASE_URL`（例：`smart_chat`、`meta_app_builder`）；仿真接入 Agent 的扩展方式写为前端侧 |
-| 2026-04-29 | v4.0 | **真实双 Agent 实现上线**：SimulationOrchestrator（Planner+Verifier）、FileTraceStore 轨迹持久化、仿真路由直连 Micro-Agent、smart_chat 多轮 session；更新 §2 当前状态；新增 §12 傻瓜式研究路线 |
-| 2026-05-06 | v4.1 | 真链路领域知识由 Micro-Agent `domain_*` Skill 注入；进程内 mock 的领域增强文案并入 `simulation_builder_data.js`；删除已无引用的 `src/domain/` 与 `simulationStages.js` |
-| 2026-05-06 | v4.2 | 仿真 API：`simulation_builder.js` 按 `appName` 分流进程内 mock / Micro-Agent；移除 `SIMULATION_USE_MOCK` |
-| 2026-06-03 | v4.3 | SmartChat 本机 MCP 演示：关键字改为 `【本地MCP】(n)`；样例改为真实临床场景；配置与 flow 统一在 `meta_apps_data.js` |
+- `src/api/simulation_builder.js`
+- `src/components/ef/simulation_builder.vue`
+- `src/components/ef/meta_app_build/MetaAppConfigDetail.vue`
+- `src/components/ef/meta_app_build/SimulationDetailSidebar.vue`
+- `src/mock/services/simulation_builder_inmemory.js`
