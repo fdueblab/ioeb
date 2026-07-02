@@ -209,7 +209,7 @@
               <div v-if="loadingFlow" class="loading-overlay">
                 <div class="meta-app-loading">
                   <a-spin size="large" />
-                  <span class="meta-app-loading-text">正在加载元应用</span>
+                  <span class="meta-app-loading-text">正在生成元应用</span>
                 </div>
               </div>
               <div v-if="connectionLabel.visible"

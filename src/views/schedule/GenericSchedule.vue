@@ -75,8 +75,8 @@ export default {
   },
   activated() {
     this.$nextTick(() => {
-      const panel = this.$refs.flowPanel
-      this.simulationChromeOpen = !!(panel && panel.simulationBuilderVisible)
+      const shell = this.$refs.buildShell
+      const panel = shell && shell.$refs.flowPanel
       if (panel && panel.jsPlumb && panel.jsPlumb.repaintEverything) {
         panel.jsPlumb.repaintEverything()
       }
