@@ -73,6 +73,15 @@ export default {
         next(false)
       })
   },
+  activated() {
+    this.$nextTick(() => {
+      const panel = this.$refs.flowPanel
+      this.simulationChromeOpen = !!(panel && panel.simulationBuilderVisible)
+      if (panel && panel.jsPlumb && panel.jsPlumb.repaintEverything) {
+        panel.jsPlumb.repaintEverything()
+      }
+    })
+  },
   watch: {
     verticalType: {
       handler(newVal, oldVal) {

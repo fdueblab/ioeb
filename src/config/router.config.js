@@ -7,7 +7,10 @@ import { buildDocsUrl } from '@/utils/baseUrl'
 
 const RouteView = {
   name: 'RouteView',
-  render: (h) => h('router-view')
+  render(h) {
+    const view = h('router-view', { key: this.$route.path })
+    return this.$route.meta.keepAlive ? h('keep-alive', [view]) : view
+  }
 }
 
 const DEFAULT_VERTICAL_DOMAIN = { code: 'aml', text: '跨境支付AI监测' }
@@ -913,6 +916,17 @@ export const asyncRouterMap = [
           permission: ['admin', 'publisher', 'user'],
           target: '_blank'
         }
+      },
+      {
+        path: '/feedback',
+        name: 'feedback',
+        meta: {
+          title: '意见反馈',
+          keepAlive: true,
+          icon: 'message',
+          permission: ['admin', 'publisher', 'user']
+        },
+        component: () => import('@/views/feedback')
       },
       // account
       {
