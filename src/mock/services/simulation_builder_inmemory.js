@@ -184,7 +184,7 @@ function start(body) {
     success: true,
     sessionId,
     buildId: sessionId,
-    streamUrl: `/api/simulation/${sessionId}/stream`
+    streamUrl: `/api/agent/simulation/${sessionId}/stream`
   }
 }
 
