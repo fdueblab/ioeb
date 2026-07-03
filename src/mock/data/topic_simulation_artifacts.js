@@ -769,14 +769,14 @@ export async function buildTopicDemoArtifacts(ctx) {
     researchEligible: false,
     ref: {
       buildId: ctx.sessionId,
-      manifestUrl: `/api/simulation/builds/${ctx.sessionId}/manifest`,
-      traceUrl: `/api/simulation/builds/${ctx.sessionId}/trace`,
-      serviceSelectionUrl: `/api/simulation/builds/${ctx.sessionId}/service-selection`,
-      acceptedTrajectoryUrl: `/api/simulation/builds/${ctx.sessionId}/accepted-trajectory`,
-      artifactUrl: `/api/simulation/builds/${ctx.sessionId}/artifact`,
-      frontendStateUrl: `/api/simulation/builds/${ctx.sessionId}/frontend-state`,
-      runUrl: `/api/simulation/builds/${ctx.sessionId}/run`,
-      experimentUrl: `/api/simulation/builds/${ctx.sessionId}/experiments/run`
+      manifestUrl: `/api/agent/simulation/${ctx.sessionId}/manifest`,
+      traceUrl: `/api/agent/simulation/${ctx.sessionId}/trace`,
+      serviceSelectionUrl: `/api/agent/simulation/${ctx.sessionId}/service-selection`,
+      acceptedTrajectoryUrl: `/api/agent/simulation/${ctx.sessionId}/accepted-trajectory`,
+      artifactUrl: `/api/agent/simulation/${ctx.sessionId}/artifact`,
+      frontendStateUrl: `/api/agent/simulation/${ctx.sessionId}/frontend-state`,
+      runUrl: `/api/agent/simulation/${ctx.sessionId}/run`,
+      experimentUrl: `/api/agent/simulation/${ctx.sessionId}/experiments/run`
     }
   }
   return {

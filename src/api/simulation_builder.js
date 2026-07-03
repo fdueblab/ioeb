@@ -13,6 +13,7 @@ import { simulationBuildInMemory } from '@/mock/services/simulation_builder_inme
 import { useMemorySimulation } from '@/mock/data/meta_apps_data'
 
 const SIMULATION_BASE_URL = AGENT_BASE_URL
+const SIMULATION_API_PREFIX = '/api/agent/simulation'
 
 /** SSE 自定义事件名（与后端约定一致） */
 const SIMULATION_SSE_EVENTS = [
@@ -77,28 +78,28 @@ function createHttpSimulationBuildClient() {
   return {
     startSimulation(payload) {
       return request({
-        url: `${SIMULATION_BASE_URL}/api/simulation/start`,
+        url: `${SIMULATION_BASE_URL}${SIMULATION_API_PREFIX}/start`,
         method: 'post',
         data: payload
       })
     },
     cancelSimulation(sessionId) {
       return request({
-        url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/cancel`,
+        url: `${SIMULATION_BASE_URL}${SIMULATION_API_PREFIX}/${sessionId}/cancel`,
         method: 'post'
       })
     },
     fetchSimulationRecords(appName) {
       const params = appName ? { appName } : {}
       return request({
-        url: `${SIMULATION_BASE_URL}/api/simulation/records`,
+        url: `${SIMULATION_BASE_URL}${SIMULATION_API_PREFIX}/records`,
         method: 'get',
         params
       })
     },
     compareSimulationRecords(recordIds) {
       return request({
-        url: `${SIMULATION_BASE_URL}/api/simulation/records/compare`,
+        url: `${SIMULATION_BASE_URL}${SIMULATION_API_PREFIX}/records/compare`,
         method: 'post',
         data: { recordIds }
       })
@@ -208,7 +209,7 @@ export function subscribeSimulationStream(sessionId, streamUrl, handlers) {
 /** 构建结束后读取落盘轨迹（仅 HTTP / Micro-Agent） */
 export function fetchSimulationTrace(sessionId) {
   return request({
-    url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/trace`,
+    url: `${SIMULATION_BASE_URL}${SIMULATION_API_PREFIX}/${sessionId}/trace`,
     method: 'get',
     timeout: 60000
   })
@@ -217,7 +218,7 @@ export function fetchSimulationTrace(sessionId) {
 /** 读取 Micro-Agent 从 BuildBundle 派生的 evidence summary */
 export function fetchSimulationEvidence(sessionId) {
   return request({
-    url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/evidence`,
+    url: `${SIMULATION_BASE_URL}${SIMULATION_API_PREFIX}/${sessionId}/evidence`,
     method: 'post',
     timeout: 120000
   })
@@ -226,7 +227,7 @@ export function fetchSimulationEvidence(sessionId) {
 /** 获取 MetaAppArtifact v1 产物（来自 BuildBundle） */
 export function fetchSimulationArtifact(sessionId) {
   return request({
-    url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/artifact`,
+    url: `${SIMULATION_BASE_URL}${SIMULATION_API_PREFIX}/${sessionId}/artifact`,
     method: 'get',
     timeout: 60000
   })
@@ -235,7 +236,7 @@ export function fetchSimulationArtifact(sessionId) {
 /** 获取 Verifier 接受的最终执行主干（来自 BuildBundle） */
 export function fetchSimulationAcceptedTrajectory(sessionId) {
   return request({
-    url: `${SIMULATION_BASE_URL}/api/simulation/${sessionId}/accepted-trajectory`,
+    url: `${SIMULATION_BASE_URL}${SIMULATION_API_PREFIX}/${sessionId}/accepted-trajectory`,
     method: 'get',
     timeout: 60000
   })
