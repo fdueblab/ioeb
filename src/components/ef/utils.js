@@ -156,10 +156,10 @@ export function createDataFromSchema(schema, rawData = {}, context = {}) {
   }
 
   // 处理特殊字段转换
-  if (rawData.status && context.statusDict) {
+  if (rawData.status && context.statusDict && context.statusDict.length) {
     result.state = statusFilter(rawData.status, context.statusDict)
   }
-  if (rawData.status && context.statusStyleDict) {
+  if (rawData.status && context.statusStyleDict && context.statusStyleDict.length) {
     result.stateStyle = statusStyleFilter(rawData.status, context.statusStyleDict)
   }
 

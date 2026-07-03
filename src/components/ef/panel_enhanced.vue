@@ -610,10 +610,11 @@ export default {
     SimulationBuilder
   },
   mounted() {
-    this.loadDictionaryData()
     this.jsPlumb = jsPlumb.getInstance()
     this.setServices(this.initialServices)
-    this.parseInitialFlowText()
+    this.loadDictionaryData().then(() => {
+      this.parseInitialFlowText()
+    })
     if (this.workbenchMode) {
       this.$nextTick(() => this.bindCanvasResizeObserver())
     }
@@ -654,6 +655,16 @@ export default {
           this.loadEasyFlow()
         })
       })
+    },
+    statusDict: {
+      handler() {
+        this.refreshNodeStatesFromStatus()
+      }
+    },
+    statusStyleDict: {
+      handler() {
+        this.refreshNodeStatesFromStatus()
+      }
     }
   },
   methods: {
@@ -1306,8 +1317,13 @@ export default {
     },
     updateInitialFlow(newFlow) {
       console.log('updateInitialFlow 被调用，newFlow:', newFlow)
-      // 导入新流程后需要重新进行仿真验证
       this.simulationPassed = false
+      this.applyInitialFlow(newFlow)
+    },
+    async applyInitialFlow(newFlow) {
+      if (!this.statusDict?.length || !this.statusStyleDict?.length) {
+        await this.loadDictionaryData()
+      }
       const parsedFlow = parseInitialFlow(newFlow, this.statusDict, this.statusStyleDict)
       if (parsedFlow) {
         if (newFlow.scenarioSummary) {
@@ -1316,7 +1332,6 @@ export default {
         if (newFlow.scenarioParsed) {
           parsedFlow.scenarioParsed = newFlow.scenarioParsed
         }
-        // 同步初始节点到左侧服务列表
         const initNodes = parsedFlow.nodeList.filter(node => node.name !== 'metaAppAgent')
         this.syncInitialNodesToServices(initNodes)
         this.dataReload(parsedFlow)
@@ -1324,6 +1339,14 @@ export default {
         console.log('解析流程失败，使用默认数据')
         this.dataReloadClear()
       }
+    },
+    refreshNodeStatesFromStatus() {
+      if (!this.statusDict?.length || !this.data?.nodeList?.length) return
+      this.data.nodeList.forEach((node) => {
+        if (node.name === 'metaAppAgent' || !node.status) return
+        this.$set(node, 'state', statusFilter(node.status, this.statusDict))
+        this.$set(node, 'stateStyle', statusStyleFilter(node.status, this.statusStyleDict))
+      })
     },
     dataReloadClear() {
       // 重置服务列表为基础状态，根据verticalType决定根节点名称
