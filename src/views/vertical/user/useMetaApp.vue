@@ -104,9 +104,6 @@
             </div>
             <panel-enhanced
               ref="flowPanel"
-              :initial-flow="flowData"
-              :initial-services="services"
-              :loading-services="loadingServices"
               :loading-flow="loadingFlow"
               :vertical-type="verticalType"
               :show-toolbar="false"
@@ -129,7 +126,7 @@
 import { streamAgent } from '@/utils/request'
 import PanelEnhanced from '@/components/ef/panel_enhanced'
 import { batchGetServices } from '@/api/service'
-import { buildImportedFlowData } from '@/components/ef/utils'
+import { buildCanvasFlow } from '@/components/ef/utils'
 
 const MAX_INPUT_FILE_SIZE = 50 * 1024 * 1024
 
@@ -194,9 +191,7 @@ export default {
       },
       // 初始化数据
       loadingFlow: false,
-      loadingServices: false,
       flowData: {},
-      services: [],
       fullServices: [], // 保存完整服务信息供流式运行使用
       showLogs: false, // 是否显示日志（除运行中自动显示外可手动开启）
       simulationChromeOpen: false
@@ -479,7 +474,7 @@ export default {
           }
         }
         // 构建完整的流程数据
-        const flowData = buildImportedFlowData(importData, fullServices)
+        const flowData = buildCanvasFlow(importData.metaApp, fullServices, serviceIds)
         // 更新面板数据
         this.$refs.flowPanel.updateInitialFlow(flowData)
         console.log('成功加载元应用:', metaAppConfig.name, '包含', fullServices.length, '个服务')

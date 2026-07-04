@@ -2,14 +2,6 @@
   <meta-app-build-shell
     ref="buildShell"
     :vertical-type="verticalType"
-    :initial-flow="initFlow"
-    :initial-services="initServices"
-    :loading-services="loadingServices"
-    :loading-flow="loadingFlow"
-    @start-loading="startLoading"
-    @stop-loading="stopLoading"
-    @update-services="updateServices"
-    @update-flow="updateFlow"
     @import-request="handleImportRequest"
   />
 </template>
@@ -17,11 +9,9 @@
 <script>
 import MetaAppBuildShell from '@/components/ef/meta_app_build/MetaAppBuildShell.vue'
 import {
-  SERVICE_TEXT_MAP,
   parseImportData,
-  buildImportedFlowData,
-  createServiceIdDecoder,
-  generateServiceNodes
+  buildCanvasFlow,
+  createServiceIdDecoder
 } from '@/components/ef/utils'
 import { batchGetServices } from '@/api/service'
 
@@ -34,15 +24,6 @@ export default {
     verticalType: {
       type: String,
       required: true
-    }
-  },
-  data() {
-    return {
-      service_text_map: SERVICE_TEXT_MAP,
-      initFlow: {},
-      initServices: [],
-      loadingServices: false,
-      loadingFlow: false
     }
   },
   mounted() {
@@ -95,45 +76,7 @@ export default {
   methods: {
     init() {
       this.$refs.buildShell.initChat()
-      this.clearFlow()
-    },
-    startLoading() {
-      this.loadingServices = true
-      this.loadingFlow = true
-    },
-    stopLoading() {
-      this.loadingServices = false
-      this.loadingFlow = false
-    },
-    updateServices(newServices) {
-      if (!this.loadingServices) this.loadingServices = true
-      setTimeout(() => {
-        this.initServices = newServices
-        this.loadingServices = false
-      }, 800)
-    },
-    updateFlow(newFlow) {
-      if (!this.loadingFlow) this.loadingFlow = true
-      setTimeout(() => {
-        const panel = this.$refs.buildShell && this.$refs.buildShell.$refs.flowPanel
-        if (panel) panel.updateInitialFlow(newFlow)
-        this.loadingFlow = false
-      }, 1600)
-    },
-    clearFlow() {
-      const shell = this.$refs.buildShell
-      if (shell) shell.clearFlow()
-      const panel = shell && shell.$refs.flowPanel
-      if (panel && (!this.initServices || !this.initServices.length)) {
-        panel.setServices([
-          {
-            id: 'rootNode',
-            name: this.service_text_map[this.verticalType],
-            open: true,
-            children: []
-          }
-        ])
-      }
+      this.$refs.buildShell.clearFlow()
     },
     async handleImportRequest(importData) {
       try {
@@ -152,18 +95,17 @@ export default {
           this.$message.error('获取服务信息失败，请检查文件内数据是否正确')
           return
         }
-        const flowData = buildImportedFlowData(importData, fullServices)
-        const { serviceNodes } = generateServiceNodes(flowData, this.verticalType)
-        this.updateServices(serviceNodes)
-        this.updateFlow(flowData)
+        const flowData = buildCanvasFlow(importData.metaApp || {}, fullServices, serviceIds)
+        const shell = this.$refs.buildShell
+        if (shell) {
+          await shell.applyFlowPatch(flowData)
+        }
         const successCount = fullServices.length
         const totalCount = importData.services.length
         const message = totalCount === successCount
           ? `成功导入元应用"${importData.metaApp.preName}"，包含${successCount}个服务`
           : `导入元应用"${importData.metaApp.preName}"，成功${successCount}/${totalCount}个服务`
-        setTimeout(() => {
-          this.$message.success(message)
-        }, 1600)
+        this.$message.success(message)
       } catch (error) {
         console.error('处理导入数据失败:', error)
         this.$message.error('导入异常，请检查文件内数据是否正确！')

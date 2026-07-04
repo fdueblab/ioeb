@@ -287,52 +287,37 @@ export function syncNodesToServices(nodes, verticalType) {
 }
 
 /**
- * 根据流程数据生成服务树结构
+ * 从平台目录服务记录组装画布 flow（不含 metaAppAgent，由 parseInitialFlow 注入）
  */
-export function generateServiceNodes(flowData, verticalType) {
-  const chosenServices = []
-  const groupMap = new Map()
+export function buildCanvasFlow(meta, catalogServices, orderedIds) {
+  const byId = new Map((catalogServices || []).map((s) => [s.id, s]))
+  const ids = orderedIds || (catalogServices || []).map((s) => s.id)
+  const nodeList = ids
+    .map((id) => transformApiServiceToNodeFormat(byId.get(id)))
+    .filter(Boolean)
 
-  // 按服务分组
-  flowData.nodeList.forEach(node => {
-    const { name, id } = node
-
-    if (!groupMap.has(id)) {
-      chosenServices.push(name)
-      groupMap.set(id, {
-        id,
-        name,
-        children: []
-      })
-    }
-
-    const tools = node.tools || []
-    tools.forEach((tool) => {
-      groupMap.get(id).children.push({
-        id: tool.id || tool.name,
-        name: tool.name,
-        des: tool.description || tool.des
-      })
-    })
-  })
-
-  // 获取正确的根服务名称
-  const rootServiceText = SERVICE_TEXT_MAP[verticalType] || '智能服务'
-
-  const serviceNodes = [
-    {
-      id: 'rootNode',
-      name: rootServiceText,
-      children: Array.from(groupMap.values())
-    }
-  ]
-
-  return { chosenServices, serviceNodes }
+  return {
+    preName: meta.preName || '未命名元应用',
+    preDes: meta.preDes || '',
+    preInputName: meta.preInputName || '输入内容',
+    preOutputName: meta.preOutputName || '输出内容',
+    inputType: meta.inputType != null ? meta.inputType : 0,
+    outputType: meta.outputType != null ? meta.outputType : 0,
+    nodeList
+  }
 }
 
-/**
- * 获取基础服务节点
- */
+/** 画布 flow 中的去重服务名（用于对话成功文案） */
+export function flowServiceNames(flow) {
+  const seen = new Set()
+  const names = []
+  for (const node of flow?.nodeList || []) {
+    if (!node?.id || node.name === 'metaAppAgent' || seen.has(node.id)) continue
+    seen.add(node.id)
+    if (node.name) names.push(node.name)
+  }
+  return names
+}
 export function getBaseServiceNodes(serviceType = 'default') {
   const rootServiceText = SERVICE_TEXT_MAP[serviceType] || '智能服务'
   return [
@@ -592,29 +577,7 @@ export function transformApiServiceToNodeFormat(apiService) {
 }
 
 /**
- * 构建导入后的完整流程数据
- */
-export function buildImportedFlowData(importData, fullServices) {
-  const metaApp = importData.metaApp || {}
-
-  // 转换API服务数据为标准NODE格式
-  const transformedServices = (fullServices || []).map(apiService => {
-    return transformApiServiceToNodeFormat(apiService)
-  }).filter(service => service !== null) // 过滤掉转换失败的服务
-
-  return {
-    preName: metaApp.preName || '未命名元应用',
-    preDes: metaApp.preDes || '',
-    preInputName: metaApp.preInputName || '输入内容',
-    preOutputName: metaApp.preOutputName || '输出内容',
-    inputType: metaApp.inputType || 0,
-    outputType: metaApp.outputType || 0,
-    nodeList: transformedServices
-  }
-}
-
-/**
- * 服务ID编码器工厂
+ * 获取基础服务节点
  */
 export function createServiceIdEncoder() {
   return function(id) {

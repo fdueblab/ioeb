@@ -100,9 +100,6 @@
 
       <!-- 左侧服务菜单 -->
       <div v-if="showSidebar && !workbenchMode && !simulationBuilderVisible" class="ef-sidebar">
-        <div v-if="loadingServices" class="loading-overlay">
-          <a-spin size="large" tip="正在选择服务"/>
-        </div>
         <node-menu @addNode="addNode" ref="nodeMenu" :menu-list="services" />
       </div>
 
@@ -343,18 +340,6 @@ const SERVICE_CALL_VIS_MIN_MS = 720
 
 export default {
   props: {
-    initialFlow: {
-      type: Object,
-      default: () => ({}),
-    },
-    initialServices: {
-      type: Array,
-      default: () => []
-    },
-    loadingServices: {
-      type: Boolean,
-      default: false
-    },
     loadingFlow: {
       type: Boolean,
       default: false
@@ -417,7 +402,7 @@ export default {
       return this.loadingFlow || this.workbenchPhase === 'build'
     },
     workbenchImportDisabled() {
-      return this.loadingFlow || this.loadingServices || this.workbenchPhase === 'build'
+      return this.loadingFlow || this.workbenchPhase === 'build'
     },
     workbenchDownloadDisabled() {
       return this.workbenchToolbarDisabled || !this.hasServiceNodes
@@ -425,7 +410,6 @@ export default {
     workbenchDataInfoDisabled() {
       return (
         this.loadingFlow ||
-        this.loadingServices ||
         this.workbenchPhase === 'build' ||
         !this.hasServiceNodes
       )
@@ -463,7 +447,7 @@ export default {
     /** 无服务节点时显示引导遮罩（与 phase 无关）；有服务后展示智能体与服务 */
     showWorkbenchLockOverlay() {
       if (!this.workbenchMode) return false
-      if (this.loadingFlow || this.loadingServices) return false
+      if (this.loadingFlow) return false
       return !this.hasServiceNodes
     },
     /** workbench 无服务时不渲染节点（遮罩态），避免 jsPlumb 绑定到 display:none 元素 */
@@ -508,9 +492,9 @@ export default {
     metaAppDisplayNameForSimulation() {
       return this.data.preName || ''
     },
-    /** 仿真用完整想定摘要；preDes 仅作用户可改备注 */
+    /** 仿真用完整想定摘要 */
     simulationScenarioText() {
-      return this.data.scenarioSummary || this.data.preDes || ''
+      return this.data.scenarioSummary || ''
     },
     /** 只读展示（如元应用运行页）：复用 workbench 的 wb-canvas-zone 画布样式 */
     standaloneWorkbenchCanvas() {
@@ -611,9 +595,9 @@ export default {
   },
   mounted() {
     this.jsPlumb = jsPlumb.getInstance()
-    this.setServices(this.initialServices)
+    this.setServices(getBaseServiceNodes(this.verticalType))
     this.loadDictionaryData().then(() => {
-      this.parseInitialFlowText()
+      this.dataReloadClear()
     })
     if (this.workbenchMode) {
       this.$nextTick(() => this.bindCanvasResizeObserver())
@@ -624,12 +608,6 @@ export default {
     this.unbindCanvasResizeObserver()
   },
   watch: {
-    initialServices: {
-      handler(newVal) {
-        this.setServices(newVal)
-      },
-      deep: true
-    },
     simulationBuilderVisible(val) {
       this.$emit('simulation-ui', { open: !!val })
       this.$nextTick(() => {
@@ -683,18 +661,6 @@ export default {
         top: `${this.canvasNodeVisualTop(node)}px`,
         opacity: this.nodePositionsCalculated ? 1 : 0,
         transition: 'opacity 0.3s ease'
-      }
-    },
-    // 解析初始流程数据
-    parseInitialFlowText() {
-      const parsedFlow = parseInitialFlow(this.initialFlow, this.statusDict, this.statusStyleDict)
-      if (parsedFlow) {
-        // 同步初始节点到左侧服务列表
-        const initNodes = parsedFlow.nodeList.filter(node => node.name !== 'metaAppAgent')
-        this.syncInitialNodesToServices(initNodes)
-        this.dataReload(parsedFlow)
-      } else {
-        this.dataReloadClear()
       }
     },
     setServices(serviceList) {
@@ -1316,9 +1282,8 @@ export default {
       this.emitFlowSynced()
     },
     updateInitialFlow(newFlow) {
-      console.log('updateInitialFlow 被调用，newFlow:', newFlow)
       this.simulationPassed = false
-      this.applyInitialFlow(newFlow)
+      return this.applyInitialFlow(newFlow)
     },
     async applyInitialFlow(newFlow) {
       if (!this.statusDict?.length || !this.statusStyleDict?.length) {
@@ -1336,7 +1301,6 @@ export default {
         this.syncInitialNodesToServices(initNodes)
         this.dataReload(parsedFlow)
       } else {
-        console.log('解析流程失败，使用默认数据')
         this.dataReloadClear()
       }
     },
