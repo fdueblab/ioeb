@@ -6,7 +6,9 @@
       :columns="columns"
       :dataSource="dataSource"
       :loading="loading"
+      :pagination="pagination"
       :rowKey="record => record.id || record.name"
+      @change="handleTableChange"
     >
       <span slot="serial" slot-scope="text, record, index">
         {{ index + 1 }}
@@ -175,6 +177,10 @@ export default {
     technologyArr: {
       type: Array,
       default: () => []
+    },
+    pagination: {
+      type: [Object, Boolean],
+      default: false
     }
   },
   data() {
@@ -242,6 +248,9 @@ export default {
     }
   },
   methods: {
+    handleTableChange(pagination) {
+      this.$emit('table-change', pagination)
+    },
     statusFilter(type) {
       if (type === undefined) {
         return '未知状态'

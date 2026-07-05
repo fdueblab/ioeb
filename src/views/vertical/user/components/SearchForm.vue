@@ -74,6 +74,8 @@
 </template>
 
 <script>
+import { smartSearch } from '@/api/service'
+
 export default {
   name: 'SearchForm',
   props: {
@@ -175,8 +177,19 @@ export default {
         }
 
         try {
-          const searchResults = this.fuzzySearchServices(this.form)
-          this.$emit('search-completed', searchResults)
+          const response = await smartSearch({
+            domain: this.verticalType,
+            name: this.form.name,
+            description: this.form.description,
+            role: this.form.role,
+            function: this.form.function,
+            requirement: this.form.requirement
+          })
+          if (response && response.status === 'success') {
+            this.$emit('search-completed', response.services || [])
+          } else {
+            this.$message.error((response && response.message) || '智能检索失败')
+          }
         } catch (error) {
           console.error('智能检索请求失败:', error)
           this.$message.error('请求异常，请稍后重试！')
@@ -186,111 +199,6 @@ export default {
       } else {
         this.$message.error('请先输入您的需求！')
       }
-    },
-    fuzzySearchServices(form) {
-      const terms = this.getSearchTerms(form)
-      if (terms.length === 0) {
-        return []
-      }
-
-      return (this.services || [])
-        .map(service => ({
-          service,
-          score: this.getServiceSearchScore(service, terms)
-        }))
-        .filter(item => item.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .map(item => item.service)
-    },
-    getSearchTerms(form) {
-      return Object.keys(form)
-        .map(key => form[key])
-        .join(' ')
-        .split(/[\s,，;；、。.!！?？/\\|]+/)
-        .map(term => this.normalizeText(term))
-        .filter(Boolean)
-    },
-    getServiceSearchScore(service, terms) {
-      const searchableText = this.buildServiceSearchText(service)
-      if (!terms.every(term => searchableText.all.includes(term))) {
-        return 0
-      }
-
-      return terms.reduce((score, term) => {
-        if (searchableText.name.includes(term)) {
-          score += 8
-        }
-        if (searchableText.description.includes(term)) {
-          score += 5
-        }
-        if (searchableText.metadata.includes(term)) {
-          score += 3
-        }
-        return score + 1
-      }, 0)
-    },
-    buildServiceSearchText(service) {
-      const attributeText = this.getDictText(this.attributeArr, service.attribute)
-      const typeText = this.getDictText(this.typeArr, service.type)
-      const industryText = this.getDictText(this.industryArr, service.industry)
-      const scenarioText = this.getDictText(this.scenarioArr, service.scenario)
-      const technologyText = this.getDictText(this.technologyArr, service.technology)
-      const apiListText = this.valueToText(service.apiList)
-      const sourceText = this.valueToText(service.source)
-
-      const name = this.normalizeText(service.name)
-      const description = this.normalizeText([
-        service.description,
-        service.des,
-        service.role,
-        service.function,
-        service.requirement,
-        service.msIntroduce,
-        sourceText
-      ].join(' '))
-      const metadata = this.normalizeText([
-        attributeText,
-        typeText,
-        industryText,
-        scenarioText,
-        technologyText,
-        apiListText,
-        service.status
-      ].join(' '))
-
-      return {
-        name,
-        description,
-        metadata,
-        all: [name, description, metadata].join(' ')
-      }
-    },
-    getDictText(options, value) {
-      const values = Array.isArray(value)
-        ? value
-        : String(value || '').split(',').map(item => item.trim()).filter(Boolean)
-
-      return values
-        .map(item => {
-          const matched = (options || []).find(option => option.code === item || option.value === item)
-          return matched ? `${matched.text || matched.label || ''} ${item}` : item
-        })
-        .join(' ')
-    },
-    valueToText(value) {
-      if (!value) {
-        return ''
-      }
-      if (Array.isArray(value)) {
-        return value.map(item => this.valueToText(item)).join(' ')
-      }
-      if (typeof value === 'object') {
-        return Object.keys(value).map(key => this.valueToText(value[key])).join(' ')
-      }
-      return String(value)
-    },
-    normalizeText(value) {
-      return String(value || '').trim().toLowerCase()
     },
 
     // 显示/隐藏知识增强输入框

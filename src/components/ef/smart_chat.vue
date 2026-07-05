@@ -95,7 +95,8 @@
 <script>
 import { ChatMessageManager } from './chat_messages'
 import { streamAgent, callAgentApi } from '@/utils/request'
-import { generateServiceNodes } from './utils'
+import { buildCanvasFlow, flowServiceNames } from './utils'
+import { batchGetServices } from '@/api/service'
 import {
   getMetaAppNodes,
   generateMockSteps,
@@ -354,7 +355,7 @@ export default {
         if (res.status === 'question') {
           const text = res.hint ? `${res.text}<br/><span style="color:#888;font-size:12px;">提示：${res.hint}</span>` : res.text
           this.messages.push({ text, isUser: false })
-          this.placeholder = '请补充想定信息（可继续澄清结构化想定）…'
+          this.placeholder = '请补充想定信息…'
           this.finishAgentTurn()
           this.scrollToBottom()
           return
@@ -607,46 +608,46 @@ export default {
       })
     },
     // 处理智能体返回的数据
-    handleAgentResponse(results) {
+    async handleAgentResponse(results) {
       try {
         // eslint-disable-next-line camelcase
         const { recommendation_result } = results
-        // 检查返回数据格式
-        if (recommendation_result.success) {
-          // eslint-disable-next-line camelcase
-          const { result } = recommendation_result
-          // 转换数据格式以适配现有系统
-          const flowData = {
-            preName: result.preName,
-            preDes: result.preDes || this.userRemark || '',
-            preInputName: result.preInputName,
-            preOutputName: result.preOutputName,
-            nodeList: result.nodeList,
-            scenarioSummary: this.scenarioSummary || '',
-            scenarioParsed: this.scenarioParsed || null
-          }
-          // 生成服务节点和选中服务列表
-          const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
-          // 生成成功回复消息
-          const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
-          // 向父组件发送数据
-          this.$emit('update-services', serviceNodes)
-          this.$emit('update-flow', flowData)
-          this.hasGeneratedRecommendation = true
-          this.placeholder = '可继续对话补充想定，或打开仿真构建前在准备页编辑'
-          this.agentTypeWriter(outputMessage)
-        } else {
-          if (typeof recommendation_result.result !== 'string' || !recommendation_result.result.trim()) {
+        if (!recommendation_result?.success) {
+          const failText = recommendation_result?.result
+          if (typeof failText !== 'string' || !failText.trim()) {
             throw new Error('推荐失败结果缺少可展示内容')
           }
           this.$emit('stop-loading')
-          this.agentTypeWriter(recommendation_result.result)
+          this.agentTypeWriter(failText.trim())
+          return
         }
+        // eslint-disable-next-line camelcase
+        const { result } = recommendation_result
+        const serviceIds = result.serviceIds
+        if (!Array.isArray(serviceIds) || !serviceIds.length) {
+          throw new Error('推荐结果未包含有效服务 ID')
+        }
+        const response = await batchGetServices(serviceIds)
+        if (response?.status !== 'success' || !response.services?.length) {
+          throw new Error(response?.message || '获取服务目录失败')
+        }
+        const flowData = buildCanvasFlow({
+          preName: result.preName,
+          preDes: result.preDes || this.userRemark || '',
+          preInputName: result.preInputName,
+          preOutputName: result.preOutputName
+        }, response.services, serviceIds)
+        flowData.scenarioSummary = this.scenarioSummary || ''
+        flowData.scenarioParsed = this.scenarioParsed || null
+        const outputMessage = this.messageManager.generateSuccessReply(flowServiceNames(flowData))
+        this.$emit('apply-flow', flowData)
+        this.hasGeneratedRecommendation = true
+        this.placeholder = '可继续对话补充想定，或打开仿真构建前在准备页编辑'
+        this.agentTypeWriter(outputMessage)
       } catch (error) {
         console.error('处理智能体返回数据失败:', error)
         this.$emit('stop-loading')
-        const outputMessage = this.messageManager.getErrorReply('server')
-        this.agentTypeWriter(outputMessage)
+        this.agentTypeWriter(this.messageManager.getErrorReply('server'))
       }
     },
     useScheduleDemoData(input, analysisChoice = null) {
@@ -678,19 +679,13 @@ export default {
             this.userRemark = intakeEvent.userRemark || ''
             this.$emit('scenario-intake', intakeEvent)
           }
-          const { chosenServices, serviceNodes } = generateServiceNodes(
-            flowData,
-            this.verticalType
-          )
-          this.$emit('update-services', serviceNodes)
-          this.$emit('update-flow', flowData)
+          const outputMessage = this.messageManager.generateSuccessReply(flowServiceNames(flowData))
+          this.$emit('apply-flow', flowData)
           this.hasGeneratedRecommendation = true
           this.placeholder = isTopic
             ? '可继续对话补充想定，或点击「开始仿真构建」进入构建'
             : '继续补充或调整需求…'
-          this.agentTypeWriter(
-            this.messageManager.generateSuccessReply(chosenServices)
-          )
+          this.agentTypeWriter(outputMessage)
         })
         .catch(() => {
           this.$emit('stop-loading')

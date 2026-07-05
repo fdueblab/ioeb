@@ -42,10 +42,9 @@
                   ref="smartChat"
                   workbench-layout
                   :vertical-type="verticalType"
-                  @start-loading="$emit('start-loading')"
-                  @stop-loading="$emit('stop-loading')"
-                  @update-services="onUpdateServices"
-                  @update-flow="onUpdateFlow"
+                  @start-loading="onStartLoading"
+                  @stop-loading="onStopLoading"
+                  @apply-flow="applyFlowPatch"
                   @scenario-intake="onScenarioIntake"
                   @regenerate-available="canRegenerateChat = true"
                   @regenerate="onRegenerate"
@@ -81,9 +80,6 @@
                 :workbench-phase="phase"
                 :workbench-stage-height="workbenchStageHeight"
                 :build-entry-ready="canStartBuild"
-                :initial-flow="initialFlow"
-                :initial-services="initialServices"
-                :loading-services="loadingServices"
                 :loading-flow="loadingFlow"
                 :vertical-type="verticalType"
                 :show-toolbar="false"
@@ -133,11 +129,7 @@ export default {
     FlowPanel
   },
   props: {
-    verticalType: { type: String, required: true },
-    initialFlow: { type: Object, default: () => ({}) },
-    initialServices: { type: Array, default: () => [] },
-    loadingServices: { type: Boolean, default: false },
-    loadingFlow: { type: Boolean, default: false }
+    verticalType: { type: String, required: true }
   },
   data() {
     return {
@@ -146,14 +138,12 @@ export default {
       prepublishDetailMinimized: true,
       detailRefreshKey: 0,
       detailRefreshTimer: null,
-      /** 画布数据快照；避免 Vue2 $refs 不触发 computed 重算导致侧栏/构建读不到节点 */
-      canvasFlow: null,
-      /** 进入预发布前缓存产物详情（builder 卸载后仍可读） */
+      /** panel flow-synced 只读投影 */
+      flow: null,
+      loadingFlow: false,
       cachedProductDetail: null,
-      /** 构建面板已挂载：预发布返回时不销毁 builder，避免空白 */
       buildUiMounted: false,
       canRegenerateChat: false,
-      /** 左右栏统一高度（视口 - macro - detail dock） */
       workbenchStageHeight: 0
     }
   },
@@ -180,7 +170,7 @@ export default {
       return this.$refs.flowPanel
     },
     flowData() {
-      if (this.canvasFlow) return this.canvasFlow
+      if (this.flow) return this.flow
       const panel = this.$refs.flowPanel
       return (panel && panel.data) || {}
     },
@@ -191,7 +181,7 @@ export default {
       return this.flowData.name || 'meta-app-draft'
     },
     flowScenarioText() {
-      return this.flowData.scenarioSummary || this.flowData.preDes || ''
+      return this.flowData.scenarioSummary || ''
     },
     flowScenarioParsed() {
       return this.flowData.scenarioParsed || {}
@@ -254,7 +244,6 @@ export default {
       }
     },
     buildDetailView() {
-      // detailRefreshKey 驱动构建中侧栏轮询刷新
       void this.detailRefreshKey
       const b = this.$refs.simulationBuilder
       if (!b || !b.getDetailViewModel) return {}
@@ -277,7 +266,7 @@ export default {
     }
   },
   watch: {
-    phase(val, oldVal) {
+    phase(val) {
       if (this.detailRefreshTimer) {
         clearInterval(this.detailRefreshTimer)
         this.detailRefreshTimer = null
@@ -291,14 +280,6 @@ export default {
     },
     detailDockMinimized() {
       this.$nextTick(() => this.syncWorkbenchStageHeight())
-    },
-    loadingFlow(loading) {
-      if (!loading) {
-        this.$nextTick(() => {
-          this.syncFlowFromPanel()
-          this.syncWorkbenchStageHeight()
-        })
-      }
     }
   },
   mounted() {
@@ -355,7 +336,7 @@ export default {
     clearFlow() {
       this.canRegenerateChat = false
       if (this.panel) this.panel.dataReloadClear()
-      this.canvasFlow = null
+      this.flow = null
       this.phase = 'input'
       this.detailMinimized = true
       this.buildUiMounted = false
@@ -371,22 +352,13 @@ export default {
     },
     onFlowSynced(payload) {
       const snap = this.cloneFlowSnapshot(payload)
-      if (snap) this.canvasFlow = snap
+      if (snap) this.flow = snap
       this.$nextTick(() => {
         this.syncWorkbenchStageHeight()
       })
     },
-    syncFlowFromPanel() {
-      const panel = this.$refs.flowPanel
-      if (!panel || !panel.data) return
-      this.onFlowSynced(panel.data)
-    },
     getServiceNodes() {
-      const panel = this.$refs.flowPanel
-      const list =
-        (this.canvasFlow && this.canvasFlow.nodeList) ||
-        (panel && panel.data && panel.data.nodeList) ||
-        []
+      const list = (this.flow && this.flow.nodeList) || []
       return list.filter((n) => n.name !== 'metaAppAgent')
     },
     hasStructuredScenarioParse() {
@@ -394,33 +366,35 @@ export default {
       if (sp.goal || sp.description) return true
       if (Array.isArray(sp.constraints) && sp.constraints.length) return true
       if (Array.isArray(sp.acceptanceCriteria) && sp.acceptanceCriteria.length) return true
-      const summary = (this.canvasFlow && this.canvasFlow.scenarioSummary) || this.flowData.scenarioSummary
-      return Boolean(summary && String(summary).trim())
+      return false
     },
-    onUpdateServices(services) {
-      this.$emit('update-services', services)
+    onStartLoading() {
+      this.loadingFlow = true
     },
-    onUpdateFlow(flow) {
-      const snap = this.cloneFlowSnapshot(flow)
-      if (snap) this.canvasFlow = snap
-      this.canRegenerateChat = true
-      this.$emit('update-flow', flow)
+    onStopLoading() {
+      this.loadingFlow = false
+    },
+    async applyFlowPatch(flow) {
+      const panel = this.$refs.flowPanel
+      if (!panel) return
+      this.loadingFlow = true
+      try {
+        await panel.updateInitialFlow(flow)
+        this.canRegenerateChat = true
+      } finally {
+        this.loadingFlow = false
+      }
     },
     onScenarioIntake(payload) {
       if (this.panel && this.panel.applyScenarioIntake) {
         this.panel.applyScenarioIntake(payload)
       }
-      if (payload) {
-        this.canvasFlow = {
-          ...(this.canvasFlow || {}),
-          ...(payload.scenarioParsed ? { scenarioParsed: payload.scenarioParsed } : {}),
-          ...(payload.scenarioSummary ? { scenarioSummary: payload.scenarioSummary } : {}),
-          ...(payload.userRemark ? { preDes: payload.userRemark } : {})
-        }
-      }
     },
     startBuild() {
-      this.syncFlowFromPanel()
+      const panel = this.$refs.flowPanel
+      if (panel && panel.data) {
+        this.onFlowSynced(panel.data)
+      }
       if (!this.canStartBuild) {
         if (!this.getServiceNodes().length) {
           this.$message.error('请先智能生成应用或添加服务！')
@@ -429,10 +403,7 @@ export default {
         }
         return
       }
-      const allNodes =
-        (this.canvasFlow && this.canvasFlow.nodeList) ||
-        (this.$refs.flowPanel && this.$refs.flowPanel.data && this.$refs.flowPanel.data.nodeList) ||
-        []
+      const allNodes = (this.flow && this.flow.nodeList) || []
       this.buildUiMounted = true
       this.phase = 'build'
       this.$nextTick(() => {
@@ -473,8 +444,10 @@ export default {
           panel.onSimulationCanvasVisual({ type: 'build', active: false })
           panel.onSimulationCanvasVisual({ type: 'clear' })
         }
+        if (panel.data) {
+          this.onFlowSynced(panel.data)
+        }
       }
-      this.syncFlowFromPanel()
       this.$nextTick(() => {
         if (panel && panel.scheduleCanvasReflow) {
           panel.scheduleCanvasReflow()
@@ -549,7 +522,6 @@ export default {
   }
 }
 
-// smart_chat 默认 width:30vw，须限制在左栏宽度内
 .wb-chat-host {
   :deep(.chat-container--workbench) {
     display: flex;

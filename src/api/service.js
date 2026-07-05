@@ -38,6 +38,18 @@ export function searchServices(keyword) {
 }
 
 /**
+ * 领域内智能检索（全表模糊匹配）
+ * @param {{ domain: string, name?: string, description?: string, role?: string, function?: string, requirement?: string }} params
+ */
+export function smartSearch(params) {
+  return request({
+    url: `${API_BASE_URL}/services/smart-search`,
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 按条件筛选微服务
  * @param {Object} filters 筛选条件对象，可包含attribute, type, domain, industry, scenario, technology, status
  * @returns {Promise} 返回筛选后的服务列表
@@ -51,12 +63,24 @@ export function filterServices(filters) {
 }
 
 /**
- * 获取特定垂直领域的服务
- * @param {string} verticalType 垂直领域类型
- * @returns {Promise} 返回指定垂直领域的服务列表
+ * 仿真构建 MCP 服务选择器（含 tools，不分页）
+ * @param {string} domain 垂直领域
  */
-export function getServicesByVerticalType(verticalType) {
-  return filterServices({ domain: verticalType })
+export function getMcpServiceOptions(domain) {
+  return request({
+    url: `${API_BASE_URL}/services/mcp-options`,
+    method: 'get',
+    params: { domain }
+  })
+}
+
+/**
+ * 获取特定垂直领域的服务（支持分页）
+ * @param {string} verticalType 垂直领域类型
+ * @param {{ page?: number, pageSize?: number }} [pagination]
+ */
+export function getServicesByVerticalType(verticalType, pagination = {}) {
+  return filterServices({ domain: verticalType, ...pagination })
 }
 
 /**
