@@ -9,7 +9,7 @@
           <small v-if="formSubtitle">{{ formSubtitle }}</small>
         </div>
         <div class="wb-phone-card">
-          <div class="wb-phone-label">▎{{ formInputName || preInputName }}</div>
+          <div v-show="localInputType !== 0" class="wb-phone-label">▎{{ formInputName || preInputName }}</div>
           <textarea
             v-if="localInputType === 1 || localInputType === 3"
             class="wb-phone-input"
@@ -345,6 +345,11 @@ export default {
       })
     },
     goToSearchPage() {
+      try {
+        sessionStorage.setItem(`eb_vertical_list_refresh_${this.verticalType}`, '1')
+      } catch (e) {
+        /* ignore */
+      }
       this.$router.push(`/vertical-user/${this.verticalType}`)
     },
     submit() {

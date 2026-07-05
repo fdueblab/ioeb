@@ -355,7 +355,7 @@ export default {
         if (res.status === 'question') {
           const text = res.hint ? `${res.text}<br/><span style="color:#888;font-size:12px;">提示：${res.hint}</span>` : res.text
           this.messages.push({ text, isUser: false })
-          this.placeholder = '请补充想定信息（可继续澄清结构化想定）…'
+          this.placeholder = '请补充想定信息…'
           this.finishAgentTurn()
           this.scrollToBottom()
           return

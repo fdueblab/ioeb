@@ -1,6 +1,6 @@
 # 仿真构建 · 当前接口契约
 
-更新：2026-06-28。本文是 LLM/工程协作者修改仿真构建时的当前契约。产品与研究叙事见同目录其它文档；本地联调启停见 `~/.cursor/rules/fdueblab-local-dev.mdc`。
+更新：2026-07-05。本文是 LLM/工程协作者修改仿真构建时的当前契约。产品与研究叙事见同目录其它文档；本地联调启停见 `~/.cursor/rules/fdueblab-local-dev.mdc`。
 
 ## 一、仓库职责
 
@@ -48,6 +48,19 @@ Micro-Agent 真实调用       -> 远程 MCP（mcpUrl 来自 servicesMeta / 服�
 | `src/components/ef/meta_app_build/MetaAppBuildShell.vue` | 构建工作台壳 |
 | `src/mock/services/simulation_builder_inmemory.js` | 课题演示进程内 mock 流 |
 | `src/mock/data/topic_simulation_artifacts.js` | 课题演示产物合成；仍可能是旧演示形状，不计入真实链路 |
+
+## 三b、ioeb_backend 服务 API（垂域资源列表 / 检索）
+
+前端 `src/api/service.js`；实现 `ioeb_backend/app/api/namespaces/service_ns.py`。
+
+| 端点 | 用途 | 响应要点 |
+| --- | --- | --- |
+| `GET /api/services/filter` | 总览列表 + 标签筛选 | `page` 与 `pageSize` **同时**传入才分页；`services[]` 为 `to_list_dict()`（精简，无 artifact） |
+| `GET /api/services/:id` | 使用前拉全量 | `to_dict()`：apiList、MCP tools、meta `runtimeSpec` / artifact 等 |
+| `GET /api/services/smart-search` | 智能检索表单 | 五字段 + `domain`；领域内拆词子串匹配；精简列表，不分页 |
+| `GET /api/services/mcp-options?domain=` | 仿真构建 MCP 选择器 | 该域 `atomic_mcp` + tools，不分页 |
+
+行业 / 场景 / 技术筛选与表单项字典：`{domain}_industry`、`{domain}_scenario`、`{domain}_technology`（每垂域独立 code 表）。
 
 ## 四、Start 请求
 
