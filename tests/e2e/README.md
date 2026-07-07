@@ -18,3 +18,8 @@ yarn test:e2e
 ```
 
 The CI workflow reads the same values from GitHub Actions secrets.
+
+In CI, the login smoke suite runs after a `master` push finishes the development
+test environment deployment step. It is not run against pull request branches,
+because those changes have not been deployed to the shared development test
+environment yet.
