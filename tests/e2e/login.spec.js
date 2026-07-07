@@ -8,6 +8,10 @@ function requireEnv(name) {
   return value
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 test('test user can sign in through the login page', async ({ page }) => {
   requireEnv('E2E_BASE_URL')
   const username = requireEnv('E2E_USERNAME')
@@ -17,8 +21,10 @@ test('test user can sign in through the login page', async ({ page }) => {
 
   await page.getByPlaceholder('请输入账户名').fill(username)
   await page.getByPlaceholder('请输入密码').fill(password)
-  await page.getByRole('button', { name: '登录' }).click()
+  await page.getByRole('button', { name: /登\s*录/ }).click()
 
-  await expect(page).not.toHaveURL(/\/user\/login/)
-  await expect(page.locator('.ant-pro-account-avatar')).toBeVisible()
+  await expect(page).toHaveURL(/#\/account\/workplace/)
+  await expect(page.getByRole('heading', {
+    name: new RegExp(`下午好，${escapeRegExp(username)}`)
+  })).toBeVisible()
 })
