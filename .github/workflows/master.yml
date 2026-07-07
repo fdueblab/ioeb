@@ -3,8 +3,6 @@ name: CI
 on:
   push:
     branches: [master]
-  pull_request:
-    branches: [master]
   release:
     types: [published]
 
@@ -63,6 +61,59 @@ jobs:
             -H "X-Deploy-Token: ${{ secrets.STAGING_DEPLOY_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "{\"service\":\"frontend\",\"image\":\"${IMAGE_REPO}:${IMAGE_TAG}\"}"
+
+  e2e:
+    name: Login E2E
+    needs: deploy-staging
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
+      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: |
+          npm install -g yarn
+          yarn install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Wait for development test environment
+        run: |
+          set -euo pipefail
+          health_url="${E2E_BASE_URL%/}/api/health"
+
+          sleep 30
+          for attempt in $(seq 1 30); do
+            if curl -fsSL --max-time 10 "${health_url}" >/dev/null; then
+              exit 0
+            fi
+
+            echo "Waiting for development test environment (${attempt}/30)..."
+            sleep 10
+          done
+
+          echo "::error::Development test environment is not ready: ${health_url}"
+          exit 1
+
+      - name: Run login E2E
+        run: yarn test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
 
   deploy-production:
     name: Deploy Production
