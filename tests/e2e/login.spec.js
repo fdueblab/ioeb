@@ -25,6 +25,6 @@ test('test user can sign in through the login page', async ({ page }) => {
 
   await expect(page).toHaveURL(/#\/account\/workplace/)
   await expect(page.getByRole('heading', {
-    name: new RegExp(`下午好，${escapeRegExp(username)}`)
+    name: new RegExp(`(早上好|上午好|中午好|下午好|晚上好)，${escapeRegExp(username)}`)
   })).toBeVisible()
 })
