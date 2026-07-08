@@ -17,10 +17,14 @@ test('test user can sign in through the login page', async ({ page }) => {
   const username = requireEnv('E2E_USERNAME')
   const password = requireEnv('E2E_PASSWORD')
 
-  await page.goto('/user/login')
+  await page.goto('/user/login', { waitUntil: 'domcontentloaded' })
 
-  await page.getByPlaceholder('请输入账户名').fill(username)
-  await page.getByPlaceholder('请输入密码').fill(password)
+  const usernameInput = page.getByPlaceholder('请输入账户名')
+  const passwordInput = page.getByPlaceholder('请输入密码')
+
+  await expect(usernameInput).toBeVisible()
+  await usernameInput.fill(username)
+  await passwordInput.fill(password)
   await page.getByRole('button', { name: /登\s*录/ }).click()
 
   await expect(page).toHaveURL(/#\/account\/workplace/)
