@@ -13,10 +13,9 @@
           我们推荐使用这种方式进行 LOGO 和 title 自定义
     -->
     <template v-slot:menuHeaderRender>
-      <div>
+      <div class="sider-logo-header">
         <img src="@/assets/logo.svg" alt="" />
-        <div class="tit">{{ title }}</div>
-        <div class="subtit">{{ subTitle }}</div>
+        <div class="tit">算法模型众智工场</div>
       </div>
     </template>
     <!-- 1.0.0+ 版本 pro-layout 提供 API,
@@ -92,9 +91,6 @@ export default {
       },
       // 媒体查询
       query: {},
-      // 用户类型
-      title: '面向垂域应用',
-      subTitle: '的算法模型智能体平台',
       // 是否手机模式
       isMobile: false,
       // 登录后用户画像问卷弹窗
@@ -216,23 +212,23 @@ export default {
 
 <style lang="less">
 @import './BasicLayout.less';
+.ant-pro-sider-menu-logo .sider-logo-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+  min-height: 64px;
+  padding-right: 8px;
+}
 .ant-pro-sider-menu-logo img {
   height: 40px;
   width: 40px;
+  flex-shrink: 0;
 }
 .ant-pro-sider-menu-logo .tit {
-  top: -8px;
-  left: 80px;
   font-weight: 500;
   font-size: 16px;
-  position: absolute;
-  color: #fff;
-}
-.ant-pro-sider-menu-logo .subtit {
-  top: 14px;
-  left: 80px;
-  font-weight: 400;
-  position: absolute;
+  line-height: 1.35;
   color: #fff;
 }
 </style>

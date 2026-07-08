@@ -1,372 +1,436 @@
 <template>
   <page-header-wrapper :title="false">
-    <a-card :bordered="false" size="small" title="想定式开发配置">
-      <div class="table-page-search-wrapper">
-        <a-form layout="inline">
-          <!-- 第一行：领域 / 算法模型名称 / 行业 / 场景 / 技术 -->
-          <a-row :gutter="20">
-            <a-col :span="4">
-              <a-form-item label="领域">
-                <span style="margin-left: 5px; font-size: 14px">{{ domainTitle }}</span>
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <a-form-item label="算法模型名称" required>
-                <a-input v-model="form.serviceName" placeholder="请输入算法模型名称" @change="onServiceNameInput"/>
-              </a-form-item>
-            </a-col>
-            <a-col :span="4">
-              <a-form-item label="行业">
-                <a-select v-model="programInfo.industry" placeholder="请选择行业" allow-clear>
-                  <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
-                    {{ item.text }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="4">
-              <a-form-item label="场景">
-                <a-select v-model="programInfo.scenario" placeholder="请选择场景" allow-clear>
-                  <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="item.code">
-                    {{ item.text }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="4">
-              <a-form-item label="技术">
-                <a-select v-model="programInfo.technology" placeholder="请选择技术" allow-clear>
-                  <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="item.code">
-                    {{ item.text }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <!-- 第二行：数据集文件 / 算法类别 -->
-          <a-row :gutter="20">
-            <a-col :span="12">
-              <a-form-item label="数据集文件">
-                <div class="dataset-upload-row">
-                  <a-upload
-                    accept=".csv,.xlsx,.xls,.json,.txt,.pdf"
-                    :file-list="datasetFiles"
-                    :remove="removeDatasetFile"
-                    :customRequest="customDatasetFileChose"
-                    :multiple="false">
-                    <a-button icon="database"> 选择数据集 </a-button>
-                  </a-upload>
-                  <span class="upload-hint">支持 CSV / Excel / JSON / TXT / PDF</span>
-                </div>
-              </a-form-item>
-            </a-col>
-            <a-col :span="8">
-              <a-form-item label="算法类别">
-                <a-select
-                  v-model="algorithmCategory"
-                  placeholder="请选择算法类别"
-                  allow-clear
-                  @change="onCategoryChange"
-                >
-                  <a-select-option v-for="(item, index) in algorithmCategoryOptions" :key="index" :value="item.code">
-                    {{ item.text }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <!-- 类别特定参数面板 -->
-          <a-collapse
-            v-if="currentCategoryConfig"
-            :bordered="false"
-            :activeKey="categoryParamsPanelActive"
-            @change="(keys) => categoryParamsPanelActive = keys"
-            class="spec-collapse"
-            style="margin-top: 4px;"
-          >
-            <a-collapse-panel key="params" :header="currentCategoryConfig.label + '（选填）'">
-              <a-row :gutter="20">
-                <template v-for="field in currentCategoryConfig.fields">
-                  <a-col :span="field.type === 'constraint_group' ? 24 : 8" :key="field.key">
-
-                    <!-- 多选下拉 -->
-                    <a-form-item v-if="field.type === 'multi_select'">
-                      <span slot="label">{{ field.label }}</span>
-                      <a-select
-                        :value="getCategoryFieldValue(field.key, [])"
-                        @change="(val) => setCategoryFieldValue(field.key, val)"
-                        mode="multiple"
-                        :placeholder="'请选择' + field.label"
-                        allow-clear
-                      >
-                        <a-select-option
-                          v-for="opt in (categoryDictCache[field.dictCategory] || [])"
-                          :key="opt.code"
-                          :value="opt.code"
-                        >
-                          {{ opt.text }}
-                        </a-select-option>
-                      </a-select>
-                    </a-form-item>
-
-                    <!-- 单选下拉 -->
-                    <a-form-item v-else-if="field.type === 'single_select'">
-                      <span slot="label">{{ field.label }}</span>
-                      <a-select
-                        :value="getCategoryFieldValue(field.key, undefined)"
-                        @change="(val) => setCategoryFieldValue(field.key, val)"
-                        :placeholder="'请选择' + field.label"
-                        allow-clear
-                      >
-                        <a-select-option
-                          v-for="opt in (categoryDictCache[field.dictCategory] || [])"
-                          :key="opt.code"
-                          :value="opt.code"
-                        >
-                          {{ opt.text }}
-                        </a-select-option>
-                      </a-select>
-                    </a-form-item>
-
-                    <!-- 标签输入 -->
-                    <a-form-item v-else-if="field.type === 'tag_input'">
-                      <span slot="label">{{ field.label }}</span>
-                      <div class="label-tags-container">
-                        <a-tag
-                          v-for="(tag, idx) in (categoryParams.labels || [])"
-                          :key="idx"
-                          closable
-                          @close="removeLabel(idx)"
-                          color="blue"
-                        >
-                          {{ tag }}
-                        </a-tag>
-                        <a-input
-                          v-if="labelInputVisible"
-                          ref="labelInput"
-                          size="small"
-                          style="width: 120px;"
-                          v-model="labelInputValue"
-                          @blur="handleLabelInputConfirm"
-                          @keyup.enter="handleLabelInputConfirm"
-                          placeholder="输入标签名"
-                        />
-                        <a-tag v-else style="border-style: dashed; cursor: pointer;" @click="showLabelInput">
-                          <a-icon type="plus" /> 添加标签
-                        </a-tag>
-                      </div>
-                    </a-form-item>
-
-                    <!-- 开关 -->
-                    <a-form-item v-else-if="field.type === 'switch'">
-                      <span slot="label">{{ field.label }}</span>
-                      <a-switch
-                        :checked="getCategoryFieldValue(field.key, false)"
-                        @change="(val) => setCategoryFieldValue(field.key, val)"
-                      />
-                    </a-form-item>
-
-                    <!-- 文本输入 -->
-                    <a-form-item v-else-if="field.type === 'text_input'">
-                      <span slot="label">{{ field.label }}</span>
-                      <a-input
-                        :value="getCategoryFieldValue(field.key, '')"
-                        @change="(e) => setCategoryFieldValue(field.key, e.target.value)"
-                        :placeholder="field.placeholder || ''"
-                      />
-                    </a-form-item>
-
-                    <!-- 数字输入 -->
-                    <a-form-item v-else-if="field.type === 'number_input'">
-                      <span slot="label">{{ field.label }}</span>
-                      <a-input-number
-                        :value="getCategoryFieldValue(field.key, undefined)"
-                        @change="(val) => setCategoryFieldValue(field.key, val)"
-                        :min="field.min !== undefined ? field.min : 0"
-                        :placeholder="field.placeholder || ''"
-                        style="width: 100%;"
-                      />
-                    </a-form-item>
-
-                    <!-- 技术约束复选框组 -->
-                    <a-form-item v-else-if="field.type === 'constraint_group'">
-                      <span slot="label">{{ field.label }}</span>
-                      <a-checkbox-group
-                        :value="getCategoryFieldValue(field.key, [])"
-                        @change="(val) => setCategoryFieldValue(field.key, val)"
-                        class="constraints-group"
-                      >
-                        <a-row :gutter="[16, 8]">
-                          <a-col
-                            :span="6"
-                            v-for="opt in (categoryDictCache[field.dictCategory] || [])"
-                            :key="opt.code"
-                          >
-                            <a-checkbox :value="opt.code">{{ opt.text }}</a-checkbox>
-                          </a-col>
-                          <a-col :span="12">
-                            <a-checkbox value="custom_constraint">其他约束：</a-checkbox>
-                            <a-input
-                              v-if="(getCategoryFieldValue(field.key, []) || []).includes('custom_constraint')"
-                              v-model="customConstraintText"
-                              size="small"
-                              style="width: 280px; margin-left: 8px;"
-                              placeholder="请输入自定义约束"
-                            />
-                          </a-col>
-                        </a-row>
-                      </a-checkbox-group>
-                    </a-form-item>
-
-                  </a-col>
-                </template>
+    <a-row :gutter="16" type="flex" class="scenario-dev-layout">
+      <a-col
+        :xs="24"
+        :sm="24"
+        :md="16"
+        :lg="16"
+        :xl="16"
+        class="scenario-dev-main"
+      >
+        <a-card :bordered="false" size="small" title="想定式开发配置" class="config-main-card">
+          <div class="table-page-search-wrapper">
+            <a-form layout="vertical" class="config-form">
+              <!-- 第一行：领域 / 算法模型名称 -->
+              <a-row :gutter="16">
+                <a-col :xs="24" :sm="8" :md="8">
+                  <a-form-item label="领域">
+                    <span class="domain-title-text">{{ domainTitle }}</span>
+                  </a-form-item>
+                </a-col>
+                <a-col :xs="24" :sm="16" :md="16">
+                  <a-form-item label="算法模型名称" required>
+                    <a-input v-model="form.serviceName" placeholder="请输入算法模型名称" @change="onServiceNameInput"/>
+                  </a-form-item>
+                </a-col>
               </a-row>
-            </a-collapse-panel>
-          </a-collapse>
 
-          <!-- 相关资料（算法优化参考） -->
-          <a-row :gutter="20" style="margin-top: 8px;">
-            <a-col :span="24">
-              <div class="reference-block">
-                <div class="reference-title">
-                  相关资料<span class="label-optional">（选填）</span>
-                </div>
-                <a-alert
-                  type="warning"
-                  show-icon
-                  class="reference-hint"
-                  message="可提交论文、专利、程序、开源代码或网址作为算法优化参考。智能体将参考这些资料，并在生成时进行差异化创新以规避知识产权争议。"
-                />
-                <div class="reference-upload-row">
-                  <a-upload
-                    accept=".pdf,.doc,.docx,.txt,.md,.py,.ipynb,.zip"
-                    :file-list="referenceFiles"
-                    :remove="removeReferenceFile"
-                    :customRequest="customReferenceFileChose"
-                    :multiple="true">
-                    <a-button icon="paper-clip"> 上传论文/专利/代码 </a-button>
-                  </a-upload>
-                  <span class="upload-hint">支持 PDF / Word / TXT / 代码(.py/.ipynb) / ZIP，可多选</span>
-                </div>
-              </div>
-            </a-col>
-          </a-row>
+              <!-- 第二行：行业 / 场景 / 技术 -->
+              <a-row :gutter="16">
+                <a-col :xs="24" :sm="8" :md="8">
+                  <a-form-item label="行业">
+                    <a-select v-model="programInfo.industry" placeholder="请选择行业" allow-clear>
+                      <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
+                        {{ item.text }}
+                      </a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :xs="24" :sm="8" :md="8">
+                  <a-form-item label="场景">
+                    <a-select v-model="programInfo.scenario" placeholder="请选择场景" allow-clear>
+                      <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="item.code">
+                        {{ item.text }}
+                      </a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :xs="24" :sm="8" :md="8">
+                  <a-form-item label="技术">
+                    <a-select v-model="programInfo.technology" placeholder="请选择技术" allow-clear>
+                      <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="item.code">
+                        {{ item.text }}
+                      </a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+              </a-row>
 
-          <a-row :gutter="20" style="margin-top: 8px;">
-            <a-col :span="24">
-              <div class="narrative-block">
-                <div class="narrative-title">
-                  进一步需求和要求请在下面自由叙述<span class="label-required-tip">（必填）</span>
-                </div>
-                <a-alert
-                  type="info"
-                  show-icon
-                  class="narrative-hint"
-                  message="请具体描述您希望生成的算法模型具备哪些功能、输入与输出形式、以及主要使用场景。"
-                >
-                  <template slot="description">
-                    <div class="example-title">正确、完整的描述示例：</div>
-                    <div class="example-text">
-                      创建一个可以处理图像识别的算法服务：接收图像 URL 或 Base64 图像数据作为输入，返回图像中的主要物体类别标签及置信度列表；服务需支持批量请求，单次最多 32 张图；适用于电商商品图审核场景。
+              <!-- 第三行：数据集文件 / 算法类别 -->
+              <a-row :gutter="16">
+                <a-col :xs="24" :sm="12" :md="12">
+                  <a-form-item label="数据集文件">
+                    <div class="dataset-upload-row">
+                      <a-upload
+                        accept=".csv,.xlsx,.xls,.json,.txt,.pdf"
+                        :file-list="datasetFiles"
+                        :remove="removeDatasetFile"
+                        :customRequest="customDatasetFileChose"
+                        :multiple="false">
+                        <a-button icon="database"> 选择数据集 </a-button>
+                      </a-upload>
+                      <span class="upload-hint">支持 CSV / Excel / JSON / TXT / PDF</span>
                     </div>
-                  </template>
-                </a-alert>
-                <a-textarea
-                  v-model="freeNarrative"
-                  :rows="8"
-                  class="narrative-textarea"
-                  placeholder="请详细描述您希望生成的算法服务功能，例如：创建一个可以处理图像识别的算法服务，它可以接收图像URL并返回识别结果..."
-                />
-              </div>
-            </a-col>
-          </a-row>
+                  </a-form-item>
+                </a-col>
+                <a-col :xs="24" :sm="12" :md="12">
+                  <a-form-item label="算法类别">
+                    <a-select
+                      v-model="algorithmCategory"
+                      placeholder="请选择算法类别"
+                      allow-clear
+                      @change="onCategoryChange"
+                    >
+                      <a-select-option v-for="(item, index) in algorithmCategoryOptions" :key="index" :value="item.code">
+                        {{ item.text }}
+                      </a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+              </a-row>
 
-          <a-row :gutter="20" style="margin-top: 8px;">
-            <a-col :span="24">
-              <a-form-item label="操作">
-                <a-button
-                  type="primary"
-                  icon="thunderbolt"
-                  @click="onGenerateClick"
-                  :disabled="generateDisabled"
-                  :loading="generateLoading"
-                >
-                  生成算法模型
-                </a-button>
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </a-form>
-      </div>
-    </a-card>
+              <!-- 类别特定参数面板 -->
+              <a-collapse
+                v-if="currentCategoryConfig"
+                :bordered="false"
+                :activeKey="categoryParamsPanelActive"
+                @change="(keys) => categoryParamsPanelActive = keys"
+                class="spec-collapse"
+                style="margin-top: 4px;"
+              >
+                <a-collapse-panel key="params" :header="currentCategoryConfig.label + '（选填）'">
+                  <a-row :gutter="16">
+                    <template v-for="field in currentCategoryConfig.fields">
+                      <a-col :xs="24" :sm="field.type === 'constraint_group' ? 24 : 12" :md="field.type === 'constraint_group' ? 24 : 12" :key="field.key">
 
-    <!-- 生成进度 -->
-    <a-card v-if="generateProgress.show" :bordered="false" style="margin-top: 10px;">
-      <div slot="title">
-        <a-icon type="loading" v-if="generateProgress.status === 'process'" />
-        <a-icon type="check-circle" theme="twoTone" two-tone-color="#52c41a" v-else-if="generateProgress.status === 'finish'" />
-        <a-icon type="close-circle" theme="twoTone" two-tone-color="#f5222d" v-else-if="generateProgress.status === 'error'" />
-        <span style="margin-left: 8px;">生成进度</span>
-      </div>
+                        <!-- 多选下拉 -->
+                        <a-form-item v-if="field.type === 'multi_select'">
+                          <span slot="label">{{ field.label }}</span>
+                          <a-select
+                            :value="getCategoryFieldValue(field.key, [])"
+                            @change="(val) => setCategoryFieldValue(field.key, val)"
+                            mode="multiple"
+                            :placeholder="'请选择' + field.label"
+                            allow-clear
+                          >
+                            <a-select-option
+                              v-for="opt in (categoryDictCache[field.dictCategory] || [])"
+                              :key="opt.code"
+                              :value="opt.code"
+                            >
+                              {{ opt.text }}
+                            </a-select-option>
+                          </a-select>
+                        </a-form-item>
 
-      <div class="publish-steps">
-        <div
-          :class="['step-item', {
-            'active': generateProgress.status === 'process',
-            'completed': generateProgress.status === 'finish',
-            'error': generateProgress.status === 'error'
-          }]"
-        >
-          <div class="step-header" @click="toggleMainStep">
-            <div class="step-indicator">
-              <a-icon v-if="generateProgress.status === 'finish'" type="check-circle" class="icon-completed" />
-              <a-icon v-else-if="generateProgress.status === 'error'" type="close-circle" class="icon-error" />
-              <a-icon v-else type="loading" class="icon-loading" />
+                        <!-- 单选下拉 -->
+                        <a-form-item v-else-if="field.type === 'single_select'">
+                          <span slot="label">{{ field.label }}</span>
+                          <a-select
+                            :value="getCategoryFieldValue(field.key, undefined)"
+                            @change="(val) => setCategoryFieldValue(field.key, val)"
+                            :placeholder="'请选择' + field.label"
+                            allow-clear
+                          >
+                            <a-select-option
+                              v-for="opt in (categoryDictCache[field.dictCategory] || [])"
+                              :key="opt.code"
+                              :value="opt.code"
+                            >
+                              {{ opt.text }}
+                            </a-select-option>
+                          </a-select>
+                        </a-form-item>
+
+                        <!-- 标签输入 -->
+                        <a-form-item v-else-if="field.type === 'tag_input'">
+                          <span slot="label">{{ field.label }}</span>
+                          <div class="label-tags-container">
+                            <a-tag
+                              v-for="(tag, idx) in (categoryParams.labels || [])"
+                              :key="idx"
+                              closable
+                              @close="removeLabel(idx)"
+                              color="blue"
+                            >
+                              {{ tag }}
+                            </a-tag>
+                            <a-input
+                              v-if="labelInputVisible"
+                              ref="labelInput"
+                              size="small"
+                              style="width: 120px;"
+                              v-model="labelInputValue"
+                              @blur="handleLabelInputConfirm"
+                              @keyup.enter="handleLabelInputConfirm"
+                              placeholder="输入标签名"
+                            />
+                            <a-tag v-else style="border-style: dashed; cursor: pointer;" @click="showLabelInput">
+                              <a-icon type="plus" /> 添加标签
+                            </a-tag>
+                          </div>
+                        </a-form-item>
+
+                        <!-- 开关 -->
+                        <a-form-item v-else-if="field.type === 'switch'">
+                          <span slot="label">{{ field.label }}</span>
+                          <a-switch
+                            :checked="getCategoryFieldValue(field.key, false)"
+                            @change="(val) => setCategoryFieldValue(field.key, val)"
+                          />
+                        </a-form-item>
+
+                        <!-- 文本输入 -->
+                        <a-form-item v-else-if="field.type === 'text_input'">
+                          <span slot="label">{{ field.label }}</span>
+                          <a-input
+                            :value="getCategoryFieldValue(field.key, '')"
+                            @change="(e) => setCategoryFieldValue(field.key, e.target.value)"
+                            :placeholder="field.placeholder || ''"
+                          />
+                        </a-form-item>
+
+                        <!-- 数字输入 -->
+                        <a-form-item v-else-if="field.type === 'number_input'">
+                          <span slot="label">{{ field.label }}</span>
+                          <a-input-number
+                            :value="getCategoryFieldValue(field.key, undefined)"
+                            @change="(val) => setCategoryFieldValue(field.key, val)"
+                            :min="field.min !== undefined ? field.min : 0"
+                            :placeholder="field.placeholder || ''"
+                            style="width: 100%;"
+                          />
+                        </a-form-item>
+
+                        <!-- 技术约束复选框组 -->
+                        <a-form-item v-else-if="field.type === 'constraint_group'">
+                          <span slot="label">{{ field.label }}</span>
+                          <a-checkbox-group
+                            :value="getCategoryFieldValue(field.key, [])"
+                            @change="(val) => setCategoryFieldValue(field.key, val)"
+                            class="constraints-group"
+                          >
+                            <a-row :gutter="[16, 8]">
+                              <a-col
+                                :xs="24"
+                                :sm="12"
+                                :md="12"
+                                v-for="opt in (categoryDictCache[field.dictCategory] || [])"
+                                :key="opt.code"
+                              >
+                                <a-checkbox :value="opt.code">{{ opt.text }}</a-checkbox>
+                              </a-col>
+                              <a-col :xs="24" :sm="24" :md="24">
+                                <a-checkbox value="custom_constraint">其他约束：</a-checkbox>
+                                <a-input
+                                  v-if="(getCategoryFieldValue(field.key, []) || []).includes('custom_constraint')"
+                                  v-model="customConstraintText"
+                                  size="small"
+                                  class="custom-constraint-input"
+                                  placeholder="请输入自定义约束"
+                                />
+                              </a-col>
+                            </a-row>
+                          </a-checkbox-group>
+                        </a-form-item>
+
+                      </a-col>
+                    </template>
+                  </a-row>
+                </a-collapse-panel>
+              </a-collapse>
+
+              <!-- 相关资料（算法优化参考） -->
+              <a-row :gutter="16" class="form-section-row">
+                <a-col :span="24">
+                  <div class="reference-block">
+                    <div class="reference-title">
+                      相关资料<span class="label-optional">（选填）</span>
+                    </div>
+                    <a-alert
+                      type="warning"
+                      show-icon
+                      class="reference-hint"
+                      message="可提交论文、专利、程序、开源代码或网址作为算法优化参考。智能体将参考这些资料，并在生成时进行差异化创新以规避知识产权争议。"
+                    />
+                    <div class="reference-upload-row">
+                      <a-upload
+                        accept=".pdf,.doc,.docx,.txt,.md,.py,.ipynb,.zip"
+                        :file-list="referenceFiles"
+                        :remove="removeReferenceFile"
+                        :customRequest="customReferenceFileChose"
+                        :multiple="true">
+                        <a-button icon="paper-clip"> 上传论文/专利/代码 </a-button>
+                      </a-upload>
+                      <span class="upload-hint">支持 PDF / Word / TXT / 代码(.py/.ipynb) / ZIP，可多选</span>
+                    </div>
+                  </div>
+                </a-col>
+              </a-row>
+
+              <a-row :gutter="16" class="form-section-row">
+                <a-col :span="24">
+                  <div class="narrative-block">
+                    <div class="narrative-title">
+                      进一步需求和要求请在下面自由叙述<span class="label-required-tip">（必填）</span>
+                    </div>
+                    <a-alert
+                      type="info"
+                      show-icon
+                      class="narrative-hint"
+                      message="请具体描述您希望生成的算法模型具备哪些功能、输入与输出形式、以及主要使用场景。"
+                    >
+                      <template slot="description">
+                        <div class="example-title">正确、完整的描述示例：</div>
+                        <div class="example-text">
+                          创建一个可以处理图像识别的算法服务：接收图像 URL 或 Base64 图像数据作为输入，返回图像中的主要物体类别标签及置信度列表；服务需支持批量请求，单次最多 32 张图；适用于电商商品图审核场景。
+                        </div>
+                      </template>
+                    </a-alert>
+                    <a-textarea
+                      v-model="freeNarrative"
+                      :rows="8"
+                      class="narrative-textarea"
+                      placeholder="请详细描述您希望生成的算法服务功能，例如：创建一个可以处理图像识别的算法服务，它可以接收图像URL并返回识别结果..."
+                    />
+                  </div>
+                </a-col>
+              </a-row>
+
+              <a-row :gutter="16" class="form-section-row">
+                <a-col :span="24">
+                  <a-form-item label="操作">
+                    <div class="form-actions">
+                      <a-button
+                        type="primary"
+                        icon="thunderbolt"
+                        @click="onGenerateClick"
+                        :disabled="generateDisabled"
+                        :loading="generateLoading"
+                      >
+                        生成算法模型
+                      </a-button>
+                      <a-button
+                        v-if="showRegenerateButton"
+                        icon="reload"
+                        @click="onRegenerateClick"
+                      >
+                        重新生成算法模型
+                      </a-button>
+                    </div>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+            </a-form>
+          </div>
+        </a-card>
+      </a-col>
+
+      <!-- 右侧：生成进度（始终显示，未生成时占位提示） -->
+      <a-col
+        :xs="24"
+        :sm="24"
+        :md="8"
+        :lg="8"
+        :xl="8"
+        class="scenario-dev-sidebar"
+      >
+        <a-card :bordered="false" size="small" class="progress-sidebar-card">
+          <div slot="title" class="progress-card-title">
+            <div class="progress-card-title-main">
+              <a-icon type="info-circle" v-if="!generateProgress.show" />
+              <a-icon type="loading" v-else-if="generateProgress.status === 'process'" />
+              <a-icon type="check-circle" theme="twoTone" two-tone-color="#52c41a" v-else-if="generateProgress.status === 'finish'" />
+              <a-icon type="close-circle" theme="twoTone" two-tone-color="#f5222d" v-else-if="generateProgress.status === 'error'" />
+              <span>生成进度</span>
             </div>
-            <div class="step-content">
-              <div class="step-title">算法模型生成进度</div>
-              <div class="step-description">{{ generateProgress.description }}</div>
-            </div>
-            <a-icon
-              v-if="generateProgress.friendlySteps.length > 0"
-              :type="generateProgress.expanded ? 'up' : 'down'"
-              class="expand-icon"
-            />
+            <span v-if="generateProgress.show && progressStepSummary.total > 0" class="progress-card-subtitle">
+              {{ progressStepSummary.current }}/{{ progressStepSummary.total }}
+            </span>
           </div>
 
-          <div v-if="generateProgress.expanded && generateProgress.friendlySteps.length > 0" class="agent-steps friendly-steps">
+          <div v-if="!generateProgress.show" class="progress-placeholder">
+            <a-empty description="填写左侧配置并点击「生成算法模型」">
+              <template slot="image">
+                <a-icon type="robot" class="progress-placeholder-icon" />
+              </template>
+            </a-empty>
+            <div class="progress-placeholder-steps">
+              <div v-for="step in progressPlaceholderSteps" :key="step.step" class="progress-placeholder-step">
+                <span class="progress-placeholder-step-num">{{ step.step }}</span>
+                <span class="progress-placeholder-step-title">{{ step.title }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="publish-steps sidebar-steps">
             <div
-              v-for="(friendlyStep, agentIndex) in generateProgress.friendlySteps"
-              :key="agentIndex"
-              :class="['agent-step-item', {
-                'done': friendlyStep.status === 'done',
-                'active': friendlyStep.status === 'active',
-                'pending': friendlyStep.status === 'pending',
-                'warning': friendlyStep.status === 'warning'
+              :class="['step-item', {
+                'active': generateProgress.status === 'process',
+                'completed': generateProgress.status === 'finish',
+                'error': generateProgress.status === 'error'
               }]"
             >
-              <div class="agent-step-header">
-                <span class="agent-step-number">步骤 {{ friendlyStep.step }}</span>
-                <span class="agent-step-summary">{{ friendlyStep.title }}</span>
-                <a-tag :color="friendlyStep.status === 'done' ? 'green' : friendlyStep.status === 'active' ? 'blue' : friendlyStep.status === 'warning' ? 'orange' : 'default'">
-                  {{ friendlyStep.statusText }}
-                </a-tag>
+              <div class="step-header sidebar-step-header">
+                <div class="step-indicator">
+                  <a-icon v-if="generateProgress.status === 'finish'" type="check-circle" class="icon-completed" />
+                  <a-icon v-else-if="generateProgress.status === 'error'" type="close-circle" class="icon-error" />
+                  <a-icon v-else type="loading" class="icon-loading" />
+                </div>
+                <div class="step-content">
+                  <div class="step-title">算法模型生成进度</div>
+                  <div class="step-description sidebar-step-description">{{ generateProgress.description }}</div>
+                </div>
               </div>
-              <div class="friendly-step-desc">{{ friendlyStep.description }}</div>
+
+              <div v-if="generateProgress.friendlySteps.length > 0" class="agent-steps friendly-steps timeline-steps">
+                <div
+                  v-for="(friendlyStep, agentIndex) in generateProgress.friendlySteps"
+                  :key="agentIndex"
+                  :class="['timeline-item', {
+                    'done': friendlyStep.status === 'done',
+                    'active': friendlyStep.status === 'active',
+                    'pending': friendlyStep.status === 'pending',
+                    'warning': friendlyStep.status === 'warning',
+                    'last': agentIndex === generateProgress.friendlySteps.length - 1
+                  }]"
+                >
+                  <div class="timeline-track">
+                    <span class="timeline-dot">
+                      <a-icon v-if="friendlyStep.status === 'done'" type="check" />
+                      <a-icon v-else-if="friendlyStep.status === 'active'" type="loading" />
+                      <a-icon v-else-if="friendlyStep.status === 'warning'" type="exclamation" />
+                      <span v-else class="timeline-dot-num">{{ friendlyStep.step }}</span>
+                    </span>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="timeline-header">
+                      <span class="timeline-step-label">步骤 {{ friendlyStep.step }}</span>
+                      <a-tag :color="friendlyStep.status === 'done' ? 'green' : friendlyStep.status === 'active' ? 'blue' : friendlyStep.status === 'warning' ? 'orange' : 'default'">
+                        {{ friendlyStep.statusText }}
+                      </a-tag>
+                    </div>
+                    <div class="timeline-title">{{ friendlyStep.title }}</div>
+                    <div class="timeline-desc">{{ friendlyStep.description }}</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </a-card>
+        </a-card>
+      </a-col>
+    </a-row>
 
-    <!-- 生成结果 -->
-    <a-card v-if="generateResult.show" :bordered="false" style="margin-top: 10px;">
+    <!-- 生成结果（整行展示） -->
+    <a-card v-if="generateResult.show" :bordered="false" class="result-full-card">
       <div slot="title">
         <a-icon type="check-circle" theme="twoTone" two-tone-color="#52c41a" />
         <span style="margin-left: 8px;">算法模型生成完成</span>
       </div>
+      <a-button slot="extra" icon="reload" @click="onRegenerateClick">
+        重新生成算法模型
+      </a-button>
 
       <a-tabs default-active-key="code">
         <!-- 算法模型说明及源文件（不展示源码全文） -->
@@ -510,6 +574,7 @@
 
 <script>
 /* eslint-disable */
+import { Modal } from 'ant-design-vue'
 import { streamAgent } from '@/utils/request'
 import dictionaryCache from '@/utils/dictionaryCache'
 import { uploadScenarioGeneratedAlgorithm } from '@/api/service'
@@ -1063,6 +1128,14 @@ const CATEGORY_PARAMS_CONFIG = {
   }
 }
 
+const PROGRESS_PLACEHOLDER_STEPS = [
+  { step: 1, title: '理解需求和应用场景' },
+  { step: 2, title: '强化算法方案' },
+  { step: 3, title: '生成算法模型源文件' },
+  { step: 4, title: '检查结果完整性' },
+  { step: 5, title: '整理说明与源文件' }
+]
+
 export default {
   name: 'GenericScenarioDev',
   props: {
@@ -1101,6 +1174,9 @@ export default {
       scenarioOptions: [],
       technologyOptions: [],
       generateLoading: false,
+      activeGenerateSessionId: 0,
+      activeStreamAbortController: null,
+      demoProgressTimerIds: [],
       generateProgress: {
         show: false,
         status: 'process',
@@ -1141,6 +1217,28 @@ export default {
     },
     diff() {
       return this.generateResult.differentiationSummary || {}
+    },
+    progressStepSummary() {
+      const steps = this.generateProgress.friendlySteps || []
+      const total = steps.length
+      if (!total) {
+        return { current: 0, total: 0 }
+      }
+      const doneCount = steps.filter(step => step.status === 'done').length
+      const activeIndex = steps.findIndex(step => step.status === 'active')
+      if (activeIndex >= 0) {
+        return { current: activeIndex + 1, total }
+      }
+      if (doneCount >= total) {
+        return { current: total, total }
+      }
+      return { current: Math.max(doneCount, 1), total }
+    },
+    progressPlaceholderSteps() {
+      return PROGRESS_PLACEHOLDER_STEPS
+    },
+    showRegenerateButton() {
+      return this.generateProgress.show || this.generateResult.show
     }
   },
   created() {
@@ -1464,7 +1562,100 @@ export default {
       this.startGenerate(name, narrative)
     },
 
+    getInitialGenerateProgress() {
+      return {
+        show: false,
+        status: 'process',
+        description: '',
+        expanded: true,
+        agentSteps: [],
+        friendlySteps: []
+      }
+    },
+
+    getInitialGenerateResult() {
+      return {
+        show: false,
+        generatedCode: '',
+        codeFilename: '',
+        modelSummary: { ...DEFAULT_MODEL_SUMMARY },
+        testResults: [],
+        references: [],
+        differentiationSummary: null
+      }
+    },
+
+    resetScenarioDevToInitial() {
+      this.activeGenerateSessionId += 1
+      this.clearDemoProgressTimers()
+      if (this.activeStreamAbortController) {
+        this.activeStreamAbortController.abort()
+        this.activeStreamAbortController = null
+      }
+      this.form.serviceName = undefined
+      this.serviceNameAutoValue = ''
+      this.serviceNameTouched = false
+      this.freeNarrative = ''
+      this.programInfo = { industry: undefined, scenario: undefined, technology: undefined }
+      this.datasetFiles = []
+      this.uploadDatasetFiles = []
+      this.referenceFiles = []
+      this.uploadReferenceFiles = []
+      this.algorithmCategory = undefined
+      this.categoryParams = {}
+      this.customConstraintText = ''
+      this.labelInputVisible = false
+      this.labelInputValue = ''
+      this.categoryParamsPanelActive = ['params']
+      this.generateLoading = false
+      this.generateProgress = this.getInitialGenerateProgress()
+      this.generateResult = this.getInitialGenerateResult()
+    },
+
+    async restoreScenarioDevDefaults() {
+      this.resetScenarioDevToInitial()
+      await this.applyScenarioDefaults()
+    },
+
+    clearDemoProgressTimers() {
+      (this.demoProgressTimerIds || []).forEach((timerId) => {
+        clearTimeout(timerId)
+      })
+      this.demoProgressTimerIds = []
+    },
+
+    scrollToConfigPanel() {
+      this.$nextTick(() => {
+        const configCard = this.$el && this.$el.querySelector('.config-main-card')
+        if (configCard && configCard.scrollIntoView) {
+          configCard.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      })
+    },
+
+    onRegenerateClick() {
+      const doReset = async () => {
+        await this.restoreScenarioDevDefaults()
+        this.$message.success('已恢复默认配置，您可以修改后重新生成')
+        this.scrollToConfigPanel()
+      }
+      if (this.generateLoading) {
+        Modal.confirm({
+          title: '重新生成',
+          content: '算法还在生成中，确定要停止并清空已填内容吗？',
+          okText: '确定',
+          cancelText: '取消',
+          onOk: () => doReset()
+        })
+      } else {
+        doReset()
+      }
+    },
+
     startHealthDemoGenerate(modelName) {
+      this.activeGenerateSessionId += 1
+      const sessionId = this.activeGenerateSessionId
+      this.clearDemoProgressTimers()
       this.generateLoading = true
       this.generateProgress = {
         show: true,
@@ -1483,7 +1674,8 @@ export default {
         [40000, 5, '演示算法模型已生成，可查看说明并下载源文件。']
       ]
       progressTimers.forEach(([delay, step, message]) => {
-        window.setTimeout(() => {
+        const timerId = window.setTimeout(() => {
+          if (sessionId !== this.activeGenerateSessionId) return
           if (!this.generateProgress.show || !this.isHealthDemoMock()) return
           this.updateFriendlyProgress(step, message)
           if (step === 5) {
@@ -1494,6 +1686,7 @@ export default {
             this.$message.success('演示算法模型生成成功！')
           }
         }, delay)
+        this.demoProgressTimerIds.push(timerId)
       })
     },
 
@@ -1513,6 +1706,9 @@ export default {
     },
 
     startAmlDemoGenerate(modelName) {
+      this.activeGenerateSessionId += 1
+      const sessionId = this.activeGenerateSessionId
+      this.clearDemoProgressTimers()
       this.generateLoading = true
       this.generateProgress = {
         show: true,
@@ -1531,7 +1727,8 @@ export default {
         [40000, 5, '演示算法模型已生成，可查看说明并下载源文件。']
       ]
       progressTimers.forEach(([delay, step, message]) => {
-        window.setTimeout(() => {
+        const timerId = window.setTimeout(() => {
+          if (sessionId !== this.activeGenerateSessionId) return
           if (!this.generateProgress.show || this.verticalType !== AML_DEMO_VERTICAL_TYPE) return
           this.updateFriendlyProgress(step, message)
           if (step === 5) {
@@ -1542,6 +1739,7 @@ export default {
             this.$message.success('演示算法模型生成成功！')
           }
         }, delay)
+        this.demoProgressTimerIds.push(timerId)
       })
     },
 
@@ -1561,6 +1759,12 @@ export default {
     },
 
     startGenerate(modelName, narrative) {
+      this.activeGenerateSessionId += 1
+      const sessionId = this.activeGenerateSessionId
+      if (this.activeStreamAbortController) {
+        this.activeStreamAbortController.abort()
+      }
+      this.activeStreamAbortController = null
       this.generateLoading = true
       this.generateProgress = {
         show: true,
@@ -1612,10 +1816,17 @@ export default {
       }
 
       streamAgent('/api/agent/aml_auto_generate', formData, {
+        onAbortController: (controller) => {
+          if (sessionId === this.activeGenerateSessionId) {
+            this.activeStreamAbortController = controller
+          }
+        },
         onStart: () => {
+          if (sessionId !== this.activeGenerateSessionId) return
           this.updateFriendlyProgress(1, '已开始理解您的需求和应用场景。')
         },
         onStep: (data) => {
+          if (sessionId !== this.activeGenerateSessionId) return
           this.generateProgress.agentSteps.push({
             step: data.step || this.generateProgress.agentSteps.length + 1,
             thought: data.thought || '',
@@ -1627,6 +1838,8 @@ export default {
           this.updateFriendlyProgress(friendly.step, friendly.message)
         },
         onError: (error) => {
+          if (sessionId !== this.activeGenerateSessionId) return
+          this.activeStreamAbortController = null
           this.generateProgress.status = 'error'
           this.generateProgress.description = '生成过程遇到异常，已为您提供备用说明和后续完善建议。'
           this.generateProgress.friendlySteps = this.buildFriendlySteps(5, 'warning')
@@ -1635,6 +1848,8 @@ export default {
           this.$message.warning('生成未完全完成，已展示备用说明。')
         },
         onWarning: (warning) => {
+          if (sessionId !== this.activeGenerateSessionId) return
+          this.activeStreamAbortController = null
           this.generateProgress.status = 'finish'
           this.generateProgress.description = '生成过程返回警告，已为您提供备用说明和后续完善建议。'
           this.generateProgress.friendlySteps = this.buildFriendlySteps(5, 'warning')
@@ -1643,6 +1858,8 @@ export default {
           this.$message.warning('生成返回警告，已展示备用说明。')
         },
         onFinalResult: (results) => {
+          if (sessionId !== this.activeGenerateSessionId) return
+          this.activeStreamAbortController = null
           this.generateProgress.status = 'finish'
           this.generateProgress.description = '算法模型已顺利生成，可查看说明并下载源文件。'
           this.generateProgress.friendlySteps = this.buildFriendlySteps(5)
@@ -1654,11 +1871,18 @@ export default {
           })
         },
         onComplete: () => {
+          if (sessionId !== this.activeGenerateSessionId) return
+          this.activeStreamAbortController = null
           this.generateLoading = false
           if (this.generateProgress.status === 'process') {
             this.generateProgress.status = 'finish'
             this.generateProgress.description = '执行完成，正在整理结果展示。'
           }
+        },
+        onAbort: () => {
+          if (sessionId !== this.activeGenerateSessionId) return
+          this.activeStreamAbortController = null
+          this.generateLoading = false
         },
         onDataProcessError: (e, line) => {
           console.error('解析智能体数据失败:', e, line)
@@ -1931,39 +2155,7 @@ export default {
     verticalType: {
       async handler(newVal) {
         if (newVal) {
-          this.form.serviceName = undefined
-          this.serviceNameAutoValue = ''
-          this.serviceNameTouched = false
-          this.freeNarrative = ''
-          this.programInfo = { industry: undefined, scenario: undefined, technology: undefined }
-          this.datasetFiles = []
-          this.uploadDatasetFiles = []
-          this.referenceFiles = []
-          this.uploadReferenceFiles = []
-          this.algorithmCategory = undefined
-          this.categoryParams = {}
-          this.customConstraintText = ''
-          this.labelInputVisible = false
-          this.labelInputValue = ''
-          this.categoryParamsPanelActive = ['params']
-          this.generateLoading = false
-          this.generateProgress = {
-            show: false,
-            status: 'process',
-            description: '',
-            expanded: true,
-            agentSteps: [],
-            friendlySteps: []
-          }
-          this.generateResult = {
-            show: false,
-            generatedCode: '',
-            codeFilename: '',
-            modelSummary: { ...DEFAULT_MODEL_SUMMARY },
-            testResults: [],
-            references: [],
-            differentiationSummary: null
-          }
+          this.resetScenarioDevToInitial()
           await this.initData()
         }
       }
@@ -1973,9 +2165,163 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.ant-form-item {
-  margin-bottom: 0;
+.scenario-dev-layout {
+  align-items: stretch;
 }
+
+.scenario-dev-main,
+.scenario-dev-sidebar {
+  margin-bottom: 0;
+  display: flex;
+}
+
+.config-main-card,
+.progress-sidebar-card {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  /deep/ .ant-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.config-form {
+  /deep/ .ant-form-item {
+    margin-bottom: 12px;
+  }
+
+  /deep/ .ant-form-item-label {
+    line-height: 1.4;
+    padding-bottom: 4px;
+  }
+
+  /deep/ .ant-select,
+  /deep/ .ant-input,
+  /deep/ .ant-input-number {
+    width: 100%;
+  }
+}
+
+.form-section-row {
+  margin-top: 4px;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.domain-title-text {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 32px;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.custom-constraint-input {
+  width: 100%;
+  max-width: 360px;
+  margin-top: 8px;
+  margin-left: 24px;
+}
+
+.result-full-card {
+  margin-top: 16px;
+}
+
+.progress-sidebar-card {
+  /deep/ .ant-card-head {
+    min-height: 42px;
+    padding: 0 12px;
+  }
+
+  /deep/ .ant-card-head-title {
+    padding: 10px 0;
+  }
+
+  /deep/ .ant-card-body {
+    padding: 12px;
+    overflow-y: auto;
+  }
+}
+
+.progress-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 280px;
+  padding: 8px 0;
+}
+
+.progress-placeholder-icon {
+  font-size: 48px;
+  color: #bfbfbf;
+}
+
+.progress-placeholder-steps {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #f0f0f0;
+}
+
+.progress-placeholder-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 13px;
+}
+
+.progress-placeholder-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #d9d9d9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  background: #fafafa;
+}
+
+.progress-placeholder-step-title {
+  line-height: 1.4;
+}
+
+.progress-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
+.progress-card-title-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.progress-card-subtitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1890ff;
+  background: #e6f7ff;
+  border-radius: 10px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
 .reference-block {
   width: 100%;
 }
@@ -1991,12 +2337,6 @@ export default {
 .reference-control {
   width: 100%;
   margin-top: 8px;
-}
-.reference-upload-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 .ref-detail {
   margin-top: 8px;
@@ -2054,22 +2394,32 @@ export default {
   color: rgba(0, 0, 0, 0.65);
   font-size: 13px;
 }
-.narrative-textarea {
-  width: 100%;
-  max-width: 960px;
-}
 
 .dataset-upload-row {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
+  gap: 8px;
+}
+
+.reference-upload-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .upload-hint {
   font-size: 12px;
   color: #8c8c8c;
-  line-height: 32px;
-  white-space: nowrap;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.narrative-textarea {
+  width: 100%;
+  max-width: none;
 }
 
 .spec-collapse {
@@ -2367,6 +2717,166 @@ export default {
         }
       }
     }
+  }
+}
+
+// 右侧进度栏适配
+.sidebar-steps {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  .step-item {
+    padding: 12px;
+    margin-bottom: 0;
+  }
+
+  .sidebar-step-header {
+    cursor: default;
+    align-items: flex-start;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    .step-title {
+      font-size: 14px;
+    }
+
+    .sidebar-step-description {
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+  }
+
+  .timeline-steps {
+    max-height: none;
+    overflow: visible;
+    padding-top: 8px;
+    margin-top: 8px;
+    border-top: 1px dashed #e8e8e8;
+  }
+
+  .timeline-item {
+    display: flex;
+    position: relative;
+    padding-bottom: 16px;
+
+    &.last {
+      padding-bottom: 0;
+    }
+
+    .timeline-track {
+      position: relative;
+      width: 28px;
+      flex-shrink: 0;
+      margin-right: 8px;
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 13px;
+        top: 28px;
+        bottom: -4px;
+        width: 2px;
+        background: #e8e8e8;
+      }
+    }
+
+    &.last .timeline-track::after {
+      display: none;
+    }
+
+    .timeline-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid #d9d9d9;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #999;
+      position: relative;
+      z-index: 1;
+    }
+
+    &.done .timeline-dot {
+      border-color: #52c41a;
+      background: #f6ffed;
+      color: #52c41a;
+    }
+
+    &.active .timeline-dot {
+      border-color: #1890ff;
+      background: #e6f7ff;
+      color: #1890ff;
+    }
+
+    &.warning .timeline-dot {
+      border-color: #fa8c16;
+      background: #fff7e6;
+      color: #fa8c16;
+    }
+
+    .timeline-content {
+      flex: 1;
+      min-width: 0;
+      padding: 2px 0;
+    }
+
+    .timeline-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .timeline-step-label {
+      font-size: 12px;
+      color: #8c8c8c;
+      white-space: nowrap;
+    }
+
+    .timeline-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+
+    .timeline-desc {
+      font-size: 12px;
+      line-height: 1.5;
+      color: rgba(0, 0, 0, 0.65);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .progress-sidebar-card {
+    position: static;
+    margin-top: 16px;
+
+    /deep/ .ant-card-body {
+      max-height: none;
+    }
+  }
+
+  .scenario-dev-sidebar {
+    order: 2;
+  }
+
+  .scenario-dev-main {
+    order: 1;
   }
 }
 </style>

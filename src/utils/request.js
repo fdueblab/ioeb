@@ -93,11 +93,16 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
     onWarning = (warning) => {},
     onFinalResult = (results) => {},
     onComplete = () => {},
-    onDataProcessError = (error) => {}
+    onDataProcessError = (error) => {},
+    onAbort = () => {},
+    onAbortController = () => {}
   } = callbacks
 
   const abortController = new AbortController()
+  onAbortController(abortController)
+  let timedOut = false
   const fetchTimeoutId = setTimeout(() => {
+    timedOut = true
     abortController.abort()
   }, STREAM_AGENT_FETCH_TIMEOUT_MS)
 
@@ -180,10 +185,14 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
   } catch (error) {
     clearTimeout(fetchTimeoutId)
     if (error && error.name === 'AbortError') {
-      onError('连接智能体超时，请检查网关服务或稍后重试')
-    } else {
-      onError(`请求错误: ${error.message}`)
+      if (timedOut) {
+        onError('连接智能体超时，请检查网关服务或稍后重试')
+      } else {
+        onAbort()
+      }
+      return
     }
+    onError(`请求错误: ${error.message}`)
   }
 }
 

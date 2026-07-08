@@ -8,3 +8,10 @@ export function submitFeedback(data) {
     data
   })
 }
+
+export function getMyFeedbacks() {
+  return request({
+    url: `${API_BASE_URL}/feedback/mine`,
+    method: 'get'
+  })
+}

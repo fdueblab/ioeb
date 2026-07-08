@@ -65,6 +65,7 @@ import SearchForm from './components/SearchForm'
 import FilterCard from './components/FilterCard'
 import ServiceTable from './components/ServiceTable'
 import ServiceEditModal from './components/ServiceEditModal'
+import { standardizeServiceData } from '@/utils/serviceData'
 
 export default {
   name: 'GenericVerticalList',
@@ -300,26 +301,7 @@ export default {
     },
     // 标准化API返回的数据，确保格式统一
     standardizeServiceData(services) {
-      return services.map(service => {
-        // 确保norm属性存在且为数组
-        if (!service.norm || !Array.isArray(service.norm)) {
-          service.norm = []
-        }
-        // 确保source属性存在
-        if (!service.source) {
-          service.source = {
-            popoverTitle: '服务溯源',
-            companyName: '',
-            companyAddress: '',
-            companyContact: '',
-            companyIntroduce: '',
-            msIntroduce: '',
-            companyScore: 0,
-            msScore: 0
-          }
-        }
-        return service
-      })
+      return standardizeServiceData(services)
     },
     // 初始化数据
     async initData() {

@@ -697,29 +697,51 @@ export default {
     loadEasyFlow() {
       console.log('开始加载流程，节点数量:', this.data.nodeList.length)
 
-      // 先确保DOM已渲染，再计算节点位置
       this.$nextTick(() => {
         this.calculateNodePositions()
+        this.scheduleJsPlumbBinding()
+      })
+    },
 
-        // 等待位置更新后再设置jsPlumb
+    bindJsPlumbToNodes() {
+      if (!this.jsPlumb || !this.data.nodeList.length) {
+        return true
+      }
+      let allBound = true
+      for (let i = 0; i < this.data.nodeList.length; i++) {
+        const node = this.data.nodeList[i]
+        if (!document.getElementById(node.id)) {
+          allBound = false
+          continue
+        }
+        try {
+          this.jsPlumb.makeSource(node.id, this.jsplumbSourceOptions)
+          this.jsPlumb.makeTarget(node.id, this.jsplumbTargetOptions)
+        } catch (e) {
+          console.warn('jsPlumb 绑定节点失败，稍后重试:', node.id, e)
+          allBound = false
+        }
+      }
+      return allBound
+    },
+
+    scheduleJsPlumbBinding(attempt = 0) {
+      this.$nextTick(() => {
+        const bound = this.bindJsPlumbToNodes()
+        if (!bound && attempt < 10) {
+          setTimeout(() => this.scheduleJsPlumbBinding(attempt + 1), 100)
+          return
+        }
+
+        this.loadEasyFlowFinish = false
+        this.createAutoConnections()
+
         this.$nextTick(() => {
-          // 设置节点为连接源和目标
-          for (let i = 0; i < this.data.nodeList.length; i++) {
-            const node = this.data.nodeList[i];
-            this.jsPlumb.makeSource(node.id, this.jsplumbSourceOptions);
-            this.jsPlumb.makeTarget(node.id, this.jsplumbTargetOptions);
+          this.loadEasyFlowFinish = true
+          if (this.jsPlumb) {
+            this.jsPlumb.repaintEverything()
           }
-
-          // 暂时设置标志防止connection事件被触发
-          this.loadEasyFlowFinish = false;
-
-          // 自动创建智能体与服务节点之间的双向连线
-          this.createAutoConnections();
-
-          this.$nextTick(() => {
-            this.loadEasyFlowFinish = true;
-            console.log('流程加载完成')
-          });
+          console.log('流程加载完成')
         })
       })
     },

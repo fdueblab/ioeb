@@ -23,7 +23,8 @@ export default {
   menu: {
     locale: true
   },
-  title: '算法模型智能体平台',
+  title: '面向垂域应用的算法模型众智工场',
+  pageTitleBrand: '算法模型众智工场',
   pwa: false,
   iconfontUrl: '',
   production: process.env.NODE_ENV === 'production' && process.env.VUE_APP_PREVIEW !== 'true'

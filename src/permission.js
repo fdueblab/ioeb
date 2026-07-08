@@ -4,7 +4,7 @@ import storage from 'store'
 import NProgress from 'nprogress' // progress bar
 import '@/components/NProgress/nprogress.less' // progress bar custom style
 import notification from 'ant-design-vue/es/notification'
-import { setDocumentTitle, domTitle } from '@/utils/domUtil'
+import { setDocumentTitle, buildPageDocumentTitle } from '@/utils/domUtil'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { i18nRender } from '@/locales'
 import { loadDict, preloadAllDict } from '@/utils/dictionaryCache' // 引入字典预加载功能
@@ -33,7 +33,7 @@ const getDefaultRoutePath = () => getDefaultLandingPath()
 
 router.beforeEach(async (to, from, next) => {
   NProgress.start() // start progress bar
-  to.meta && typeof to.meta.title !== 'undefined' && setDocumentTitle(`${i18nRender(to.meta.title)} - ${domTitle}`)
+  to.meta && typeof to.meta.title !== 'undefined' && setDocumentTitle(buildPageDocumentTitle(i18nRender(to.meta.title)))
   /* has token */
   const token = storage.get(ACCESS_TOKEN)
   if (token) {
