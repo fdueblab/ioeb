@@ -516,15 +516,6 @@ export const asyncRouterMap = [
     meta: { title: 'menu.home' },
     redirect: () => getDefaultLandingPath(),
     children: [
-      // 垂域应用AI资源检索 - 从字典动态获取
-      {
-        path: '/vertical-user',
-        name: 'vertical-user',
-        redirect: '/vertical-user/aml', // 默认重定向，会在路由初始化时被更新
-        component: RouteView,
-        meta: { title: '垂域应用AI资源检索', keepAlive: true, icon: 'appstore', permission: ['admin', 'publisher', 'user'] },
-        children: [] // 子路由在路由初始化时动态加载
-      },
       // 算法模型想定式开发 - 从字典动态获取（置于垂域原子微服务发布上方）
       {
         path: '/vertical-scenario-dev',
@@ -859,6 +850,15 @@ export const asyncRouterMap = [
         },
         component: () => import('@/views/dashboard/Analysis')
       },
+      // 垂域应用AI资源检索 - 从字典动态获取
+      {
+        path: '/vertical-user',
+        name: 'vertical-user',
+        redirect: '/vertical-user/aml', // 默认重定向，会在路由初始化时被更新
+        component: RouteView,
+        meta: { title: '垂域应用AI资源检索', keepAlive: true, icon: 'appstore', permission: ['admin', 'publisher', 'user'] },
+        children: [] // 子路由在路由初始化时动态加载
+      },
       // 用户管理
       {
         path: '/user-manage',
@@ -919,14 +919,8 @@ export const asyncRouterMap = [
       },
       {
         path: '/feedback',
-        name: 'feedback',
-        meta: {
-          title: '意见反馈',
-          keepAlive: true,
-          icon: 'message',
-          permission: ['admin', 'publisher', 'user']
-        },
-        component: () => import('@/views/feedback')
+        redirect: '/account/feedback',
+        hidden: true
       },
       // account
       {
@@ -940,7 +934,7 @@ export const asyncRouterMap = [
             path: '/account/workplace',
             name: 'workplace',
             meta: {
-              title: '我的工作台',
+              title: '当前工作',
               keepAlive: true,
               suppressProfileSurvey: true,
               permission: ['admin', 'publisher', 'user']
@@ -1026,11 +1020,21 @@ export const asyncRouterMap = [
             path: '/account/center',
             name: 'account-center',
             meta: {
-              title: '个人空间',
+              title: '我的成果',
               keepAlive: true,
               permission: ['admin', 'publisher', 'user']
             },
             component: () => import('@/views/account/space')
+          },
+          {
+            path: '/account/feedback',
+            name: 'account-feedback',
+            meta: {
+              title: '意见反馈',
+              keepAlive: true,
+              permission: ['admin', 'publisher', 'user']
+            },
+            component: () => import('@/views/account/feedback/index')
           }
         ]
       },

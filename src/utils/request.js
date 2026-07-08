@@ -123,12 +123,17 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
     onWarning = (warning) => {},
     onFinalResult = (results) => {},
     onComplete = () => {},
-    onDataProcessError = (error) => {}
+    onDataProcessError = (error) => {},
+    onAbort = () => {},
+    onAbortController = () => {}
   } = callbacks
 
   const abortController = new AbortController()
+  onAbortController(abortController)
+  let timedOut = false
   let responseReceived = false
   const fetchTimeoutId = setTimeout(() => {
+    timedOut = true
     abortController.abort()
   }, STREAM_AGENT_FETCH_TIMEOUT_MS)
 
@@ -208,11 +213,15 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
   } catch (error) {
     clearTimeout(fetchTimeoutId)
     if (error && error.name === 'AbortError') {
-      onError('连接智能体超时，请检查网关服务或稍后重试', REQUEST_ERROR_KIND.NETWORK)
-    } else {
-      const kind = error.kind || (responseReceived ? REQUEST_ERROR_KIND.SERVER : REQUEST_ERROR_KIND.NETWORK)
-      onError(error.message || String(error), kind)
+      if (timedOut) {
+        onError('连接智能体超时，请检查网关服务或稍后重试', REQUEST_ERROR_KIND.NETWORK)
+      } else {
+        onAbort()
+      }
+      return
     }
+    const kind = error.kind || (responseReceived ? REQUEST_ERROR_KIND.SERVER : REQUEST_ERROR_KIND.NETWORK)
+    onError(error.message || String(error), kind)
   }
 }
 

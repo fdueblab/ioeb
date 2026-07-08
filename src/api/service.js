@@ -198,3 +198,18 @@ export function downloadScenarioGeneratedAlgorithm(serviceId) {
     responseType: 'blob'
   })
 }
+
+export function getMyServices() {
+  return request({
+    url: `${API_BASE_URL}/services/mine`,
+    method: 'get'
+  })
+}
+
+export function saveUpgradeAdvice(serviceId, payload) {
+  return request({
+    url: `${API_BASE_URL}/services/${serviceId}/upgrade-advice`,
+    method: 'post',
+    data: payload
+  })
+}

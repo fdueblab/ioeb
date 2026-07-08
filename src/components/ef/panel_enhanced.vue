@@ -927,28 +927,55 @@ export default {
         if (wireNodes.length) {
           this.calculateNodePositions()
         }
+        this.scheduleJsPlumbBinding(wireNodes)
+      })
+    },
+
+    bindJsPlumbToNodes(wireNodes) {
+      if (!this.jsPlumb || !wireNodes.length) {
+        return true
+      }
+      let allBound = true
+      for (let i = 0; i < wireNodes.length; i++) {
+        const node = wireNodes[i]
+        if (!document.getElementById(node.id)) {
+          allBound = false
+          continue
+        }
+        try {
+          this.jsPlumb.makeSource(node.id, this.jsplumbSourceOptions)
+          this.jsPlumb.makeTarget(node.id, this.jsplumbTargetOptions)
+        } catch (e) {
+          console.warn('jsPlumb 绑定节点失败，稍后重试:', node.id, e)
+          allBound = false
+        }
+      }
+      return allBound
+    },
+
+    scheduleJsPlumbBinding(wireNodes, attempt = 0) {
+      this.$nextTick(() => {
+        if (!wireNodes.length) {
+          this.loadEasyFlowFinish = true
+          this.nodePositionsCalculated = true
+          return
+        }
+
+        const bound = this.bindJsPlumbToNodes(wireNodes)
+        if (!bound && attempt < 10) {
+          setTimeout(() => this.scheduleJsPlumbBinding(wireNodes, attempt + 1), 100)
+          return
+        }
+
+        this.loadEasyFlowFinish = false
+        this.createAutoConnections()
 
         this.$nextTick(() => {
-          if (!wireNodes.length) {
-            this.loadEasyFlowFinish = true
-            this.nodePositionsCalculated = true
-            return
+          this.loadEasyFlowFinish = true
+          if (this.jsPlumb) {
+            this.jsPlumb.repaintEverything()
           }
-
-          for (let i = 0; i < wireNodes.length; i++) {
-            const node = wireNodes[i]
-            if (!document.getElementById(node.id)) continue
-            this.jsPlumb.makeSource(node.id, this.jsplumbSourceOptions)
-            this.jsPlumb.makeTarget(node.id, this.jsplumbTargetOptions)
-          }
-
-          this.loadEasyFlowFinish = false
-          this.createAutoConnections()
-
-          this.$nextTick(() => {
-            this.loadEasyFlowFinish = true
-            if (this.jsPlumb) this.jsPlumb.repaintEverything()
-          })
+          console.log('流程加载完成')
         })
       })
     },

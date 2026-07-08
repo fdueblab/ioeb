@@ -19,3 +19,12 @@ export const setDocumentTitle = function (title) {
 }
 
 export const domTitle = config.title
+export const pageTitleBrand = config.pageTitleBrand || '算法模型众智工场'
+
+export const buildPageDocumentTitle = function (menuTitle) {
+  const label = (menuTitle || '').trim()
+  if (!label) {
+    return domTitle
+  }
+  return `${pageTitleBrand}#${label}`
+}

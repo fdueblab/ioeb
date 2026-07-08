@@ -1,224 +1,263 @@
 <template>
   <page-header-wrapper :title="false">
     <a-card :bordered="false">
-      <div class="table-page-search-wrapper">
+      <div class="page-heading">
+        <h2>我的成果</h2>
+        <p>展示你在平台中创建并登记的各类组件，可按需生成升级建议。</p>
+      </div>
+
+      <div class="table-toolbar">
         <a-form layout="inline">
-          <a-row :gutter="48">
-            <a-col :md="8" :sm="24">
-              <a-form-item label="服务名称">
-                <a-input v-model="queryParam.id" placeholder=""/>
-              </a-form-item>
-            </a-col>
-            <a-col :md="8" :sm="24">
-              <a-form-item label="使用状态">
-                <a-select v-model="queryParam.status" placeholder="请选择" default-value="0">
-                  <a-select-option value="-1">全部</a-select-option>
-                  <a-select-option value="0">未启动</a-select-option>
-                  <a-select-option value="1">运行中</a-select-option>
-                  <a-select-option value="2">异常</a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :md="8" :sm="24">
-              <span class="table-page-search-submitButtons">
-                <a-button type="primary" @click="$refs.table.refresh(true)">查询</a-button>
-                <a-button style="margin-left: 8px" @click="() => this.queryParam = {}">重置</a-button>
-              </span>
-            </a-col>
-          </a-row>
+          <a-form-item label="资源类型">
+            <a-select
+              v-model="typeFilter"
+              allow-clear
+              placeholder="全部类型"
+              style="width: 200px"
+              @change="applyFilter"
+            >
+              <a-select-option v-for="item in typeArr" :key="item.code" :value="item.code">
+                {{ item.text }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item>
+            <a-button @click="loadData">刷新列表</a-button>
+          </a-form-item>
         </a-form>
       </div>
 
-      <a-table
-        ref="table"
-        :columns="columns"
-        :dataSource="dataSource"
-      >
-        <span slot="serial" slot-scope="text, record, index">
-          {{ index + 1 }}
-        </span>
-        <span slot="status" slot-scope="text">
-          <a-badge :status="text | statusTypeFilter" :text="text | statusFilter" />
-        </span>
-      </a-table>
+      <service-table
+        mode="achievement"
+        :data-source="filteredDataSource"
+        :loading="dataLoading"
+        :status-dict="statusDict"
+        :status-style-dict="statusStyleDict"
+        :norm-dict="normDict"
+        :type-arr="typeArr"
+        :technology-arr="technologyArr"
+        :upgrade-advice-loading-id="upgradeAdviceLoadingId"
+        @edit="handleEdit"
+        @use="handleUse"
+        @upgrade-advice="handleUpgradeAdvice"
+      />
+
+      <a-empty
+        v-if="!dataLoading && filteredDataSource.length === 0"
+        description="暂无成果，请先在垂域模块创建并登记组件"
+        style="margin-top: 24px"
+      />
     </a-card>
+
+    <upgrade-advice-modal ref="upgradeAdviceModal" />
   </page-header-wrapper>
 </template>
 
 <script>
-import { Ellipsis, TagSelect, StandardFormRow, ArticleListContent } from '@/components'
-const statusMap = {
-  0: {
-    status: 'default',
-    text: '未启动'
-  },
-  1: {
-    status: 'processing',
-    text: '运行中'
-  },
-  2: {
-    status: 'error',
-    text: '异常'
-  }
-}
-const data = []
-data.push({
-  name: '安全计算微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 1,
-  norm: [0, 2],
-  number: '2342'
-})
-data.push({
-  name: '无人机目标识别微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 1,
-  norm: [1, 2],
-  number: '2342'
-})
-data.push({
-  name: '无人机远程控制微服务',
-  netWork: 'bridge',
-  port: '0.0.0.0:8000/TCP → 0.0.0.0:80001',
-  volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-  status: 1,
-  norm: [0, 1, 3],
-  number: '2342'
-})
-if (sessionStorage.getItem('upload_exception_service')) {
-  data.push({
-    name: '异常识别微服务',
-    netWork: 'bridge',
-    port: '0.0.0.0:8081/TCP → 0.0.0.0:8080',
-    volume: '/var/opt/gitlab/mnt/user  →  /appdata/aml/data',
-    status: 1,
-    norm: [0, 1, 2],
-    number: '2342'
-  })
-}
+import { getMyServices, saveUpgradeAdvice, downloadScenarioGeneratedAlgorithm } from '@/api/service'
+import { streamGenerateUpgradeAdvice } from '@/api/achievement'
+import { standardizeServiceData, parseUpgradeAdviceResult } from '@/utils/serviceData'
+import dictionaryCache from '@/utils/dictionaryCache'
+import ServiceTable from '@/views/vertical/user/components/ServiceTable'
+import UpgradeAdviceModal from '@/views/account/components/UpgradeAdviceModal'
 
 export default {
-  name: 'TableList',
+  name: 'AccountAchievements',
   components: {
-    Ellipsis,
-    TagSelect,
-    StandardFormRow,
-    ArticleListContent
+    ServiceTable,
+    UpgradeAdviceModal
   },
-  data () {
+  data() {
     return {
-      // create model
-      form: this.$form.createForm(this),
-      visible: false,
-      confirmLoading: false,
-      mdl: null,
-      // 高级搜索 展开/关闭
-      advanced: false,
-      // 查询参数
-      queryParam: {},
-      // 加载数据方法 必须为 Promise 对象
-      columns: [
-        {
-          title: '#',
-          scopedSlots: { customRender: 'serial' }
-        },
-        {
-          title: '服务名称',
-          dataIndex: 'name'
-        },
-        {
-          title: '网络',
-          dataIndex: 'netWork'
-        },
-        {
-          title: '端口映射',
-          dataIndex: 'port'
-        },
-        {
-          title: '卷映射',
-          dataIndex: 'volume'
-        },
-        {
-          title: '状态',
-          dataIndex: 'status',
-          scopedSlots: { customRender: 'status' }
-        }
-      ],
+      dataLoading: false,
       dataSource: [],
-      selectedRowKeys: [],
-      selectedRows: [],
-      response: ''
+      filteredDataSource: [],
+      typeFilter: undefined,
+      upgradeAdviceLoadingId: '',
+      statusDict: [],
+      statusStyleDict: [],
+      normDict: [],
+      typeArr: [],
+      technologyArr: []
     }
   },
-  filters: {
-    statusFilter (type) {
-      return statusMap[type].text
-    },
-    statusTypeFilter (type) {
-      return statusMap[type].status
-    }
+  created() {
+    this.loadDictionaryData()
+    this.loadData()
   },
-  created () {
-    this.dataSource = data
-  },
-  computed: {
-    rowSelection () {
-      return {
-        selectedRowKeys: this.selectedRowKeys,
-        onChange: this.onSelectChange
-      }
-    }
+  activated() {
+    this.loadData()
   },
   methods: {
-    handleAdd () {
-      this.$emit('onGoAdd')
-    },
-    handleEdit (record) {
-      console.log(record)
-    },
-    delConfirm() {
-      this.$message.success('删除成功！')
-    },
-    handleCancel () {
-      this.visible = false
-      const form = this.$refs.createModal.form
-      form.resetFields() // 清理表单数据（可不做）
-    },
-    handleChange (value) {
-      console.log(`selected ${value}`)
-    },
-    onSelectChange (selectedRowKeys, selectedRows) {
-      this.selectedRowKeys = selectedRowKeys
-      this.selectedRows = selectedRows
-    },
-    toggleAdvanced () {
-      this.advanced = !this.advanced
-    },
-    onTest () {
-      const obj = {
-        code: 200,
-        message: '测试通过！'
+    async loadDictionaryData() {
+      try {
+        this.statusDict = await dictionaryCache.loadDict('status') || []
+        this.statusStyleDict = await dictionaryCache.loadDict('status_style') || []
+        this.normDict = [
+          ...(await dictionaryCache.loadDict('norm') || []),
+          ...(await dictionaryCache.loadDict('performance_metric') || [])
+        ]
+        this.typeArr = await dictionaryCache.loadDict('service_type') || []
+        this.technologyArr = await dictionaryCache.loadDict('aml_technology') || []
+        const genAlgo = { code: 'generated_algorithm', text: '想定式生成算法' }
+        if (!this.typeArr.some(item => item.code === genAlgo.code)) {
+          this.typeArr = [...this.typeArr, genAlgo]
+        }
+      } catch (error) {
+        console.error('加载字典失败:', error)
       }
-      const newObj = JSON.stringify(obj, null, 4)
-      this.response = newObj
+    },
+    async loadData() {
+      this.dataLoading = true
+      try {
+        const res = await getMyServices()
+        if (res && res.status === 'success') {
+          this.dataSource = standardizeServiceData(res.services || [])
+          this.applyFilter()
+        } else {
+          this.$message.error((res && res.message) || '获取我的成果失败')
+        }
+      } catch (e) {
+        this.$message.error('获取我的成果失败：' + ((e && e.message) || e))
+      } finally {
+        this.dataLoading = false
+      }
+    },
+    applyFilter() {
+      if (!this.typeFilter) {
+        this.filteredDataSource = [...this.dataSource]
+        return
+      }
+      this.filteredDataSource = this.dataSource.filter(item => item.type === this.typeFilter)
+    },
+    handleEdit(record) {
+      this.$message.info(`成果「${record.name}」可在垂域应用 AI 资源检索中编辑`)
+      if (record.domain) {
+        this.$router.push(`/vertical-user/${record.domain}`)
+      }
+    },
+    async handleUse(record) {
+      if (record.type === 'generated_algorithm') {
+        try {
+          const blob = await downloadScenarioGeneratedAlgorithm(record.id)
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = (record.apiList && record.apiList[0] && record.apiList[0].responseFileName) || `${record.name || 'algorithm'}.py`
+          link.click()
+          window.URL.revokeObjectURL(url)
+        } catch (e) {
+          this.$message.error('下载失败：' + ((e && e.message) || e))
+        }
+        return
+      }
+      const statusType = this.statusStyleDict.find(item => item.code === record.status)
+      const badge = statusType ? statusType.text : 'default'
+      if (badge === 'default' || badge === 'error') {
+        this.$message.info('服务异常或未部署，暂时无法使用')
+        return
+      }
+      if (badge === 'processing') {
+        this.$message.info('该服务正在部署，暂时无法使用')
+        return
+      }
+      if (record.domain) {
+        this.$router.push(`/vertical-user/${record.domain}`)
+      }
+    },
+    handleUpgradeAdvice(record, action) {
+      if (action === 'view') {
+        this.$refs.upgradeAdviceModal.openView(record)
+        return
+      }
+      this.generateUpgradeAdvice(record, action === 'refresh')
+    },
+    generateUpgradeAdvice(record, isRefresh) {
+      if (this.upgradeAdviceLoadingId) {
+        this.$message.info('正在生成其他成果的升级建议，请稍候')
+        return
+      }
+      this.upgradeAdviceLoadingId = record.id
+      this.$refs.upgradeAdviceModal.openGenerating(record)
+
+      streamGenerateUpgradeAdvice(record, {
+        typeArr: this.typeArr,
+        technologyArr: this.technologyArr
+      }, {
+        onFinalResult: async (results) => {
+          const parsed = parseUpgradeAdviceResult(results)
+          if (!parsed) {
+            this.$message.error('未能解析升级建议结果')
+            this.upgradeAdviceLoadingId = ''
+            this.$refs.upgradeAdviceModal.setGenerating(false)
+            return
+          }
+          try {
+            const payload = {
+              leadingAnalysis: parsed.leadingAnalysis || '',
+              autoUpgradeSuggestion: parsed.autoUpgradeSuggestion || '',
+              manualUpdateSuggestion: parsed.manualUpdateSuggestion || ''
+            }
+            const res = await saveUpgradeAdvice(record.id, payload)
+            if (res && res.status === 'success') {
+              const advice = res.service && res.service.upgradeAdvice
+              this.updateRecordAdvice(record.id, advice || payload)
+              this.$refs.upgradeAdviceModal.setAdvice(advice || payload)
+              this.$message.success(isRefresh ? '升级建议已刷新' : '升级建议生成成功')
+            } else {
+              this.$message.error((res && res.message) || '保存升级建议失败')
+              this.$refs.upgradeAdviceModal.handleClose()
+            }
+          } catch (e) {
+            this.$message.error('保存升级建议失败：' + ((e && e.message) || e))
+            this.$refs.upgradeAdviceModal.handleClose()
+          } finally {
+            this.upgradeAdviceLoadingId = ''
+          }
+        },
+        onError: (error) => {
+          this.upgradeAdviceLoadingId = ''
+          this.$refs.upgradeAdviceModal.handleClose()
+          this.$message.error('生成升级建议失败：' + error)
+        },
+        onWarning: (warning) => {
+          this.upgradeAdviceLoadingId = ''
+          this.$refs.upgradeAdviceModal.handleClose()
+          this.$message.warning('生成升级建议返回警告：' + warning)
+        }
+      })
+    },
+    updateRecordAdvice(serviceId, advice) {
+      const patch = item => {
+        if (item.id === serviceId) {
+          item.upgradeAdvice = advice
+        }
+        return item
+      }
+      this.dataSource = this.dataSource.map(patch)
+      this.applyFilter()
     }
   }
 }
 </script>
+
 <style lang="less" scoped>
-.ant-pro-components-tag-select {
-  :deep(.ant-pro-tag-select .ant-tag) {
-    margin-right: 24px;
-    padding: 0 8px;
-    font-size: 14px;
+.page-heading {
+  margin-bottom: 16px;
+
+  h2 {
+    margin-bottom: 4px;
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    color: #6b7280;
   }
 }
 
-.list-articles-trigger {
-  margin-left: 12px;
+.table-toolbar {
+  margin-bottom: 16px;
 }
 </style>

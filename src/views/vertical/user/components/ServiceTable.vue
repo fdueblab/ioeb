@@ -131,6 +131,18 @@
           <a-tag>无溯源数据</a-tag>
         </template>
       </span>
+      <span v-if="mode === 'achievement'" slot="upgradeAdvice" slot-scope="text, record">
+        <template v-if="upgradeAdviceLoadingId === record.id">
+          <a-spin size="small" />
+        </template>
+        <template v-else-if="record.upgradeAdvice">
+          <a-button type="link" size="small" @click="$emit('upgrade-advice', record, 'view')">查看建议</a-button>
+          <a-button type="link" size="small" @click="$emit('upgrade-advice', record, 'refresh')">刷新</a-button>
+        </template>
+        <template v-else>
+          <a-button type="link" size="small" @click="$emit('upgrade-advice', record, 'generate')">生成建议</a-button>
+        </template>
+      </span>
       <span slot="action" slot-scope="text, record">
         <a-button type="link" @click="$emit('edit', record)">编辑</a-button>
         <a-button v-if="record.type === 'meta'" type="link" @click="$emit('use', record)">试用</a-button>
@@ -178,14 +190,22 @@ export default {
       type: Array,
       default: () => []
     },
+    mode: {
+      type: String,
+      default: 'resource'
+    },
+    upgradeAdviceLoadingId: {
+      type: String,
+      default: ''
+    },
     pagination: {
       type: [Object, Boolean],
       default: false
     }
   },
-  data() {
-    return {
-      columns: [
+  computed: {
+    columns() {
+      const baseColumns = [
         {
           title: '#',
           width: '80px',
@@ -236,15 +256,27 @@ export default {
           dataIndex: 'source',
           width: '90px',
           scopedSlots: { customRender: 'source' }
-        },
-        {
-          title: '操作',
-          dataIndex: 'action',
-          width: '80px',
-          align: 'center',
-          scopedSlots: { customRender: 'action' }
         }
       ]
+
+      if (this.mode === 'achievement') {
+        baseColumns.push({
+          title: '升级建议',
+          dataIndex: 'upgradeAdvice',
+          width: '120px',
+          scopedSlots: { customRender: 'upgradeAdvice' }
+        })
+      }
+
+      baseColumns.push({
+        title: '操作',
+        dataIndex: 'action',
+        width: '80px',
+        align: 'center',
+        scopedSlots: { customRender: 'action' }
+      })
+
+      return baseColumns
     }
   },
   methods: {

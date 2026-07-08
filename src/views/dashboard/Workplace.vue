@@ -4,7 +4,7 @@
       <div class="workbench-hero__main">
         <div class="workbench-kicker">
           <span class="workbench-kicker__dot"></span>
-          我的工作台
+          当前工作
         </div>
         <h1>{{ greeting }}，{{ displayName }}</h1>
         <p>
