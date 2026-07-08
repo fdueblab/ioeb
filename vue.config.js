@@ -154,12 +154,13 @@ const vueConfig = {
     host: '0.0.0.0',
     // 允许所有来源
     allowedHosts: 'all',
-    // 客户端配置
     client: {
-      webSocketURL: {
-        hostname: '0.0.0.0',
-        pathname: '/ws',
-        port: 8001
+      // 服务端仍监听 0.0.0.0；浏览器 HMR 客户端走 SSH tunnel 暴露的本机端口。
+      webSocketURL: process.env.VUE_APP_DEV_WS_URL || 'auto://127.0.0.1:0/ws',
+      overlay: {
+        errors: true,
+        warnings: false,
+        runtimeErrors: false
       }
     }
     // 如果需要代理，请去除下面的注释

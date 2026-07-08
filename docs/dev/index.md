@@ -7,5 +7,7 @@
 - [Git 最佳实践](./git-practices)
 - [生产发布流程](./release-process)
 - [生产与开发测试环境隔离及发布流程建设报告](./environment-release-report)
+- [前端 E2E 自动化测试建设说明](./e2e-testing-report)
 - [平台项目快速开始](./project-quickstart)
 - [智能体添加指南](./add-agent)
+- [Agent SSE 接口调用指南](./agent-sse-api)

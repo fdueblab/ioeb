@@ -20,6 +20,36 @@ const request = axios.create({
 // 流式智能体：首包前可能长时间阻塞（如 MCP 建连），需单独超时
 const STREAM_AGENT_FETCH_TIMEOUT_MS = 120000
 
+const REQUEST_ERROR_KIND = {
+  NETWORK: 'network',
+  SERVER: 'server'
+}
+
+function requestError(message, kind) {
+  const error = new Error(message)
+  error.kind = kind
+  return error
+}
+
+function parseAgentHttpError(errBody, status) {
+  const detail = errBody && errBody.detail
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail.trim()
+  }
+  if (detail && typeof detail === 'object') {
+    if (typeof detail.message === 'string' && detail.message.trim()) {
+      return detail.message.trim()
+    }
+    if (typeof detail.error === 'string' && detail.error.trim()) {
+      return detail.error.trim()
+    }
+  }
+  if (typeof errBody?.message === 'string' && errBody.message.trim()) {
+    return errBody.message.trim()
+  }
+  return `HTTP错误! 状态码: ${status}`
+}
+
 // 异常拦截处理器
 const errorHandler = (error) => {
   if (error.response) {
@@ -101,6 +131,7 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
   const abortController = new AbortController()
   onAbortController(abortController)
   let timedOut = false
+  let responseReceived = false
   const fetchTimeoutId = setTimeout(() => {
     timedOut = true
     abortController.abort()
@@ -114,6 +145,7 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
       body: formData,
       signal: abortController.signal
     })
+    responseReceived = true
 
     clearTimeout(fetchTimeoutId)
 
@@ -121,15 +153,11 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
       let msg = `HTTP错误! 状态码: ${response.status}`
       try {
         const errBody = await response.json()
-        if (errBody && errBody.detail) {
-          msg = typeof errBody.detail === 'string' ? errBody.detail : JSON.stringify(errBody.detail)
-        } else if (errBody && errBody.message) {
-          msg = errBody.message
-        }
+        msg = parseAgentHttpError(errBody, response.status)
       } catch (_) {
         /* 非 JSON 错误体 */
       }
-      throw new Error(msg)
+      throw requestError(msg, REQUEST_ERROR_KIND.SERVER)
     }
 
     const reader = response.body.getReader()
@@ -155,7 +183,7 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
             const data = JSON.parse(line.substring(6))
 
             if (data.error) {
-              onError(data.error)
+              onError(data.error, REQUEST_ERROR_KIND.SERVER)
               return
             }
 
@@ -186,21 +214,33 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
     clearTimeout(fetchTimeoutId)
     if (error && error.name === 'AbortError') {
       if (timedOut) {
-        onError('连接智能体超时，请检查网关服务或稍后重试')
+        onError('连接智能体超时，请检查网关服务或稍后重试', REQUEST_ERROR_KIND.NETWORK)
       } else {
         onAbort()
       }
       return
     }
-    onError(`请求错误: ${error.message}`)
+    const kind = error.kind || (responseReceived ? REQUEST_ERROR_KIND.SERVER : REQUEST_ERROR_KIND.NETWORK)
+    onError(error.message || String(error), kind)
   }
 }
 
 export const callAgentApi = async (path, formData) => {
   const url = `${AGENT_BASE_URL}${path}`
-  const response = await fetch(url, { method: 'POST', body: formData })
-  if (!response.ok) throw new Error(`HTTP错误! 状态码: ${response.status}`)
-  return response.json()
+  let response
+  try {
+    response = await fetch(url, { method: 'POST', body: formData })
+  } catch (error) {
+    throw requestError(error.message, REQUEST_ERROR_KIND.NETWORK)
+  }
+  if (!response.ok) {
+    throw requestError(`HTTP错误! 状态码: ${response.status}`, REQUEST_ERROR_KIND.SERVER)
+  }
+  try {
+    return await response.json()
+  } catch (error) {
+    throw requestError('服务器响应格式错误', REQUEST_ERROR_KIND.SERVER)
+  }
 }
 
 export const streamLLMChat = async (path, formData, callbacks = {}) => {

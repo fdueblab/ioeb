@@ -1,85 +1,64 @@
+import { enrichTopicFlowWithScenarioIntake } from './topic_scenario_intake'
+import { matchesTopicDemoInput } from './topic_demo_inputs'
+
 // 调度页演示：元应用 flow、SmartChat 推理步骤、关键字与仿真分流
 // - 课题 → getMetaAppNodes / generateMockSteps + 仿真 inmemory
-// - 【本地MCP】(n) → 同上 + 仿真 Micro-Agent（preName 含同标记，n=节点数）
+// 注：health 垂域已去除本地 MCP mock，改走真实 scenario_intake + 推荐链路。
 
 export const TOPIC_DEMO_KEYWORD = '课题'
 
-/** 匹配 SmartChat 输入与元应用 preName 中的【本地MCP】(节点数) */
-export const LOCAL_MCP_MARK_RE = /【本地MCP】\(\d+\)/
+function collectScheduleDemoText(input) {
+  if (input == null) return ''
+  if (typeof input === 'string') return input
+  if (Array.isArray(input)) return input.map(collectScheduleDemoText).join(' ')
+  if (typeof input !== 'object') return String(input)
 
-export function localMcpPrefix(nodeCount) {
-  return `【本地MCP】(${nodeCount})`
+  const chunks = [
+    input.appName,
+    input.preName,
+    input.name,
+    input.mockRouteHint,
+    input._mockRouteHint,
+    input.topicHint,
+    input.goal,
+    input.description,
+    input.scenarioDescription,
+    input.scenarioSummary,
+    input.userInput
+  ]
+  const services = input.servicesMeta || input.services || input.serviceStatuses || input.nodeList || []
+  if (Array.isArray(services)) {
+    services.forEach((svc) => {
+      chunks.push(svc.name, svc.serviceName, svc.des, svc.description)
+    })
+  }
+  if (input.scenarioParsed) chunks.push(collectScheduleDemoText(input.scenarioParsed))
+  if (input.taskContract) chunks.push(collectScheduleDemoText(input.taskContract))
+  return chunks.filter(Boolean).join(' ')
 }
 
-export function isLocalMcpDemo(text) {
-  return LOCAL_MCP_MARK_RE.test(String(text || ''))
-}
-
-export const SCHEDULE_DEMO_KIND = { TOPIC: 'topic', LOCAL_MCP: 'local_mcp' }
+export const SCHEDULE_DEMO_KIND = { TOPIC: 'topic' }
 
 export function resolveScheduleDemoKind(text) {
-  if (isLocalMcpDemo(text)) return SCHEDULE_DEMO_KIND.LOCAL_MCP
-  if (String(text || '').includes(TOPIC_DEMO_KEYWORD)) {
+  const demoText = collectScheduleDemoText(text)
+  if (demoText.includes(TOPIC_DEMO_KEYWORD)) {
     return SCHEDULE_DEMO_KIND.TOPIC
   }
   return null
 }
 
 export function matchesScheduleDemoInput(text) {
-  return resolveScheduleDemoKind(text) != null
+  return matchesTopicDemoInput(text)
 }
 
 /** 仿真 API：课题演示走进程内 mock */
-export function useMemorySimulation(appName) {
-  return resolveScheduleDemoKind(appName) === SCHEDULE_DEMO_KIND.TOPIC
-}
-
-export const LOCAL_MCP_SUGGESTIONS = [
-  {
-    value: `${localMcpPrefix(1)}65岁男性院内获得性肺炎，合并肾功能不全，请制定利奈唑胺给药方案`
-  },
-  {
-    value: `${localMcpPrefix(1)}ICU脓毒症患者需计算SOFA评分并选用相应医学计算器`
-  },
-  {
-    value: `${localMcpPrefix(1)}处方前查询利奈唑胺（linezolid）说明书、黑框警告与药物相互作用`
-  },
-  {
-    value: `${localMcpPrefix(1)}肿瘤MDT：检索BRAF靶点相关疾病与在研药物证据`
-  },
-  {
-    value: `${localMcpPrefix(2)}脓毒症休克患者：先完成SOFA评估，再优化利奈唑胺静脉给药方案`
-  },
-  {
-    value: `${localMcpPrefix(3)}肾功能减退的肺炎患者：SOFA评分、利奈唑胺剂量计算并查阅药品标签`
-  },
-  {
-    value: `${localMcpPrefix(5)}重症医院感染患者：病情评分、抗菌药给药、查说明书与靶点证据、出院医保与随访安排`
-  }
-]
-
-export function resolveMcpDemoScenario(userInput) {
-  const t = String(userInput || '')
-  const countMatch = t.match(/【本地MCP】\((\d+)\)/)
-  const n = countMatch ? parseInt(countMatch[1], 10) : null
-
-  if (n === 5 || /重症医院感染|出院.*医保|随访安排/.test(t)) return 'all5'
-  if (n === 3 || /肾功能.*肺炎|评分.*剂量.*标签/.test(t)) return 'clinical_triad'
-  if (n === 2 || /脓毒症|休克|SOFA.*利奈/.test(t)) return 'combo'
-  if (/说明书|黑框|相互作用|openfda|fda|药品标签/.test(t)) return 'openfda'
-  if (/BRAF|MDT|靶点|opentargets|基因/.test(t)) return 'opentargets'
-  if (/医保|参保|healthcovered|ACA/.test(t)) return 'healthcovered'
-  if (/SOFA|医学计算|计算器|discover|medical-calc/i.test(t)) return 'medical_calc'
-  if (/利奈唑胺|给药|linezolid|剂量|肺炎/.test(t)) return 'linezolid'
-  if (n === 2) return 'combo'
-  if (n === 3) return 'clinical_triad'
-  if (n === 5) return 'all5'
-  return 'linezolid'
+export function useMemorySimulation(context) {
+  return resolveScheduleDemoKind(context) === SCHEDULE_DEMO_KIND.TOPIC
 }
 
 // 金融欺诈检测推理元应用
 const fraudDetectionApp = {
-  preName: '金融欺诈检测推理元应用',
+  preName: '课题一金融欺诈检测推理元应用',
   preDes: '基于大模型智能体的元应用，用于在跨境支付场景下实现金融欺诈检测',
   preInputName: '金融交易数据',
   preOutputName: '欺诈检测评估报告',
@@ -113,7 +92,7 @@ const fraudDetectionApp = {
       name: '样例报告生成MCP服务',
       url: 'https://myMcpServer.com/report-generation/sse',
       method: 'sse',
-      des: '供智能体调用的课题五mcp样例服务，用于功能演示',
+      des: '供智能体调用的课题五通用能力 MCP 服务，用于补充上下游业务处理',
       attribute: 'non_intelligent',
       type: 'atomic_mcp',
       domain: 'aml',
@@ -154,7 +133,7 @@ const fraudDetectionApp = {
 
 // 乡村医疗AI辅助诊断元应用
 const medicalDiagnosisApp = {
-  preName: '乡村医疗AI辅助诊断元应用',
+  preName: '乡村医疗AI应用课题辅助诊断元应用',
   preDes: '基于大模型智能体的元应用，用于在乡村医疗场景下辅助诊断',
   preInputName: '患者医疗数据',
   preOutputName: '诊断与健康管理方案',
@@ -214,7 +193,7 @@ const medicalDiagnosisApp = {
 
 // 农业数智AI元应用
 const agricultureApp = {
-  preName: '农业数智AI元应用',
+  preName: '数字农业AI应用课题元应用',
   preDes: '基于大模型智能体的元应用，用于在农业场景下进行作物分析和预测',
   preInputName: '农业数据输入',
   preOutputName: '农业智能分析报告',
@@ -250,7 +229,7 @@ const agricultureApp = {
 
 // 智能飞行控制元应用
 const aircraftApp = {
-  preName: '智能飞行控制元应用',
+  preName: '无人机AI应用课题智能飞行控制元应用',
   preDes: '基于大模型智能体的元应用，用于在低空飞行场景下辅助无人机控制',
   preInputName: '智能飞行器参数',
   preOutputName: '智能飞行器任务结果',
@@ -294,7 +273,7 @@ const aircraftApp = {
 
 // 跨境电商智能营销元应用
 const ecommerceApp = {
-  preName: '跨境电商智能营销元应用',
+  preName: '跨境电商AI应用课题智能营销元应用',
   preDes: '基于大模型智能体的元应用，用于在跨境电商场景下辅助市场分析',
   preInputName: '产品信息与市场需求',
   preOutputName: '多语言营销方案',
@@ -330,7 +309,7 @@ const ecommerceApp = {
 
 // 低空飞行AI应用元应用
 const evtolApp = {
-  preName: 'eVTOL智能飞行控制元应用',
+  preName: '低空飞行AI应用课题eVTOL智能飞行控制元应用',
   preDes: '基于大模型智能体的元应用，用于在eVTOL场景下辅助飞行控制',
   preInputName: '飞行任务参数',
   preOutputName: '飞行控制结果',
@@ -366,7 +345,7 @@ const evtolApp = {
 
 // 家庭智能助手元应用
 const homeAIApp = {
-  preName: '家庭智能助手元应用',
+  preName: '家庭智能助手AI应用课题元应用',
   preDes: '基于大模型智能体的元应用，用于在家庭陪伴场景下实现智能家居陪伴',
   preInputName: '家庭环境数据与指令',
   preOutputName: '智能家庭管理方案',
@@ -437,7 +416,7 @@ const pj1App = {
       name: '样例报告生成MCP服务',
       url: 'https://myMcpServer.com/report-generation/sse',
       method: 'sse',
-      des: '供智能体调用的课题五mcp样例服务，用于功能演示',
+      des: '供智能体调用的课题五通用能力 MCP 服务，用于补充上下游业务处理',
       attribute: 'non_intelligent',
       type: 'atomic_mcp',
       domain: 'aml',
@@ -498,7 +477,7 @@ const pj2App = {
       name: '样例报告生成MCP服务',
       url: 'https://myMcpServer.com/report-generation/sse',
       method: 'sse',
-      des: '供智能体调用的课题五mcp样例服务，用于功能演示',
+      des: '供智能体调用的课题五通用能力 MCP 服务，用于补充上下游业务处理',
       attribute: 'non_intelligent',
       type: 'atomic_mcp',
       domain: 'aml',
@@ -553,7 +532,8 @@ const pj4App = {
 
 // 金融风险报告生成（课题一+课题四+课题三）
 const pj1pj4pj3App = {
-  preName: '金融风险报告生成元应用',
+  preName: '跨境金融风险综合报告生成元应用',
+  mockRouteHint: '课题一 课题四 课题三',
   preDes: '基于大模型智能体的元应用，用于在跨境支付场景下实现金融风险报告生成',
   preInputName: '跨境贸易数据',
   preOutputName: '金融风险报告',
@@ -632,9 +612,17 @@ const pj1pj4pj3App = {
   ]
 }
 
+const pj2pj4pj3App = {
+  ...pj1pj4pj3App,
+  preName: '跨境金融联合风控综合报告生成元应用',
+  mockRouteHint: '课题二 课题四 课题三',
+  preDes: '先由课题二多方安全计算完成联合风险识别，再经课题四安全评测，最终由课题三生成金融风险报告',
+  nodeList: [pj2App.nodeList[0], ...pj1pj4pj3App.nodeList.slice(1)]
+}
+
 // 围标检测元应用
 const bidRiggingDetectionApp = {
-  preName: '围标检测元应用',
+  preName: '课题五围标检测元应用',
   preDes: '基于大模型智能体的元应用，用于在金融场景下实现围标检测',
   preInputName: '投标数据与招标信息',
   preOutputName: '围标风险评估报告',
@@ -669,7 +657,7 @@ const bidRiggingDetectionApp = {
       name: '样例报告生成MCP服务',
       url: 'https://myMcpServer.com/report-generation/sse',
       method: 'sse',
-      des: '供智能体调用的课题五mcp样例服务，用于功能演示',
+      des: '供智能体调用的课题五通用能力 MCP 服务，用于补充上下游业务处理',
       attribute: 'non_intelligent',
       type: 'atomic_mcp',
       domain: 'aml',
@@ -687,194 +675,6 @@ const bidRiggingDetectionApp = {
   ]
 }
 
-// ---------------------------------------------------------------------------
-// 本机 external-mcp 演示（health · SmartChat 输入含【本地MCP】(n)）
-// ---------------------------------------------------------------------------
-
-const MCP_ROOT = '/home/lyx/workspace/fdueblab/external-mcp'
-
-const MCP_NODES = {
-  linezolid: {
-    id: 'mcp-demo-linezolid',
-    name: '利奈唑胺给药方案优化MCP Server',
-    url: 'http://127.0.0.1:25013/sse',
-    mcpMethod: 'sse',
-    isFake: false,
-    des: '利奈唑胺剂量（SSE :25013）',
-    type: 'atomic_mcp',
-    status: 'released',
-    tools: [{ name: 'calculate_linezolid_dose', description: '计算推荐剂量' }]
-  },
-  medicalCalc: {
-    id: 'mcp-demo-medical-calc',
-    name: 'medical-calc-mcp',
-    url: 'http://127.0.0.1:18000/sse',
-    mcpMethod: 'sse',
-    isFake: false,
-    des: '医学计算器（SSE :18000）',
-    type: 'atomic_mcp',
-    status: 'released',
-    tools: [
-      { name: 'discover', description: '发现计算器' },
-      { name: 'calculate', description: '执行计算' }
-    ]
-  },
-  openfda: {
-    id: 'mcp-demo-openfda',
-    name: 'openFDA 药品标签 MCP',
-    mcpMethod: 'stdio',
-    mcpCommand: 'node',
-    mcpArgs: [`${MCP_ROOT}/openfda-mcp/build/index.js`],
-    isFake: false,
-    des: 'openFDA（stdio）',
-    type: 'atomic_mcp',
-    status: 'released',
-    tools: [
-      { name: 'search_drug_labels', description: '检索药品标签' },
-      { name: 'search_drug_adverse_events', description: '检索不良事件' }
-    ]
-  },
-  opentargets: {
-    id: 'mcp-demo-opentargets',
-    name: 'OpenTargets 靶点知识 MCP',
-    mcpMethod: 'stdio',
-    mcpCommand: `${MCP_ROOT}/opentargets-mcp/.venv/bin/python`,
-    mcpArgs: ['-m', 'opentargets_mcp.server', '--transport', 'stdio'],
-    isFake: false,
-    des: 'OpenTargets（stdio）',
-    type: 'atomic_mcp',
-    status: 'released',
-    tools: [
-      { name: 'search_entities', description: '检索实体' },
-      { name: 'get_target_associations', description: '靶点关联' }
-    ]
-  },
-  healthcovered: {
-    id: 'mcp-demo-healthcovered',
-    name: 'healthcovered ACA 资格 MCP',
-    url: 'http://127.0.0.1:18001/mcp',
-    mcpMethod: 'streamable_http',
-    isFake: false,
-    des: 'ACA 资格（HTTP :18001）',
-    type: 'atomic_mcp',
-    status: 'released',
-    tools: [
-      { name: 'get_enrollment_dates', description: '开放注册日期' },
-      { name: 'check_eligibility', description: '参保资格' }
-    ]
-  }
-}
-
-function mcpDemoApp(nodeCount, title, preDes, preInput, preOutput, nodes) {
-  return {
-    preName: `${localMcpPrefix(nodeCount)} ${title}`,
-    preDes,
-    preInputName: preInput,
-    preOutputName: preOutput,
-    inputType: 2,
-    outputType: 1,
-    nodeList: nodes
-  }
-}
-
-const LOCAL_MCP_SCENARIOS = {
-  linezolid: mcpDemoApp(
-    1,
-    '院内肺炎利奈唑胺给药优化',
-    '老年院内获得性肺炎，合并肾功能减退',
-    '体征、检验与用药史',
-    '给药方案与监测建议',
-    [MCP_NODES.linezolid]
-  ),
-  medical_calc: mcpDemoApp(
-    1,
-    'ICU严重程度评分辅助',
-    '脓毒症/重症患者需量化病情',
-    '生命体征与实验室指标',
-    'SOFA等评分结果',
-    [MCP_NODES.medicalCalc]
-  ),
-  openfda: mcpDemoApp(
-    1,
-    '抗菌药处方前说明书查询',
-    '处方前核对药品标签与安全性信息',
-    '药品名称',
-    '标签摘要与警示',
-    [MCP_NODES.openfda]
-  ),
-  opentargets: mcpDemoApp(
-    1,
-    '肿瘤靶点证据检索',
-    'MDT前检索靶点相关疾病与药物',
-    '靶点/基因名',
-    '关联疾病与药物证据',
-    [MCP_NODES.opentargets]
-  ),
-  healthcovered: mcpDemoApp(
-    1,
-    '出院患者医保与参保咨询',
-    '慢病或出院患者咨询参保与报销窗口',
-    '患者参保场景',
-    '开放注册与资格说明',
-    [MCP_NODES.healthcovered]
-  ),
-  combo: mcpDemoApp(
-    2,
-    '脓毒症休克抗菌治疗',
-    '先评估严重程度，再制定利奈唑胺给药方案',
-    'ICU监测数据',
-    '评分与给药方案',
-    [MCP_NODES.medicalCalc, MCP_NODES.linezolid]
-  ),
-  clinical_triad: mcpDemoApp(
-    3,
-    '肾功能减退肺炎患者用药',
-    '评分、剂量计算与说明书核对',
-    '肾功能、感染指标',
-    '综合用药建议',
-    [MCP_NODES.medicalCalc, MCP_NODES.linezolid, MCP_NODES.openfda]
-  ),
-  all5: mcpDemoApp(
-    5,
-    '重症医院感染多学科用药辅助',
-    '重症感染：评分、给药、查说明书与靶点、出院医保与随访',
-    '住院病历摘要',
-    '多学科辅助决策材料',
-    [
-      MCP_NODES.medicalCalc,
-      MCP_NODES.linezolid,
-      MCP_NODES.openfda,
-      MCP_NODES.opentargets,
-      MCP_NODES.healthcovered
-    ]
-  )
-}
-
-function getMcpDemoFlowData(userInput) {
-  const key = resolveMcpDemoScenario(userInput)
-  const flow = LOCAL_MCP_SCENARIOS[key]
-  if (!flow) throw new Error('未找到本地 MCP 演示场景')
-  return JSON.parse(JSON.stringify(flow))
-}
-
-function generateMcpDemoMockSteps(userInput) {
-  const key = resolveMcpDemoScenario(userInput)
-  const scenario = LOCAL_MCP_SCENARIOS[key]
-  const n = (scenario.nodeList || []).length
-  const names = scenario.nodeList.map((x) => x.name).join('、')
-  return [
-    {
-      step: 1,
-      thought: `识别${localMcpPrefix(n)}场景「${key}」：将编排 ${n} 个本机 MCP 服务。`
-    },
-    {
-      step: 2,
-      thought: `服务：${names}。仿真走 Micro-Agent（元应用名含${localMcpPrefix(n)}）。`
-    },
-    { step: 3, thought: '请先启动 external-mcp 对应进程，再运行仿真构建。' }
-  ]
-}
-
 // 模拟数据获取相关的工具函数
 
 /**
@@ -883,9 +683,38 @@ function generateMcpDemoMockSteps(userInput) {
  * @param {string} userInput - 用户输入
  * @returns {Array} - 返回推理步骤数组
  */
-export function generateMockSteps(serviceType, userInput) {
-  if (resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.LOCAL_MCP) {
-    return generateMcpDemoMockSteps(userInput)
+function generateTopicDemoMockSteps(userInput, analysisChoice) {
+  const flowName =
+    analysisChoice === 'pj2'
+      ? '课题二联合风险识别 + 课题四安全评测 + 课题三报告生成'
+      : analysisChoice === 'pj1'
+        ? '课题一风险识别 + 课题四安全评测 + 课题三报告生成'
+        : userInput.includes('课题二')
+      ? '课题二风险识别'
+      : userInput.includes('课题四') && !userInput.includes('课题三')
+        ? '课题四安全评测'
+        : userInput.includes('课题三') || userInput.includes('各课题')
+          ? '多课题组合'
+          : '课题一风险识别'
+  return [
+    {
+      step: 1,
+      thought: `识别课题场景「${flowName}」：将查询 aml 领域 MCP 服务并匹配用户诉求。`
+    },
+    {
+      step: 2,
+      thought: '已生成课题结构化想定，包含构建需求、约束与验收标准。'
+    },
+    {
+      step: 3,
+      thought: '将进入想定式仿真构建；构建完成后可进入元应用预发布。'
+    }
+  ]
+}
+
+export function generateMockSteps(serviceType, userInput, analysisChoice = null) {
+  if (resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.TOPIC) {
+    return generateTopicDemoMockSteps(userInput, analysisChoice)
   }
   return [
     {
@@ -927,16 +756,13 @@ export function generateMockSteps(serviceType, userInput) {
  * @param {string} userInput - 用户输入
  * @returns {Promise<Object>} - 返回flowData对象
  */
-export function getMetaAppNodes(serviceType, userInput) {
-  if (resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.LOCAL_MCP) {
-    return Promise.resolve(getMcpDemoFlowData(userInput))
-  }
+export function getMetaAppNodes(serviceType, userInput, analysisChoice = null) {
   return new Promise((resolve, reject) => {
     let flowData
     // 对于金融领域，根据用户输入选择不同的应用
     if (serviceType === 'aml') {
       if (userInput.includes('课题三')) {
-        flowData = pj1pj4pj3App
+        flowData = analysisChoice === 'pj2' ? pj2pj4pj3App : pj1pj4pj3App
       } else if (userInput.includes('课题四')) {
         flowData = pj4App
       } else if (userInput.includes('课题一')) {
@@ -984,6 +810,13 @@ export function getMetaAppNodes(serviceType, userInput) {
       }
     }
     if (flowData) {
+      if (
+        serviceType === 'aml' &&
+        resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.TOPIC
+      ) {
+        resolve(enrichTopicFlowWithScenarioIntake(flowData, userInput, analysisChoice))
+        return
+      }
       resolve(flowData)
     }
   })

@@ -173,7 +173,7 @@
                     'source.companyName',
                     {
                       rules: [{ required: true, message: '请输入公司名称' }],
-                      initialValue: currentRecord.source?.companyName || '',
+                      initialValue: currentSource.companyName || '',
                     },
                   ]"
                 />
@@ -196,7 +196,7 @@
                   v-decorator="[
                     'source.companyAddress',
                     {
-                      initialValue: currentRecord.source?.companyAddress || '',
+                      initialValue: currentSource.companyAddress || '',
                     },
                   ]"
                 />
@@ -208,7 +208,7 @@
                   v-decorator="[
                     'source.companyContact',
                     {
-                      initialValue: currentRecord.source?.companyContact || '',
+                      initialValue: currentSource.companyContact || '',
                     },
                   ]"
                 />
@@ -220,7 +220,7 @@
               v-decorator="[
                 'source.companyIntroduce',
                 {
-                  initialValue: currentRecord.source?.companyIntroduce || '',
+                  initialValue: currentSource.companyIntroduce || '',
                 },
               ]"
               :rows="3"
@@ -231,7 +231,7 @@
               v-decorator="[
                 'source.msIntroduce',
                 {
-                  initialValue: currentRecord.source?.msIntroduce || '',
+                  initialValue: currentSource.msIntroduce || '',
                 },
               ]"
               :rows="4"
@@ -325,6 +325,11 @@ export default {
         companyScore: 0,
         msScore: 0
       }
+    }
+  },
+  computed: {
+    currentSource() {
+      return (this.currentRecord && this.currentRecord.source) || {}
     }
   },
   methods: {

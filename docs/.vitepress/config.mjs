@@ -95,6 +95,7 @@ export default defineConfig({
     // 设置导航栏
     nav: [
       { text: '首页', link: '/' },
+      { text: '快速开始', link: '/quickstart' },
       { text: '用户指南', link: '/guide/' },
       { text: '开发指南', link: '/dev/' },
       { text: '常见问题', link: '/faq' },
@@ -144,6 +145,7 @@ export default defineConfig({
             { text: '环境与发布建设报告', link: '/dev/environment-release-report' },
             { text: '平台项目快速开始', link: '/dev/project-quickstart' },
             { text: '智能体添加指南', link: '/dev/add-agent' },
+            { text: 'Agent SSE 接口调用指南', link: '/dev/agent-sse-api' },
             // { text: '代码规范', link: '/dev/code-standards' }
           ]
         },

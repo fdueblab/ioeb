@@ -31,6 +31,7 @@
       <service-table
         :data-source="filteredDataSource"
         :loading="dataLoading"
+        :pagination="tablePagination"
         :status-dict="statusDict"
         :status-style-dict="statusStyleDict"
         :norm-dict="normDict"
@@ -38,6 +39,7 @@
         :technology-arr="technologyArr"
         @edit="handleEdit"
         @use="handleUse"
+        @table-change="handleTableChange"
         ref="serviceTable"
       />
     </a-card>
@@ -58,7 +60,7 @@
 </template>
 
 <script>
-import { filterServices, getServicesByVerticalType } from '@/api/service'
+import { filterServices, getServiceById, getServicesByVerticalType } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
 // 导入拆分出的组件
 import SearchForm from './components/SearchForm'
@@ -94,6 +96,14 @@ export default {
       dataLoading: false,
       dataSource: [],
       filteredDataSource: [],
+      activeFilters: {},
+      pagination: {
+        current: 1,
+        pageSize: 10,
+        total: 0,
+        showSizeChanger: true,
+        showQuickJumper: true
+      },
       // 筛选相关字典数据
       attributeArr: [],
       typeArr: [],
@@ -101,6 +111,14 @@ export default {
       scenarioArr: [],
       technologyArr: [],
       methodTypeOptions: []
+    }
+  },
+  computed: {
+    tablePagination() {
+      if (this.agentSearchData.length > 0) {
+        return false
+      }
+      return this.pagination
     }
   },
   created() {
@@ -192,8 +210,8 @@ export default {
     },
     // 处理搜索结果 - 从SearchForm组件接收
     handleSearchCompleted(searchResults) {
-      this.agentSearchData = searchResults
-      this.filteredDataSource = searchResults
+      this.agentSearchData = this.standardizeServiceData(searchResults || [])
+      this.filteredDataSource = this.agentSearchData
 
       this.$nextTick(() => {
         this.$message.success('检索完毕！')
@@ -206,13 +224,11 @@ export default {
     },
     handleSearchReset() {
       this.agentSearchData = []
-      this.filteredDataSource = this.dataSource
+      this.activeFilters = { domain: this.verticalType }
+      this.loadServices(1, this.pagination.pageSize)
     },
-    // 根据筛选条件过滤数据
-    async filterDataSource(filterValues) {
-      // 收集所有筛选条件
-      const filters = {}
-      // 只添加有值的筛选条件
+    buildFiltersFromValues(filterValues) {
+      const filters = { domain: this.verticalType }
       if (filterValues.attribute && filterValues.attribute.length > 0) {
         filters.attribute = filterValues.attribute.join(',')
       }
@@ -228,72 +244,49 @@ export default {
       if (typeof filterValues.technology !== 'undefined') {
         filters.technology = filterValues.technology
       }
-      // 添加领域过滤条件
-      filters.domain = this.verticalType
+      return filters
+    },
+    async loadServices(page = 1, pageSize = this.pagination.pageSize) {
+      const filters = {
+        ...this.activeFilters,
+        page,
+        pageSize
+      }
+      const response = await filterServices(filters)
+      if (response && response.status === 'success') {
+        this.dataSource = this.standardizeServiceData(response.services || [])
+        this.filteredDataSource = this.dataSource
+        this.pagination = {
+          ...this.pagination,
+          current: response.page || page,
+          pageSize: response.pageSize || pageSize,
+          total: response.total || 0
+        }
+        return true
+      }
+      return false
+    },
+    handleTableChange(pagination) {
+      this.loadServices(pagination.current, pagination.pageSize)
+    },
+    // 根据筛选条件过滤数据
+    async filterDataSource(filterValues) {
+      this.activeFilters = this.buildFiltersFromValues(filterValues)
 
       try {
-        // 如果没有筛选条件，则直接使用已有数据
-        if (Object.keys(filters).length === 1) { // 只有domain一个条件
-          this.filteredDataSource = this.dataSource
-          return
-        }
-        // 发送筛选请求
-        const response = await filterServices(filters)
-
-        if (response && response.status === 'success') {
-          this.filteredDataSource = response.services
-        } else {
-          // 如果API调用失败，回退到客户端筛选
-          this.filteredDataSource = this.dataSource.filter(item => {
-            return (
-              (filterValues.attribute && filterValues.attribute.length > 0
-                ? filterValues.attribute.some(attr => item.attribute && item.attribute.includes(attr))
-                : true) &&
-              (filterValues.type
-                ? item.type === filterValues.type
-                : true) &&
-              (filterValues.industry
-                ? item.industry === filterValues.industry
-                : true) &&
-              (filterValues.scenario
-                ? item.scenario === filterValues.scenario
-                : true) &&
-              (filterValues.technology
-                ? item.technology === filterValues.technology
-                : true)
-            )
-          })
+        const ok = await this.loadServices(1, this.pagination.pageSize)
+        if (!ok) {
+          this.$message.error('筛选数据失败')
         }
       } catch (error) {
         console.error('筛选服务数据失败:', error)
-        this.$message.error('筛选数据失败，使用本地筛选')
-
-        // 发生错误时回退到客户端筛选
-        this.filteredDataSource = this.dataSource.filter(item => {
-          return (
-            (filterValues.attribute && filterValues.attribute.length > 0
-              ? filterValues.attribute.some(attr => item.attribute && item.attribute.includes(attr))
-              : true) &&
-            (filterValues.type
-              ? item.type === filterValues.type
-              : true) &&
-            (filterValues.industry
-              ? item.industry === filterValues.industry
-              : true) &&
-            (filterValues.scenario
-              ? item.scenario === filterValues.scenario
-              : true) &&
-            (filterValues.technology
-              ? item.technology === filterValues.technology
-              : true)
-          )
-        })
+        this.$message.error('筛选数据失败')
       }
     },
     // 从API获取服务数据
-    async fetchServicesFromAPI() {
+    async fetchServicesFromAPI(page = 1, pageSize = this.pagination.pageSize) {
       try {
-        return await getServicesByVerticalType(this.verticalType)
+        return await getServicesByVerticalType(this.verticalType, { page, pageSize })
       } catch (error) {
         console.error('获取服务数据失败:', error)
         return undefined
@@ -307,23 +300,23 @@ export default {
     async initData() {
       this.dataLoading = true
       this.agentSearchData = []
-      this.filteredDataSource = [] // 清空现有数据，避免显示上一个页面的数据
+      this.filteredDataSource = []
+      this.activeFilters = { domain: this.verticalType }
+      this.pagination = {
+        ...this.pagination,
+        current: 1,
+        total: 0
+      }
 
       try {
         console.log('正在加载服务数据，垂直领域类型:', this.verticalType)
-
-        // 优先尝试从API获取数据
-        const response = await this.fetchServicesFromAPI()
-
-        if (response && response.status === 'success') {
-          console.log(`成功从API获取到${response.services.length}条服务数据`)
-          // 标准化数据
-          this.dataSource = this.standardizeServiceData(response.services)
-        } else {
-          console.log('API获取失败')
+        const ok = await this.loadServices(1, this.pagination.pageSize)
+        if (!ok) {
           this.dataSource = []
+          this.filteredDataSource = []
+        } else {
+          console.log(`成功从API获取到${this.dataSource.length}条服务数据，共${this.pagination.total}条`)
         }
-        this.filteredDataSource = this.dataSource
       } catch (error) {
         console.error('初始化数据失败:', error)
         this.dataSource = []
@@ -352,9 +345,8 @@ export default {
         this.$message.success('编辑成功')
       }, 500)
     },
-    // 使用服务
-    handleUse(record) {
-      // 想定式生成算法仅落库存档，状态为未部署；仍需允许进入下载流程
+    // 使用服务：列表为精简字段，进入使用前拉取详情
+    async handleUse(record) {
       if (record && record.type === 'generated_algorithm') {
         this.$emit('onGoUse', record)
         return
@@ -368,9 +360,20 @@ export default {
         case 'processing':
           this.$message.info('该服务正在部署，暂时无法使用！')
           break
-        default:
-          this.$emit('onGoUse', record)
+        default: {
+          try {
+            const res = await getServiceById(record.id)
+            if (res && res.status === 'success' && res.service) {
+              this.$emit('onGoUse', res.service)
+            } else {
+              this.$message.error((res && res.message) || '获取服务详情失败')
+            }
+          } catch (error) {
+            console.error('获取服务详情失败:', error)
+            this.$message.error('获取服务详情失败')
+          }
           break
+        }
       }
     }
   }

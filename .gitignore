@@ -27,6 +27,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Playwright
+playwright-report/
+test-results/
+
 # Editor directories and files
 .idea
 .vscode
@@ -36,3 +40,10 @@ yarn-error.log*
 *.sln
 *.sw*
 package-lock.json
+
+# Local agent/editor configuration (never commit)
+.cursor/
+.codex/
+.agents/
+.claude/
+CLAUDE.md

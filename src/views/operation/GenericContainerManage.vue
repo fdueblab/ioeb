@@ -49,13 +49,25 @@
         <span slot="status" slot-scope="text">
           <a-badge :status="statusStyleFilter(text)" :text="statusFilter(text)" />
         </span>
+        <span slot="docker" slot-scope="text">
+          <span class="runtime-cell">{{ text || '—' }}</span>
+        </span>
         <span slot="action" slot-scope="text, record">
-          <template>
-            <a-button v-if="deployingStatusCode.includes(record.status)" style="padding: 0" type="link" @click="handleStop(record)">停止</a-button>
-            <a-button v-else style="padding: 0" type="link" @click="handleDeploy(record)">部署</a-button>
-            <a-divider type="vertical" />
-            <a-button style="padding: 0;color: orangered" type="link" @click="handleDelete(record)">删除</a-button>
-          </template>
+          <a-button
+            v-if="canStop(record)"
+            style="padding: 0"
+            type="link"
+            @click="handleStop(record)"
+          >停止</a-button>
+          <a-button
+            v-else-if="canDeploy(record)"
+            style="padding: 0"
+            type="link"
+            @click="handleDeploy(record)"
+          >部署</a-button>
+          <span v-else class="runtime-action-label">—</span>
+          <a-divider type="vertical" />
+          <a-button style="padding: 0;color: orangered" type="link" @click="handleDelete(record)">删除</a-button>
         </span>
       </a-table>
     </a-card>
@@ -86,7 +98,8 @@ export default {
       },
       statusDict: [],
       statusStyleDict: [],
-      deployingStatusCode: [],
+      stopStatuses: ['pre_release_unrated', 'pre_release_pending', 'released', 'deploying'],
+      deployStatuses: ['not_deployed', 'error'],
       columns: [
         {
           title: '#',
@@ -103,6 +116,12 @@ export default {
           title: '网络',
           dataIndex: 'network',
           width: '120px'
+        },
+        {
+          title: 'Docker',
+          dataIndex: 'dockerImage',
+          width: '190px',
+          scopedSlots: { customRender: 'docker' }
         },
         {
           title: '端口映射',
@@ -152,24 +171,18 @@ export default {
   },
   methods: {
     statusFilter(type) {
-      if (type === undefined) {
-        return '未知状态'
-      }
-      if (!this.statusDict || !Array.isArray(this.statusDict)) {
-        return '未知状态'
-      }
       const statusItem = this.statusDict.find(item => item && item.code === type)
-      return statusItem ? statusItem.text : '未知状态'
+      return statusItem.text
     },
     statusStyleFilter(type) {
-      if (type === undefined) {
-        return 'default'
-      }
-      if (!this.statusStyleDict || !Array.isArray(this.statusStyleDict)) {
-        return 'default'
-      }
       const statusItem = this.statusStyleDict.find(item => item && item.code === type)
-      return statusItem ? statusItem.text : 'default'
+      return statusItem.text
+    },
+    canStop(record) {
+      return this.stopStatuses.includes(record.status)
+    },
+    canDeploy(record) {
+      return this.deployStatuses.includes(record.status)
     },
     handleAdd() {
       this.$router.push({ path: `/vertical-ms/${this.verticalType}` })
@@ -178,7 +191,7 @@ export default {
     handleSearch() {
       this.filteredDataSource = this.dataSource.filter((item) => {
         const nameMatch = item.name.includes(this.queryParam.name)
-        const statusMatch = this.queryParam.status === 'all' || item.status === Number(this.queryParam.status)
+        const statusMatch = this.queryParam.status === 'all' || item.status === this.queryParam.status
         return nameMatch && statusMatch
       })
     },
@@ -209,7 +222,6 @@ export default {
         // 加载字典缓存
         this.statusDict = await dictionaryCache.loadDict('status') || []
         this.statusStyleDict = await dictionaryCache.loadDict('status_style') || []
-        this.deployingStatusCode = this.statusStyleDict.filter(item => ['processing', 'warning', 'success'].includes(item.text)).map(item => item.code)
       } catch (error) {
         console.error('加载字典数据失败:', error)
         this.$message.error('加载数据字典失败，请刷新重试')
@@ -226,7 +238,14 @@ export default {
         const response = await this.fetchServicesFromAPI()
         if (response && response.status === 'success') {
           console.log(`成功从API获取到${response.services.length}条服务数据`)
-          this.dataSource = response.services
+          this.dataSource = response.services.map((service) => {
+            const api = service.apiList && service.apiList[0]
+            const runtimeSpec = api && api.runtimeSpec
+            return {
+              ...service,
+              dockerImage: runtimeSpec && runtimeSpec.docker && runtimeSpec.docker.image
+            }
+          })
         } else {
           console.log('API获取失败')
           this.dataSource = []
@@ -291,9 +310,15 @@ export default {
         }
       })
     },
-    // 停止
+    // 停止 / 终止部署
     handleStop(record) {
-      this.$confirm('确认停止', `确定要停止服务 ${record.name} 吗？`, {
+      const deploying = record.status === 'deploying'
+      this.$confirm(
+        deploying ? '确认终止部署' : '确认停止',
+        deploying
+          ? `确定要终止服务 ${record.name} 的部署吗？`
+          : `确定要停止服务 ${record.name} 吗？`,
+        {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning',
@@ -332,3 +357,16 @@ export default {
   }
 }
 </script>
+
+<style scoped lang="less">
+.runtime-cell {
+  color: #29445f;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.runtime-action-label {
+  color: #64748b;
+  font-size: 12px;
+}
+</style>

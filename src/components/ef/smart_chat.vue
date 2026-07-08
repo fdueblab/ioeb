@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-container">
+  <div class="chat-container" :class="{ 'chat-container--workbench': workbenchLayout }">
     <div class="chat-output" ref="chatOutput">
       <div v-for="(message, index) in messages" :key="index" :class="['chat-message', message.isUser ? 'user-message' : 'bot-message', message.type === 'agent' ? 'agent-message-wrapper' : '', message.text === 'agentLoading' ? 'loading-text-wrapper' : '']">
         <!-- 智能体连接状态 -->
@@ -53,24 +53,30 @@
         <div v-else class="message-content" v-html="message.text" />
       </div>
     </div>
-    <a-button v-if="isGenerated && !isInputLoading" class="retry-button" icon="sync" @click="refresh">重新生成</a-button>
     <div class="chat-input">
       <div class="input-wrapper" style="width: 100%; position: relative;" ref="inputWrapper">
         <a-input
-          style="width: 100%"
+          style="width: 100%; padding-right: 44px"
           v-model="userInput"
           :placeholder="placeholder"
-          :disabled="!isInputEnabled"
+          :disabled="!canTypeInput"
           @input="onInputChange"
           @focus="activateSuggestions"
           @blur="hideSuggestionsDelayed"
-          @keydown.enter="handleUserInput"
+          @keydown.enter.prevent="handleUserInput"
           ref="inputElement"
         />
-        <a-button type="primary" icon="deployment-unit" @click="handleUserInput" :loading="isInputLoading" :disabled="!userInput" class="submit-button" />
+        <a-button
+          type="primary"
+          icon="deployment-unit"
+          @click="handleUserInput"
+          :loading="isInputLoading"
+          :disabled="!canSubmit"
+          class="submit-button"
+        />
         <div
           class="suggestion-dropdown"
-          v-if="showSuggestions && filteredSuggestions.length > 0 && isInputEnabled"
+          v-if="allowInputSuggestions && showSuggestions && filteredSuggestions.length > 0 && canTypeInput"
         >
           <div
             class="suggestion-item"
@@ -88,8 +94,9 @@
 
 <script>
 import { ChatMessageManager } from './chat_messages'
-import { streamAgent } from '@/utils/request'
-import { generateServiceNodes } from './utils'
+import { streamAgent, callAgentApi } from '@/utils/request'
+import { buildCanvasFlow, flowServiceNames } from './utils'
+import { batchGetServices } from '@/api/service'
 import {
   getMetaAppNodes,
   generateMockSteps,
@@ -97,6 +104,7 @@ import {
   resolveScheduleDemoKind,
   SCHEDULE_DEMO_KIND
 } from '@/mock/data/meta_apps_data'
+import { runTopicMockScenarioIntakeTurn, toScenarioIntakeEvent } from '@/mock/data/topic_scenario_intake'
 
 export default {
   name: 'SmartChat',
@@ -104,21 +112,16 @@ export default {
     verticalType: {
       type: String,
       required: true
+    },
+    workbenchLayout: {
+      type: Boolean,
+      default: false
     }
   },
-  mounted() {
-    // 添加键盘事件监听
-    document.addEventListener('keydown', this.handleKeyDown)
-  },
   beforeDestroy() {
-    // 移除键盘事件监听
-    document.removeEventListener('keydown', this.handleKeyDown)
     // 清理定时器
     if (this.stepTypewriterTimer) {
       clearTimeout(this.stepTypewriterTimer)
-    }
-    if (this.finalCollapseTimer) {
-      clearTimeout(this.finalCollapseTimer)
     }
   },
   data() {
@@ -129,15 +132,31 @@ export default {
       currentIndex: 0,
       isInputEnabled: true,
       isInputLoading: false,
-      isGenerated: false,
       showSuggestions: false,
+      allowInputSuggestions: true,
       messageManager: null,
       filteredSuggestions: [],
       thinkingMessageIndex: -1,
       stepTypewriterTimer: null,
-      finalCollapseTimer: null,
-      isTaskFinishing: false,
-      agentSessionId: null
+      receivedFinalResult: false,
+      agentSessionId: null,
+      intakeSessionId: null,
+      topicMockIntakeSession: null,
+      scenarioSummary: '',
+      scenarioParsed: null,
+      userRemark: '',
+      hasGeneratedRecommendation: false
+    }
+  },
+  computed: {
+    canTypeInput() {
+      return this.isInputEnabled && !this.isInputLoading
+    },
+    canSubmit() {
+      return this.canTypeInput && !!this.userInput.trim()
+    },
+    canRegenerate() {
+      return this.messages.some((m) => m.isUser) && !this.isInputLoading
     }
   },
   watch: {
@@ -152,18 +171,13 @@ export default {
     }
   },
   methods: {
-    handleKeyDown(e) {
-      if (e.key === 'Enter' && this.userInput && !this.isInputLoading && this.isInputEnabled) {
-        this.handleUserInput()
-      }
-    },
     onInputChange() {
-      if (this.messageManager) {
-        this.filteredSuggestions = this.messageManager.filterSuggestions(this.userInput)
-        this.showSuggestions = true
-      }
+      if (!this.allowInputSuggestions || !this.messageManager) return
+      this.filteredSuggestions = this.messageManager.filterSuggestions(this.userInput)
+      this.showSuggestions = true
     },
     activateSuggestions() {
+      if (!this.allowInputSuggestions) return
       this.showSuggestions = true
     },
     selectSuggestion(value) {
@@ -176,24 +190,206 @@ export default {
         this.showSuggestions = false
       }, 200)
     },
+    beginAgentTurn() {
+      if (this.stepTypewriterTimer) {
+        clearTimeout(this.stepTypewriterTimer)
+        this.stepTypewriterTimer = null
+      }
+      this.thinkingMessageIndex = -1
+      this.receivedFinalResult = false
+      this.currentIndex = 0
+    },
+
+    finishAgentTurn() {
+      this.isInputLoading = false
+      this.isInputEnabled = true
+      this.thinkingMessageIndex = -1
+      this.currentIndex = 0
+    },
+
+    handleRegenerate() {
+      if (!this.canRegenerate) return
+      this.$emit('stop-loading')
+      this.$emit('regenerate')
+      this.init()
+    },
+
     handleUserInput() {
-      if (!this.userInput.trim()) return
+      if (!this.canSubmit) return
+      this.allowInputSuggestions = false
+      this.showSuggestions = false
+      const shouldUseReadyScenario = this.hasGeneratedRecommendation && this.scenarioParsed
+      this.beginAgentTurn()
       this.isInputLoading = true
       this.isInputEnabled = false
       this.messages.push({ text: this.userInput, isUser: true })
+      this.$emit('regenerate-available')
       this.messages.push({ text: 'agentLoading', isUser: false })
       this.scrollToBottom()
-      const input = this.userInput
+      const input = this.userInput.trim()
       this.userInput = ''
 
-      // 发出开始loading事件，让其他界面进入loading状态
-      this.$emit('start-loading')
-
-      // 调度演示（课题 / MCP）→ 统一 mock 推荐；否则 Agent API
+      // 课题演示 → 进程内 mock 推荐；其余（含 health）→ 真实想定追问再推荐
       if (matchesScheduleDemoInput(input)) {
+        // 新的演示示例优先，不能被上一次待补充会话当成回答。
+        this.topicMockIntakeSession = null
+        if (this.handleTopicMockScenarioIntake(input)) return
+        this.$emit('start-loading')
         this.useScheduleDemoData(input)
-      } else {
+      } else if (this.topicMockIntakeSession) {
+        this.handleTopicMockScenarioIntake(input)
+      } else if (shouldUseReadyScenario) {
+        this.$emit('start-loading')
         this.callAgentForRecommendation(input)
+      } else {
+        this.callScenarioIntake(input)
+      }
+    },
+
+    handleTopicMockScenarioIntake(input) {
+      const turn = runTopicMockScenarioIntakeTurn({
+        message: input,
+        session: this.topicMockIntakeSession
+      })
+      if (!turn) return false
+
+      if (turn.status === 'question') {
+        this.topicMockIntakeSession = turn.session
+        this.placeholder = '请补充想定信息…'
+        this.playMockAgentIntakeReply({
+          thought: '正在解析课题一报告生成需求…',
+          result: this.formatIntakeQuestionHtml(turn.text, turn.hint),
+          finishedTitle: '想定待补充'
+        })
+        return true
+      }
+
+      this.topicMockIntakeSession = null
+      const intakeEvent = toScenarioIntakeEvent(turn.intake)
+      this.scenarioSummary = intakeEvent.scenarioSummary || ''
+      this.scenarioParsed = intakeEvent.scenarioParsed || null
+      this.userRemark = intakeEvent.userRemark || ''
+      this.$emit('scenario-intake', intakeEvent)
+      this.playMockAgentIntakeReply({
+        thought: '已将补充要求写入课题一结构化想定…',
+        result: turn.text,
+        finishedTitle: '想定已就绪',
+        onComplete: () => {
+          this.beginAgentTurn()
+          this.isInputLoading = true
+          this.isInputEnabled = false
+          this.messages.push({ text: 'agentLoading', isUser: false })
+          this.scrollToBottom()
+          this.$emit('start-loading')
+          this.useScheduleDemoData(turn.initialInput, turn.analysisChoice)
+        }
+      })
+      return true
+    },
+
+    formatIntakeQuestionHtml(text, hint) {
+      if (!hint) return text
+      return `${text}<br/><br/><span style="color:#888;font-size:12px;">提示：${hint}</span>`
+    },
+
+    playMockAgentIntakeReply({ thought, result, finishedTitle, onComplete }) {
+      setTimeout(() => {
+        this.updateThinkingMessage(thought, 1)
+        setTimeout(() => {
+          if (this.thinkingMessageIndex !== -1) {
+            this.$set(this.messages[this.thinkingMessageIndex].thinking, 'title', finishedTitle)
+          }
+          this.handleFinalStep()
+          this.currentIndex = 0
+          this.typeAgentResult(result, onComplete)
+        }, 900)
+      }, 800)
+    },
+
+    typeAgentResult(text, onComplete) {
+      if (this.thinkingMessageIndex === -1) {
+        this.agentTypeWriter(text)
+        if (onComplete) setTimeout(onComplete, text.length * 20 + 80)
+        return
+      }
+      const message = this.messages[this.thinkingMessageIndex]
+      let index = 0
+      const tick = () => {
+        if (index < text.length) {
+          this.$set(message, 'result', text.substring(0, ++index))
+          this.scrollToBottom()
+          setTimeout(tick, 20)
+          return
+        }
+        this.finishAgentTurn()
+        this.scrollToBottom()
+        if (onComplete) onComplete()
+      }
+      tick()
+    },
+
+    removeAgentLoadingMessage() {
+      const idx = this.messages.findIndex((m) => m.text === 'agentLoading')
+      if (idx !== -1) this.messages.splice(idx, 1)
+    },
+
+    async callScenarioIntake(input) {
+      const formData = new FormData()
+      formData.append('message', input)
+      formData.append('domain', this.verticalType)
+      if (this.intakeSessionId) {
+        formData.append('session_id', this.intakeSessionId)
+      }
+
+      try {
+        const res = await callAgentApi('/api/agent/scenario_intake', formData)
+        if (!res.success) {
+          throw new Error('想定追问失败')
+        }
+        if (res.session_id) {
+          this.intakeSessionId = res.session_id
+        }
+
+        this.removeAgentLoadingMessage()
+
+        if (res.status === 'question') {
+          const text = res.hint ? `${res.text}<br/><span style="color:#888;font-size:12px;">提示：${res.hint}</span>` : res.text
+          this.messages.push({ text, isUser: false })
+          this.placeholder = '请补充想定信息…'
+          this.finishAgentTurn()
+          this.scrollToBottom()
+          return
+        }
+
+        if (res.status === 'ready') {
+          this.scenarioSummary = res.scenarioSummary || ''
+          this.scenarioParsed = res.scenarioParsed || null
+          this.userRemark = res.userRemark || ''
+          this.$emit('scenario-intake', {
+            scenarioParsed: this.scenarioParsed,
+            scenarioSummary: this.scenarioSummary,
+            userRemark: this.userRemark,
+            intakeSessionId: this.intakeSessionId
+          })
+          if (res.text) {
+            this.messages.push({ text: res.text, isUser: false })
+            this.scrollToBottom()
+          }
+          this.messages.push({ text: 'agentLoading', isUser: false })
+          this.scrollToBottom()
+          this.$emit('start-loading')
+          this.callAgentForRecommendation(input)
+          return
+        }
+
+        throw new Error('想定追问返回未知状态')
+      } catch (error) {
+        console.error('想定追问失败:', error)
+        this.removeAgentLoadingMessage()
+        this.$emit('stop-loading')
+        const outputMessage = this.messageManager.getErrorReply(error.kind)
+        this.messages.push({ text: outputMessage, isUser: false })
+        this.finishAgentTurn()
       }
     },
     // 获取思考过程标题
@@ -347,6 +543,15 @@ export default {
       const formData = new FormData()
       formData.append('message', input)
       formData.append('service_type', this.verticalType)
+      if (this.scenarioSummary) {
+        formData.append('scenario_summary', this.scenarioSummary)
+      }
+      if (this.scenarioParsed) {
+        formData.append('scenario_parsed', JSON.stringify(this.scenarioParsed))
+      }
+      if (this.userRemark) {
+        formData.append('user_remark', this.userRemark)
+      }
       if (this.agentSessionId) {
         formData.append('session_id', this.agentSessionId)
       }
@@ -368,106 +573,87 @@ export default {
             this.updateThinkingMessage(data.thought, data.step)
           }
         },
-        onError: (error) => {
+        onError: (error, kind) => {
           console.error('智能体推荐失败:', error)
-          this.$emit('stop-loading') // 停止loading状态
-          const outputMessage = this.messageManager.getErrorReply()
+          this.$emit('stop-loading')
+          const outputMessage = this.messageManager.getErrorReply(kind)
           this.agentTypeWriter(outputMessage)
-          this.isInputEnabled = true
         },
         onWarning: (warning) => {
           console.warn('智能体推荐警告:', warning)
-          this.$emit('stop-loading') // 停止loading状态
-          const outputMessage = this.messageManager.getErrorReply()
+          this.$emit('stop-loading')
+          const outputMessage = this.messageManager.getErrorReply('server')
           this.agentTypeWriter(outputMessage)
-          this.isInputEnabled = true
         },
         onFinalResult: (results) => {
           console.log('智能体推荐结果:', results)
-          // 标记任务结束并处理最后一步
-          this.isTaskFinishing = true
+          this.receivedFinalResult = true
           this.handleFinalStep()
           this.handleAgentResponse(results)
         },
         onComplete: () => {
           console.log('智能体推荐完成')
           this.$emit('stop-loading')
-          if (this.isInputLoading) {
-            this.isInputEnabled = true
-            const outputMessage = this.messageManager.getErrorReply()
+          if (this.isInputLoading && !this.receivedFinalResult) {
+            const outputMessage = this.messageManager.getErrorReply('server')
             this.agentTypeWriter(outputMessage)
           }
         },
         onDataProcessError: (error) => {
           console.error('智能体数据处理错误:', error)
-          this.$emit('stop-loading') // 停止loading状态
-          const outputMessage = this.messageManager.getErrorReply()
+          this.$emit('stop-loading')
+          const outputMessage = this.messageManager.getErrorReply('server')
           this.agentTypeWriter(outputMessage)
-          this.isInputEnabled = true
         }
       })
     },
     // 处理智能体返回的数据
-    handleAgentResponse(results) {
+    async handleAgentResponse(results) {
       try {
         // eslint-disable-next-line camelcase
         const { recommendation_result } = results
-        // 检查返回数据格式
-        if (recommendation_result.success) {
-          // eslint-disable-next-line camelcase
-          const { result } = recommendation_result
-          // 转换数据格式以适配现有系统
-          const flowData = {
-            preName: result.preName,
-            preInputName: result.preInputName,
-            preOutputName: result.preOutputName,
-            nodeList: result.nodeList
+        if (!recommendation_result?.success) {
+          const failText = recommendation_result?.result
+          if (typeof failText !== 'string' || !failText.trim()) {
+            throw new Error('推荐失败结果缺少可展示内容')
           }
-          // 生成服务节点和选中服务列表
-          const { chosenServices, serviceNodes } = generateServiceNodes(flowData, this.verticalType)
-          // 生成成功回复消息
-          const outputMessage = this.messageManager.generateSuccessReply(chosenServices)
-          // 向父组件发送数据
-          this.$emit('update-services', serviceNodes)
-          this.$emit('update-flow', flowData)
-          this.placeholder = '已智能生成元应用'
-          this.isGenerated = true
-          // 使用agentTypeWriter在智能体消息中显示结果
-          this.agentTypeWriter(outputMessage)
-        } else {
-          this.$emit('stop-loading') // 停止loading状态
-          const outputMessage = this.messageManager.getErrorReply()
-          this.agentTypeWriter(outputMessage)
-          this.isInputEnabled = true
+          this.$emit('stop-loading')
+          this.agentTypeWriter(failText.trim())
+          return
         }
+        // eslint-disable-next-line camelcase
+        const { result } = recommendation_result
+        const serviceIds = result.serviceIds
+        if (!Array.isArray(serviceIds) || !serviceIds.length) {
+          throw new Error('推荐结果未包含有效服务 ID')
+        }
+        const response = await batchGetServices(serviceIds)
+        if (response?.status !== 'success' || !response.services?.length) {
+          throw new Error(response?.message || '获取服务目录失败')
+        }
+        const flowData = buildCanvasFlow({
+          preName: result.preName,
+          preDes: result.preDes || this.userRemark || '',
+          preInputName: result.preInputName,
+          preOutputName: result.preOutputName
+        }, response.services, serviceIds)
+        flowData.scenarioSummary = this.scenarioSummary || ''
+        flowData.scenarioParsed = this.scenarioParsed || null
+        const outputMessage = this.messageManager.generateSuccessReply(flowServiceNames(flowData))
+        this.$emit('apply-flow', flowData)
+        this.hasGeneratedRecommendation = true
+        this.placeholder = '可继续对话补充想定，或打开仿真构建前在准备页编辑'
+        this.agentTypeWriter(outputMessage)
       } catch (error) {
         console.error('处理智能体返回数据失败:', error)
-        this.$emit('stop-loading') // 停止loading状态
-        const outputMessage = this.messageManager.getErrorReply(true)
-        this.agentTypeWriter(outputMessage)
-        this.isInputEnabled = true
+        this.$emit('stop-loading')
+        this.agentTypeWriter(this.messageManager.getErrorReply('server'))
       }
     },
-    useScheduleDemoData(input) {
-      if (
-        resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.LOCAL_MCP &&
-        this.verticalType !== 'health'
-      ) {
-        this.$emit('stop-loading')
-        this.isInputLoading = false
-        this.isInputEnabled = true
-        const i = this.messages.findIndex((msg) => msg.text === 'agentLoading')
-        if (i !== -1) {
-          this.$set(this.messages, i, {
-            text: '【本地MCP】样例仅在 <b>health</b> 调度页可用。',
-            isUser: false
-          })
-        }
-        return
-      }
-      const steps = generateMockSteps(this.verticalType, input)
+    useScheduleDemoData(input, analysisChoice = null) {
+      const steps = generateMockSteps(this.verticalType, input, analysisChoice)
       const runStep = (idx) => {
-        if (idx >= steps.length) return this.finishScheduleDemo(input)
+        if (idx >= steps.length) return this.finishScheduleDemo(input, analysisChoice)
         const step = steps[idx]
         setTimeout(() => {
           this.updateThinkingMessage(step.thought, step.step)
@@ -476,28 +662,35 @@ export default {
       }
       runStep(0)
     },
-    finishScheduleDemo(input) {
-      this.isTaskFinishing = true
+    finishScheduleDemo(input, analysisChoice = null) {
       this.handleFinalStep()
-      const isMcp = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.LOCAL_MCP
-      getMetaAppNodes(this.verticalType, input)
+      const isTopic = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.TOPIC
+      getMetaAppNodes(this.verticalType, input, analysisChoice)
         .then((flowData) => {
-          const { chosenServices, serviceNodes } = generateServiceNodes(
-            flowData,
-            this.verticalType
-          )
-          this.$emit('update-services', serviceNodes)
-          this.$emit('update-flow', flowData)
-          this.placeholder = isMcp ? '已生成本地 MCP 元应用' : '已智能生成元应用'
-          this.isGenerated = true
-          this.agentTypeWriter(
-            this.messageManager.generateSuccessReply(chosenServices)
-          )
+          if (isTopic && flowData.scenarioParsed && !this.scenarioParsed) {
+            const intakeEvent = toScenarioIntakeEvent({
+              scenarioParsed: flowData.scenarioParsed,
+              scenarioSummary: flowData.scenarioSummary,
+              userRemark: flowData.preDes,
+              intakeSessionId: null
+            })
+            this.scenarioSummary = intakeEvent.scenarioSummary || ''
+            this.scenarioParsed = intakeEvent.scenarioParsed || null
+            this.userRemark = intakeEvent.userRemark || ''
+            this.$emit('scenario-intake', intakeEvent)
+          }
+          const outputMessage = this.messageManager.generateSuccessReply(flowServiceNames(flowData))
+          this.$emit('apply-flow', flowData)
+          this.hasGeneratedRecommendation = true
+          this.placeholder = isTopic
+            ? '可继续对话补充想定，或点击「开始仿真构建」进入构建'
+            : '继续补充或调整需求…'
+          this.agentTypeWriter(outputMessage)
         })
         .catch(() => {
           this.$emit('stop-loading')
-          this.agentTypeWriter(this.messageManager.getErrorReply())
-          this.isInputEnabled = true
+          this.agentTypeWriter(this.messageManager.getErrorReply('server'))
+          this.finishAgentTurn()
         })
     },
     typeWriter(text) {
@@ -506,9 +699,7 @@ export default {
         this.currentIndex++
         setTimeout(() => this.typeWriter(text), 20)
       } else {
-        this.userInput = ''
-        this.isInputLoading = false
-        this.currentIndex = 0
+        this.finishAgentTurn()
         this.scrollToBottom()
       }
     },
@@ -521,10 +712,7 @@ export default {
           this.currentIndex++
           setTimeout(() => this.agentTypeWriter(text), 20)
         } else {
-          this.userInput = ''
-          this.isInputLoading = false
-          this.currentIndex = 0
-          this.thinkingMessageIndex = -1 // 完成后重置索引
+          this.finishAgentTurn()
           this.scrollToBottom()
         }
       } else {
@@ -537,12 +725,9 @@ export default {
             result: text,
             isUser: false
           })
-          this.userInput = ''
-          this.isInputLoading = false
-          this.currentIndex = 0
+          this.finishAgentTurn()
           this.scrollToBottom()
         } else {
-          // 回退到普通消息处理
           this.messages.push({ text: '', isUser: false })
           this.typeWriter(text)
         }
@@ -561,28 +746,26 @@ export default {
         clearTimeout(this.stepTypewriterTimer)
         this.stepTypewriterTimer = null
       }
-      if (this.finalCollapseTimer) {
-        clearTimeout(this.finalCollapseTimer)
-        this.finalCollapseTimer = null
-      }
 
       this.userInput = ''
       this.placeholder = this.messageManager ? this.messageManager.getPlaceholder() : ''
       this.messages = []
       this.isInputEnabled = true
       this.isInputLoading = false
-      this.isGenerated = false
       this.showSuggestions = false
+      this.allowInputSuggestions = true
       this.filteredSuggestions = this.messageManager ? this.messageManager.getSuggestions() : []
       this.thinkingMessageIndex = -1
-      this.isTaskFinishing = false
+      this.receivedFinalResult = false
       this.agentSessionId = null
+      this.intakeSessionId = null
+      this.topicMockIntakeSession = null
+      this.scenarioSummary = ''
+      this.scenarioParsed = null
+      this.userRemark = ''
+      this.hasGeneratedRecommendation = false
       const initialMessage = this.messageManager ? this.messageManager.getInitialMessage() : '智能体未获取到必要信息，请刷新后重试'
       this.messages.push({ text: initialMessage, isUser: false })
-    },
-    refresh() {
-      this.init()
-      this.$emit('clear-flow')
     }
   }
 }
@@ -681,23 +864,28 @@ export default {
 .submit-button {
   position: absolute;
   right: 0;
-  top: 0;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 2;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+
+  :deep(.anticon) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
 }
 
 .loading-text-wrapper {
   padding-right: 15px;
   width: auto;
-}
-
-.retry-button {
-  position: absolute;
-  bottom: 75px;
-  left: 50%;
-  transform: translateX(-50%);
-  border: none;
-  border-radius: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* 智能体消息容器样式 */
@@ -946,6 +1134,32 @@ export default {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.chat-container--workbench {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-container--workbench .chat-output {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: none !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.chat-container--workbench .chat-input {
+  flex: 0 0 auto;
+  flex-shrink: 0;
 }
 
 </style>

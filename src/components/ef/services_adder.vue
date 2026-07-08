@@ -3,6 +3,8 @@
     :title="title"
     width="40%"
     :visible.sync="dialogVisible"
+    :append-to-body="true"
+    :modal-append-to-body="true"
     @close="onClose"
     class="service-dialog"
   >
@@ -56,7 +58,7 @@
 
 <script>
 import cloneDeep from 'lodash.clonedeep'
-import { filterServices } from '@/api/service'
+import { getMcpServiceOptions } from '@/api/service'
 
 export default {
   props: {
@@ -105,12 +107,10 @@ export default {
     },
     async fetchServices() {
       try {
-        filterServices({ domain: this.verticalType, type: 'atomic_mcp' }).then(res => {
-          console.log('获取到的MCP服务:', res.services)
-          this.services = this.processServicesData(res.services || [])
-          this.filterData = this.services
-          this.initSelectedItems()
-        })
+        const res = await getMcpServiceOptions(this.verticalType)
+        this.services = this.processServicesData(res.services || [])
+        this.filterData = this.services
+        this.initSelectedItems()
       } catch (error) {
         console.error('获取服务失败:', error)
         this.services = []
@@ -120,28 +120,26 @@ export default {
       }
     },
 
-        processServicesData(rawServices) {
+    processServicesData(rawServices) {
       return rawServices.map(service => {
-        const apiInfo = service.apiList && service.apiList[0] ? service.apiList[0] : {}
-        const tools = apiInfo.tools || []
+        const tools = service.tools || []
 
         return {
           id: service.id,
           name: service.name,
-          des: apiInfo.des,
-          // 服务级别的原始数据，用于后续传递
+          des: service.des,
           _serviceData: {
             status: service.status,
-            apiName: apiInfo.name,
-            apiUrl: apiInfo.url,
-            tools: tools,
-            isFake: !!apiInfo.isFake,
-            mcpMethod: apiInfo.method || ''
+            apiName: service.name,
+            apiUrl: service.url,
+            tools,
+            isFake: !!service.isFake,
+            mcpMethod: service.method || ''
           },
           children: tools.map((tool, index) => ({
             id: `${service.name}_tool_${index}`,
             name: tool.name,
-            des: tool.des || '',
+            des: tool.des || tool.description || '',
             isTool: true
           }))
         }
@@ -287,6 +285,12 @@ export default {
 }
 </script>
 <style scoped>
+.service-dialog {
+  :deep(.el-dialog__wrapper) {
+    z-index: 3000 !important;
+  }
+}
+
 /* 对话框整体样式 */
 .service-dialog {
   border-radius: 8px;

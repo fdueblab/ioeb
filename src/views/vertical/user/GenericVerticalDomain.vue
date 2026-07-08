@@ -1,10 +1,12 @@
 <template>
   <div>
     <component
+      ref="activeView"
       @onGoBack="handleGoBack"
       @onGoUse="handleGoUse"
       :is="currentComponent"
       :apiList="apiList"
+      :metaAppId="metaAppId"
       :verticalType="verticalType"
       :key="verticalType"
     >
@@ -38,12 +40,41 @@ export default {
   data() {
     return {
       currentComponent: 'GenericVerticalList',
-      apiList: []
+      apiList: [],
+      metaAppId: ''
     }
   },
+  activated() {
+    this.applyListRefreshIfNeeded()
+  },
   methods: {
+    applyListRefreshIfNeeded() {
+      try {
+        const flag = sessionStorage.getItem(`eb_vertical_list_refresh_${this.verticalType}`)
+        if (flag !== '1') return
+        sessionStorage.removeItem(`eb_vertical_list_refresh_${this.verticalType}`)
+        this.currentComponent = 'GenericVerticalList'
+        this.apiList = []
+        this.metaAppId = ''
+        this.$nextTick(() => {
+          const view = this.$refs.activeView
+          if (!view) return
+          if (typeof view.handleSearchReset === 'function') {
+            view.handleSearchReset()
+          } else if (typeof view.initData === 'function') {
+            view.initData()
+          }
+          if (view.$refs.filterCard && typeof view.$refs.filterCard.reset === 'function') {
+            view.$refs.filterCard.reset()
+          }
+        })
+      } catch (e) {
+        /* ignore */
+      }
+    },
     handleGoBack() {
       this.currentComponent = 'GenericVerticalList'
+      this.metaAppId = ''
     },
     handleGoUse(record) {
       console.log('record', record)
@@ -58,6 +89,7 @@ export default {
             return
           }
           this.apiList = record.apiList
+          this.metaAppId = record.id
           this.currentComponent = 'UseMetaApp'
           break
         case 'atomic_mcp':
@@ -124,6 +156,7 @@ export default {
         // 重置为列表组件
         this.currentComponent = 'GenericVerticalList'
         this.apiList = []
+        this.metaAppId = ''
       }
     }
   }
