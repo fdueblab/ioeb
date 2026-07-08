@@ -631,9 +631,24 @@
         <template v-else-if="isCompleted && !hasFailed">
           <a-button v-if="!embedded" @click="handleClose">返回编辑</a-button>
           <button v-if="embedded" type="button" class="wb-danger-btn" @click="confirmBackToEdit">返回重新编辑</button>
-          <button v-if="embedded" type="button" class="wb-primary-btn" :disabled="!canPrepublish" @click="handlePrePublish">元应用预览与发布</button>
-          <a-button v-else type="primary" icon="rocket" :disabled="!canPrepublish" @click="handlePrePublish">
-            元应用预览与发布
+          <button
+            v-if="embedded"
+            type="button"
+            class="wb-primary-btn"
+            :class="{ 'wb-primary-btn--loading': prepublishLoading }"
+            @click="handlePrePublish"
+          >
+            <a-icon v-if="prepublishLoading" type="loading" spin class="wb-primary-btn-icon" />
+            {{ prepublishButtonLabel }}
+          </button>
+          <a-button
+            v-else
+            type="primary"
+            icon="rocket"
+            :loading="prepublishLoading"
+            @click="handlePrePublish"
+          >
+            {{ prepublishButtonLabel }}
           </a-button>
         </template>
       </div>
@@ -650,16 +665,16 @@ import {
   fetchSimulationTrace,
   fetchSimulationEvidence,
   fetchSimulationArtifact,
-  fetchSimulationAcceptedTrajectory
+  fetchSimulationAcceptedTrajectory,
+  isMemorySimulationSession
 } from '@/api/simulation_builder'
 import {
   SIMULATION_BUILD_ENV_TASKS,
   SIMULATION_BUILD_GEN_TASKS
 } from '@/mock/data/simulation_builder_data'
+import { materializeTopicDemoBundle } from '@/mock/data/topic_demo_bundles'
 import { getKnowledge } from '@/domain'
-import {
-  useMemorySimulation
-} from '@/mock/data/meta_apps_data'
+import { getPrepublishReadiness } from './meta_app_build/prepublish_readiness'
 import MetaAppArtifactPanel from './meta_app_build/MetaAppArtifactPanel.vue'
 
 function mapSetupItems(tasks) {
@@ -786,15 +801,28 @@ export default {
     }
   },
   computed: {
+    prepublishReadiness() {
+      return getPrepublishReadiness({
+        build: this.completedBuild,
+        detailArtifact: this.detailArtifact,
+        isCompleted: this.isCompleted,
+        hasFailed: this.hasFailed
+      })
+    },
     canPrepublish() {
-      const build = this.completedBuild || {}
-      return Boolean(
-        build.buildId &&
-        build.artifactId &&
-        build.artifactHash &&
-        this.detailArtifact &&
-        this.detailArtifact.data
-      )
+      return this.prepublishReadiness.ready
+    },
+    prepublishLoading() {
+      return this.prepublishReadiness.loading
+    },
+    prepublishButtonLabel() {
+      if (this.prepublishLoading) return '产物加载中…'
+      if (this.detailArtifact.error) return '产物加载失败，点击重试'
+      return '元应用预览与发布'
+    },
+    prepublishBlockReason() {
+      if (this.detailArtifact.error) return ''
+      return this.prepublishReadiness.reason
     },
     formattedElapsedTime() {
       const minutes = Math.floor(this.elapsedTime / 60)
@@ -1418,16 +1446,42 @@ export default {
       return fallback
     },
 
+    collectDetailLoadIssues() {
+      const issues = []
+      if (this.detailTrace.error) issues.push(this.detailTrace.error)
+      if (this.detailEvidence.error) issues.push(this.detailEvidence.error)
+      if (this.detailArtifact.error) issues.push(this.detailArtifact.error)
+      if (this.detailAcceptedTrajectory.error) issues.push(this.detailAcceptedTrajectory.error)
+      return issues
+    },
+
+    reportDetailLoadIssues() {
+      if (!this.isCompleted || this.hasFailed) return
+      const issues = this.collectDetailLoadIssues()
+      if (!issues.length) return
+      const summary = issues.join('；')
+      this.addLog(`构建详情加载异常：${summary}`, 'ERROR', 'error')
+      this.$message.warning(issues[0])
+    },
+
+    applyMockArtifactLoadError(err) {
+      const msg = this.formatArtifactError(err, '课题产物加载失败')
+      this.detailTrace = { loading: false, skipped: true, error: msg, view: null, rawJson: '' }
+      this.detailEvidence = { loading: false, skipped: true, error: msg, data: null }
+      this.detailArtifact = { loading: false, skipped: false, error: msg, data: null }
+      this.detailAcceptedTrajectory = { loading: false, skipped: true, error: msg, data: null }
+      this.reportDetailLoadIssues()
+    },
+
     async loadDetailArtifacts() {
       if (!this.sessionId) return
-      if (useMemorySimulation(this.buildStartPayload())) {
+      if (isMemorySimulationSession(this.sessionId)) {
         this.detailTrace = { loading: true, skipped: false, error: null, view: null, rawJson: '' }
         this.detailEvidence = { loading: true, skipped: false, error: null, data: null }
         this.detailArtifact = { loading: true, skipped: false, error: null, data: null }
         this.detailAcceptedTrajectory = { loading: true, skipped: false, error: null, data: null }
         try {
-          const { buildTopicDemoArtifacts } = await import('@/mock/data/topic_simulation_artifacts')
-          const packs = await buildTopicDemoArtifacts({
+          const packs = await materializeTopicDemoBundle({
             sessionId: this.sessionId,
             appName: this.appName,
             appId: this.appId,
@@ -1454,12 +1508,9 @@ export default {
             artifactId: packs.manifest.artifactId,
             artifactHash: packs.manifest.hashes.artifact
           }
+          this.reportDetailLoadIssues()
         } catch (e) {
-          const msg = this.formatArtifactError(e, '课题产物加载失败')
-          this.detailTrace = { loading: false, skipped: true, error: msg, view: null, rawJson: '' }
-          this.detailEvidence = { loading: false, skipped: true, error: null, data: null }
-          this.detailArtifact = { loading: false, skipped: true, error: null, data: null }
-          this.detailAcceptedTrajectory = { loading: false, skipped: true, error: null, data: null }
+          this.applyMockArtifactLoadError(e)
         }
         return
       }
@@ -1516,12 +1567,14 @@ export default {
             data: null
           }
         }
+        this.reportDetailLoadIssues()
       } catch (e) {
         const msg = this.formatArtifactError(e, '轨迹加载失败')
         this.detailTrace = { loading: false, skipped: false, error: msg, view: null, rawJson: '' }
         this.detailEvidence = { loading: false, skipped: false, error: null, data: null }
-        this.detailArtifact = { loading: false, skipped: false, error: null, data: null }
+        this.detailArtifact = { loading: false, skipped: false, error: msg, data: null }
         this.detailAcceptedTrajectory = { loading: false, skipped: false, error: null, data: null }
+        this.reportDetailLoadIssues()
       }
     },
 
@@ -1980,7 +2033,16 @@ export default {
     },
 
     handlePrePublish() {
-      if (!this.canPrepublish) return
+      if (this.prepublishLoading) return
+      if (this.detailArtifact.error) {
+        this.loadDetailArtifacts()
+        return
+      }
+      if (!this.canPrepublish) {
+        const reason = this.prepublishBlockReason
+        if (reason) this.$message.warning(reason)
+        return
+      }
       this.$emit('success', {
         appName: this.appName,
         appId: this.appId,
@@ -2166,6 +2228,9 @@ export default {
         traceLoading: this.detailTrace.loading,
         traceSkipped: this.detailTrace.skipped,
         traceError: this.detailTrace.error,
+        artifactError: this.detailArtifact.error,
+        artifactLoading: this.detailArtifact.loading,
+        canPrepublish: this.canPrepublish,
         callChain: this.callChainSteps,
         evidenceStatus: evidence && evidence.overallStatus,
         evidenceSummary: this.evidenceSummaryText(evidence),
@@ -2184,245 +2249,11 @@ export default {
       }
     },
 
-    runtimeModeLabel(mode) {
-      const map = {
-        agent_with_optional_golden_path: '智能体执行 + 候选路径',
-        agent_only: '智能体执行'
-      }
-      return map[mode] || mode || '智能体执行'
-    },
-
-    pushProductRow(rows, key, label, value, size = 'sm', extra = null) {
-      if (value == null || value === '') return
-      const row = { key, label, value: String(value), size }
-      if (extra && typeof extra === 'object') {
-        Object.assign(row, extra)
-      }
-      rows.push(row)
-    },
-
-    buildBuildSummaryRows() {
-      const rows = []
-      const art = this.detailArtifact.data
-      const evidence = this.detailEvidence.data
-
-      if (this.detailTrace.loading) {
-        this.pushProductRow(rows, 'trace', '轨迹', '加载中…', 'xl')
-      } else if (this.detailTrace.skipped) {
-        this.pushProductRow(rows, 'trace', '轨迹', '构建轨迹暂未生成', 'lg')
-      } else if (this.detailTrace.error) {
-        this.pushProductRow(rows, 'trace', '轨迹', this.detailTrace.error, 'xl')
-      } else if (this.callChainSteps.length) {
-        this.pushProductRow(rows, 'trace', '轨迹', this.callChainSteps.join(' → '), 'xl')
-      }
-
-      if (evidence) {
-        const statusText = evidence.overallStatus || '—'
-        const summaryText = [statusText, this.evidenceSummaryText(evidence)].filter(Boolean).join(' · ')
-        this.pushProductRow(rows, 'evidence-status', '证据结论', summaryText, 'lg')
-      }
-
-      if (art) {
-        this.pushProductRow(rows, 'artifact-id', '产物 ID', art.artifactId, 'sm')
-        this.pushProductRow(rows, 'runtime-mode', '运行方式', this.runtimeModeLabel(art.runtime && art.runtime.mode), 'xs')
-      }
-
-      this.pushProductRow(rows, 'elapsed', '构建耗时', this.formattedElapsedTime, 'xs')
-      return rows
-    },
-
-    collectAcceptedInputSlots(accepted) {
-      const actions = accepted && Array.isArray(accepted.actionSequence)
-        ? accepted.actionSequence
-        : []
-      const seen = {}
-      const slots = []
-      actions.forEach((action) => {
-        ;(action.inputSlots || []).forEach((slot) => {
-          const name = slot && slot.name
-          if (!name || seen[name]) return
-          seen[name] = true
-          slots.push({
-            name,
-            type: (slot && slot.type) || 'unknown',
-            required: true,
-            source: (slot && slot.source) || ''
-          })
-        })
-      })
-      return slots
-    },
-
-    formatMaterialSlots(slots) {
-      return (Array.isArray(slots) ? slots : [])
-        .map((slot) => {
-          if (typeof slot === 'string') return { name: slot, type: '', detail: '' }
-          const type = (slot && slot.type) || ''
-          const source = (slot && slot.source) || ''
-          return {
-            name: (slot && slot.name) || '',
-            type,
-            detail: [type, source].filter(Boolean).join(' · ')
-          }
-        })
-        .filter((slot) => slot.name)
-    },
-
-    buildRequirementMaterial(art, accepted) {
-      const traceScenario = this.detailTrace.view && this.detailTrace.view.scenarioParsed
-      const scenario = Object.assign(
-        {},
-        traceScenario || {},
-        this.scenarioParsedDraft || {}
-      )
-      const task = (art && art.taskContract) || {}
-      const app = (art && art.app) || {}
-      const source = scenario.source || {}
-      const inputSlots = Array.isArray(task.inputSlots) && task.inputSlots.length
-        ? task.inputSlots
-        : this.collectAcceptedInputSlots(accepted)
-      const sourceRows = []
-      if (source.parserModel) sourceRows.push({ label: '解析模型', value: source.parserModel })
-      if (source.parsedAt) sourceRows.push({ label: '解析时间', value: source.parsedAt })
-      if (scenario.scenarioKey) sourceRows.push({ label: '想定标识', value: scenario.scenarioKey })
-      if (scenario.domain || task.domain || app.domain) {
-        sourceRows.push({ label: '领域', value: scenario.domain || task.domain || app.domain })
-      }
-      return {
-        goal: scenario.goal || task.goal || app.name || this.appName,
-        description: scenario.description || app.description || this.scenarioDraft || '',
-        constraints: Array.isArray(scenario.constraints) && scenario.constraints.length
-          ? scenario.constraints
-          : (Array.isArray(task.constraints) ? task.constraints : []),
-        successCriteria: Array.isArray(scenario.acceptanceCriteria) && scenario.acceptanceCriteria.length
-          ? scenario.acceptanceCriteria
-          : (Array.isArray(task.successCriteria) ? task.successCriteria : []),
-        inputSlots: this.formatMaterialSlots(inputSlots),
-        outputSlots: this.formatMaterialSlots(task.outputSlots || []),
-        sourceRows
-      }
-    },
-
-    buildServiceSelectionMaterial(art) {
-      const traceSelection = this.detailTrace.view && this.detailTrace.view.serviceSelection
-      const report = this.serviceSelectionReport || traceSelection || {}
-      const runtime = (art && art.runtime) || {}
-      const bindings = Array.isArray(runtime.serviceBindings) ? runtime.serviceBindings : []
-      let selected = Array.isArray(report.selectedServices) ? report.selectedServices : []
-      if (!selected.length && bindings.length) {
-        selected = bindings.map((binding) => ({
-          serviceId: binding.serviceId,
-          serviceName: binding.serviceName,
-          reason: '已写入运行绑定，来自构建阶段服务选择结果。',
-          matchedCapabilities: (binding.tools || [])
-            .map((tool) => tool && (tool.toolName || tool.name))
-            .filter(Boolean)
-        }))
-      }
-      return {
-        selectionId: report.selectionId || '',
-        strategy: report.strategy || '',
-        rationale: report.rationale || '',
-        confidence: report.confidence != null ? `${Math.round(Number(report.confidence) * 100)}%` : '',
-        model: report.model || '',
-        createdAt: report.createdAt || '',
-        selectedServices: selected.map((svc) => ({
-          serviceId: svc.serviceId || '',
-          serviceName: svc.serviceName || svc.serviceId || '未命名服务',
-          reason: svc.reason || '',
-          matchedCapabilities: Array.isArray(svc.matchedCapabilities)
-            ? svc.matchedCapabilities.filter(Boolean)
-            : []
-        })),
-        rejectedServices: Array.isArray(report.rejectedServices) ? report.rejectedServices : [],
-        missingCapabilities: Array.isArray(report.missingCapabilities) ? report.missingCapabilities : [],
-        bindingCount: bindings.length
-      }
-    },
-
-    buildExecutionMaterial(art, accepted) {
-      const traceView = (this.detailTrace && this.detailTrace.view) || {}
-      const actions = accepted && Array.isArray(accepted.actionSequence)
-        ? accepted.actionSequence
-        : []
-      const runtime = (art && art.runtime) || {}
-      const toolCalls = Array.isArray(traceView.toolCalls) ? traceView.toolCalls : []
-      const plannerDecisions = Array.isArray(traceView.plannerDecisions) ? traceView.plannerDecisions : []
-      return {
-        runtimeMode: this.runtimeModeLabel(runtime.mode),
-        traceVersion: traceView.traceVersion || '',
-        iterationCount: this.totalIterations || this.currentIteration,
-        toolCallCount: traceView.toolCallCount != null ? traceView.toolCallCount : (this.serviceCallStats.total || toolCalls.length),
-        mcpCallCount: traceView.mcpCallCount,
-        elapsedText: this.formattedElapsedTime,
-        callChain: this.callChainSteps,
-        plannerDecisions,
-        toolCalls,
-        acceptedIteration: accepted && accepted.acceptedIteration,
-        acceptedActionCount: actions.length
-      }
-    },
-
-    buildVerificationMaterial(accepted) {
-      const evidence = this.detailEvidence.data || {}
-      const traceView = (this.detailTrace && this.detailTrace.view) || {}
-      const actions = accepted && Array.isArray(accepted.actionSequence)
-        ? accepted.actionSequence
-        : []
-      const verifierResults = Array.isArray(traceView.verifierResults)
-        ? traceView.verifierResults
-        : []
-      return {
-        overallStatus: evidence.overallStatus || (accepted && accepted.verifier && accepted.verifier.status) || '',
-        summaryText: evidence.summary ? this.evidenceSummaryText(evidence) : ((accepted && accepted.verifier && accepted.verifier.summary) || ''),
-        dimensions: this.evidenceDimensionPanels.map((panel) => ({
-          key: panel.key,
-          title: panel.title,
-          status: panel.status,
-          summaryLine: panel.summaryLine
-        })),
-        checks: Array.isArray(evidence.checks) ? evidence.checks : [],
-        failedChecks: Array.isArray(evidence.failedChecks) ? evidence.failedChecks : [],
-        missingEvidence: Array.isArray(evidence.missingEvidence) ? evidence.missingEvidence : [],
-        verifierResults,
-        acceptedTrajectory: {
-          trajectoryId: (accepted && accepted.trajectoryId) || '',
-          status: (accepted && accepted.status) || '',
-          acceptedIteration: accepted && accepted.acceptedIteration,
-          actionCount: actions.length,
-          bindingGaps: (accepted && Array.isArray(accepted.bindingGaps)) ? accepted.bindingGaps : []
-        }
-      }
-    },
-
     getProductViewModel() {
-      const art = this.detailArtifact.data
-      const accepted = this.detailAcceptedTrajectory && this.detailAcceptedTrajectory.data
-      const tags = []
-      if (art) {
-        tags.push({ label: '任务说明', tone: 'green' })
-        if (art.runtime && Array.isArray(art.runtime.serviceBindings) && art.runtime.serviceBindings.length) {
-          tags.push({ label: '服务绑定', tone: 'green' })
-        }
-        const hasPath = Array.isArray(art.goldenPaths) && art.goldenPaths.some(
-          (p) => p && Array.isArray(p.steps) && p.steps.length
-        )
-        if (hasPath) {
-          tags.push({ label: '可复用路径', tone: 'green' })
-        }
-        tags.push({ label: this.runtimeModeLabel(art.runtime && art.runtime.mode), tone: 'blue' })
-      }
+      const readiness = this.prepublishReadiness
       return {
-        build: this.completedBuild || null,
-        artifact: art || null,
-        summaryRows: this.buildBuildSummaryRows(),
-        intent: (this.scenarioParsedDraft && this.scenarioParsedDraft.goal) || this.appName,
-        services: this.serviceStatuses.map((s) => s.name).join('、'),
-        tags,
-        requirement: this.buildRequirementMaterial(art, accepted),
-        serviceSelection: this.buildServiceSelectionMaterial(art),
-        execution: this.buildExecutionMaterial(art, accepted),
-        verification: this.buildVerificationMaterial(accepted)
+        build: (readiness.build || this.completedBuild) || null,
+        artifact: readiness.artifact || (this.detailArtifact && this.detailArtifact.data) || null
       }
     },
 

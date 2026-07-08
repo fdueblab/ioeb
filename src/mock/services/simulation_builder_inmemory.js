@@ -480,6 +480,7 @@ async function runStream(sessionId, emit) {
 
     emit('complete', {
       success: true,
+      publishable: true,
       buildId: sessionId,
       metrics,
       result: successResult

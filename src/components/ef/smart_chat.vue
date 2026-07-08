@@ -100,10 +100,9 @@ import { batchGetServices } from '@/api/service'
 import {
   getMetaAppNodes,
   generateMockSteps,
-  matchesScheduleDemoInput,
-  resolveScheduleDemoKind,
-  SCHEDULE_DEMO_KIND
+  matchesScheduleDemoInput
 } from '@/mock/data/meta_apps_data'
+import { matchesTopicDemoInput } from '@/mock/data/topic_demo_route'
 import { runTopicMockScenarioIntakeTurn, toScenarioIntakeEvent } from '@/mock/data/topic_scenario_intake'
 
 export default {
@@ -664,7 +663,7 @@ export default {
     },
     finishScheduleDemo(input, analysisChoice = null) {
       this.handleFinalStep()
-      const isTopic = resolveScheduleDemoKind(input) === SCHEDULE_DEMO_KIND.TOPIC
+      const isTopic = matchesTopicDemoInput(input)
       getMetaAppNodes(this.verticalType, input, analysisChoice)
         .then((flowData) => {
           if (isTopic && flowData.scenarioParsed && !this.scenarioParsed) {
@@ -687,7 +686,8 @@ export default {
             : '继续补充或调整需求…'
           this.agentTypeWriter(outputMessage)
         })
-        .catch(() => {
+        .catch((error) => {
+          console.error('课题演示流程生成失败:', error)
           this.$emit('stop-loading')
           this.agentTypeWriter(this.messageManager.getErrorReply('server'))
           this.finishAgentTurn()

@@ -161,13 +161,6 @@
             </a-form-item>
           </a-col>
         </a-row>
-        <a-divider>运行环境</a-divider>
-        <div class="wb-runtime-spec">
-          <div v-for="row in runtimeDisplay" :key="row.label" class="wb-runtime-row">
-            <span>{{ row.label }}</span>
-            <code>{{ row.value }}</code>
-          </div>
-        </div>
           </a-form>
         </div>
         <div class="wb-publish-actions">
@@ -183,9 +176,6 @@
 import { prepublishService } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
 import store from '@/store'
-import {
-  metaAppRuntimeDisplay
-} from './runtime_spec'
 import { buildMetaAppPrepublishPayload } from './prepublish_payload'
 
 const PREPUBLISH_FIELD_ORDER = ['name', 'inputName', 'outputName', 'submitButtonText', 'technology']
@@ -224,9 +214,6 @@ export default {
   computed: {
     defaultVisualization() {
       return this.verticalType === 'aml'
-    },
-    runtimeDisplay() {
-      return metaAppRuntimeDisplay()
     }
   },
   watch: {
@@ -392,7 +379,7 @@ export default {
             this.$message.error((res && res.message) || '预发布失败')
           }
         } catch (e) {
-          this.$message.error('预发布异常，请稍后重试！')
+          this.$message.error((e && e.message) || '预发布异常，请稍后重试！')
         } finally {
           this.submitting = false
         }
@@ -564,41 +551,6 @@ export default {
 .wb-form-title h3 {
   margin: 0;
   font-size: 16px;
-}
-
-.wb-runtime-spec {
-  margin: 0 24px 18px;
-  border: 1px solid #dfe8f3;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #f8fbff;
-}
-
-.wb-runtime-row {
-  min-height: 42px;
-  padding: 9px 12px;
-  display: grid;
-  grid-template-columns: 110px minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
-  border-bottom: 1px solid #e8eef6;
-
-  &:last-child {
-    border-bottom: 0;
-  }
-
-  span {
-    color: #64748b;
-    font-size: 12px;
-    font-weight: 700;
-  }
-
-  code {
-    color: #173b65;
-    font-size: 12px;
-    overflow-wrap: anywhere;
-    white-space: normal;
-  }
 }
 
 .wb-preview-col {

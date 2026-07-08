@@ -7,6 +7,7 @@
  */
 
 import { resolveTopicScenarioKeyByAppName } from './topic_scenario_intake'
+import { resolveTopicDemoAnalysisChoice } from './topic_demo_route'
 
 const ARTIFACT_SCHEMA = 'meta_app_artifact.v1'
 const TRACE_SCHEMA = 'build_trace.v1'
@@ -47,8 +48,14 @@ function canonicalJson(value) {
 }
 
 async function stableHash(data) {
-  const bytes = new TextEncoder().encode(JSON.stringify(canonicalJson(data || {})))
-  const digest = await window.crypto.subtle.digest('SHA-256', bytes)
+  const payload = JSON.stringify(canonicalJson(data || {}))
+  const subtle = typeof window !== 'undefined' && window.crypto && window.crypto.subtle
+  if (!subtle) {
+    // dev.fdueblab.cn 等为 HTTP 非 localhost，无 crypto.subtle；mock 演示用确定性回退
+    return longHash(payload)
+  }
+  const bytes = new TextEncoder().encode(payload)
+  const digest = await subtle.digest('SHA-256', bytes)
   return Array.from(new Uint8Array(digest))
     .map((value) => value.toString(16).padStart(2, '0'))
     .join('')
@@ -684,10 +691,13 @@ export function buildTopicDemoAcceptedTrajectory(ctx) {
 }
 
 export function buildTopicDemoArtifact(ctx) {
-  const scenarioKey = scenarioFromCtx(ctx).scenarioKey || resolveTopicScenarioKeyByAppName(ctx.appName) || 'pj1'
+  const scenario = scenarioFromCtx(ctx)
+  const scenarioKey = scenario.scenarioKey || resolveTopicScenarioKeyByAppName(ctx.appName) || 'pj1'
+  const analysisChoice = resolveTopicDemoAnalysisChoice(ctx)
   const accepted = buildTopicDemoAcceptedTrajectory(ctx)
   const artifact = buildMetaAppArtifact(ctx, accepted)
-  artifact.artifactId = `app-topic-${scenarioKey}-${shortHash(ctx.sessionId)}`
+  const comboSuffix = scenarioKey === 'pj_combo' && analysisChoice === 'pj2' ? '-mpc' : ''
+  artifact.artifactId = `app-topic-${scenarioKey}${comboSuffix}`
   return artifact
 }
 

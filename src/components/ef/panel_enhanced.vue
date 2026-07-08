@@ -11,37 +11,7 @@
             </h4>
           </div>
           <div class="toolbar-center">
-            <a-space>
-              <div class="simulation-btn-wrapper">
-                <a-button
-                  type="primary"
-                  shape="round"
-                  icon="play-circle"
-                  :disabled="simulationChromeLocked"
-                  @click="simulationBuild"
-                >
-                  开始仿真构建
-                </a-button>
-                <transition name="tips-float">
-                  <div v-if="hasServiceNodes && !simulationPassed && !simulationEntryTipDismissed" class="simulation-tips-float">
-                    <span>看起来还行？进入仿真构建环节</span>
-                    <div class="tips-arrow"></div>
-                  </div>
-                </transition>
-              </div>
-              <!-- 预发布按钮已整合到仿真构建弹窗内 -->
-              <!-- <a-tooltip :title="simulationPassed ? '' : '请先完成仿真构建'">
-                <a-button
-                  shape="round"
-                  icon="rocket"
-                  :disabled="!simulationPassed"
-                  :class="{ 'success-button': simulationPassed }"
-                  @click="previewAndPublish"
-                >
-                  元应用预览与发布
-                </a-button>
-              </a-tooltip> -->
-            </a-space>
+            <a-space />
           </div>
           <div class="toolbar-right">
             <a-space>
@@ -75,31 +45,12 @@
     <div
       class="ef-main-container"
       :class="{
-        'ef-main--simulation': simulationBuilderVisible && !workbenchMode,
         'ef-main--workbench': workbenchMode
       }"
       :style="mainContainerStyle"
     >
-      <!-- 仿真构建：非 workbench 时左栏 -->
-      <div v-if="!workbenchMode && simulationBuilderVisible" class="ef-simulation-pane">
-        <simulation-builder
-          ref="simulationBuilder"
-          :service-nodes="data.nodeList"
-          :app-name="metaAppDisplayNameForSimulation"
-          :app-id="data.name || 'meta-app-draft'"
-          :domain="verticalType"
-          :scenario-description="simulationScenarioText"
-          :scenario-parsed="data.scenarioParsed || {}"
-          @success="handleSimulationSuccess"
-          @prePublish="previewAndPublish"
-          @canvas-visual="onSimulationCanvasVisual"
-          @scenario-parsed-update="onScenarioParsedUpdate"
-          @close="simulationBuilderVisible = false"
-        />
-      </div>
-
       <!-- 左侧服务菜单 -->
-      <div v-if="showSidebar && !workbenchMode && !simulationBuilderVisible" class="ef-sidebar">
+      <div v-if="showSidebar && !workbenchMode" class="ef-sidebar">
         <node-menu @addNode="addNode" ref="nodeMenu" :menu-list="services" />
       </div>
 
@@ -311,7 +262,6 @@ import flowNodeEnhanced from '@/components/ef/node_enhanced'
 import nodeMenu from '@/components/ef/node_menu_enhanced'
 import InfoDisplayEnhanced from '@/components/ef/info_display_enhanced'
 import ServicesAdder from '@/components/ef/services_adder'
-import SimulationBuilder from '@/components/ef/simulation_builder'
 import {
   SERVICE_TEXT_MAP,
   hasLine,
@@ -481,7 +431,7 @@ export default {
       return o
     },
     simulationChromeLocked() {
-      return this.simulationBuilderVisible
+      return false
     },
     toolbarDisabled() {
       return this.loadingFlow || this.simulationChromeLocked
@@ -507,11 +457,6 @@ export default {
       easyFlowVisible: true,
       flowInfoVisible: false,
       servicesAdderVisible: false,
-      simulationBuilderVisible: false,
-      simulationBuilding: false,
-      simulationPassed: false,
-      /** 点击「开始仿真构建」并成功打开面板后，不再显示「试试仿真构建」类浮层提示 */
-      simulationEntryTipDismissed: false,
       loadEasyFlowFinish: false,
       importLoading: false,
       fileSelectionInProgress: false,
@@ -590,8 +535,7 @@ export default {
     flowNodeEnhanced,
     nodeMenu,
     InfoDisplayEnhanced,
-    ServicesAdder,
-    SimulationBuilder
+    ServicesAdder
   },
   mounted() {
     this.jsPlumb = jsPlumb.getInstance()
@@ -608,18 +552,6 @@ export default {
     this.unbindCanvasResizeObserver()
   },
   watch: {
-    simulationBuilderVisible(val) {
-      this.$emit('simulation-ui', { open: !!val })
-      this.$nextTick(() => {
-        if (this.jsPlumb) {
-          this.jsPlumb.importDefaults({
-            ...this.jsplumbSetting,
-            ConnectionsDetachable: !val
-          })
-          this.jsPlumb.repaintEverything()
-        }
-      })
-    },
     workbenchMode(val) {
       if (val) this.$nextTick(() => this.bindCanvasResizeObserver())
       else this.unbindCanvasResizeObserver()
@@ -895,7 +827,7 @@ export default {
 
         // 连线验证
         this.jsPlumb.bind('beforeDrop', (evt) => {
-          if (this.simulationBuilderVisible) {
+          if (this.workbenchMode && this.workbenchPhase === 'build') {
             return false
           }
           const from = evt.sourceId
@@ -1245,7 +1177,7 @@ export default {
     },
 
     nodeRightMenu(nodeId, evt) {
-      if (this.simulationBuilderVisible) return
+      if (this.workbenchMode && this.workbenchPhase === 'build') return
       this.menu.show = true
       this.menu.curNodeId = nodeId
       this.menu.left = evt.x + 'px'
@@ -1309,7 +1241,6 @@ export default {
       this.emitFlowSynced()
     },
     updateInitialFlow(newFlow) {
-      this.simulationPassed = false
       return this.applyInitialFlow(newFlow)
     },
     async applyInitialFlow(newFlow) {
@@ -1342,8 +1273,6 @@ export default {
     dataReloadClear() {
       // 重置服务列表为基础状态，根据verticalType决定根节点名称
       this.setServices(getBaseServiceNodes(this.verticalType))
-      // 重置仿真状态
-      this.simulationPassed = false
 
       // 创建默认数据，包含智能体节点
       const defaultData = createDefaultFlowData()
@@ -1456,27 +1385,6 @@ export default {
       this.$nextTick(() => {
         this.$refs.servicesAdder.init()
       })
-    },
-    // 仿真构建
-    simulationBuild() {
-      if (this.data.nodeList.length > 1) {
-        this.simulationEntryTipDismissed = true
-        this.simulationBuilderVisible = true
-        this.$nextTick(() => {
-          this.$refs.simulationBuilder.init(this.data.nodeList)
-        })
-      } else {
-        this.$message.error('请先智能生成应用或添加服务！')
-      }
-    },
-    // 仿真构建成功回调
-    handleSimulationSuccess(result) {
-      console.log('仿真构建成功:', result)
-      this.simulationPassed = true
-    },
-    // 元应用预览与发布
-    previewAndPublish() {
-      this.$emit('pre-publish')
     },
     scheduleCanvasReflow() {
       this.$nextTick(() => {

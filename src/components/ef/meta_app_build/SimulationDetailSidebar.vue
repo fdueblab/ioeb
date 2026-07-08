@@ -181,6 +181,17 @@
       </div>
       <p v-else class="wb-subtle">等待仿真构建轨迹写入。</p>
 
+      <div
+        v-if="build.isCompleted && !build.hasFailed && (build.artifactError || build.traceError)"
+        class="build-friendly-empty build-friendly-empty--failed"
+      >
+        <a-icon type="warning" />
+        <div>
+          <strong>构建详情加载异常</strong>
+          <p>{{ build.artifactError || build.traceError }}</p>
+        </div>
+      </div>
+
       <h3 class="wb-detail-section-head">已验证调用链</h3>
       <template v-if="hasAcceptedCallChain">
         <div class="build-accepted-chain">
@@ -206,17 +217,17 @@
 
     <!-- prepublish：元应用配置 -->
     <template v-else-if="mode === 'prepublish'">
-      <meta-app-config-detail :artifact="productArtifact" :product="product" />
+      <meta-app-prepublish-materials-panel :artifact="productArtifact" />
     </template>
   </div>
 </template>
 
 <script>
-import MetaAppConfigDetail from './MetaAppConfigDetail.vue'
+import MetaAppPrepublishMaterialsPanel from './MetaAppPrepublishMaterialsPanel.vue'
 
 export default {
   name: 'SimulationDetailSidebar',
-  components: { MetaAppConfigDetail },
+  components: { MetaAppPrepublishMaterialsPanel },
   props: {
     mode: {
       type: String,

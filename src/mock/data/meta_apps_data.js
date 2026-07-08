@@ -1,60 +1,20 @@
 import { enrichTopicFlowWithScenarioIntake } from './topic_scenario_intake'
-import { matchesTopicDemoInput } from './topic_demo_inputs'
+import {
+  isTopicDemoSimulationContext,
+  matchesScheduleDemoInput,
+  matchesTopicDemoInput,
+  useMemorySimulation
+} from './topic_demo_route'
 
-// 调度页演示：元应用 flow、SmartChat 推理步骤、关键字与仿真分流
-// - 课题 → getMetaAppNodes / generateMockSteps + 仿真 inmemory
+export {
+  matchesScheduleDemoInput,
+  matchesTopicDemoInput,
+  useMemorySimulation,
+  isTopicDemoSimulationContext
+}
+
+// 调度页演示：元应用 flow、SmartChat 推理步骤；仿真 mock 见 topic_demo_route.js
 // 注：health 垂域已去除本地 MCP mock，改走真实 scenario_intake + 推荐链路。
-
-export const TOPIC_DEMO_KEYWORD = '课题'
-
-function collectScheduleDemoText(input) {
-  if (input == null) return ''
-  if (typeof input === 'string') return input
-  if (Array.isArray(input)) return input.map(collectScheduleDemoText).join(' ')
-  if (typeof input !== 'object') return String(input)
-
-  const chunks = [
-    input.appName,
-    input.preName,
-    input.name,
-    input.mockRouteHint,
-    input._mockRouteHint,
-    input.topicHint,
-    input.goal,
-    input.description,
-    input.scenarioDescription,
-    input.scenarioSummary,
-    input.userInput
-  ]
-  const services = input.servicesMeta || input.services || input.serviceStatuses || input.nodeList || []
-  if (Array.isArray(services)) {
-    services.forEach((svc) => {
-      chunks.push(svc.name, svc.serviceName, svc.des, svc.description)
-    })
-  }
-  if (input.scenarioParsed) chunks.push(collectScheduleDemoText(input.scenarioParsed))
-  if (input.taskContract) chunks.push(collectScheduleDemoText(input.taskContract))
-  return chunks.filter(Boolean).join(' ')
-}
-
-export const SCHEDULE_DEMO_KIND = { TOPIC: 'topic' }
-
-export function resolveScheduleDemoKind(text) {
-  const demoText = collectScheduleDemoText(text)
-  if (demoText.includes(TOPIC_DEMO_KEYWORD)) {
-    return SCHEDULE_DEMO_KIND.TOPIC
-  }
-  return null
-}
-
-export function matchesScheduleDemoInput(text) {
-  return matchesTopicDemoInput(text)
-}
-
-/** 仿真 API：课题演示走进程内 mock */
-export function useMemorySimulation(context) {
-  return resolveScheduleDemoKind(context) === SCHEDULE_DEMO_KIND.TOPIC
-}
 
 // 金融欺诈检测推理元应用
 const fraudDetectionApp = {
@@ -713,7 +673,7 @@ function generateTopicDemoMockSteps(userInput, analysisChoice) {
 }
 
 export function generateMockSteps(serviceType, userInput, analysisChoice = null) {
-  if (resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.TOPIC) {
+  if (matchesTopicDemoInput(userInput)) {
     return generateTopicDemoMockSteps(userInput, analysisChoice)
   }
   return [
@@ -810,10 +770,7 @@ export function getMetaAppNodes(serviceType, userInput, analysisChoice = null) {
       }
     }
     if (flowData) {
-      if (
-        serviceType === 'aml' &&
-        resolveScheduleDemoKind(userInput) === SCHEDULE_DEMO_KIND.TOPIC
-      ) {
+      if (serviceType === 'aml' && matchesTopicDemoInput(userInput)) {
         resolve(enrichTopicFlowWithScenarioIntake(flowData, userInput, analysisChoice))
         return
       }

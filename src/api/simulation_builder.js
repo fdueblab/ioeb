@@ -1,16 +1,18 @@
 /**
  * simulation_builder · 前端 API 统一入口（与 `simulation_builder.vue` 配套）
  *
- * 【分流】构建上下文（元应用名 / 想定 / 服务名）见 `@/mock/data/meta_apps_data`：
- * - **课题** → 进程内 inmemory
+ * 【分流】见 `@/mock/data/topic_demo_route.js`：
+ * - **特定课题样例输入** → 进程内 inmemory + 预生成 BuildBundle
  * - **其他（含 health 真实场景）** → HTTP + EventSource → `VUE_APP_AGENT_BASE_URL`
- *
- * `fetchSimulationRecords` / `compareSimulationRecords` 须传入同一上下文的 `appName`（与 prop 一致）。
  */
 import request from '@/utils/request'
 import { AGENT_BASE_URL } from '@/utils/baseUrl'
 import { simulationBuildInMemory } from '@/mock/services/simulation_builder_inmemory'
-import { useMemorySimulation } from '@/mock/data/meta_apps_data'
+import {
+  isTopicDemoSimulationContext,
+  resolveTopicDemoAnalysisChoice,
+  resolveTopicDemoKey
+} from '@/mock/data/topic_demo_route'
 
 const SIMULATION_BASE_URL = AGENT_BASE_URL
 const SIMULATION_API_PREFIX = '/api/agent/simulation'
@@ -33,11 +35,26 @@ const SIMULATION_SSE_EVENTS = [
   'complete'
 ]
 
-/** 由「含课题关键字的 start」创建的 sessionId，subscribe/cancel 须走同一实现 */
-const memoryRouteSessionIds = new Set()
+/** 课题演示 start 创建的 sessionId → 固定 scenario 元数据 */
+const topicDemoSessions = new Map()
 
-function useMemoryForContext(context) {
-  return useMemorySimulation(context)
+export function isMemorySimulationSession(sessionId) {
+  return sessionId != null && topicDemoSessions.has(sessionId)
+}
+
+export function getTopicDemoSessionMeta(sessionId) {
+  return topicDemoSessions.get(sessionId) || null
+}
+
+function rememberTopicDemoSession(sessionId, payload) {
+  topicDemoSessions.set(sessionId, {
+    scenarioKey: resolveTopicDemoKey(payload),
+    analysisChoice: resolveTopicDemoAnalysisChoice(payload)
+  })
+}
+
+function forgetTopicDemoSession(sessionId) {
+  topicDemoSessions.delete(sessionId)
 }
 
 function createMemorySimulationBuildClient() {
@@ -156,8 +173,8 @@ function createHttpSimulationBuildClient() {
 
 function pickClient(context, sessionId) {
   const memory = sessionId != null
-    ? memoryRouteSessionIds.has(sessionId)
-    : useMemoryForContext(context)
+    ? topicDemoSessions.has(sessionId)
+    : isTopicDemoSimulationContext(context)
   return memory
     ? createMemorySimulationBuildClient()
     : createHttpSimulationBuildClient()
@@ -165,10 +182,12 @@ function pickClient(context, sessionId) {
 
 /** @param {Record<string, unknown>} payload */
 export function startSimulation(payload) {
-  const memory = useMemoryForContext(payload)
+  const memory = isTopicDemoSimulationContext(payload)
   const client = pickClient(payload)
   return client.startSimulation(payload).then((res) => {
-    if (memory && res && res.sessionId) memoryRouteSessionIds.add(res.sessionId)
+    if (memory && res && res.sessionId) {
+      rememberTopicDemoSession(res.sessionId, payload)
+    }
     return res
   })
 }
@@ -176,7 +195,7 @@ export function startSimulation(payload) {
 export function cancelSimulation(sessionId) {
   const client = pickClient(undefined, sessionId)
   const p = client.cancelSimulation(sessionId)
-  memoryRouteSessionIds.delete(sessionId)
+  forgetTopicDemoSession(sessionId)
   return p
 }
 

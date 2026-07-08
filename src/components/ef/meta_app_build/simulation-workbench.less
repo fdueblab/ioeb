@@ -1096,6 +1096,19 @@
   box-shadow: 0 7px 16px rgba(22, 119, 255, 0.18);
   cursor: pointer;
   font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  &--loading {
+    cursor: wait;
+    opacity: 0.92;
+  }
+
+  &-icon {
+    font-size: 14px;
+  }
 }
 
 .wb-danger-btn {

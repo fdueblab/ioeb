@@ -206,10 +206,6 @@ export default {
     artifact: {
       type: Object,
       default: null
-    },
-    product: {
-      type: Object,
-      default: () => ({})
     }
   },
   computed: {

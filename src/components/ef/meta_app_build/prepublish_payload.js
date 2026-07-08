@@ -4,6 +4,7 @@ import {
   META_APP_VOLUME,
   createMetaAppRuntimeSpec
 } from './runtime_spec'
+import { assertPrepublishReady, getPrepublishReadiness } from './prepublish_readiness'
 
 export function buildMetaAppPrepublishPayload({
   values,
@@ -14,11 +15,12 @@ export function buildMetaAppPrepublishPayload({
   buildProduct,
   nickname
 }) {
-  const build = buildProduct && buildProduct.build
-  const artifact = buildProduct && buildProduct.artifact
-  if (!build || !build.buildId || !build.artifactId || !build.artifactHash || !artifact) {
-    throw new Error('构建产物不完整，请返回重新构建')
-  }
+  const readiness = assertPrepublishReady(getPrepublishReadiness({
+    build: buildProduct && buildProduct.build,
+    artifact: buildProduct && buildProduct.artifact
+  }))
+  const build = readiness.build
+  const artifact = readiness.artifact
   const { name, subtitle, des, inputName, outputName, visualization, submitButtonText } = values
   return {
     ...values,

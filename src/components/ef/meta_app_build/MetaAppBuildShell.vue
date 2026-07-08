@@ -255,14 +255,7 @@ export default {
       }
       const b = this.$refs.simulationBuilder
       if (b && b.getProductViewModel) return b.getProductViewModel()
-      return {
-        build: null,
-        artifact: null,
-        summaryRows: [],
-        intent: this.flowPreDes,
-        services: this.parsedServices.map((s) => s.name).join('、'),
-        tags: []
-      }
+      return { build: null, artifact: null }
     }
   },
   watch: {
@@ -439,7 +432,6 @@ export default {
       this.cachedProductDetail = null
       const panel = this.$refs.flowPanel
       if (panel) {
-        panel.simulationPassed = false
         if (panel.onSimulationCanvasVisual) {
           panel.onSimulationCanvasVisual({ type: 'build', active: false })
           panel.onSimulationCanvasVisual({ type: 'clear' })
@@ -456,18 +448,23 @@ export default {
     },
     goPrepublish() {
       const b = this.$refs.simulationBuilder
-      if (b && b.getProductViewModel) {
-        this.cachedProductDetail = b.getProductViewModel()
+      if (!b || !b.getProductViewModel) {
+        this.$message.error('仿真构建面板未就绪')
+        return
       }
+      const readiness = b.prepublishReadiness
+      if (!readiness.ready) {
+        if (readiness.reason) this.$message.warning(readiness.reason)
+        return
+      }
+      this.cachedProductDetail = b.getProductViewModel()
       this.phase = 'prepublish'
       this.prepublishDetailMinimized = true
     },
     backToEdit() {
       this.returnToParsedInput()
     },
-    onBuildSuccess() {
-      if (this.panel) this.panel.simulationPassed = true
-    },
+    onBuildSuccess() {},
     onPublished() {},
     onCanvasVisual(payload) {
       if (this.panel && this.panel.onSimulationCanvasVisual) {
