@@ -298,10 +298,14 @@ yarn test:e2e:ui
 const { test, expect } = require('@playwright/test')
 
 test('test user can open workplace page', async ({ page }) => {
-  await page.goto('/user/login')
+  await page.goto('/user/login', { waitUntil: 'domcontentloaded' })
 
-  await page.getByPlaceholder('请输入账户名').fill(process.env.E2E_USERNAME)
-  await page.getByPlaceholder('请输入密码').fill(process.env.E2E_PASSWORD)
+  const usernameInput = page.getByPlaceholder('请输入账户名')
+  const passwordInput = page.getByPlaceholder('请输入密码')
+
+  await expect(usernameInput).toBeVisible()
+  await usernameInput.fill(process.env.E2E_USERNAME)
+  await passwordInput.fill(process.env.E2E_PASSWORD)
   await page.getByRole('button', { name: /登\s*录/ }).click()
 
   await expect(page).toHaveURL(/#\/account\/workplace/)
