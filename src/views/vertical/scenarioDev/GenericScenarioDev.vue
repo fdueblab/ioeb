@@ -20,7 +20,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :xs="24" :sm="16" :md="16">
-                  <a-form-item label="算法模型名称" required>
+                  <a-form-item label="算法模型名称" required :class="{ 'field-highlight-wrap': highlightFields.serviceName }">
                     <a-input v-model="form.serviceName" placeholder="请输入算法模型名称" @change="onServiceNameInput"/>
                   </a-form-item>
                 </a-col>
@@ -29,7 +29,7 @@
               <!-- 第二行：行业 / 场景 / 技术 -->
               <a-row :gutter="16">
                 <a-col :xs="24" :sm="8" :md="8">
-                  <a-form-item label="行业">
+                  <a-form-item label="行业" :class="{ 'field-highlight-wrap': highlightFields.industry }">
                     <a-select v-model="programInfo.industry" placeholder="请选择行业" allow-clear>
                       <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
                         {{ item.text }}
@@ -38,7 +38,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :xs="24" :sm="8" :md="8">
-                  <a-form-item label="场景">
+                  <a-form-item label="场景" :class="{ 'field-highlight-wrap': highlightFields.scenario }">
                     <a-select v-model="programInfo.scenario" placeholder="请选择场景" allow-clear>
                       <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="item.code">
                         {{ item.text }}
@@ -47,7 +47,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :xs="24" :sm="8" :md="8">
-                  <a-form-item label="技术">
+                  <a-form-item label="技术" :class="{ 'field-highlight-wrap': highlightFields.technology }">
                     <a-select v-model="programInfo.technology" placeholder="请选择技术" allow-clear>
                       <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="item.code">
                         {{ item.text }}
@@ -75,7 +75,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :xs="24" :sm="12" :md="12">
-                  <a-form-item label="算法类别">
+                  <a-form-item label="算法类别" :class="{ 'field-highlight-wrap': highlightFields.algorithmCategory }">
                     <a-select
                       v-model="algorithmCategory"
                       placeholder="请选择算法类别"
@@ -97,6 +97,7 @@
                 :activeKey="categoryParamsPanelActive"
                 @change="(keys) => categoryParamsPanelActive = keys"
                 class="spec-collapse"
+                :class="{ 'field-highlight-wrap': highlightFields.categoryParams }"
                 style="margin-top: 4px;"
               >
                 <a-collapse-panel key="params" :header="currentCategoryConfig.label + '（选填）'">
@@ -269,39 +270,64 @@
                 </a-col>
               </a-row>
 
-              <a-row :gutter="16" class="form-section-row">
-                <a-col :span="24">
-                  <div class="narrative-block">
-                    <div class="narrative-title">
-                      进一步需求和要求请在下面自由叙述<span class="label-required-tip">（必填）</span>
-                    </div>
-                    <a-alert
-                      type="info"
-                      show-icon
-                      class="narrative-hint"
-                      message="请具体描述您希望生成的算法模型具备哪些功能、输入与输出形式、以及主要使用场景。"
-                    >
-                      <template slot="description">
-                        <div class="example-title">正确、完整的描述示例：</div>
-                        <div class="example-text">
-                          创建一个可以处理图像识别的算法服务：接收图像 URL 或 Base64 图像数据作为输入，返回图像中的主要物体类别标签及置信度列表；服务需支持批量请求，单次最多 32 张图；适用于电商商品图审核场景。
-                        </div>
-                      </template>
-                    </a-alert>
-                    <a-textarea
-                      v-model="freeNarrative"
-                      :rows="8"
-                      class="narrative-textarea"
-                      placeholder="请详细描述您希望生成的算法服务功能，例如：创建一个可以处理图像识别的算法服务，它可以接收图像URL并返回识别结果..."
+              <a-row :gutter="16" class="form-section-row narrative-pair-row">
+                <a-col :xs="24" :md="10" class="narrative-pair-col narrative-pair-col--chat">
+                  <div class="narrative-pair">
+                    <scenario-intent-chat
+                      ref="intentChat"
+                      :domain="verticalType"
+                      :domain-title="domainTitle"
+                      :dictionary-snapshot="intakeDictionarySnapshot"
+                      :partial-form="intakePartialForm"
+                      :disabled="generateLoading"
+                      @form-draft="onIntentFormDraft"
+                      @busy="intentChatBusy = $event"
                     />
                   </div>
                 </a-col>
-              </a-row>
-
-              <a-row :gutter="16" class="form-section-row">
-                <a-col :span="24">
-                  <a-form-item label="操作">
+                <a-col :xs="24" :md="14" class="narrative-pair-col narrative-pair-col--narrative">
+                  <div class="narrative-pair narrative-pair--right">
+                    <div class="narrative-block">
+                      <div class="narrative-title">
+                        进一步需求和要求请在下面自由叙述<span class="label-required-tip">（必填）</span>
+                      </div>
+                      <div class="narrative-sync-bar">
+                        <span class="narrative-sync-status" :class="narrativeSyncClass">
+                          {{ narrativeSyncLabel }}
+                        </span>
+                        <div class="narrative-sync-actions">
+                          <a-checkbox v-model="autoSyncNarrative">自动同步对话结果</a-checkbox>
+                          <a-button
+                            v-if="pendingNarrativeFromChat"
+                            type="link"
+                            size="small"
+                            @click="applyPendingNarrative(true)"
+                          >
+                            用对话结果覆盖
+                          </a-button>
+                        </div>
+                      </div>
+                      <a-collapse :bordered="false" class="narrative-example-collapse">
+                        <a-collapse-panel key="example" header="查看描述示例">
+                          <div class="example-title">正确、完整的描述示例：</div>
+                          <div class="example-text">
+                            创建一个可以处理图像识别的算法服务：接收图像 URL 或 Base64 图像数据作为输入，返回图像中的主要物体类别标签及置信度列表；服务需支持批量请求，单次最多 32 张图；适用于电商商品图审核场景。
+                          </div>
+                        </a-collapse-panel>
+                      </a-collapse>
+                      <a-textarea
+                        v-model="freeNarrative"
+                        :rows="10"
+                        class="narrative-textarea"
+                        :class="{ 'field-highlight': highlightFields.freeNarrative }"
+                        placeholder="请详细描述您希望生成的算法服务功能；也可先在左侧用自然语言描述，由智能体完善到此处。"
+                        @input="onNarrativeManualInput"
+                      />
+                    </div>
+                  </div>
+                  <a-form-item :colon="false" class="action-form-item">
                     <div class="form-actions">
+                      <span class="form-actions-label">操作：</span>
                       <a-button
                         type="primary"
                         icon="thunderbolt"
@@ -578,6 +604,7 @@ import { Modal } from 'ant-design-vue'
 import { streamAgent } from '@/utils/request'
 import dictionaryCache from '@/utils/dictionaryCache'
 import { uploadScenarioGeneratedAlgorithm } from '@/api/service'
+import ScenarioIntentChat from './components/ScenarioIntentChat.vue'
 
 const ALGORITHM_CATEGORY_FALLBACK = [
   { code: 'classification', text: '分类算法' },
@@ -1138,6 +1165,9 @@ const PROGRESS_PLACEHOLDER_STEPS = [
 
 export default {
   name: 'GenericScenarioDev',
+  components: {
+    ScenarioIntentChat
+  },
   props: {
     verticalType: {
       type: String,
@@ -1152,6 +1182,20 @@ export default {
       referenceFiles: [],
       uploadReferenceFiles: [],
       freeNarrative: '',
+      narrativeManualEdited: false,
+      autoSyncNarrative: true,
+      pendingNarrativeFromChat: '',
+      intentChatBusy: false,
+      highlightFields: {
+        freeNarrative: false,
+        industry: false,
+        scenario: false,
+        technology: false,
+        algorithmCategory: false,
+        categoryParams: false,
+        serviceName: false
+      },
+      highlightTimers: {},
       form: {
         serviceName: undefined
       },
@@ -1208,6 +1252,53 @@ export default {
       const narrative = (this.freeNarrative || '').trim()
       return !name || !narrative
     },
+    narrativeSyncLabel() {
+      if (this.narrativeManualEdited) {
+        return '已手动编辑（自动同步已暂停覆盖）'
+      }
+      if (this.pendingNarrativeFromChat) {
+        return '对话已生成新叙述，可一键覆盖'
+      }
+      if (this.intentChatBusy) {
+        return '正在根据对话更新…'
+      }
+      return this.autoSyncNarrative ? '已开启：对话结果自动写入此处' : '已关闭自动同步，可手动粘贴或点覆盖'
+    },
+    narrativeSyncClass() {
+      if (this.narrativeManualEdited) return 'is-manual'
+      if (this.pendingNarrativeFromChat) return 'is-pending'
+      return 'is-auto'
+    },
+    intakePartialForm() {
+      return {
+        model_name: this.form.serviceName || '',
+        free_narrative: this.freeNarrative || '',
+        industry: this.programInfo.industry,
+        scenario: this.programInfo.scenario,
+        technology: this.programInfo.technology,
+        algorithm_category: this.algorithmCategory,
+        category_params: { ...(this.categoryParams || {}) }
+      }
+    },
+    intakeDictionarySnapshot() {
+      const snap = {
+        industry: this.industryOptions || [],
+        scenario: this.scenarioOptions || [],
+        technology: this.technologyOptions || [],
+        algorithm_category: this.algorithmCategoryOptions || []
+      }
+      Object.keys(this.categoryDictCache || {}).forEach(key => {
+        snap[key] = this.categoryDictCache[key] || []
+      })
+      // 常用约束/输入类型 fallback，便于首轮即可约束 LLM
+      if (!snap.algo_input_type || !snap.algo_input_type.length) {
+        snap.algo_input_type = ALGO_DICT_FALLBACK.algo_input_type || []
+      }
+      if (!snap.algo_constraint || !snap.algo_constraint.length) {
+        snap.algo_constraint = ALGO_DICT_FALLBACK.algo_constraint || []
+      }
+      return snap
+    },
     testPassedCount() {
       return this.generateResult.testResults.filter(t => t.status === 'passed').length
     },
@@ -1243,6 +1334,17 @@ export default {
   },
   created() {
     this.initData()
+  },
+  beforeDestroy() {
+    Object.keys(this.highlightTimers || {}).forEach(key => {
+      if (this.highlightTimers[key]) {
+        clearTimeout(this.highlightTimers[key])
+      }
+    })
+    this.clearDemoProgressTimers && this.clearDemoProgressTimers()
+    if (this.activeStreamAbortController) {
+      this.activeStreamAbortController.abort()
+    }
   },
   methods: {
     async initData() {
@@ -1473,6 +1575,93 @@ export default {
       return map[type] || 'default'
     },
 
+    onNarrativeManualInput() {
+      this.narrativeManualEdited = true
+    },
+
+    flashFieldHighlight(key) {
+      if (!key || !(key in this.highlightFields)) return
+      this.$set(this.highlightFields, key, true)
+      if (this.highlightTimers[key]) {
+        clearTimeout(this.highlightTimers[key])
+      }
+      this.highlightTimers[key] = setTimeout(() => {
+        this.$set(this.highlightFields, key, false)
+      }, 1500)
+    },
+
+    codeInOptions(options, code) {
+      if (code === undefined || code === null || code === '') return false
+      return (options || []).some(item => String(item.code) === String(code))
+    },
+
+    applyPendingNarrative(force = false) {
+      if (!this.pendingNarrativeFromChat) return
+      if (!force && this.narrativeManualEdited && !this.autoSyncNarrative) return
+      this.freeNarrative = this.pendingNarrativeFromChat
+      this.pendingNarrativeFromChat = ''
+      this.narrativeManualEdited = false
+      this.flashFieldHighlight('freeNarrative')
+    },
+
+    async onIntentFormDraft(payload) {
+      const draft = (payload && payload.formDraft) || {}
+      const changedFields = (payload && payload.changedFields) || Object.keys(draft)
+      await this.applyFormDraft(draft, changedFields)
+    },
+
+    async applyFormDraft(draft, changedFields = []) {
+      if (!draft || typeof draft !== 'object') return
+
+      if (draft.industry !== undefined && this.codeInOptions(this.industryOptions, draft.industry)) {
+        this.programInfo.industry = draft.industry
+        this.flashFieldHighlight('industry')
+      }
+      if (draft.scenario !== undefined && this.codeInOptions(this.scenarioOptions, draft.scenario)) {
+        this.programInfo.scenario = draft.scenario
+        this.flashFieldHighlight('scenario')
+      }
+      if (draft.technology !== undefined && this.codeInOptions(this.technologyOptions, draft.technology)) {
+        this.programInfo.technology = draft.technology
+        this.flashFieldHighlight('technology')
+      }
+
+      if (draft.algorithm_category) {
+        const cat = draft.algorithm_category
+        if (this.codeInOptions(this.algorithmCategoryOptions, cat) || CATEGORY_PARAMS_CONFIG[cat]) {
+          this.algorithmCategory = cat
+          await this.onCategoryChange(cat, true)
+          this.flashFieldHighlight('algorithmCategory')
+        }
+      }
+
+      if (draft.category_params && typeof draft.category_params === 'object') {
+        const next = { ...(this.categoryParams || {}), ...draft.category_params }
+        this.categoryParams = next
+        if (Array.isArray(next.constraints)) {
+          const custom = next.constraints.find(c => String(c).startsWith('custom:'))
+          if (custom) {
+            this.customConstraintText = String(custom).replace(/^custom:\s*/, '')
+          }
+        }
+        this.flashFieldHighlight('categoryParams')
+        this.categoryParamsPanelActive = ['params']
+      }
+
+      if (draft.model_name && !(this.form.serviceName || '').trim()) {
+        this.form.serviceName = draft.model_name
+        this.flashFieldHighlight('serviceName')
+      }
+
+      if (draft.free_narrative && String(draft.free_narrative).trim()) {
+        const narrative = String(draft.free_narrative).trim()
+        this.pendingNarrativeFromChat = narrative
+        if (this.autoSyncNarrative && !this.narrativeManualEdited) {
+          this.applyPendingNarrative(true)
+        }
+      }
+    },
+
     async onCategoryChange(category, keepParams = false) {
       const shouldKeepParams = keepParams === true
       if (!shouldKeepParams) {
@@ -1615,6 +1804,19 @@ export default {
     async restoreScenarioDevDefaults() {
       this.resetScenarioDevToInitial()
       await this.applyScenarioDefaults()
+      this.resetIntentChat()
+    },
+
+    resetIntentChat() {
+      this.intentChatBusy = false
+      this.pendingNarrativeFromChat = ''
+      this.narrativeManualEdited = false
+      this.$nextTick(() => {
+        const chat = this.$refs.intentChat
+        if (chat && typeof chat.resetConversation === 'function') {
+          chat.resetConversation()
+        }
+      })
     },
 
     clearDemoProgressTimers() {
@@ -2217,6 +2419,22 @@ export default {
   gap: 8px;
 }
 
+.form-actions-label {
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 32px;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.action-form-item {
+  margin-top: 12px;
+  margin-bottom: 0;
+
+  /deep/ .ant-form-item-label {
+    display: none;
+  }
+}
+
 .domain-title-text {
   display: inline-block;
   font-size: 14px;
@@ -2374,6 +2592,110 @@ export default {
 }
 .narrative-block {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.narrative-pair-row {
+  margin-top: 4px;
+  align-items: stretch;
+}
+.narrative-pair-col--chat,
+.narrative-pair-col--narrative {
+  display: flex;
+  flex-direction: column;
+}
+.narrative-pair {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 420px;
+  padding: 12px;
+  background: #fafcff;
+  border: 1px solid #e8eef5;
+  border-radius: 8px;
+}
+.narrative-pair--right {
+  background: #fff;
+  border-color: #f0f0f0;
+}
+.narrative-pair-col--chat {
+  margin-bottom: 12px;
+}
+.narrative-pair-col--narrative {
+  margin-bottom: 12px;
+}
+@media (min-width: 768px) {
+  .narrative-pair-col--chat {
+    border-right: none;
+    margin-bottom: 0;
+  }
+  .narrative-pair-col--chat .narrative-pair {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 0;
+  }
+  .narrative-pair-col--narrative .narrative-pair {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+}
+.narrative-sync-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  background: #f7f9fc;
+  border-radius: 6px;
+}
+.narrative-sync-status {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+.narrative-sync-status.is-auto {
+  color: #1890ff;
+}
+.narrative-sync-status.is-manual {
+  color: #d48806;
+}
+.narrative-sync-status.is-pending {
+  color: #389e0d;
+}
+.narrative-sync-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.narrative-example-collapse {
+  margin-bottom: 8px;
+  background: transparent;
+
+  /deep/ .ant-collapse-item {
+    border-bottom: none;
+  }
+  /deep/ .ant-collapse-header {
+    padding: 4px 0 !important;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.45);
+  }
+  /deep/ .ant-collapse-content-box {
+    padding: 4px 0 8px !important;
+  }
+}
+.field-highlight,
+.field-highlight-wrap /deep/ .ant-select-selection,
+.field-highlight-wrap /deep/ .ant-input {
+  animation: fieldPulse 1.5s ease;
+}
+@keyframes fieldPulse {
+  0% { box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.45); }
+  40% { box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.25); }
+  100% { box-shadow: 0 0 0 0 rgba(24, 144, 255, 0); }
 }
 .narrative-title {
   font-weight: 600;
@@ -2420,6 +2742,8 @@ export default {
 .narrative-textarea {
   width: 100%;
   max-width: none;
+  flex: 1;
+  min-height: 200px;
 }
 
 .spec-collapse {
@@ -2877,6 +3201,12 @@ export default {
 
   .scenario-dev-main {
     order: 1;
+  }
+
+  .narrative-pair-col--chat .narrative-pair,
+  .narrative-pair-col--narrative .narrative-pair {
+    border-radius: 8px !important;
+    border: 1px solid #e8eef5 !important;
   }
 }
 </style>
