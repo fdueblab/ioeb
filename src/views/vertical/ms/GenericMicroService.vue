@@ -585,10 +585,9 @@ import * as echarts from 'echarts'
 import vChart from 'vue-echarts'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
 import dictionaryCache from '@/utils/dictionaryCache'
-import { createService, downloadScenarioGeneratedAlgorithm, filterServices, getServiceById } from '@/api/service'
+import { createService, downloadScenarioGeneratedAlgorithm, filterServices } from '@/api/service'
 import store from '@/store'
 import { buildDocsUrl } from '@/utils/baseUrl'
-import { waitForServiceDeployment } from '@/utils/serviceDeployment'
 
 export default {
   name: 'GenericMicroService',
@@ -1420,26 +1419,7 @@ export default {
         const response = await this.uploadAndDeployService(formData)
         
         if (response && response.status === 'success') {
-          const serviceId = response.service && response.service.id
-          if (!serviceId) {
-            throw new Error('部署任务已提交，但后端没有返回服务ID')
-          }
-
-          const deployedService = await waitForServiceDeployment(
-            () => getServiceById(serviceId),
-            {
-              onStatus: status => {
-                if (status === 'deploying') {
-                  this.updatePublishProgress(
-                    3,
-                    'process',
-                    '容器正在构建，等待 MCP 服务端点就绪...'
-                  )
-                }
-              }
-            }
-          )
-          return { ...response, service: deployedService }
+          return response
         } else {
           throw new Error(response?.message || '部署失败')
         }
