@@ -101,6 +101,8 @@ const user = {
         dispatch('ResetProfile', null, { root: true })
         storage.remove(ACCESS_TOKEN)
         localStorage.removeItem('username')
+        // 清除自动登录标志，避免退出后仍自动登录导致无法切换账号
+        localStorage.removeItem('ioeb_auto_login')
       }
       return new Promise((resolve) => {
         logout(state.token).then(() => {

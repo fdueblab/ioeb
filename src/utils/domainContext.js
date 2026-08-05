@@ -137,7 +137,7 @@ export function projectDomainMenus(menus = [], domainCode = getCurrentDomainCode
       return projectedMenu
     }
 
-    if (menu.path === '/evaluation' || menu.path === '/operation') {
+    if (menu.path === '/evaluation') {
       const domainPath = `/${menu.path.split('/')[1]}/${domainCode}`
       const selectedDomainRoute = (menu.children || []).find(child => child.path === domainPath) || (menu.children || [])[0]
       return {
@@ -146,6 +146,17 @@ export function projectDomainMenus(menus = [], domainCode = getCurrentDomainCode
         children: selectedDomainRoute && selectedDomainRoute.children ? selectedDomainRoute.children : []
       }
     }
+
+    // 运维管理已改为单层菜单，不需要特殊处理
+    // if (menu.path === '/operation') {
+    //   const domainPath = `/${menu.path.split('/')[1]}/${domainCode}`
+    //   const selectedDomainRoute = (menu.children || []).find(child => child.path === domainPath) || (menu.children || [])[0]
+    //   return {
+    //     ...menu,
+    //     redirect: getDomainModuleEntryPath(menu.path, domainCode, permissionList),
+    //     children: selectedDomainRoute && selectedDomainRoute.children ? selectedDomainRoute.children : []
+    //   }
+    // }
 
     return menu
   })
