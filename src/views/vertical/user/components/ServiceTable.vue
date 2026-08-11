@@ -131,6 +131,29 @@
           <a-tag>无溯源数据</a-tag>
         </template>
       </span>
+      <span v-if="!mode || mode === 'default'" slot="saleInfo" slot-scope="text, record">
+        <div style="text-align: center; padding-left: 20px;">
+          <template v-if="record.isForSale === true || record.isForSale === 'true' || record.isForSale === 1 || record.isForSale === '1'">
+            <div>
+              <a-tag color="green">可售</a-tag>
+            </div>
+            <div style="margin-top: 4px;">
+              <span style="color: #f5222d; font-weight: 600;">¥{{ (record.salePrice || 0).toFixed(2) }}</span>
+            </div>
+            <div v-if="record.saleDescription" style="margin-top: 4px;">
+              <a-popover title="销售说明" trigger="hover">
+                <template slot="content">
+                  <p>{{ record.saleDescription }}</p>
+                </template>
+                <a-tag color="blue" style="margin-left: 10px;">销售说明</a-tag>
+              </a-popover>
+            </div>
+          </template>
+          <template v-else>
+            <a-tag>不可售</a-tag>
+          </template>
+        </div>
+      </span>
       <span v-if="mode === 'achievement'" slot="upgradeAdvice" slot-scope="text, record">
         <template v-if="upgradeAdviceLoadingId === record.id">
           <a-spin size="small" />
@@ -143,11 +166,72 @@
           <a-button type="link" size="small" @click="$emit('upgrade-advice', record, 'generate')">生成建议</a-button>
         </template>
       </span>
+      <span v-if="mode === 'achievement'" slot="updateStrategy" slot-scope="text, record">
+        <template v-if="record.updateStrategy">
+          <div>
+            <a-icon type="sync" :spin="record.updateStrategy.autoTestEnabled" style="color: #1890ff" />
+            <span style="margin-left: 4px;">
+              {{ record.updateStrategy.autoTestEnabled ? `自动测试 ${record.updateStrategy.autoTestPeriod}天` : '自动测试：关闭' }}
+            </span>
+          </div>
+          <div style="margin-top: 4px;">
+            <a-icon type="edit" style="color: #52c41a" />
+            <span style="margin-left: 4px;">
+              {{ record.updateStrategy.updateStrategyType === 'manual' ? '手动更新' :
+                 record.updateStrategy.updateStrategyType === 'auto' ? '自动更新' :
+                 record.updateStrategy.updateStrategyType === 'scheduled' ? '定时更新' : '手动更新' }}
+            </span>
+          </div>
+        </template>
+        <template v-else>
+          <span>未配置</span>
+        </template>
+        <a-button type="link" size="small" @click="$emit('update-strategy', record)" style="margin-left: 8px">
+          配置
+        </a-button>
+      </span>
+      <span v-if="mode === 'purchased'" slot="purchaseInfo">
+        <div>
+          <a-icon type="shopping-cart" style="color: #52c41a" />
+          <span style="margin-left: 4px;">已购买</span>
+        </div>
+      </span>
+      <span v-if="mode === 'interested'" slot="interestInfo">
+        <div>
+          <a-icon type="heart" style="color: #f5222d" />
+          <span style="margin-left: 4px;">已关注</span>
+        </div>
+      </span>
+      <span v-if="mode === 'achievement'" slot="saleStatus" slot-scope="text, record">
+        <template v-if="record.isForSale">
+          <a-tag color="green" style="margin-left: 8px;">已发布</a-tag>
+          <div style="margin-top: 4px;">
+            <span style="color: #f5222d;">¥{{ (record.salePrice || 0).toFixed(2) }}</span>
+          </div>
+          <a-button type="link" size="small" @click="$emit('publish-sale', record)">修改</a-button>
+        </template>
+        <template v-else>
+          <a-button type="link" size="small" @click="$emit('publish-sale', record)">发布销售</a-button>
+        </template>
+      </span>
       <span slot="action" slot-scope="text, record">
-        <a-button type="link" @click="$emit('edit', record)">编辑</a-button>
-        <a-button v-if="record.type === 'meta'" type="link" @click="$emit('use', record)">试用</a-button>
-        <a-button v-else-if="record.type === 'generated_algorithm'" type="link" @click="$emit('use', record)">下载</a-button>
-        <a-button v-else type="link" @click="$emit('use', record)">测试</a-button>
+        <template v-if="mode === 'achievement'">
+          <a-button type="link" @click="$emit('edit', record)">编辑</a-button>
+          <a-button v-if="record.type === 'meta'" type="link" @click="$emit('use', record)">试用</a-button>
+          <a-button v-else-if="record.type === 'generated_algorithm'" type="link" @click="$emit('use', record)">下载</a-button>
+          <a-button v-else type="link" @click="$emit('use', record)">测试</a-button>
+        </template>
+        <template v-else-if="mode === 'purchased'">
+          <a-button type="link" @click="$emit('use-service', record)">使用服务</a-button>
+        </template>
+        <template v-else-if="mode === 'interested'">
+          <a-button type="link" @click="$emit('contact-purchase', record)">联系购买</a-button>
+        </template>
+        <template v-else>
+          <a-button type="link" @click="$emit('edit', record)">查看</a-button>
+          <a-button type="link" @click="$emit('add-interested', record)">感兴趣</a-button>
+          <a-button v-if="record.isForSale" type="link" @click="$emit('purchase', record)">购买</a-button>
+        </template>
       </span>
     </a-table>
   </div>
@@ -259,6 +343,17 @@ export default {
         }
       ]
 
+      // 垮域算法模型组件列表添加销售信息列
+      if (!this.mode || this.mode === 'default') {
+        baseColumns.push({
+          title: '销售信息',
+          dataIndex: 'saleInfo',
+          width: '150px',
+          align: 'center',
+          scopedSlots: { customRender: 'saleInfo' }
+        })
+      }
+
       if (this.mode === 'achievement') {
         baseColumns.push({
           title: '升级建议',
@@ -266,12 +361,43 @@ export default {
           width: '120px',
           scopedSlots: { customRender: 'upgradeAdvice' }
         })
+        baseColumns.push({
+          title: '更新策略',
+          dataIndex: 'updateStrategy',
+          width: '150px',
+          scopedSlots: { customRender: 'updateStrategy' }
+        })
+        baseColumns.push({
+          title: '对外销售',
+          dataIndex: 'saleStatus',
+          width: '120px',
+          align: 'center',
+          scopedSlots: { customRender: 'saleStatus' }
+        })
+      }
+
+      if (this.mode === 'purchased') {
+        baseColumns.push({
+          title: '购买信息',
+          dataIndex: 'purchaseInfo',
+          width: '120px',
+          scopedSlots: { customRender: 'purchaseInfo' }
+        })
+      }
+
+      if (this.mode === 'interested') {
+        baseColumns.push({
+          title: '关注信息',
+          dataIndex: 'interestInfo',
+          width: '120px',
+          scopedSlots: { customRender: 'interestInfo' }
+        })
       }
 
       baseColumns.push({
         title: '操作',
         dataIndex: 'action',
-        width: '80px',
+        width: this.mode === 'achievement' ? '150px' : '120px',
         align: 'center',
         scopedSlots: { customRender: 'action' }
       })

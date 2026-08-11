@@ -467,7 +467,6 @@ export const asyncRouterMap = [
   // 添加新的顶级路由配置，使用BlankLayout
   {
     path: '/aml/monitor',
-    name: 'aml-monitor-fullscreen',
     component: BlankLayout,
     meta: { title: '跨境支付事中监测系统', permission: ['user'] },
     children: [
@@ -482,7 +481,6 @@ export const asyncRouterMap = [
   // 添加AML列表查询页面
   {
     path: '/aml/list',
-    name: 'aml-list-fullscreen',
     component: BlankLayout,
     meta: { title: '跨境支付风险商户查询', permission: ['user'] },
     children: [
@@ -497,7 +495,6 @@ export const asyncRouterMap = [
   // 添加AML详情页面
   {
     path: '/aml/detail/:id',
-    name: 'aml-detail-fullscreen',
     component: BlankLayout,
     meta: { title: '跨境支付商户风险详情', permission: ['user'] },
     children: [
@@ -516,6 +513,7 @@ export const asyncRouterMap = [
     meta: { title: 'menu.home' },
     redirect: () => getDefaultLandingPath(),
     children: [
+      // ========== 第一部分：算法模型想定式开发 ==========
       // 算法模型想定式开发 - 从字典动态获取（置于垂域原子微服务发布上方）
       {
         path: '/vertical-scenario-dev',
@@ -525,6 +523,158 @@ export const asyncRouterMap = [
         meta: { title: '算法模型想定式开发', keepAlive: true, icon: 'code', permission: ['publisher'] },
         children: [] // 子路由在路由初始化时动态加载
       },
+
+      // ========== 第二部分：个人中心、数据统计、使用指南 ==========
+      // account
+      {
+        path: '/account',
+        component: RouteView,
+        redirect: '/account/workplace',
+        name: 'account',
+        meta: { title: '个人中心', icon: 'user', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
+        children: [
+          {
+            path: '/account/workplace',
+            name: 'workplace',
+            meta: {
+              title: '当前工作',
+              keepAlive: true,
+              suppressProfileSurvey: true,
+              permission: ['admin', 'publisher', 'user']
+            },
+            component: () => import('@/views/dashboard/Workplace')
+          },
+          {
+            path: '/account/messages',
+            name: 'account-messages',
+            meta: {
+              title: '我的消息',
+              keepAlive: true,
+              permission: ['admin', 'publisher', 'user']
+            },
+            component: () => import('@/views/account/messages/Index')
+          },
+          {
+            path: '/account/center',
+            name: 'account-center',
+            meta: {
+              title: '我的成果',
+              keepAlive: true,
+              permission: ['admin', 'publisher', 'user']
+            },
+            component: () => import('@/views/account/space')
+          },
+          {
+            path: '/account/feedback',
+            name: 'account-feedback',
+            meta: {
+              title: '意见反馈',
+              keepAlive: true,
+              permission: ['admin', 'publisher', 'user']
+            },
+            component: () => import('@/views/account/feedback/index')
+          },
+          {
+            path: '/account/settings',
+            name: 'settings',
+            component: () => import('@/views/account/settings/Index'),
+            meta: { title: 'menu.account.settings', hideHeader: true, permission: ['admin', 'publisher', 'user'] },
+            redirect: '/account/settings/basic',
+            hideChildrenInMenu: true,
+            children: [
+              {
+                path: '/account/settings/basic',
+                name: 'BasicSettings',
+                component: () => import('@/views/account/settings/BasicSetting'),
+                meta: {
+                  title: 'account.settings.menuMap.basic',
+                  hidden: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
+              },
+              {
+                path: '/account/settings/profile',
+                name: 'ProfileSettings',
+                component: () => import('@/views/account/settings/UserProfile'),
+                meta: {
+                  title: 'account.settings.menuMap.profile',
+                  hidden: true,
+                  keepAlive: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
+              },
+              {
+                path: '/account/settings/security',
+                name: 'SecuritySettings',
+                component: () => import('@/views/account/settings/Security'),
+                meta: {
+                  title: 'account.settings.menuMap.security',
+                  hidden: true,
+                  keepAlive: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
+              },
+              {
+                path: '/account/settings/custom',
+                name: 'CustomSettings',
+                component: () => import('@/views/account/settings/Custom'),
+                meta: {
+                  title: 'account.settings.menuMap.custom',
+                  hidden: true,
+                  keepAlive: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
+              },
+              {
+                path: '/account/settings/binding',
+                name: 'BindingSettings',
+                component: () => import('@/views/account/settings/Binding'),
+                meta: {
+                  title: 'account.settings.menuMap.binding',
+                  hidden: true,
+                  keepAlive: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
+              },
+              {
+                path: '/account/settings/notification',
+                name: 'NotificationSettings',
+                component: () => import('@/views/account/settings/Notification'),
+                meta: {
+                  title: 'account.settings.menuMap.notification',
+                  hidden: true,
+                  keepAlive: true,
+                  permission: ['admin', 'publisher', 'user']
+                }
+              }
+            ]
+          }
+        ]
+      },
+      // 数据统计（首页）
+      {
+        path: '/home',
+        name: 'home',
+        meta: {
+          title: '数据统计',
+          keepAlive: true,
+          icon: 'bar-chart',
+          permission: ['admin', 'publisher', 'user']
+        },
+        component: () => import('@/views/dashboard/Analysis')
+      },
+      // 使用指南
+      {
+        path: buildDocsUrl(),
+        name: 'guide',
+        meta: {
+          title: '使用指南',
+          icon: 'book',
+          permission: ['admin', 'publisher', 'user'],
+          target: '_blank'
+        }
+      },
+      // ========== 第三部分：垂域原子微服务发布、垂域元应用仿真构建、垂域应用AI资源检索 ==========
       // 垂域原子微服务发布 - 从字典动态获取
       {
         path: '/vertical-ms',
@@ -548,6 +698,35 @@ export const asyncRouterMap = [
         },
         children: [] // 子路由在路由初始化时动态加载
       },
+      // 垂域算法模型组件列表 - 从字典动态获取
+      {
+        path: '/vertical-user',
+        name: 'vertical-user',
+        redirect: '/vertical-user/aml', // 默认重定向，会在路由初始化时被更新
+        component: RouteView,
+        meta: { title: '垂域算法模型组件列表', keepAlive: true, icon: 'appstore', permission: ['admin', 'publisher', 'user'] },
+        children: [] // 子路由在路由初始化时动态加载
+      },
+      // ========== 第四部分：运维管理、技术评测 ==========
+      // 运维管理（单层菜单，直接显示微服务容器化状态）
+      {
+        path: '/operation',
+        name: 'operation',
+        meta: { title: '运维管理', keepAlive: true, icon: 'control', permission: ['admin', 'publisher'] },
+        component: () => import('@/views/operation/GenericContainerStatus'),
+        props: { verticalType: 'aml' }
+      },
+      // 技术评测 - 从字典动态获取
+      {
+        path: '/evaluation',
+        name: 'evaluation',
+        redirect: '/evaluation/aml/technology',
+        component: RouteView,
+        meta: { title: '技术评测', keepAlive: true, icon: 'radar-chart', permission: ['admin', 'publisher', 'user'] },
+        children: [] // 子路由在路由初始化时动态加载
+      },
+
+      // ========== 其他路由 ==========
       // 垂域应用参数化构建
       // 原有的两个应用实例已废弃，新增反洗钱监管系统实例，并改为垂域应用参数化构建
       {
@@ -637,24 +816,6 @@ export const asyncRouterMap = [
           //   ]
           // }
         ]
-      },
-      // 技术评测与业务验证
-      {
-        path: '/evaluation',
-        name: 'evaluation',
-        redirect: '/evaluation/aml/technology',
-        component: RouteView,
-        meta: { title: '技术评测与业务验证', keepAlive: true, icon: 'radar-chart', permission: ['admin', 'publisher', 'user'] },
-        children: [] // 子路由在路由初始化时动态加载
-      },
-      // 服务及应用运维管理
-      {
-        path: '/operation',
-        name: 'operation',
-        redirect: '/operation/aml/container-status', // 默认重定向，会在路由初始化时被更新
-        component: RouteView,
-        meta: { title: '服务及应用运维管理', keepAlive: true, icon: 'control', permission: ['admin', 'publisher'] },
-        children: [] // 子路由在路由初始化时动态加载
       },
       // 技术资源服务发布
       // 似乎已废弃
@@ -838,27 +999,6 @@ export const asyncRouterMap = [
       //     permission: ['user']
       //   }
       // },
-      // 数据统计（首页）
-      {
-        path: '/home',
-        name: 'home',
-        meta: {
-          title: '数据统计',
-          keepAlive: true,
-          icon: 'bar-chart',
-          permission: ['admin', 'publisher', 'user']
-        },
-        component: () => import('@/views/dashboard/Analysis')
-      },
-      // 垂域应用AI资源检索 - 从字典动态获取
-      {
-        path: '/vertical-user',
-        name: 'vertical-user',
-        redirect: '/vertical-user/aml', // 默认重定向，会在路由初始化时被更新
-        component: RouteView,
-        meta: { title: '垂域应用AI资源检索', keepAlive: true, icon: 'appstore', permission: ['admin', 'publisher', 'user'] },
-        children: [] // 子路由在路由初始化时动态加载
-      },
       // 用户管理
       {
         path: '/user-manage',
@@ -883,160 +1023,6 @@ export const asyncRouterMap = [
         },
         component: () => import('@/views/mcp-test'),
         hidden: true
-      },
-      // 使用指南
-      // {
-      //   path: '/guide',
-      //   name: 'guide',
-      //   meta: { title: '使用指南', keepAlive: true, icon: 'book', permission: ['admin', 'publisher', 'user'] },
-      //   redirect: '/guide/intro',
-      //   component: RouteView,
-      //   children: [
-      //     {
-      //       path: '/guide/intro',
-      //       name: 'guide_intro',
-      //       component: () => import('@/views/guide/intro'),
-      //       meta: { title: '平台简介', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-      //     },
-      //     {
-      //       path: '/guide/operateGuide',
-      //       name: 'operateGuide',
-      //       component: () => import('@/views/guide/operateGuide'),
-      //       meta: { title: '操作指南', keepAlive: true, permission: ['admin', 'publisher', 'user'] }
-      //     }
-      //     // 动态子路由将在路由初始化时加载
-      //   ]
-      // },
-      {
-        path: buildDocsUrl(),
-        name: 'guide',
-        meta: {
-          title: '使用指南',
-          icon: 'book',
-          permission: ['admin', 'publisher', 'user'],
-          target: '_blank'
-        }
-      },
-      {
-        path: '/feedback',
-        redirect: '/account/feedback',
-        hidden: true
-      },
-      // account
-      {
-        path: '/account',
-        component: RouteView,
-        redirect: '/account/workplace',
-        name: 'account',
-        meta: { title: '个人中心', icon: 'user', keepAlive: true, permission: ['admin', 'publisher', 'user'] },
-        children: [
-          {
-            path: '/account/workplace',
-            name: 'workplace',
-            meta: {
-              title: '当前工作',
-              keepAlive: true,
-              suppressProfileSurvey: true,
-              permission: ['admin', 'publisher', 'user']
-            },
-            component: () => import('@/views/dashboard/Workplace')
-          },
-          {
-            path: '/account/settings',
-            name: 'settings',
-            component: () => import('@/views/account/settings/Index'),
-            meta: { title: 'menu.account.settings', hideHeader: true, permission: ['admin', 'publisher', 'user'] },
-            redirect: '/account/settings/basic',
-            hideChildrenInMenu: true,
-            children: [
-              {
-                path: '/account/settings/basic',
-                name: 'BasicSettings',
-                component: () => import('@/views/account/settings/BasicSetting'),
-                meta: {
-                  title: 'account.settings.menuMap.basic',
-                  hidden: true,
-                  permission: ['admin', 'publisher', 'user']
-                }
-              },
-              {
-                path: '/account/settings/profile',
-                name: 'ProfileSettings',
-                component: () => import('@/views/account/settings/UserProfile'),
-                meta: {
-                  title: 'account.settings.menuMap.profile',
-                  hidden: true,
-                  keepAlive: true,
-                  permission: ['admin', 'publisher', 'user']
-                }
-              },
-              {
-                path: '/account/settings/security',
-                name: 'SecuritySettings',
-                component: () => import('@/views/account/settings/Security'),
-                meta: {
-                  title: 'account.settings.menuMap.security',
-                  hidden: true,
-                  keepAlive: true,
-                  permission: ['admin', 'publisher', 'user']
-                }
-              },
-              {
-                path: '/account/settings/custom',
-                name: 'CustomSettings',
-                component: () => import('@/views/account/settings/Custom'),
-                meta: {
-                  title: 'account.settings.menuMap.custom',
-                  hidden: true,
-                  keepAlive: true,
-                  permission: ['admin', 'publisher', 'user']
-                }
-              },
-              {
-                path: '/account/settings/binding',
-                name: 'BindingSettings',
-                component: () => import('@/views/account/settings/Binding'),
-                meta: {
-                  title: 'account.settings.menuMap.binding',
-                  hidden: true,
-                  keepAlive: true,
-                  permission: ['admin', 'publisher', 'user']
-                }
-              },
-              {
-                path: '/account/settings/notification',
-                name: 'NotificationSettings',
-                component: () => import('@/views/account/settings/Notification'),
-                meta: {
-                  title: 'account.settings.menuMap.notification',
-                  hidden: true,
-                  keepAlive: true,
-                  permission: ['admin', 'publisher', 'user']
-                }
-              }
-            ]
-          },
-          {
-            path: '/account/center',
-            name: 'account-center',
-            meta: {
-              title: '我的成果',
-              keepAlive: true,
-              permission: ['admin', 'publisher', 'user']
-            },
-            component: () => import('@/views/account/space')
-          },
-          {
-            path: '/account/feedback',
-            name: 'account-feedback',
-            meta: {
-              title: '意见反馈',
-              keepAlive: true,
-              permission: ['admin', 'publisher', 'user']
-            },
-            component: () => import('@/views/account/feedback/index')
-          }
-        ]
       },
       // dashboard
       // TODO: 似乎已废弃

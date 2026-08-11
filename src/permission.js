@@ -21,8 +21,7 @@ import {
   generateVerticalScenarioDevRoutes,
   generateVerticalAppRoutes,
   generateGuideRoutes,
-  generateEvaluationRoutes,
-  generateOperationRoutes
+  generateEvaluationRoutes
 } from '@/config/router.config' // 引入动态生成路由函数
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
@@ -119,7 +118,7 @@ router.beforeEach(async (to, from, next) => {
                 // 动态生成元应用路由
                 verticalAppRoute.children = await generateVerticalAppRoutes()
               }
-              // 4. 技术评测与业务验证
+              // 4. 技术评测
               const verticalEvaluationRoute = router.children.find(route => route.path === '/evaluation')
               if (verticalEvaluationRoute) {
                 // 根据用户权限设置重定向路径
@@ -132,7 +131,7 @@ router.beforeEach(async (to, from, next) => {
                   // user权限的用户只能重定向到元应用业务数据验证页面
                   verticalEvaluationRoute.redirect = () => getDomainModuleEntryPath('/evaluation', getCurrentDomainCode(), store.getters.roles.permissionList)
                 }
-                // 动态生成技术评测与业务验证路由
+                // 动态生成技术评测路由
                 const allEvaluationRoutes = await generateEvaluationRoutes()
 
                 // 根据用户权限过滤子路由
@@ -155,39 +154,9 @@ router.beforeEach(async (to, from, next) => {
 
                 verticalEvaluationRoute.children = allEvaluationRoutes
               }
-              // 5. 服务及应用运维管理
-              // 如果有admin或publisher权限
-              if (store.getters.roles.permissionList &&
-                  (store.getters.roles.permissionList.includes('admin') ||
-                   store.getters.roles.permissionList.includes('publisher'))) {
-                const verticalOperationRoute = router.children.find(route => route.path === '/operation')
-                if (verticalOperationRoute) { // 修正变量名
-                  // 获取第一个路径作为重定向路径
-                  verticalOperationRoute.redirect = () => getDomainModuleEntryPath('/operation', getCurrentDomainCode(), store.getters.roles.permissionList)
-                  // 动态生成运维管理路由
-                  const allOperationRoutes = await generateOperationRoutes()
-
-                  // 根据用户权限过滤子路由
-                  if (allOperationRoutes && allOperationRoutes.length > 0) {
-                    // 对每个领域路由进行处理
-                    allOperationRoutes.forEach(domainRoute => {
-                      if (domainRoute.children && domainRoute.children.length > 0) {
-                        // 过滤子路由，只保留用户有权限的路由
-                        domainRoute.children = domainRoute.children.filter(childRoute => {
-                          if (childRoute.meta && childRoute.meta.permission) {
-                            return childRoute.meta.permission.some(p =>
-                              store.getters.roles.permissionList.includes(p)
-                            )
-                          }
-                          return true
-                        })
-                      }
-                    })
-                  }
-
-                  verticalOperationRoute.children = allOperationRoutes
-                }
-              }
+              // 5. 运维管理（单层菜单，不需要动态加载子路由）
+              // 运维管理已改为单层菜单，直接跳转到微服务容器化状态页面
+              // 原动态加载代码已删除
               // 6. 使用指南
               const guideRoute = router.children.find(route => route.path === '/guide')
               if (guideRoute) {

@@ -37,9 +37,12 @@
         :norm-dict="normDict"
         :type-arr="typeArr"
         :technology-arr="technologyArr"
+        mode="default"
         @edit="handleEdit"
         @use="handleUse"
         @table-change="handleTableChange"
+        @purchase="handlePurchase"
+        @add-interested="handleAddInterested"
         ref="serviceTable"
       />
     </a-card>
@@ -56,17 +59,21 @@
       @ok="handleOk"
       ref="serviceEditModal"
     />
+
+    <!-- 消息对话模态框 -->
+    <message-modal ref="messageModal" @sent="handleMessageSent" />
   </page-header-wrapper>
 </template>
 
 <script>
-import { filterServices, getServiceById, getServicesByVerticalType } from '@/api/service'
+import { filterServices, getServiceById, getServicesByVerticalType, addServiceRelation } from '@/api/service'
 import dictionaryCache from '@/utils/dictionaryCache'
 // 导入拆分出的组件
 import SearchForm from './components/SearchForm'
 import FilterCard from './components/FilterCard'
 import ServiceTable from './components/ServiceTable'
 import ServiceEditModal from './components/ServiceEditModal'
+import MessageModal from '@/views/account/components/MessageModal'
 import { standardizeServiceData } from '@/utils/serviceData'
 
 export default {
@@ -75,7 +82,8 @@ export default {
     SearchForm,
     FilterCard,
     ServiceTable,
-    ServiceEditModal
+    ServiceEditModal,
+    MessageModal
   },
   props: {
     // 垂直领域类型，从路由解析
@@ -375,6 +383,29 @@ export default {
           break
         }
       }
+    },
+    // 购买服务：打开对话模态框联系销售方
+    handlePurchase(record) {
+      this.$refs.messageModal.open(record, {
+        messageType: 'contact_purchase'
+      })
+    },
+    // 添加到感兴趣列表
+    async handleAddInterested(record) {
+      try {
+        const res = await addServiceRelation(record.id, 'interested')
+        if (res && res.status === 'success') {
+          this.$message.success('已添加到感兴趣列表')
+        } else {
+          this.$message.error((res && res.message) || '添加失败')
+        }
+      } catch (e) {
+        this.$message.error('添加失败：' + ((e && e.message) || e))
+      }
+    },
+    // 消息发送成功回调
+    handleMessageSent() {
+      // 可以在这里刷新未读消息数等
     }
   }
 }
