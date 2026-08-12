@@ -217,7 +217,7 @@ export default {
       if (!this.canSubmit) return
       this.allowInputSuggestions = false
       this.showSuggestions = false
-      const shouldUseReadyScenario = this.hasGeneratedRecommendation && this.scenarioParsed
+      const shouldUseReadyScenario = !!this.scenarioParsed
       this.beginAgentTurn()
       this.isInputLoading = true
       this.isInputEnabled = false
