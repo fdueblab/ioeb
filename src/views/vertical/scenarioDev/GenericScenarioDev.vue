@@ -11,16 +11,101 @@
       >
         <a-card :bordered="false" size="small" title="想定式开发配置" class="config-main-card">
           <div class="table-page-search-wrapper">
+            <div class="config-description">
+              在左侧对话详细描述你的想定，右侧对话是AI对想定的理解（可通过左侧对话优化、也可直接编辑），页面下部内容是AI对想定的分类（可由AI基于想定自动调整，也可直接选择），用户编辑和选择内容优先。
+            </div>
             <a-form layout="vertical" class="config-form">
+              <!-- 相关资料（算法优化参考） -->
+              <a-row :gutter="16" class="form-section-row">
+                <a-col :span="24">
+                  <div class="reference-block">
+                    <div class="reference-title">
+                      相关资料<span class="label-optional">（选填）</span>
+                    </div>
+                    <a-alert
+                      type="warning"
+                      show-icon
+                      class="reference-hint"
+                      message="可提交论文、专利、程序、开源代码或网址作为算法优化参考。智能体将参考这些资料，并在生成时进行差异化创新以规避知识产权争议。"
+                    />
+                    <div class="reference-upload-row">
+                      <a-upload
+                        accept=".pdf,.doc,.docx,.txt,.md,.py,.ipynb,.zip"
+                        :file-list="referenceFiles"
+                        :remove="removeReferenceFile"
+                        :customRequest="customReferenceFileChose"
+                        :multiple="true">
+                        <a-button icon="paper-clip"> 上传论文/专利/代码 </a-button>
+                      </a-upload>
+                      <span class="upload-hint">支持 PDF / Word / TXT / 代码(.py/.ipynb) / ZIP，可多选</span>
+                    </div>
+                  </div>
+                </a-col>
+              </a-row>
+
+              <a-row :gutter="16" class="form-section-row narrative-pair-row">
+                <a-col :xs="24" :md="10" class="narrative-pair-col narrative-pair-col--chat">
+                  <div class="narrative-pair">
+                    <scenario-intent-chat
+                      ref="intentChat"
+                      :domain="verticalType"
+                      :domain-title="domainTitle"
+                      :dictionary-snapshot="intakeDictionarySnapshot"
+                      :partial-form="intakePartialForm"
+                      :disabled="generateLoading"
+                      @form-draft="onIntentFormDraft"
+                      @busy="intentChatBusy = $event"
+                    />
+                  </div>
+                </a-col>
+                <a-col :xs="24" :md="14" class="narrative-pair-col narrative-pair-col--narrative">
+                  <div class="narrative-pair narrative-pair--right">
+                    <div class="narrative-block">
+                      <div class="narrative-title">
+                        下面是基于左侧交互、结合用户画像等关联信息形成的算法模型想定（可直接编辑或通过左侧界面继续交互，完成后点击"生成算法模型"）
+                      </div>
+                      <a-textarea
+                        v-model="freeNarrative"
+                        :rows="10"
+                        class="narrative-textarea"
+                        :class="{ 'field-highlight': highlightFields.freeNarrative }"
+                        :placeholder="narrativePlaceholder"
+                      />
+                    </div>
+                  </div>
+                  <a-form-item :colon="false" class="action-form-item">
+                    <div class="form-actions">
+                      <span class="form-actions-label">操作：</span>
+                      <a-button
+                        type="primary"
+                        icon="thunderbolt"
+                        @click="onGenerateClick"
+                        :disabled="generateDisabled"
+                        :loading="generateLoading"
+                      >
+                        生成算法模型
+                      </a-button>
+                      <a-button
+                        v-if="showRegenerateButton"
+                        icon="reload"
+                        @click="onRegenerateClick"
+                      >
+                        重新生成算法模型
+                      </a-button>
+                    </div>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+
               <!-- 第一行：领域 / 算法模型名称 -->
-              <a-row :gutter="16">
+              <a-row :gutter="16" class="config-section-gap">
                 <a-col :xs="24" :sm="8" :md="8">
                   <a-form-item label="领域">
                     <span class="domain-title-text">{{ domainTitle }}</span>
                   </a-form-item>
                 </a-col>
                 <a-col :xs="24" :sm="16" :md="16">
-                  <a-form-item label="算法模型名称" required>
+                  <a-form-item label="算法模型名称" required :class="{ 'field-highlight-wrap': highlightFields.serviceName }">
                     <a-input v-model="form.serviceName" placeholder="请输入算法模型名称" @change="onServiceNameInput"/>
                   </a-form-item>
                 </a-col>
@@ -29,7 +114,7 @@
               <!-- 第二行：行业 / 场景 / 技术 -->
               <a-row :gutter="16">
                 <a-col :xs="24" :sm="8" :md="8">
-                  <a-form-item label="行业">
+                  <a-form-item label="行业" :class="{ 'field-highlight-wrap': highlightFields.industry }">
                     <a-select v-model="programInfo.industry" placeholder="请选择行业" allow-clear>
                       <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
                         {{ item.text }}
@@ -38,7 +123,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :xs="24" :sm="8" :md="8">
-                  <a-form-item label="场景">
+                  <a-form-item label="场景" :class="{ 'field-highlight-wrap': highlightFields.scenario }">
                     <a-select v-model="programInfo.scenario" placeholder="请选择场景" allow-clear>
                       <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="item.code">
                         {{ item.text }}
@@ -47,7 +132,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :xs="24" :sm="8" :md="8">
-                  <a-form-item label="技术">
+                  <a-form-item label="技术" :class="{ 'field-highlight-wrap': highlightFields.technology }">
                     <a-select v-model="programInfo.technology" placeholder="请选择技术" allow-clear>
                       <a-select-option v-for="(item, index) in technologyOptions" :key="index" :value="item.code">
                         {{ item.text }}
@@ -75,7 +160,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :xs="24" :sm="12" :md="12">
-                  <a-form-item label="算法类别">
+                  <a-form-item label="算法类别" :class="{ 'field-highlight-wrap': highlightFields.algorithmCategory }">
                     <a-select
                       v-model="algorithmCategory"
                       placeholder="请选择算法类别"
@@ -97,6 +182,7 @@
                 :activeKey="categoryParamsPanelActive"
                 @change="(keys) => categoryParamsPanelActive = keys"
                 class="spec-collapse"
+                :class="{ 'field-highlight-wrap': highlightFields.categoryParams }"
                 style="margin-top: 4px;"
               >
                 <a-collapse-panel key="params" :header="currentCategoryConfig.label + '（选填）'">
@@ -241,87 +327,6 @@
                 </a-collapse-panel>
               </a-collapse>
 
-              <!-- 相关资料（算法优化参考） -->
-              <a-row :gutter="16" class="form-section-row">
-                <a-col :span="24">
-                  <div class="reference-block">
-                    <div class="reference-title">
-                      相关资料<span class="label-optional">（选填）</span>
-                    </div>
-                    <a-alert
-                      type="warning"
-                      show-icon
-                      class="reference-hint"
-                      message="可提交论文、专利、程序、开源代码或网址作为算法优化参考。智能体将参考这些资料，并在生成时进行差异化创新以规避知识产权争议。"
-                    />
-                    <div class="reference-upload-row">
-                      <a-upload
-                        accept=".pdf,.doc,.docx,.txt,.md,.py,.ipynb,.zip"
-                        :file-list="referenceFiles"
-                        :remove="removeReferenceFile"
-                        :customRequest="customReferenceFileChose"
-                        :multiple="true">
-                        <a-button icon="paper-clip"> 上传论文/专利/代码 </a-button>
-                      </a-upload>
-                      <span class="upload-hint">支持 PDF / Word / TXT / 代码(.py/.ipynb) / ZIP，可多选</span>
-                    </div>
-                  </div>
-                </a-col>
-              </a-row>
-
-              <a-row :gutter="16" class="form-section-row">
-                <a-col :span="24">
-                  <div class="narrative-block">
-                    <div class="narrative-title">
-                      进一步需求和要求请在下面自由叙述<span class="label-required-tip">（必填）</span>
-                    </div>
-                    <a-alert
-                      type="info"
-                      show-icon
-                      class="narrative-hint"
-                      message="请具体描述您希望生成的算法模型具备哪些功能、输入与输出形式、以及主要使用场景。"
-                    >
-                      <template slot="description">
-                        <div class="example-title">正确、完整的描述示例：</div>
-                        <div class="example-text">
-                          创建一个可以处理图像识别的算法服务：接收图像 URL 或 Base64 图像数据作为输入，返回图像中的主要物体类别标签及置信度列表；服务需支持批量请求，单次最多 32 张图；适用于电商商品图审核场景。
-                        </div>
-                      </template>
-                    </a-alert>
-                    <a-textarea
-                      v-model="freeNarrative"
-                      :rows="8"
-                      class="narrative-textarea"
-                      placeholder="请详细描述您希望生成的算法服务功能，例如：创建一个可以处理图像识别的算法服务，它可以接收图像URL并返回识别结果..."
-                    />
-                  </div>
-                </a-col>
-              </a-row>
-
-              <a-row :gutter="16" class="form-section-row">
-                <a-col :span="24">
-                  <a-form-item label="操作">
-                    <div class="form-actions">
-                      <a-button
-                        type="primary"
-                        icon="thunderbolt"
-                        @click="onGenerateClick"
-                        :disabled="generateDisabled"
-                        :loading="generateLoading"
-                      >
-                        生成算法模型
-                      </a-button>
-                      <a-button
-                        v-if="showRegenerateButton"
-                        icon="reload"
-                        @click="onRegenerateClick"
-                      >
-                        重新生成算法模型
-                      </a-button>
-                    </div>
-                  </a-form-item>
-                </a-col>
-              </a-row>
             </a-form>
           </div>
         </a-card>
@@ -473,7 +478,7 @@
           <a-alert
             type="info"
             show-icon
-            message="源文件已准备好，可下载后交给技术人员部署，也可在「垂域应用AI资源检索」模块查看并下载。"
+            message="源文件已准备好，可下载后交给技术人员部署，也可在「垂域算法模型组件列表」模块查看并下载。"
             style="margin-top: 12px;"
           />
         </a-tab-pane>
@@ -578,6 +583,7 @@ import { Modal } from 'ant-design-vue'
 import { streamAgent } from '@/utils/request'
 import dictionaryCache from '@/utils/dictionaryCache'
 import { uploadScenarioGeneratedAlgorithm } from '@/api/service'
+import ScenarioIntentChat from './components/ScenarioIntentChat.vue'
 
 const ALGORITHM_CATEGORY_FALLBACK = [
   { code: 'classification', text: '分类算法' },
@@ -1138,6 +1144,9 @@ const PROGRESS_PLACEHOLDER_STEPS = [
 
 export default {
   name: 'GenericScenarioDev',
+  components: {
+    ScenarioIntentChat
+  },
   props: {
     verticalType: {
       type: String,
@@ -1152,6 +1161,16 @@ export default {
       referenceFiles: [],
       uploadReferenceFiles: [],
       freeNarrative: '',
+      highlightFields: {
+        freeNarrative: false,
+        industry: false,
+        scenario: false,
+        technology: false,
+        algorithmCategory: false,
+        categoryParams: false,
+        serviceName: false
+      },
+      highlightTimers: {},
       form: {
         serviceName: undefined
       },
@@ -1208,6 +1227,123 @@ export default {
       const narrative = (this.freeNarrative || '').trim()
       return !name || !narrative
     },
+    narrativePlaceholder() {
+      return '请详细描述您希望生成的算法服务功能；也可先在左侧用自然语言描述，由智能体完善到此处。'
+    },
+    generatedNarrativeContent() {
+      const parts = []
+
+      // 第一部分：页面上端各设定选项内容
+      const settings = []
+      if (this.programInfo.industry) {
+        const industryText = this.getTextFromOptions(this.industryOptions, this.programInfo.industry)
+        if (industryText) settings.push(`行业：${industryText}`)
+      }
+      if (this.programInfo.scenario) {
+        const scenarioText = this.getTextFromOptions(this.scenarioOptions, this.programInfo.scenario)
+        if (scenarioText) settings.push(`场景：${scenarioText}`)
+      }
+      if (this.programInfo.technology) {
+        const technologyText = this.getTextFromOptions(this.technologyOptions, this.programInfo.technology)
+        if (technologyText) settings.push(`技术：${technologyText}`)
+      }
+      if (this.algorithmCategory) {
+        const categoryText = this.getTextFromOptions(this.algorithmCategoryOptions, this.algorithmCategory)
+        if (categoryText) settings.push(`算法类别：${categoryText}`)
+      }
+
+      // 类别参数转换为中文显示
+      if (Object.keys(this.categoryParams || {}).length > 0) {
+        const categoryParamsText = this.formatCategoryParamsToText(this.categoryParams)
+        if (categoryParamsText) {
+          settings.push(categoryParamsText)
+        }
+      }
+
+      if (settings.length > 0) {
+        parts.push(settings.join('\n'))
+      }
+
+      // 第二部分：AI生成的算法模型想定场景、显式规则、隐式规则、特殊情况处理、功能性能要求、测试反馈
+      // 只在非第一次生成时显示
+      if (this.generateResult.show && this.generateResult.modelSummary) {
+        const aiContent = []
+
+        // 想定场景
+        if (this.generateResult.modelSummary.usageScenarios && this.generateResult.modelSummary.usageScenarios.length > 0) {
+          aiContent.push(`想定场景：${this.generateResult.modelSummary.usageScenarios.join('、')}`)
+        }
+
+        // 功能描述
+        if (this.generateResult.modelSummary.purpose) {
+          aiContent.push(`功能描述：${this.generateResult.modelSummary.purpose}`)
+        }
+
+        // 输入描述
+        if (this.generateResult.modelSummary.inputDescription) {
+          aiContent.push(`输入数据：${this.generateResult.modelSummary.inputDescription}`)
+        }
+
+        // 输出描述
+        if (this.generateResult.modelSummary.outputDescription) {
+          aiContent.push(`输出结果：${this.generateResult.modelSummary.outputDescription}`)
+        }
+
+        // 测试反馈
+        if (this.generateResult.testResults && this.generateResult.testResults.length > 0) {
+          const testSummary = this.generateResult.testResults.map(t =>
+            `${t.name}：${t.description}`
+          ).join('；')
+          aiContent.push(`测试反馈：${testSummary}`)
+        }
+
+        // 使用限制
+        if (this.generateResult.modelSummary.limitations) {
+          aiContent.push(`使用限制：${this.generateResult.modelSummary.limitations}`)
+        }
+
+        // 后续建议
+        if (this.generateResult.modelSummary.nextSteps && this.generateResult.modelSummary.nextSteps.length > 0) {
+          aiContent.push(`后续建议：${this.generateResult.modelSummary.nextSteps.join('；')}`)
+        }
+
+        if (aiContent.length > 0) {
+          parts.push('\n' + aiContent.join('\n'))
+        }
+      }
+
+      return parts.join('\n')
+    },
+    intakePartialForm() {
+      return {
+        model_name: this.form.serviceName || '',
+        free_narrative: this.freeNarrative || '',
+        industry: this.programInfo.industry,
+        scenario: this.programInfo.scenario,
+        technology: this.programInfo.technology,
+        algorithm_category: this.algorithmCategory,
+        category_params: { ...(this.categoryParams || {}) }
+      }
+    },
+    intakeDictionarySnapshot() {
+      const snap = {
+        industry: this.industryOptions || [],
+        scenario: this.scenarioOptions || [],
+        technology: this.technologyOptions || [],
+        algorithm_category: this.algorithmCategoryOptions || []
+      }
+      Object.keys(this.categoryDictCache || {}).forEach(key => {
+        snap[key] = this.categoryDictCache[key] || []
+      })
+      // 常用约束/输入类型 fallback，便于首轮即可约束 LLM
+      if (!snap.algo_input_type || !snap.algo_input_type.length) {
+        snap.algo_input_type = ALGO_DICT_FALLBACK.algo_input_type || []
+      }
+      if (!snap.algo_constraint || !snap.algo_constraint.length) {
+        snap.algo_constraint = ALGO_DICT_FALLBACK.algo_constraint || []
+      }
+      return snap
+    },
     testPassedCount() {
       return this.generateResult.testResults.filter(t => t.status === 'passed').length
     },
@@ -1244,7 +1380,80 @@ export default {
   created() {
     this.initData()
   },
+  beforeDestroy() {
+    Object.keys(this.highlightTimers || {}).forEach(key => {
+      if (this.highlightTimers[key]) {
+        clearTimeout(this.highlightTimers[key])
+      }
+    })
+    this.clearDemoProgressTimers && this.clearDemoProgressTimers()
+    if (this.activeStreamAbortController) {
+      this.activeStreamAbortController.abort()
+    }
+  },
   methods: {
+    getTextFromOptions(options, code) {
+      if (!options || !code) return ''
+      const item = options.find(opt => opt.code === code)
+      return item ? item.text : ''
+    },
+
+    formatCategoryParamsToText(params) {
+      if (!params || typeof params !== 'object') return ''
+
+      const config = this.currentCategoryConfig
+      if (!config || !config.fields) return ''
+
+      const lines = []
+      config.fields.forEach(field => {
+        const value = params[field.key]
+        if (value === undefined || value === null || value === '') return
+
+        // 根据字段类型格式化
+        if (field.type === 'multi_select' && Array.isArray(value) && value.length > 0) {
+          // 多选字段，从字典获取中文
+          const dictOptions = this.categoryDictCache[field.dictCategory] || []
+          const texts = value.map(v => {
+            const item = dictOptions.find(opt => opt.code === v)
+            return item ? item.text : v
+          })
+          lines.push(`${field.label}：${texts.join('、')}`)
+        } else if (field.type === 'tag_input' && Array.isArray(value) && value.length > 0) {
+          // 标签输入
+          lines.push(`${field.label}：${value.join('、')}`)
+        } else if (field.type === 'switch') {
+          // 开关字段
+          lines.push(`${field.label}：${value ? '是' : '否'}`)
+        } else if (field.type === 'number_input') {
+          // 数字输入
+          lines.push(`${field.label}：${value}`)
+        } else if (field.type === 'text_input') {
+          // 文本输入
+          lines.push(`${field.label}：${value}`)
+        } else if (field.type === 'single_select') {
+          // 单选字段
+          const dictOptions = this.categoryDictCache[field.dictCategory] || []
+          const item = dictOptions.find(opt => opt.code === value)
+          const text = item ? item.text : value
+          lines.push(`${field.label}：${text}`)
+        } else if (field.type === 'constraint_group' && Array.isArray(value) && value.length > 0) {
+          // 约束字段
+          const dictOptions = this.categoryDictCache[field.dictCategory] || []
+          const texts = value.map(v => {
+            const item = dictOptions.find(opt => opt.code === v)
+            return item ? item.text : v
+          })
+          lines.push(`${field.label}：${texts.join('、')}`)
+        }
+      })
+
+      return lines.join('\n')
+    },
+
+    updateNarrativeWithSettings() {
+      this.freeNarrative = this.generatedNarrativeContent
+    },
+
     async initData() {
       try {
         this.industryOptions = await dictionaryCache.loadDict(`${this.verticalType}_industry`) || []
@@ -1473,6 +1682,72 @@ export default {
       return map[type] || 'default'
     },
 
+    flashFieldHighlight(key) {
+      if (!key || !(key in this.highlightFields)) return
+      this.$set(this.highlightFields, key, true)
+      if (this.highlightTimers[key]) {
+        clearTimeout(this.highlightTimers[key])
+      }
+      this.highlightTimers[key] = setTimeout(() => {
+        this.$set(this.highlightFields, key, false)
+      }, 1500)
+    },
+
+    codeInOptions(options, code) {
+      if (code === undefined || code === null || code === '') return false
+      return (options || []).some(item => String(item.code) === String(code))
+    },
+
+    async onIntentFormDraft(payload) {
+      const draft = (payload && payload.formDraft) || {}
+      const changedFields = (payload && payload.changedFields) || Object.keys(draft)
+      await this.applyFormDraft(draft, changedFields)
+    },
+
+    async applyFormDraft(draft, changedFields = []) {
+      if (!draft || typeof draft !== 'object') return
+
+      if (draft.industry !== undefined && this.codeInOptions(this.industryOptions, draft.industry)) {
+        this.programInfo.industry = draft.industry
+        this.flashFieldHighlight('industry')
+      }
+      if (draft.scenario !== undefined && this.codeInOptions(this.scenarioOptions, draft.scenario)) {
+        this.programInfo.scenario = draft.scenario
+        this.flashFieldHighlight('scenario')
+      }
+      if (draft.technology !== undefined && this.codeInOptions(this.technologyOptions, draft.technology)) {
+        this.programInfo.technology = draft.technology
+        this.flashFieldHighlight('technology')
+      }
+
+      if (draft.algorithm_category) {
+        const cat = draft.algorithm_category
+        if (this.codeInOptions(this.algorithmCategoryOptions, cat) || CATEGORY_PARAMS_CONFIG[cat]) {
+          this.algorithmCategory = cat
+          await this.onCategoryChange(cat, true)
+          this.flashFieldHighlight('algorithmCategory')
+        }
+      }
+
+      if (draft.category_params && typeof draft.category_params === 'object') {
+        const next = { ...(this.categoryParams || {}), ...draft.category_params }
+        this.categoryParams = next
+        if (Array.isArray(next.constraints)) {
+          const custom = next.constraints.find(c => String(c).startsWith('custom:'))
+          if (custom) {
+            this.customConstraintText = String(custom).replace(/^custom:\s*/, '')
+          }
+        }
+        this.flashFieldHighlight('categoryParams')
+        this.categoryParamsPanelActive = ['params']
+      }
+
+      if (draft.model_name && !(this.form.serviceName || '').trim()) {
+        this.form.serviceName = draft.model_name
+        this.flashFieldHighlight('serviceName')
+      }
+    },
+
     async onCategoryChange(category, keepParams = false) {
       const shouldKeepParams = keepParams === true
       if (!shouldKeepParams) {
@@ -1615,6 +1890,19 @@ export default {
     async restoreScenarioDevDefaults() {
       this.resetScenarioDevToInitial()
       await this.applyScenarioDefaults()
+      this.resetIntentChat()
+    },
+
+    resetIntentChat() {
+      this.intentChatBusy = false
+      this.pendingNarrativeFromChat = ''
+      this.narrativeManualEdited = false
+      this.$nextTick(() => {
+        const chat = this.$refs.intentChat
+        if (chat && typeof chat.resetConversation === 'function') {
+          chat.resetConversation()
+        }
+      })
     },
 
     clearDemoProgressTimers() {
@@ -1665,7 +1953,7 @@ export default {
         agentSteps: [],
         friendlySteps: this.buildFriendlySteps(1)
       }
-      this.generateResult.show = false
+      // 点击生成时不修改显示内容，保持原有内容
 
       const progressTimers = [
         [10000, 2, '已识别基层医疗远程会诊场景，正在匹配利奈唑胺给药模型。'],
@@ -1718,7 +2006,7 @@ export default {
         agentSteps: [],
         friendlySteps: this.buildFriendlySteps(1)
       }
-      this.generateResult.show = false
+      // 点击生成时不修改显示内容，保持原有内容
 
       const progressTimers = [
         [10000, 2, '已识别金融风控与反洗钱场景，正在匹配可疑交易风险识别模型。'],
@@ -1774,7 +2062,7 @@ export default {
         agentSteps: [],
         friendlySteps: this.buildFriendlySteps(1)
       }
-      this.generateResult.show = false
+      // 点击生成时不修改显示内容，保持原有内容
 
       const formData = new FormData()
       formData.append('model_name', modelName)
@@ -2159,12 +2447,71 @@ export default {
           await this.initData()
         }
       }
+    },
+    'programInfo.industry': {
+      handler() {
+        this.updateNarrativeWithSettings()
+      }
+    },
+    'programInfo.scenario': {
+      handler() {
+        this.updateNarrativeWithSettings()
+      }
+    },
+    'programInfo.technology': {
+      handler() {
+        this.updateNarrativeWithSettings()
+      }
+    },
+    algorithmCategory: {
+      handler() {
+        this.updateNarrativeWithSettings()
+      }
+    },
+    categoryParams: {
+      deep: true,
+      handler() {
+        this.updateNarrativeWithSettings()
+      }
+    },
+    generateResult: {
+      deep: true,
+      handler() {
+        // 当generateResult变化时（特别是show和modelSummary），更新文本框内容
+        this.updateNarrativeWithSettings()
+      }
     }
   }
 }
 </script>
 
 <style lang="less" scoped>
+.config-main-card {
+  /deep/ .ant-card-head {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+  /deep/ .ant-card-body {
+    padding-top: 4px;
+  }
+}
+
+.config-description {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 0 0 16px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 16px;
+}
+
+.config-section-gap {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
 .scenario-dev-layout {
   align-items: stretch;
 }
@@ -2215,6 +2562,22 @@ export default {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.form-actions-label {
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 32px;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.action-form-item {
+  margin-top: 12px;
+  margin-bottom: 0;
+
+  /deep/ .ant-form-item-label {
+    display: none;
+  }
 }
 
 .domain-title-text {
@@ -2374,6 +2737,110 @@ export default {
 }
 .narrative-block {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.narrative-pair-row {
+  margin-top: 4px;
+  align-items: stretch;
+}
+.narrative-pair-col--chat,
+.narrative-pair-col--narrative {
+  display: flex;
+  flex-direction: column;
+}
+.narrative-pair {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 420px;
+  padding: 12px;
+  background: #fafcff;
+  border: 1px solid #e8eef5;
+  border-radius: 8px;
+}
+.narrative-pair--right {
+  background: #fff;
+  border-color: #f0f0f0;
+}
+.narrative-pair-col--chat {
+  margin-bottom: 12px;
+}
+.narrative-pair-col--narrative {
+  margin-bottom: 12px;
+}
+@media (min-width: 768px) {
+  .narrative-pair-col--chat {
+    border-right: none;
+    margin-bottom: 0;
+  }
+  .narrative-pair-col--chat .narrative-pair {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 0;
+  }
+  .narrative-pair-col--narrative .narrative-pair {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+}
+.narrative-sync-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  background: #f7f9fc;
+  border-radius: 6px;
+}
+.narrative-sync-status {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+.narrative-sync-status.is-auto {
+  color: #1890ff;
+}
+.narrative-sync-status.is-manual {
+  color: #d48806;
+}
+.narrative-sync-status.is-pending {
+  color: #389e0d;
+}
+.narrative-sync-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.narrative-example-collapse {
+  margin-bottom: 8px;
+  background: transparent;
+
+  /deep/ .ant-collapse-item {
+    border-bottom: none;
+  }
+  /deep/ .ant-collapse-header {
+    padding: 4px 0 !important;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.45);
+  }
+  /deep/ .ant-collapse-content-box {
+    padding: 4px 0 8px !important;
+  }
+}
+.field-highlight,
+.field-highlight-wrap /deep/ .ant-select-selection,
+.field-highlight-wrap /deep/ .ant-input {
+  animation: fieldPulse 1.5s ease;
+}
+@keyframes fieldPulse {
+  0% { box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.45); }
+  40% { box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.25); }
+  100% { box-shadow: 0 0 0 0 rgba(24, 144, 255, 0); }
 }
 .narrative-title {
   font-weight: 600;
@@ -2420,6 +2887,8 @@ export default {
 .narrative-textarea {
   width: 100%;
   max-width: none;
+  flex: 1;
+  min-height: 380px;
 }
 
 .spec-collapse {
@@ -2877,6 +3346,12 @@ export default {
 
   .scenario-dev-main {
     order: 1;
+  }
+
+  .narrative-pair-col--chat .narrative-pair,
+  .narrative-pair-col--narrative .narrative-pair {
+    border-radius: 8px !important;
+    border: 1px solid #e8eef5 !important;
   }
 }
 </style>

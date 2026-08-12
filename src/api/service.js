@@ -213,3 +213,160 @@ export function saveUpgradeAdvice(serviceId, payload) {
     data: payload
   })
 }
+
+/**
+ * 获取用户已购买的成果
+ * @returns {Promise} 返回已购买的服务列表
+ */
+export function getPurchasedServices() {
+  return request({
+    url: `${API_BASE_URL}/services/user/purchased`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取用户感兴趣的成果
+ * @returns {Promise} 返回感兴趣的服务列表
+ */
+export function getInterestedServices() {
+  return request({
+    url: `${API_BASE_URL}/services/user/interested`,
+    method: 'get'
+  })
+}
+
+/**
+ * 发布服务销售
+ * @param {string} serviceId 服务ID
+ * @param {Object} payload 销售信息
+ * @param {number} payload.price 价格
+ * @param {string} payload.description 销售说明
+ * @returns {Promise} 返回发布结果
+ */
+export function publishSale(serviceId, payload) {
+  return request({
+    url: `${API_BASE_URL}/services/${serviceId}/publish-sale`,
+    method: 'post',
+    data: payload
+  })
+}
+
+/**
+ * 停止销售服务
+ * @param {string} serviceId 服务ID
+ * @returns {Promise} 返回停止销售结果
+ */
+export function unpublishSale(serviceId) {
+  return request({
+    url: `${API_BASE_URL}/services/${serviceId}/unpublish-sale`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 获取成果的对话消息列表
+ * @param {string} serviceId 服务ID
+ * @returns {Promise} 返回消息列表
+ */
+export function getMessages(serviceId) {
+  return request({
+    url: `${API_BASE_URL}/messages/service/${serviceId}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 发送购买联系消息
+ * @param {Object} payload 消息内容
+ * @param {string} payload.serviceId 服务ID
+ * @param {string} payload.content 消息内容
+ * @returns {Promise} 返回发送结果
+ */
+export function sendPurchaseContactMessage(payload) {
+  return request({
+    url: `${API_BASE_URL}/messages/contact-purchase`,
+    method: 'post',
+    data: payload
+  })
+}
+
+/**
+ * 发送使用服务消息
+ * @param {Object} payload 消息内容
+ * @param {string} payload.serviceId 服务ID
+ * @param {string} payload.content 消息内容
+ * @returns {Promise} 返回发送结果
+ */
+export function sendUseServiceMessage(payload) {
+  return request({
+    url: `${API_BASE_URL}/messages/use-service`,
+    method: 'post',
+    data: payload
+  })
+}
+
+/**
+ * 回复消息
+ * @param {number} messageId 消息ID
+ * @param {string} content 回复内容
+ * @returns {Promise} 返回回复结果
+ */
+export function replyMessage(messageId, content) {
+  return request({
+    url: `${API_BASE_URL}/messages/${messageId}/reply`,
+    method: 'post',
+    data: { content }
+  })
+}
+
+/**
+ * 获取未读消息列表
+ * @returns {Promise} 返回未读消息列表
+ */
+export function getUnreadMessages() {
+  return request({
+    url: `${API_BASE_URL}/messages/user/unread`,
+    method: 'get'
+  })
+}
+
+/**
+ * 标记消息为已读
+ * @param {number} messageId 消息ID
+ * @returns {Promise} 返回标记结果
+ */
+export function markMessageAsRead(messageId) {
+  return request({
+    url: `${API_BASE_URL}/messages/${messageId}/mark-read`,
+    method: 'post'
+  })
+}
+
+/**
+ * 添加成果关系（感兴趣/已购买）
+ * @param {string} serviceId 服务ID
+ * @param {string} relationType 关系类型：interested-感兴趣/purchased-已购买
+ * @returns {Promise} 返回添加结果
+ */
+export function addServiceRelation(serviceId, relationType) {
+  return request({
+    url: `${API_BASE_URL}/services/${serviceId}/relation`,
+    method: 'post',
+    data: { relationType }
+  })
+}
+
+/**
+ * 删除成果关系
+ * @param {string} serviceId 服务ID
+ * @param {string} relationType 关系类型
+ * @returns {Promise} 返回删除结果
+ */
+export function removeServiceRelation(serviceId, relationType) {
+  return request({
+    url: `${API_BASE_URL}/services/${serviceId}/relation`,
+    method: 'delete',
+    params: { relationType }
+  })
+}

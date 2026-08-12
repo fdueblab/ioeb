@@ -162,18 +162,20 @@ const vueConfig = {
         warnings: false,
         runtimeErrors: false
       }
+    },
+    // 代理配置：将前端API请求转发到后端服务器
+    proxy: {
+      '/api/agent': {
+        target: 'http://localhost:8010',
+        ws: false,
+        changeOrigin: true
+      },
+      [process.env.VUE_APP_API_BASE_URL]: {
+        target: `http://localhost:5000`,
+        ws: false,
+        changeOrigin: true
+      }
     }
-    // 如果需要代理，请去除下面的注释
-    // proxy: {
-    //   [process.env.VUE_APP_API_BASE_URL]: {
-    //     target: `https://torna.kxyun.net/mock/msa/api`,
-    //     ws: false,
-    //     changeOrigin: true,
-    //     pathRewrite: {
-    //       ['^' + process.env.VUE_APP_API_BASE_URL]: ''
-    //     }
-    //   }
-    // }
   },
 
   // disable source map in production

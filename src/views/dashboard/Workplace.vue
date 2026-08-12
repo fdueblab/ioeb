@@ -208,7 +208,7 @@ export default {
       const actions = [
         {
           key: 'resource-search',
-          title: 'AI 资源检索',
+          title: '垂域算法模型组件列表',
           description: `进入 ${this.currentDomainText} 的资源检索页。`,
           icon: 'search',
           path: this.resourceEntryPath,
