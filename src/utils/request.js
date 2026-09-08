@@ -7,7 +7,7 @@ import { ACCESS_TOKEN } from '@/store/mutation-types'
 
 /* eslint-disable handle-callback-err */
 // 添加Agent基础URL配置
-const AGENT_BASE_URL = process.env.VUE_APP_AGENT_BASE_URL || 'https://fdueblab.cn'
+const AGENT_BASE_URL = process.env.VUE_APP_UNIONPAY_DEMO === 'true' ? '/upstream/agent' : (process.env.VUE_APP_AGENT_BASE_URL || 'https://fdueblab.cn')
 console.log('AGENT_BASE_URL', AGENT_BASE_URL)
 
 // 创建 axios 实例
@@ -54,6 +54,31 @@ const errorHandler = (error) => {
 // request interceptor
 request.interceptors.request.use(
   (config) => {
+    if (process.env.VUE_APP_UNIONPAY_DEMO === 'true') {
+      let url = config.url || ''
+      const overrides = [
+        ...((window.UNIONPAY_CONFIG || {}).urlOverrides || []),
+        { from: 'https://fdueblab.cn/api/agent', to: '/api/agent' },
+        { from: 'https://fdueblab.cn/api', to: '/api' },
+        { from: 'http://131.252.10.118/api', to: '/api' },
+        { from: 'http://131.252.10.118', to: '/upstream/platform' },
+        { from: 'https://fdueblab.cn', to: '/upstream/platform' }
+      ]
+      for (const rule of overrides) {
+        const from = rule.from.replace(/\/+$/, '')
+        if (url === from || url.startsWith(from + '/') || url.startsWith(from + '?')) {
+          url = rule.to.replace(/\/+$/, '') + url.slice(from.length)
+          break
+        }
+      }
+      if (url.startsWith('/schedule/')) url = '/upstream/platform' + url
+      if (!/^https?:\/\//.test(url)) {
+        if (!url.startsWith('/api/') && !url.startsWith('/upstream/')) url = '/api/' + url.replace(/^\/+/, '')
+        url = new URL(url, window.location.origin).toString()
+      }
+      config.url = url
+      config.baseURL = window.location.origin
+    }
     const token = storage.get(ACCESS_TOKEN)
     // 如果 token 存在
     // 让每个请求携带自定义 token 请根据实际情况自行修改

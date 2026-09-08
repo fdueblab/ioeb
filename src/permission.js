@@ -7,7 +7,7 @@ import notification from 'ant-design-vue/es/notification'
 import { setDocumentTitle, domTitle } from '@/utils/domUtil'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { i18nRender } from '@/locales'
-import { preloadAllDict } from '@/utils/dictionaryCache' // 引入字典预加载功能
+import { preloadAllDict, clearAllDictCache } from '@/utils/dictionaryCache' // 引入字典预加载功能
 import {
   generateVerticalUserRoutes,
   getFirstVerticalUserPath,
@@ -27,10 +27,28 @@ NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
 const allowList = ['login', 'register', 'registerResult'] // no redirect allowList
 const loginRoutePath = '/user/login'
-const defaultRoutePath = '/home'
+const defaultRoutePath = process.env.VUE_APP_UNIONPAY_DEMO === 'true' ? '/vertical-user/aml' : '/home'
 
 router.beforeEach(async (to, from, next) => {
   NProgress.start() // start progress bar
+  if (process.env.VUE_APP_UNIONPAY_DEMO === 'true') {
+    try {
+      const response = await fetch('/demo-api/session', { cache: 'no-store' })
+      if (!response.ok) {
+        window.location.assign('/login')
+        NProgress.done()
+        return next(false)
+      }
+      const session = await response.json()
+      storage.set(ACCESS_TOKEN, session.token)
+      localStorage.setItem('username', session.username)
+      store.commit('SET_TOKEN', session.token)
+    } catch (error) {
+      notification.error({ message: '无法连接登录服务', description: '请检查启动窗口和配置后刷新页面' })
+      NProgress.done()
+      return next(false)
+    }
+  }
   to.meta && typeof to.meta.title !== 'undefined' && setDocumentTitle(`${i18nRender(to.meta.title)} - ${domTitle}`)
   /* has token */
   const token = storage.get(ACCESS_TOKEN)
@@ -44,6 +62,8 @@ router.beforeEach(async (to, from, next) => {
         // request login userInfo
         try {
           const res = await store.dispatch('GetInfo')
+          // A demo backend may switch databases; do not reuse another environment's domain menus.
+          if (process.env.VUE_APP_UNIONPAY_DEMO === 'true') clearAllDictCache()
           // 预加载字典数据
           await preloadAllDict().catch(err => {
             console.error('预加载字典数据失败:', err)

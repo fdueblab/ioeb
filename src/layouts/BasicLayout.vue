@@ -34,6 +34,7 @@
       <div style="margin: 12px 0">This is SettingDrawer custom footer content.</div>
     </setting-drawer>
     <template v-slot:rightContentRender>
+      <a v-if="isDemo" href="/monitor" style="margin-right: 20px">返回监管系统</a>
       <right-content :top-menu="settings.layout === 'topmenu'" :is-mobile="isMobile" :theme="settings.theme" />
     </template>
     <router-view />
@@ -65,6 +66,7 @@ export default {
 
       // base
       menus: [],
+      isDemo: process.env.VUE_APP_UNIONPAY_DEMO === 'true',
       // 侧栏收起状态
       collapsed: false,
       settings: {

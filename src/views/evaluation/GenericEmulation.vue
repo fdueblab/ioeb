@@ -337,6 +337,9 @@ export default {
   },
   computed: {
     domainDatasets() {
+      if (process.env.VUE_APP_UNIONPAY_DEMO === 'true' && this.verticalType === 'aml') {
+        return [(window.UNIONPAY_CONFIG || {}).datasetName || '银联百万数据集']
+      }
       return domainDatasetsMap[this.verticalType] || domainDatasetsMap.homeAI
     },
     rowSelection () {

@@ -543,6 +543,9 @@ export default {
   },
   computed: {
     domainDatasets() {
+      if (process.env.VUE_APP_UNIONPAY_DEMO === 'true' && this.verticalType === 'aml') {
+        return [(window.UNIONPAY_CONFIG || {}).datasetName || '银联百万数据集']
+      }
       return domainDatasetsMap[this.verticalType] || []
     },
     rowSelection () {
@@ -723,7 +726,7 @@ export default {
 
         formData.append('data_file', fileObj)
       } else {
-        const datasetUrl = 'https://lhcos-84055-1317429791.cos.ap-shanghai.myqcloud.com/ioeb/test_dataset.zip'
+        const datasetUrl = process.env.VUE_APP_UNIONPAY_DEMO === 'true' ? window.UNIONPAY_CONFIG.datasetUrl : 'https://lhcos-84055-1317429791.cos.ap-shanghai.myqcloud.com/ioeb/test_dataset.zip'
         formData.append('file_url', datasetUrl)
       }
 
