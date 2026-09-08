@@ -15,13 +15,13 @@ const api = {
 export default api
 
 // 修改默认前缀
-axios.defaults.baseURL = 'http://49.235.115.169:10031/api'
+if (process.env.VUE_APP_UNIONPAY_DEMO !== 'true') axios.defaults.baseURL = 'http://49.235.115.169:10031/api'
 // axios.defaults.baseURL = 'http://localhost:10031'
 
 // container id
 export function inspectContainer (parameter) {
   return axios({
-    url: api.inspectContainer,
+    url: process.env.VUE_APP_UNIONPAY_DEMO === 'true' ? '/upstream/docker' + api.inspectContainer : api.inspectContainer,
     method: 'get',
     params: parameter
   })
@@ -29,7 +29,7 @@ export function inspectContainer (parameter) {
 
 export function startContainer (parameter) {
   return axios({
-    url: api.startContainer,
+    url: process.env.VUE_APP_UNIONPAY_DEMO === 'true' ? '/upstream/docker' + api.startContainer : api.startContainer,
     method: 'post',
     data: parameter
   })
@@ -37,7 +37,7 @@ export function startContainer (parameter) {
 
 export function stopContainer (parameter) {
   return axios({
-    url: api.stopContainer,
+    url: process.env.VUE_APP_UNIONPAY_DEMO === 'true' ? '/upstream/docker' + api.stopContainer : api.stopContainer,
     method: 'post',
     data: parameter
   })
@@ -45,7 +45,7 @@ export function stopContainer (parameter) {
 
 export function restartContainer (parameter) {
   return axios({
-    url: api.restartContainer,
+    url: process.env.VUE_APP_UNIONPAY_DEMO === 'true' ? '/upstream/docker' + api.restartContainer : api.restartContainer,
     method: 'post',
     data: parameter
   })
@@ -53,7 +53,7 @@ export function restartContainer (parameter) {
 
 export function deleteContainer (parameter) {
   return axios({
-    url: api.deleteContainer,
+    url: process.env.VUE_APP_UNIONPAY_DEMO === 'true' ? '/upstream/docker' + api.deleteContainer : api.deleteContainer,
     method: 'post',
     data: parameter
   })
@@ -61,14 +61,14 @@ export function deleteContainer (parameter) {
 
 export function createContainer (data) {
   return axios({
-    url: api.createContainer,
+    url: process.env.VUE_APP_UNIONPAY_DEMO === 'true' ? '/upstream/docker' + api.createContainer : api.createContainer,
     method: 'post',
     data: data
   })
 }
 export function createImage () {
   return axios({
-    url: api.createImage,
+    url: process.env.VUE_APP_UNIONPAY_DEMO === 'true' ? '/upstream/docker' + api.createImage : api.createImage,
     method: 'get'
   })
 }
@@ -76,7 +76,7 @@ export function createImage () {
 export function createDockfile (formData) {
     return axios({
       method: 'post',
-      url: api.newImage,
+      url: process.env.VUE_APP_UNIONPAY_DEMO === 'true' ? '/upstream/docker' + api.newImage : api.newImage,
       data: formData
     })
   }

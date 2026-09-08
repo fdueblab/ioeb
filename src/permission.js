@@ -27,10 +27,28 @@ NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
 const allowList = ['login', 'register', 'registerResult'] // no redirect allowList
 const loginRoutePath = '/user/login'
-const defaultRoutePath = '/home'
+const defaultRoutePath = process.env.VUE_APP_UNIONPAY_DEMO === 'true' ? '/vertical-user/aml' : '/home'
 
 router.beforeEach(async (to, from, next) => {
   NProgress.start() // start progress bar
+  if (process.env.VUE_APP_UNIONPAY_DEMO === 'true') {
+    try {
+      const response = await fetch('/demo-api/session', { cache: 'no-store' })
+      if (!response.ok) {
+        window.top.location.assign('/login')
+        NProgress.done()
+        return next(false)
+      }
+      const session = await response.json()
+      storage.set(ACCESS_TOKEN, session.token)
+      localStorage.setItem('username', session.username)
+      store.commit('SET_TOKEN', session.token)
+    } catch (error) {
+      notification.error({ message: '无法连接统一入口', description: '请检查启动窗口和配置后刷新页面' })
+      NProgress.done()
+      return next(false)
+    }
+  }
   to.meta && typeof to.meta.title !== 'undefined' && setDocumentTitle(`${i18nRender(to.meta.title)} - ${domTitle}`)
   /* has token */
   const token = storage.get(ACCESS_TOKEN)
