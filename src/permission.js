@@ -7,7 +7,7 @@ import notification from 'ant-design-vue/es/notification'
 import { setDocumentTitle, domTitle } from '@/utils/domUtil'
 import { ACCESS_TOKEN } from '@/store/mutation-types'
 import { i18nRender } from '@/locales'
-import { preloadAllDict } from '@/utils/dictionaryCache' // 引入字典预加载功能
+import { preloadAllDict, clearAllDictCache } from '@/utils/dictionaryCache' // 引入字典预加载功能
 import {
   generateVerticalUserRoutes,
   getFirstVerticalUserPath,
@@ -35,7 +35,7 @@ router.beforeEach(async (to, from, next) => {
     try {
       const response = await fetch('/demo-api/session', { cache: 'no-store' })
       if (!response.ok) {
-        window.top.location.assign('/login')
+        window.location.assign('/login')
         NProgress.done()
         return next(false)
       }
@@ -44,7 +44,7 @@ router.beforeEach(async (to, from, next) => {
       localStorage.setItem('username', session.username)
       store.commit('SET_TOKEN', session.token)
     } catch (error) {
-      notification.error({ message: '无法连接统一入口', description: '请检查启动窗口和配置后刷新页面' })
+      notification.error({ message: '无法连接登录服务', description: '请检查启动窗口和配置后刷新页面' })
       NProgress.done()
       return next(false)
     }
@@ -62,6 +62,8 @@ router.beforeEach(async (to, from, next) => {
         // request login userInfo
         try {
           const res = await store.dispatch('GetInfo')
+          // A demo backend may switch databases; do not reuse another environment's domain menus.
+          if (process.env.VUE_APP_UNIONPAY_DEMO === 'true') clearAllDictCache()
           // 预加载字典数据
           await preloadAllDict().catch(err => {
             console.error('预加载字典数据失败:', err)
