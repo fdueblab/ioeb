@@ -1834,6 +1834,12 @@ export default {
         this.startAmlDemoGenerate(name, narrative)
         return
       }
+      // 软引导：未上传数据集时提示可获得的额外质量验证（不阻断生成）
+      if (this.uploadDatasetFiles.length === 0) {
+        this.$message.warning(
+          '提示：未上传数据集，本次生成将无法进行真实数据评测与基线对比。建议上传数据集以获得更可靠的质量验证。'
+        )
+      }
       this.startGenerate(name, narrative)
     },
 
@@ -2206,6 +2212,8 @@ export default {
         show: true,
         generatedCode: code,
         codeFilename: parsed.code_filename || `${parsed.model_name || 'algorithm'}.py`,
+        testCode: parsed.test_code || '',
+        testFilename: parsed.test_filename || `${parsed.model_name || 'algorithm'}_test.py`,
         modelSummary: this.normalizeModelSummary(parsed.model_summary, parsed),
         testResults: Array.isArray(parsed.test_results) ? parsed.test_results : [],
         references: Array.isArray(parsed.references) ? parsed.references : [],
@@ -2396,6 +2404,16 @@ export default {
       const blob = new Blob([code], { type: 'text/x-python' })
       const fd = new FormData()
       fd.append('file', blob, filename)
+      // 留存测试文件：供后续用真实数据集复检算法质量
+      if (this.generateResult.testCode && String(this.generateResult.testCode).trim()) {
+        const testBlob = new Blob([this.generateResult.testCode], { type: 'text/x-python' })
+        fd.append('test_file', testBlob, this.generateResult.testFilename || 'algorithm_test.py')
+      }
+      // 留存数据集：供后续 holdout 评测与基线对比复检
+      if (this.uploadDatasetFiles.length > 0) {
+        const rawDataset = this.uploadDatasetFiles[0]
+        fd.append('dataset_file', rawDataset.originFileObj || rawDataset)
+      }
       fd.append('name', name)
       fd.append('domain', this.verticalType)
       if (this.programInfo.industry) {
