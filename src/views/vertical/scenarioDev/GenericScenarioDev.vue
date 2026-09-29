@@ -14,6 +14,7 @@
             <div class="config-description">
               在左侧对话详细描述你的想定，右侧对话是AI对想定的理解（可通过左侧对话优化、也可直接编辑），页面下部内容是AI对想定的分类（可由AI基于想定自动调整，也可直接选择），用户编辑和选择内容优先。
             </div>
+            <a-alert v-if="verticalType === 'clinical'" type="warning" show-icon message="请使用去标识化资料描述需求，不要上传包含患者姓名、身份证号、联系方式等身份信息的临床资料。" style="margin-bottom: 16px" />
             <a-form layout="vertical" class="config-form">
               <!-- 相关资料（算法优化参考） -->
               <a-row :gutter="16" class="form-section-row">
@@ -26,7 +27,7 @@
                       type="warning"
                       show-icon
                       class="reference-hint"
-                      message="可提交论文、专利、程序、开源代码或网址作为算法优化参考。智能体将参考这些资料，并在生成时进行差异化创新以规避知识产权争议。"
+                      :message="verticalType === 'clinical' ? '可提交论文、指南和公式资料。选择「严格复现」时会保留原公式与参数；资料不足时会提示补充。' : '可提交论文、专利、程序、开源代码或网址作为算法优化参考。智能体将参考这些资料，并在生成时进行差异化创新以规避知识产权争议。'"
                     />
                     <div class="reference-upload-row">
                       <a-upload
@@ -114,7 +115,7 @@
               <!-- 第二行：行业 / 场景 / 技术 -->
               <a-row :gutter="16">
                 <a-col :xs="24" :sm="8" :md="8">
-                  <a-form-item label="行业" :class="{ 'field-highlight-wrap': highlightFields.industry }">
+                  <a-form-item :label="verticalType === 'clinical' ? '临床专科' : '行业'" :class="{ 'field-highlight-wrap': highlightFields.industry }">
                     <a-select v-model="programInfo.industry" placeholder="请选择行业" allow-clear>
                       <a-select-option v-for="(item, index) in industryOptions" :key="index" :value="item.code">
                         {{ item.text }}
@@ -123,7 +124,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :xs="24" :sm="8" :md="8">
-                  <a-form-item label="场景" :class="{ 'field-highlight-wrap': highlightFields.scenario }">
+                  <a-form-item :label="verticalType === 'clinical' ? '诊疗场景' : '场景'" :class="{ 'field-highlight-wrap': highlightFields.scenario }">
                     <a-select v-model="programInfo.scenario" placeholder="请选择场景" allow-clear>
                       <a-select-option v-for="(item, index) in scenarioOptions" :key="index" :value="item.code">
                         {{ item.text }}
@@ -138,6 +139,23 @@
                         {{ item.text }}
                       </a-select-option>
                     </a-select>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <a-row v-if="verticalType === 'clinical'" :gutter="16">
+                <a-col :xs="24" :sm="12">
+                  <a-form-item label="临床任务">
+                    <a-select v-model="clinicalTask" placeholder="请选择临床任务">
+                      <a-select-option v-for="item in clinicalTaskOptions" :key="item.code" :value="item.code">{{ item.text }}</a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :xs="24" :sm="12">
+                  <a-form-item label="生成方式">
+                    <a-radio-group v-model="generationMode">
+                      <a-radio-button value="new_design">新方案探索</a-radio-button>
+                      <a-radio-button value="reproduce">严格复现资料</a-radio-button>
+                    </a-radio-group>
                   </a-form-item>
                 </a-col>
               </a-row>
@@ -421,6 +439,11 @@
                   </div>
                 </div>
               </div>
+              <a-collapse v-if="generationEvidenceLines.length" style="margin-top: 12px">
+                <a-collapse-panel key="evidence" header="数据、资料与验证摘要">
+                  <p v-for="(line, index) in generationEvidenceLines" :key="index">{{ line }}</p>
+                </a-collapse-panel>
+              </a-collapse>
             </div>
           </div>
         </a-card>
@@ -583,6 +606,8 @@ import { Modal } from 'ant-design-vue'
 import { streamAgent } from '@/utils/request'
 import dictionaryCache from '@/utils/dictionaryCache'
 import { uploadScenarioGeneratedAlgorithm } from '@/api/service'
+import { IS_CLINICAL_PREVIEW } from '@/utils/domainContext'
+import { savePreviewModel } from '@/utils/clinicalPreviewStore'
 import ScenarioIntentChat from './components/ScenarioIntentChat.vue'
 
 const ALGORITHM_CATEGORY_FALLBACK = [
@@ -1156,6 +1181,9 @@ export default {
   data() {
     return {
       domainTitle: '',
+      clinicalTask: undefined,
+      clinicalTaskOptions: [],
+      generationMode: 'new_design',
       datasetFiles: [],
       uploadDatasetFiles: [],
       referenceFiles: [],
@@ -1193,6 +1221,7 @@ export default {
       scenarioOptions: [],
       technologyOptions: [],
       generateLoading: false,
+      generationEvidenceLines: [],
       activeGenerateSessionId: 0,
       activeStreamAbortController: null,
       demoProgressTimerIds: [],
@@ -1459,6 +1488,10 @@ export default {
         this.industryOptions = await dictionaryCache.loadDict(`${this.verticalType}_industry`) || []
         this.scenarioOptions = await dictionaryCache.loadDict(`${this.verticalType}_scenario`) || []
         this.technologyOptions = await dictionaryCache.loadDict(`${this.verticalType}_technology`) || []
+        if (this.verticalType === 'clinical') {
+          this.clinicalTaskOptions = await dictionaryCache.loadDict('clinical_task') || []
+          if (!this.clinicalTask && this.clinicalTaskOptions.length) this.clinicalTask = this.clinicalTaskOptions[0].code
+        }
         const domains = await dictionaryCache.loadDict('domain') || []
         this.domainTitle = domains.find(d => d.code === this.verticalType)?.text || '未知领域'
       } catch (e) {
@@ -1945,6 +1978,7 @@ export default {
       const sessionId = this.activeGenerateSessionId
       this.clearDemoProgressTimers()
       this.generateLoading = true
+      this.generationEvidenceLines = []
       this.generateProgress = {
         show: true,
         status: 'process',
@@ -2054,6 +2088,12 @@ export default {
       }
       this.activeStreamAbortController = null
       this.generateLoading = true
+      this.generationEvidenceLines = [
+        '数据：正在核对提交文件及解析结果。',
+        '参考资料：正在核对检索与引用内容。',
+        '验证：平台运行验证尚未执行。',
+        '自检与完善：尚无可核验的修复复测记录。'
+      ]
       this.generateProgress = {
         show: true,
         status: 'process',
@@ -2067,6 +2107,11 @@ export default {
       const formData = new FormData()
       formData.append('model_name', modelName)
       formData.append('free_narrative', narrative)
+      formData.append('domain', this.verticalType)
+      if (this.verticalType === 'clinical') {
+        formData.append('clinical_task', this.clinicalTask || '')
+        formData.append('generation_mode', this.generationMode)
+      }
 
       if (this.programInfo.industry) {
         formData.append('industry', this.programInfo.industry)
@@ -2104,6 +2149,26 @@ export default {
       }
 
       streamAgent('/api/agent/aml_auto_generate', formData, {
+        onComponents: (data) => {
+          if (sessionId !== this.activeGenerateSessionId) return
+          const evidence = data.generation_evidence || {}
+          const dataset = evidence.dataset || {}
+          const refs = evidence.references || {}
+          this.generationEvidenceLines = [
+            dataset.submitted
+              ? (dataset.parsed
+                ? `数据：已解析 ${dataset.format || '未知格式'} 文件，${dataset.rows == null ? '数量未知' : `${dataset.rows} ${dataset.format === 'pdf' ? '个文本行' : '行'}`}，${dataset.columns || 0} 个字段；用于理解输入格式和生成样例，未执行参数训练。`
+                : '数据：已提交文件，但解析未成功；未执行参数训练。')
+              : '数据：未提交训练数据；未执行参数训练。',
+            refs.context_kind === 'rag'
+              ? `参考资料：RAG 检索命中 ${refs.rag_hits || 0} 个片段，来源：${(refs.rag_sources || []).join('、') || '未记录'}；内容摘要：${(refs.rag_snippets || []).slice(0, 2).join('；') || '未记录'}；用户资料 ${refs.user_materials || 0} 项。`
+              : refs.context_kind === 'built_in'
+                ? `参考资料：使用了内置参考内容（${(refs.built_in_sources || []).join('、') || '来源未记录'}）；用户资料 ${refs.user_materials || 0} 项。`
+                : `参考资料：未检索到知识库片段；用户资料 ${refs.user_materials || 0} 项。`,
+            '验证：当前为生成过程，平台运行验证尚未执行。',
+            '自检与完善：尚无可核验的修复复测记录。'
+          ]
+        },
         onAbortController: (controller) => {
           if (sessionId === this.activeGenerateSessionId) {
             this.activeStreamAbortController = controller
@@ -2129,6 +2194,7 @@ export default {
           if (sessionId !== this.activeGenerateSessionId) return
           this.activeStreamAbortController = null
           this.generateProgress.status = 'error'
+          this.generationEvidenceLines.splice(2, 1, '验证：生成任务失败，未执行平台运行验证。')
           this.generateProgress.description = '生成过程遇到异常，已为您提供备用说明和后续完善建议。'
           this.generateProgress.friendlySteps = this.buildFriendlySteps(5, 'warning')
           this.generateLoading = false
@@ -2139,6 +2205,7 @@ export default {
           if (sessionId !== this.activeGenerateSessionId) return
           this.activeStreamAbortController = null
           this.generateProgress.status = 'finish'
+          this.generationEvidenceLines.splice(2, 1, '验证：生成任务返回警告，未取得平台运行验证结论。')
           this.generateProgress.description = '生成过程返回警告，已为您提供备用说明和后续完善建议。'
           this.generateProgress.friendlySteps = this.buildFriendlySteps(5, 'warning')
           this.generateLoading = false
@@ -2152,11 +2219,19 @@ export default {
           this.generateProgress.description = '算法模型已顺利生成，可查看说明并下载源文件。'
           this.generateProgress.friendlySteps = this.buildFriendlySteps(5)
           this.generateLoading = false
-          this.processFinalResult(results)
-          this.$message.success('算法模型生成成功！')
-          this.$nextTick(() => {
-            this.registerGeneratedToPlatform()
-          })
+          const valid = this.processFinalResult(results)
+          if (valid) {
+            this.generationEvidenceLines.splice(2, 1,
+              '验证：已生成代码与智能体自检说明；平台运行验证将在模型登记后执行。')
+            const describedTests = (this.generateResult.testResults || []).length
+            const nextSteps = (this.generateResult.modelSummary.nextSteps || []).length
+            this.generationEvidenceLines.splice(3, 1,
+              `自检与完善：智能体提供了 ${describedTests} 项自检描述、${nextSteps} 条后续完善建议；未记录独立修复复测，实际运行结论以平台验证为准。`)
+            this.$message.success('算法模型生成成功！')
+            this.$nextTick(() => this.registerGeneratedToPlatform())
+          } else {
+            this.generateProgress.status = 'error'
+          }
         },
         onComplete: () => {
           if (sessionId !== this.activeGenerateSessionId) return
@@ -2170,6 +2245,7 @@ export default {
         onAbort: () => {
           if (sessionId !== this.activeGenerateSessionId) return
           this.activeStreamAbortController = null
+          this.generationEvidenceLines.splice(2, 1, '验证：任务已中断，未取得平台运行验证结论。')
           this.generateLoading = false
         },
         onDataProcessError: (e, line) => {
@@ -2183,7 +2259,7 @@ export default {
       if (!data) {
         this.generateResult = this.buildFallbackResult('未获取到生成结果文件')
         this.$message.warning('未获取到生成结果文件')
-        return
+        return false
       }
 
       let parsed = data
@@ -2192,25 +2268,32 @@ export default {
           parsed = JSON.parse(data)
         } catch (e) {
           this.generateResult = this.buildFallbackResult('生成结果格式不完整，已保留可下载内容。', data)
-          return
+          return false
         }
       }
 
       const code = parsed.generated_code || ''
       if (!code || !String(code).trim()) {
         this.generateResult = this.buildFallbackResult('生成结果未包含可下载的算法源文件。')
-        return
+        return false
+      }
+      if (this.verticalType === 'clinical' && (!parsed.algorithm_spec || !parsed.smoke_input)) {
+        this.generateResult = this.buildFallbackResult('缺少临床算法在线使用所需的输入规范或测试样例。', code)
+        return false
       }
 
       this.generateResult = {
         show: true,
         generatedCode: code,
+        algorithmSpec: parsed.algorithm_spec || null,
+        smokeInput: parsed.smoke_input || null,
         codeFilename: parsed.code_filename || `${parsed.model_name || 'algorithm'}.py`,
         modelSummary: this.normalizeModelSummary(parsed.model_summary, parsed),
         testResults: Array.isArray(parsed.test_results) ? parsed.test_results : [],
         references: Array.isArray(parsed.references) ? parsed.references : [],
         differentiationSummary: parsed.differentiation_summary || null
       }
+      return true
     },
 
     buildFriendlySteps(activeStep = 1, overrideStatus = '') {
@@ -2392,12 +2475,45 @@ export default {
       if (!name) {
         return
       }
+      if (IS_CLINICAL_PREVIEW) {
+        try {
+          savePreviewModel({
+            name,
+            code,
+            codeFilename: this.generateResult.codeFilename || 'generated_algorithm.py',
+            artifact: {
+              version: 1,
+              status: 'preview',
+              spec: this.generateResult.algorithmSpec,
+              source: { references: this.generateResult.references || [] },
+              validationError: '预览模式未部署算法运行服务，尚未执行平台验证'
+            }
+          })
+          this.$message.success('已保存到当前浏览器的模型列表；可查看表单和下载源码')
+        } catch (error) {
+          this.$message.warning('浏览器本地存储空间不足，请下载源码保存')
+        }
+        return
+      }
       const filename = this.generateResult.codeFilename || 'generated_algorithm.py'
       const blob = new Blob([code], { type: 'text/x-python' })
       const fd = new FormData()
       fd.append('file', blob, filename)
       fd.append('name', name)
       fd.append('domain', this.verticalType)
+      if (this.generateResult.algorithmSpec && this.generateResult.smokeInput) {
+        fd.append('algorithm_spec', JSON.stringify(this.generateResult.algorithmSpec))
+        fd.append('smoke_input', JSON.stringify(this.generateResult.smokeInput))
+      }
+      fd.append('source', JSON.stringify({
+        popoverTitle: '算法模型资料来源',
+        msIntroduce: this.generateResult.modelSummary.purpose || '',
+        references: this.generateResult.references || [],
+        generationMode: this.generationMode,
+        clinicalTask: this.clinicalTask,
+        generationEvidence: this.generationEvidenceLines,
+        verification: '资料来源与适用性需人工核对'
+      }))
       if (this.programInfo.industry) {
         fd.append('industry', this.programInfo.industry)
       }
@@ -2415,7 +2531,19 @@ export default {
           } catch (err) {
             /* ignore */
           }
-          this.$message.success('已存入资源库，可在「垂域应用 AI 资源检索」同领域中查看并下载')
+          if (res.service && res.service.algorithmArtifact) {
+            const artifact = res.service.algorithmArtifact
+            this.generationEvidenceLines.splice(2, 1, artifact.status === 'ready'
+              ? '验证：平台样例运行已通过；业务效果仍需独立数据集评估。'
+              : artifact.status === 'needs_configuration'
+                ? `验证：尚未执行平台样例运行；${artifact.validationError || '缺少在线运行配置'}。`
+                : `验证：平台样例运行未通过；${artifact.validationError || '请检查依赖和输入'}。`)
+          }
+          if (res.service && res.service.algorithmArtifact && res.service.algorithmArtifact.status !== 'ready') {
+            this.$message.warning(`模型已存入资源库，暂不能在线运行：${res.service.algorithmArtifact.validationError || '请检查输入规范、依赖和测试样例'}`)
+          } else {
+            this.$message.success('已存入资源库，可在「垂域应用 AI 资源检索」同领域中查看并下载')
+          }
         } else {
           this.$message.warning((res && res.message) || '同步到资源库未确认成功')
         }

@@ -585,7 +585,7 @@ import * as echarts from 'echarts'
 import vChart from 'vue-echarts'
 import AgentExecutionPanel from '@/components/Agent/AgentExecutionPanel'
 import dictionaryCache from '@/utils/dictionaryCache'
-import { createService, downloadScenarioGeneratedAlgorithm, filterServices, getServiceById } from '@/api/service'
+import { createService, downloadScenarioGeneratedAlgorithm, getMyServices, getServiceById } from '@/api/service'
 import store from '@/store'
 import { buildDocsUrl } from '@/utils/baseUrl'
 import { waitForServiceDeployment } from '@/utils/serviceDeployment'
@@ -798,27 +798,14 @@ export default {
     async loadPlatformAlgorithms() {
       this.platformAlgorithmLoading = true
       try {
-        const res = await filterServices({
-          domain: this.verticalType,
-          type: 'generated_algorithm'
-        })
+        // 源码下载接口仅允许创建者访问；列表只展示当前用户可封装的模型。
+        const res = await getMyServices()
         const services = (res && res.status === 'success' && Array.isArray(res.services))
           ? res.services
           : []
-        const checked = await Promise.all(services.map(async service => {
-          try {
-            const sourceBlob = await downloadScenarioGeneratedAlgorithm(service.id)
-            return {
-              ...service,
-              __sourceBlob: sourceBlob,
-              __sourceFilename: this.getGeneratedAlgorithmFilename(service)
-            }
-          } catch (e) {
-            console.warn('平台算法源码不存在，已从封装列表中过滤:', service && service.id, e)
-            return null
-          }
-        }))
-        this.platformAlgorithmOptions = checked.filter(Boolean)
+        this.platformAlgorithmOptions = services.filter(service =>
+          service.type === 'generated_algorithm' && service.domain === this.verticalType
+        )
         if (this.selectedPlatformAlgorithmId && !this.platformAlgorithmOptions.some(item => item.id === this.selectedPlatformAlgorithmId)) {
           this.selectedPlatformAlgorithmId = undefined
           this.selectedPlatformAlgorithm = null

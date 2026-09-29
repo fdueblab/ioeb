@@ -40,6 +40,7 @@
         mode="default"
         @edit="handleEdit"
         @use="handleUse"
+        @online-use="handleOnlineUse"
         @table-change="handleTableChange"
         @purchase="handlePurchase"
         @add-interested="handleAddInterested"
@@ -161,6 +162,9 @@ export default {
     }
   },
   methods: {
+    handleOnlineUse(record) {
+      this.$router.push({ path: '/algorithm-cloud', query: { serviceId: record.id, domain: record.domain } })
+    },
     initStaticData() {
       // 重置筛选条件和数据
       this.agentSearchData = []

@@ -16,6 +16,9 @@ RUN yarn install
 # 复制项目文件
 COPY . .
 
+ARG VUE_APP_SITE=default
+ENV VUE_APP_SITE=${VUE_APP_SITE}
+
 # 构建项目
 RUN yarn build
 

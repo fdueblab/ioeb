@@ -2,7 +2,7 @@
 import { UserLayout, BasicLayout, BlankLayout, AppView } from '@/layouts'
 import { bxAnaalyse } from '@/core/icons'
 import { loadDict } from '@/utils/dictionaryCache'
-import { getDefaultLandingPath } from '@/utils/domainContext'
+import { getDefaultLandingPath, normalizeDomains, DEFAULT_DOMAIN, IS_CLINICAL_SITE, IS_CLINICAL_PREVIEW } from '@/utils/domainContext'
 import { buildDocsUrl } from '@/utils/baseUrl'
 
 const RouteView = {
@@ -13,14 +13,11 @@ const RouteView = {
   }
 }
 
-const DEFAULT_VERTICAL_DOMAIN = { code: 'aml', text: '跨境支付AI监测' }
+const DEFAULT_VERTICAL_DOMAIN = DEFAULT_DOMAIN
 
 async function loadAvailableDomains() {
   const domains = await loadDict('domain', [])
-  if (!domains || domains.length === 0) {
-    return [DEFAULT_VERTICAL_DOMAIN]
-  }
-  return domains
+  return normalizeDomains(domains && domains.length ? domains : [DEFAULT_VERTICAL_DOMAIN])
 }
 
 // 获取垂域路由的第一个路径，用于重定向
@@ -33,7 +30,7 @@ export async function getFirstVerticalUserPath() {
   } catch (error) {
     console.error('获取第一个垂域路径失败:', error)
   }
-  return '/vertical-user/aml' // 默认返回aml路径
+  return `/vertical-user/${DEFAULT_VERTICAL_DOMAIN.code}`
 }
 
 // 动态生成垂域用户路由的辅助函数
@@ -201,7 +198,7 @@ export async function getFirstMSPath() {
   } catch (error) {
     console.error('获取第一个微服务路径失败:', error)
   }
-  return '/vertical-ms/aml' // 默认返回aml路径
+  return `/vertical-ms/${DEFAULT_VERTICAL_DOMAIN.code}`
 }
 
 // 获取想定式开发路由的第一个路径，用于重定向
@@ -214,7 +211,7 @@ export async function getFirstScenarioDevPath() {
   } catch (error) {
     console.error('获取第一个想定式开发路径失败:', error)
   }
-  return '/vertical-scenario-dev/aml' // 默认返回aml路径
+  return `/vertical-scenario-dev/${DEFAULT_VERTICAL_DOMAIN.code}`
 }
 
 // 动态生成算法模型想定式开发路由的辅助函数
@@ -258,7 +255,7 @@ export async function getFirstAppPath() {
   } catch (error) {
     console.error('获取第一个元应用路径失败:', error)
   }
-  return '/vertical-atom-app/aml' // 默认返回aml路径
+  return `/vertical-atom-app/${DEFAULT_VERTICAL_DOMAIN.code}`
 }
 
 // 动态生成评测路由的辅助函数
@@ -353,7 +350,7 @@ export async function getFirstTechnologyPath() {
   } catch (error) {
     console.error('获取第一个评测路径失败:', error)
   }
-  return '/evaluation/aml/technology' // 默认返回aml路径
+  return `/evaluation/${DEFAULT_VERTICAL_DOMAIN.code}/technology`
 }
 
 export async function getFirstEvaluationPath() {
@@ -365,7 +362,7 @@ export async function getFirstEvaluationPath() {
   } catch (error) {
     console.error('获取第一个评测路径失败:', error)
   }
-  return '/evaluation/aml/technology' // 默认返回aml路径
+  return `/evaluation/${DEFAULT_VERTICAL_DOMAIN.code}/technology`
 }
 
 // 动态生成运维管理路由的辅助函数
@@ -460,7 +457,7 @@ export async function getFirstOperationPath() {
   } catch (error) {
     console.error('获取第一个运维管理路径失败:', error)
   }
-  return '/operation/aml/container-status' // 默认返回aml路径
+  return `/operation/${DEFAULT_VERTICAL_DOMAIN.code}/container-status`
 }
 
 export const asyncRouterMap = [
@@ -513,7 +510,7 @@ export const asyncRouterMap = [
     meta: { title: 'menu.home' },
     redirect: () => getDefaultLandingPath(),
     children: [
-      // ========== 第一部分：算法模型想定式开发 ==========
+      // ========== 第一部分：算法模型想定式开发、算法模型云端服务 ==========
       // 算法模型想定式开发 - 从字典动态获取（置于垂域原子微服务发布上方）
       {
         path: '/vertical-scenario-dev',
@@ -523,6 +520,18 @@ export const asyncRouterMap = [
         meta: { title: '算法模型想定式开发', keepAlive: true, icon: 'code', permission: ['publisher'] },
         children: [] // 子路由在路由初始化时动态加载
       },
+      {
+        path: '/algorithm-cloud',
+        name: 'algorithm-cloud',
+        component: () => import('@/views/vertical/algorithmCloud/AlgorithmCloud'),
+        meta: { title: '算法模型云端服务', icon: 'cloud', permission: ['admin', 'publisher', 'user'] }
+      },
+      ...(process.env.VUE_APP_SITE === 'clinical' ? [{
+        path: '/clinical-algorithm-use',
+        name: 'clinical-algorithm-use',
+        component: () => import('@/views/vertical/clinical/ClinicalAlgorithmUse'),
+        meta: { title: '算法模型使用', icon: 'experiment', permission: ['admin', 'publisher', 'user'] }
+      }] : []),
 
       // ========== 第二部分：个人中心、数据统计、使用指南 ==========
       // account
@@ -1056,11 +1065,65 @@ export const asyncRouterMap = [
     hidden: true
   }
 ]
+if (IS_CLINICAL_SITE) {
+  for (let index = asyncRouterMap.length - 1; index >= 0; index--) {
+    if (asyncRouterMap[index].path.startsWith('/aml/')) asyncRouterMap.splice(index, 1)
+  }
+  const main = asyncRouterMap.find(route => route.path === '/')
+  if (main && main.children) {
+    main.children = main.children.filter(route => route.path !== '/application')
+  }
+}
 /**
  * 基础路由
  * @type { *[] }
  */
 export const constantRouterMap = [
+  ...(IS_CLINICAL_PREVIEW ? [{
+    path: '/',
+    component: () => import('@/views/vertical/clinical/ClinicalPreviewLayout'),
+    redirect: '/clinical-preview/overview',
+    children: [
+      {
+        path: '/vertical-scenario-dev/clinical',
+        name: 'clinical-preview-generate',
+        component: () => import('@/views/vertical/scenarioDev/GenericScenarioDev'),
+        props: { verticalType: 'clinical' },
+        meta: { title: '算法模型想定式开发' }
+      },
+      {
+        path: '/clinical-algorithm-use',
+        name: 'clinical-preview-use',
+        component: () => import('@/views/vertical/clinical/ClinicalAlgorithmUse'),
+        meta: { title: '算法模型使用' }
+      },
+      {
+        path: '/clinical-preview/publish',
+        name: 'clinical-preview-publish',
+        component: () => import('@/views/vertical/clinical/ClinicalMcpPackaging'),
+        meta: { title: 'MCP 服务封装' }
+      },
+      {
+        path: '/clinical-preview/meta-app',
+        name: 'clinical-preview-meta-app',
+        component: () => import('@/views/vertical/clinical/ClinicalMetaAppBuild'),
+        meta: { title: '元应用智能体构建' }
+      },
+      ...[
+        ['overview', '工作台与数据统计'],
+        ['resources', '算法模型组件列表'],
+        ['evaluation', '技术评测与业务验证'],
+        ['operation', '运维管理'],
+        ['account', '个人中心']
+      ].map(([module, title]) => ({
+        path: `/clinical-preview/${module}`,
+        name: `clinical-preview-${module}`,
+        component: () => import('@/views/vertical/clinical/ClinicalDemoModule'),
+        props: { module },
+        meta: { title }
+      }))
+    ]
+  }] : []),
   {
     path: '/user',
     component: UserLayout,

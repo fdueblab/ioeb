@@ -12,7 +12,8 @@ import {
   getDefaultLandingPath,
   getCurrentDomainCode,
   getDomainModuleEntryPath,
-  resolveCurrentDomain
+  resolveCurrentDomain,
+  IS_CLINICAL_PREVIEW
 } from '@/utils/domainContext'
 import { recordRecentRoute } from '@/utils/recentRoutes'
 import {
@@ -33,6 +34,10 @@ const getDefaultRoutePath = () => getDefaultLandingPath()
 router.beforeEach(async (to, from, next) => {
   NProgress.start() // start progress bar
   to.meta && typeof to.meta.title !== 'undefined' && setDocumentTitle(buildPageDocumentTitle(i18nRender(to.meta.title)))
+  if (IS_CLINICAL_PREVIEW) {
+    next()
+    return
+  }
   /* has token */
   const token = storage.get(ACCESS_TOKEN)
   if (token) {

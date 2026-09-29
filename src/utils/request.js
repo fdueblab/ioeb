@@ -197,8 +197,9 @@ export const streamAgent = async (path, formData, callbacks = {}) => {
               return
             }
 
-            if (data.status === 'components' && data.session_id && callbacks.onSessionInfo) {
-              callbacks.onSessionInfo(data)
+            if (data.status === 'components') {
+              if (callbacks.onComponents) callbacks.onComponents(data)
+              if (data.session_id && callbacks.onSessionInfo) callbacks.onSessionInfo(data)
             }
 
             if (data.step) {

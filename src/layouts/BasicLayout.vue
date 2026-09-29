@@ -15,7 +15,7 @@
     <template v-slot:menuHeaderRender>
       <div class="sider-logo-header">
         <img src="@/assets/logo.svg" alt="" />
-        <div class="tit">算法模型众智工场</div>
+        <div class="tit">{{ siteTitle }}</div>
       </div>
     </template>
     <!-- 1.0.0+ 版本 pro-layout 提供 API,
@@ -98,6 +98,9 @@ export default {
     }
   },
   computed: {
+    siteTitle() {
+      return defaultSettings.pageTitleBrand
+    },
     ...mapState({
       // 动态主路由
       mainMenu: (state) => state.permission.addRouters
@@ -232,22 +235,17 @@ export default {
   color: #fff;
 }
 
-// 左侧菜单分组间距
-// 为四个部分的一级菜单项之间添加间距
+// 在一级菜单的组边界额外留出一行菜单（40px 高 + 8px 上下间距）。
 .ant-pro-sider-menu {
-  // 匹配所有一级菜单（排除子菜单）
-  ul.ant-menu:not(.ant-menu-sub) {
-    // 第2部分开始（个人中心）- 位于第2位
-    > li:nth-child(2) {
-      margin-top: 32px !important;
-    }
-    // 第3部分开始（垂域原子微服务发布）- 位于第5位
-    > li:nth-child(5) {
-      margin-top: 32px !important;
-    }
-    // 第4部分开始（运维管理）- 位于第8位
-    > li:nth-child(8) {
-      margin-top: 32px !important;
+  .ant-menu-root {
+    > li:has(> a[href*="#/algorithm-cloud"]) + li.ant-menu-submenu,
+    > li:has(> a[href*="#/vertical-scenario-dev/"]) + li.ant-menu-submenu,
+    > li:has(> a[href*="#/clinical-algorithm-use"]) + li.ant-menu-submenu,
+    > li:has(> a[target="_blank"]) + li:has(> a[href*="#/vertical-ms/"]),
+    > li:has(> a[target="_blank"]) + li:has(> a[href*="#/vertical-atom-app/"]),
+    > li:has(> a[target="_blank"]) + li:has(> a[href*="#/vertical-user/"]),
+    > li:has(> a[href*="#/vertical-user/"]) + li {
+      margin-top: 52px !important;
     }
   }
 }
