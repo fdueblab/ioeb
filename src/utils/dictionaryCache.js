@@ -1,5 +1,7 @@
 import { getDictionaryByCategory, getAllDictionaries } from '@/api/dictionary'
 import storage from 'store'
+import { IS_CLINICAL_PREVIEW } from '@/utils/domainContext'
+import { clinicalPreviewDictionaries } from '@/utils/clinicalPreviewData'
 
 // 字典缓存的键前缀
 const DICT_CACHE_KEY = 'DICT_'
@@ -59,6 +61,7 @@ export function setDictCache(dictType, dictData, expires = 24 * 60 * 60 * 1000) 
  * @returns {Promise<Object>} 字典映射对象
  */
 export async function loadDict(dictType, defaultValue = []) {
+  if (IS_CLINICAL_PREVIEW) return clinicalPreviewDictionaries[dictType] || defaultValue
   // 首先检查缓存
   const cached = getDictCache(dictType)
   if (cached) {
@@ -87,6 +90,7 @@ export async function loadDict(dictType, defaultValue = []) {
  * @returns {Promise<boolean>} 处理结果
  */
 export async function preloadAllDict() {
+  if (IS_CLINICAL_PREVIEW) return true
   initDictCacheVersion()
 
   try {

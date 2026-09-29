@@ -1,10 +1,11 @@
 import storage from 'store'
 
 export const DOMAIN_STORAGE_KEY = 'ioeb_current_domain'
-export const DEFAULT_DOMAIN = {
-  code: 'aml',
-  text: '跨境支付AI监测'
-}
+export const IS_CLINICAL_PREVIEW = process.env.VUE_APP_SITE === 'clinical_preview'
+export const IS_CLINICAL_SITE = process.env.VUE_APP_SITE === 'clinical' || IS_CLINICAL_PREVIEW
+export const DEFAULT_DOMAIN = IS_CLINICAL_SITE
+  ? { code: 'clinical', text: '临床医疗算法模型' }
+  : { code: 'aml', text: '跨境支付AI监测' }
 export const DEFAULT_LANDING_PATH = '/account/workplace'
 
 const SINGLE_DOMAIN_MENU_PATHS = [
@@ -15,7 +16,8 @@ const SINGLE_DOMAIN_MENU_PATHS = [
 ]
 
 export function normalizeDomains(domains = []) {
-  const normalized = domains
+  const visibleDomains = domains.filter(item => item && (IS_CLINICAL_SITE ? item.code === 'clinical' : item.code !== 'clinical'))
+  const normalized = visibleDomains
     .map(item => ({
       code: item && (item.code || item.value || item.text),
       text: item && (item.text || item.label || item.code || item.value)
@@ -26,11 +28,11 @@ export function normalizeDomains(domains = []) {
 }
 
 export function getCurrentDomainCode() {
-  return storage.get(DOMAIN_STORAGE_KEY) || DEFAULT_DOMAIN.code
+  return IS_CLINICAL_SITE ? 'clinical' : (storage.get(DOMAIN_STORAGE_KEY) || DEFAULT_DOMAIN.code)
 }
 
 export function setCurrentDomainCode(code) {
-  storage.set(DOMAIN_STORAGE_KEY, code || DEFAULT_DOMAIN.code)
+  storage.set(DOMAIN_STORAGE_KEY, IS_CLINICAL_SITE ? 'clinical' : (code || DEFAULT_DOMAIN.code))
 }
 
 export function resolveCurrentDomain(domains = [], preferredCode = getCurrentDomainCode()) {

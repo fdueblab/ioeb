@@ -199,6 +199,32 @@ export function downloadScenarioGeneratedAlgorithm(serviceId) {
   })
 }
 
+export function getClinicalAlgorithmArtifact(serviceId) {
+  return request({ url: `${API_BASE_URL}/services/${serviceId}/clinical-artifact`, method: 'get' })
+}
+
+export function getAlgorithmArtifact(serviceId) {
+  return request({ url: `${API_BASE_URL}/services/${serviceId}/algorithm-artifact`, method: 'get' })
+}
+
+export function runAlgorithm(serviceId, inputs) {
+  return request({
+    url: `${API_BASE_URL}/services/${serviceId}/algorithm-run`,
+    method: 'post',
+    data: { inputs },
+    timeout: 30000
+  })
+}
+
+export function runClinicalAlgorithm(serviceId, inputs) {
+  return request({
+    url: `${API_BASE_URL}/services/${serviceId}/clinical-run`,
+    method: 'post',
+    data: { inputs },
+    timeout: 30000
+  })
+}
+
 export function getMyServices() {
   return request({
     url: `${API_BASE_URL}/services/mine`,

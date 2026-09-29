@@ -214,6 +214,14 @@
           <a-button type="link" size="small" @click="$emit('publish-sale', record)">发布销售</a-button>
         </template>
       </span>
+      <span slot="onlineUsage" slot-scope="text, record">
+        <template v-if="record.type === 'generated_algorithm'">
+          <a-button type="link" size="small" @click="$emit('online-use', record)">
+            {{ record.onlineUsage && record.onlineUsage.canRun ? '在线使用' : record.onlineUsage && record.onlineUsage.reason === '请先购买该模型' ? '需购买' : '查看状态' }}
+          </a-button>
+        </template>
+        <span v-else>—</span>
+      </span>
       <span slot="action" slot-scope="text, record">
         <template v-if="mode === 'achievement'">
           <a-button type="link" @click="$emit('edit', record)">编辑</a-button>
@@ -394,6 +402,15 @@ export default {
         })
       }
 
+      if (!this.mode || this.mode === 'default') {
+        baseColumns.push({
+          title: '在线使用',
+          dataIndex: 'onlineUsage',
+          width: '100px',
+          align: 'center',
+          scopedSlots: { customRender: 'onlineUsage' }
+        })
+      }
       baseColumns.push({
         title: '操作',
         dataIndex: 'action',

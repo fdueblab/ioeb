@@ -28,7 +28,7 @@
               <a-button ref="ragButton" class="rag-input-bubble-button" @click="toggleRAGInput">
                 <a-icon type="dot-chart" v-if="!showRAGInput"/>
                 <a-icon type="close" v-else/>
-                领域增强
+                {{ verticalType === 'clinical' ? '临床知识索引' : '领域增强' }}
               </a-button>
               <a-button type="primary" icon="file-search" @click="handleSearch" :loading="loading">智能检索</a-button>
             </div>
@@ -75,6 +75,7 @@
 
 <script>
 import { smartSearch } from '@/api/service'
+import { buildDocsUrl } from '@/utils/baseUrl'
 
 export default {
   name: 'SearchForm',
@@ -203,6 +204,10 @@ export default {
 
     // 显示/隐藏知识增强输入框
     toggleRAGInput() {
+      if (this.verticalType === 'clinical') {
+        window.open(buildDocsUrl(), '_blank', 'noopener')
+        return
+      }
       this.showRAGInput = !this.showRAGInput
       if (this.showRAGInput) {
         this.$nextTick(() => {

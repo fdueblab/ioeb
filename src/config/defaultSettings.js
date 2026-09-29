@@ -23,8 +23,8 @@ export default {
   menu: {
     locale: true
   },
-  title: '面向垂域应用的算法模型众智工场',
-  pageTitleBrand: '算法模型众智工场',
+  title: process.env.VUE_APP_SITE && process.env.VUE_APP_SITE.startsWith('clinical') ? '临床医疗算法模型众智工场' : '面向垂域应用的算法模型众智工场',
+  pageTitleBrand: process.env.VUE_APP_SITE && process.env.VUE_APP_SITE.startsWith('clinical') ? '临床医疗算法模型众智工场' : '算法模型众智工场',
   pwa: false,
   iconfontUrl: '',
   production: process.env.NODE_ENV === 'production' && process.env.VUE_APP_PREVIEW !== 'true'

@@ -10,7 +10,7 @@
           <div class="header">
             <a href="/">
               <img src="../assets/fdu_logo_small.png" class="logo" alt="logo">
-              <span class="title">算法模型众智工场</span>
+              <span class="title">{{ siteTitle }}</span>
             </a>
           </div>
           <div class="desc">
@@ -38,6 +38,7 @@
 <script>
 import { deviceMixin } from '@/store/device-mixin'
 import SelectLang from '@/components/SelectLang'
+import defaultSettings from '@/config/defaultSettings'
 
 export default {
   name: 'UserLayout',
@@ -45,6 +46,11 @@ export default {
     SelectLang
   },
   mixins: [deviceMixin],
+  computed: {
+    siteTitle() {
+      return defaultSettings.pageTitleBrand
+    }
+  },
   mounted () {
     document.body.classList.add('userLayout')
   },
